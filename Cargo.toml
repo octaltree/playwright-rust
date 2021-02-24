@@ -3,7 +3,11 @@ name = "playwright"
 version = "0.1.0"
 authors = ["octaltree <octaltree@gmail.com>"]
 edition = "2018"
+build = "src/build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[build-dependencies]
+reqwest = { version = "0.11.1", features = ["blocking"] }
