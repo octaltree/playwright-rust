@@ -1,0 +1,5 @@
+edition = "2018"
+fn_single_line = true
+normalize_comments = true
+trailing_comma = "Never"
+imports_granularity = "Crate"
