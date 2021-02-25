@@ -1,3 +1,4 @@
+use crate::imp::connection::Connection;
 use std::{
     fs, io,
     path::{Path, PathBuf},
@@ -5,7 +6,7 @@ use std::{
 };
 use zip::{result::ZipError, ZipArchive};
 
-pub struct Driver<'a> {
+pub(crate) struct Driver<'a> {
     path: &'a Path
 }
 
@@ -13,13 +14,13 @@ impl<'a> Driver<'a> {
     const ZIP: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), "/driver.zip"));
     const PLATFORM: &'static str = include_str!(concat!(env!("OUT_DIR"), "/platform"));
 
-    pub fn try_new(path: &'a Path) -> io::Result<Self> {
+    pub(crate) fn try_new(path: &'a Path) -> io::Result<Self> {
         let this = Self { path };
         this.prepare()?;
         Ok(this)
     }
 
-    pub fn run(&self) { unimplemented!() }
+    pub(crate) fn run(&self) -> io::Result<Connection> { Connection::try_new(&self.executable()) }
 
     fn prepare(&self) -> Result<(), ZipError> {
         if self.path.is_dir() {
