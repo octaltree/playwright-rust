@@ -15,7 +15,7 @@ fn main() {
     println!("cargo:rerun-if-changed=src/build.rs");
 }
 
-fn download(url: &str, dest: &Path) -> () {
+fn download(url: &str, dest: &Path) {
     let mut resp = reqwest::blocking::get(url).unwrap();
     let mut dest = File::create(dest).unwrap();
     resp.copy_to(&mut dest).unwrap();
