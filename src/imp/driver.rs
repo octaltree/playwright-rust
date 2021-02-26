@@ -20,7 +20,9 @@ impl<'a> Driver<'a> {
         Ok(this)
     }
 
-    pub(crate) fn run(&self) -> io::Result<Connection> { Connection::try_new(&self.executable()) }
+    pub(crate) async fn run(&self) -> io::Result<Connection> {
+        Connection::try_new(&self.executable()).await
+    }
 
     fn prepare(&self) -> Result<(), ZipError> {
         if self.path.is_dir() {
