@@ -19,6 +19,7 @@ impl Connection {
             .args(&["run-driver"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()?;
         let stdin = child.stdin.take().unwrap();
         let stdout = child.stdout.take().unwrap();
@@ -27,8 +28,22 @@ impl Connection {
     }
 
     pub(crate) async fn receive_initializer_message(&mut self) {
+        dbg!("message");
         while let Some(x) = self.transport.next().await {
             dbg!(x);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::imp::driver::Driver;
+    use std::env;
+
+    #[crate::test]
+    async fn try_new() {
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let mut conn = driver.run().await.unwrap();
     }
 }

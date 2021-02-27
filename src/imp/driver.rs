@@ -1,8 +1,7 @@
 use crate::imp::connection::Connection;
 use std::{
     fs, io,
-    path::{Path, PathBuf},
-    process
+    path::{Path, PathBuf}
 };
 use zip::{result::ZipError, ZipArchive};
 
@@ -72,6 +71,5 @@ mod tests {
         let tmp = tmp.join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         assert_eq!(driver.executable().parent().unwrap(), &tmp);
-        fs::remove_dir_all(&tmp).unwrap();
     }
 }

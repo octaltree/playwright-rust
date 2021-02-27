@@ -12,6 +12,7 @@ use std::{
     process::{ChildStdin, ChildStdout}
 };
 
+#[derive(Debug)]
 pub(crate) struct Transport {
     stdin: ChildStdin,
     stdout: ChildStdout,
@@ -20,7 +21,7 @@ pub(crate) struct Transport {
 }
 
 impl Transport {
-    const BUFSIZE: usize = 1000;
+    const BUFSIZE: usize = 30000;
 
     pub(crate) fn try_new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
         Transport {
@@ -35,7 +36,7 @@ impl Transport {
 impl Stream for Transport {
     type Item = message::Response;
 
-    fn poll_next(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let this: &mut Self = self.get_mut();
         let mut buf = [0; Self::BUFSIZE];
         let n = match this.stdout.read(&mut buf) {
@@ -43,7 +44,13 @@ impl Stream for Transport {
             Err(_) => return Poll::Ready(None)
         };
         dbg!(n);
-        this.buf.extend(&buf);
+        macro_rules! pending {
+            () => {{
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }};
+        }
+        this.buf.extend(&buf[..n]);
         if this.length.is_none() {
             if this.buf.len() >= 4 {
                 let off = this.buf.split_off(4);
@@ -51,12 +58,13 @@ impl Stream for Transport {
                 this.length = Some(u32::from_le_bytes(bytes.try_into().unwrap()));
                 this.buf = off;
             } else {
-                return Poll::Pending;
+                // TODO: Is it needed waiting for wake if len==0?
+                pending!()
             }
         }
         match this.length.map(|u| u as usize) {
-            None => Poll::Pending,
-            Some(l) if this.buf.len() < l => Poll::Pending,
+            None => pending!(),
+            Some(l) if this.buf.len() < l => pending!(),
             Some(l) => {
                 let bytes: &[u8] = &this.buf[..l];
                 log::debug!("RECV>{:?}", unsafe { std::str::from_utf8_unchecked(bytes) });
@@ -73,26 +81,4 @@ impl Stream for Transport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use futures::{stream, stream::StreamExt};
-
-    #[cfg(feature = "runtime-async-std")]
-    #[async_std::test]
-    async fn async_std_stream() {
-        let mut stream = stream::iter(0..5);
-        while let Some(item) = stream.next().await {}
-    }
-
-    #[cfg(feature = "runtime-actix")]
-    #[actix_rt::test]
-    async fn actix_rt_stream() {
-        let mut stream = stream::iter(0..5);
-        while let Some(item) = stream.next().await {}
-    }
-
-    #[cfg(feature = "runtime-tokio")]
-    #[tokio::test]
-    async fn tokio_stream() {
-        let mut stream = stream::iter(0..5);
-        while let Some(item) = stream.next().await {}
-    }
 }

@@ -1,4 +1,4 @@
-all: format lint test doc build
+all: format lint test doc
 
 d:
 	cargo watch -c -s 'make all'
@@ -7,13 +7,16 @@ format:
 	cargo fmt
 
 lint:
-	cargo clippy --all-features --all-targets
+	cargo clippy --features runtime-actix --all-targets
+	cargo clippy --features runtime-async-std --all-targets
+	cargo clippy --features runtime-tokio --all-targets
 
 test:
-	cargo test --all-features --all-targets
+	cargo test --features runtime-actix --all-targets
+	cargo test --features runtime-async-std --all-targets
+	cargo test --features runtime-tokio --all-targets
 
 doc:
-	cargo doc --all-features
-
-build:
-	cargo build --all-features --all-targets
+	cargo doc --features runtime-actix
+	cargo doc --features runtime-async-std
+	cargo doc --features runtime-tokio

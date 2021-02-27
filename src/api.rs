@@ -22,12 +22,11 @@ impl<'a> Drop for Playwright<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
 
-    #[cfg(feature = "runtime-tokio")]
-    #[tokio::test]
-    async fn tokio_initialize() {
-        let _ = Playwright::initialize("/tmp/playwright-rust-test/driver".as_ref())
-            .await
-            .unwrap();
-    }
+    //#[crate::test]
+    // async fn initialize() {
+    //    // let tmp = env::temp_dir().join("playwright-rust-test/driver");
+    //    // let _ = Playwright::initialize(&tmp).await.unwrap();
+    //}
 }
