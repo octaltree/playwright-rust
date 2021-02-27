@@ -8,7 +8,7 @@ use std::{
 
 pub(crate) struct Connection {
     child: Child,
-    transport: Transport
+    pub(crate) transport: Transport
 }
 
 pub(crate) trait ChannelOwner {}
@@ -21,6 +21,7 @@ impl Connection {
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .spawn()?;
+        // TODO: env "NODE_OPTIONS"
         let stdin = child.stdin.take().unwrap();
         let stdout = child.stdout.take().unwrap();
         let transport = Transport::try_new(stdin, stdout);
@@ -28,10 +29,7 @@ impl Connection {
     }
 
     pub(crate) async fn receive_initializer_message(&mut self) {
-        dbg!("message");
-        while let Some(x) = self.transport.next().await {
-            dbg!(x);
-        }
+        while let Some(x) = self.transport.next().await {}
     }
 }
 
@@ -40,10 +38,9 @@ mod tests {
     use crate::imp::driver::Driver;
     use std::env;
 
-    #[crate::test]
-    async fn try_new() {
+    crate::runtime_test!(try_new, {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let mut conn = driver.run().await.unwrap();
-    }
+        let _conn = driver.run().await.unwrap();
+    });
 }

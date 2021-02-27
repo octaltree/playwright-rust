@@ -31,6 +31,8 @@ impl Transport {
             buf: Vec::new()
         }
     }
+
+    fn send() { unimplemented!() }
 }
 
 impl Stream for Transport {
@@ -38,19 +40,23 @@ impl Stream for Transport {
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let this: &mut Self = self.get_mut();
-        let mut buf = [0; Self::BUFSIZE];
-        let n = match this.stdout.read(&mut buf) {
-            Ok(n) => n,
-            Err(_) => return Poll::Ready(None)
-        };
-        dbg!(n);
+        {
+            let mut buf = [0; Self::BUFSIZE];
+            let n = match this.stdout.read(&mut buf) {
+                Ok(n) => n,
+                Err(e) => {
+                    log::error!("{:?}", e);
+                    return Poll::Ready(None);
+                }
+            };
+            this.buf.extend(&buf[..n]);
+        }
         macro_rules! pending {
             () => {{
                 cx.waker().wake_by_ref();
                 return Poll::Pending;
             }};
         }
-        this.buf.extend(&buf[..n]);
         if this.length.is_none() {
             if this.buf.len() >= 4 {
                 let off = this.buf.split_off(4);
@@ -69,9 +75,15 @@ impl Stream for Transport {
                 let bytes: &[u8] = &this.buf[..l];
                 log::debug!("RECV>{:?}", unsafe { std::str::from_utf8_unchecked(bytes) });
                 let msg: message::Response = match serde_json::from_slice(bytes) {
-                    Err(_) => return Poll::Ready(None),
+                    Err(e) => {
+                        log::error!("{:?}", e);
+                        return Poll::Ready(None);
+                    }
                     Ok(r) => r
                 };
+                log::debug!("MSG>{:?}", &msg);
+                this.length = None;
+                this.buf = this.buf[l..].to_owned();
                 Poll::Ready(Some(msg))
             }
         }
@@ -80,5 +92,40 @@ impl Stream for Transport {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::imp::driver::Driver;
+    use futures::stream::StreamExt;
+    use std::env;
+
+    #[tokio::test]
+    async fn tokio_read() {
+        env_logger::builder().is_test(true).try_init().ok();
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let mut conn = driver.run().await.unwrap();
+        if let Some(x) = conn.transport.next().await {
+            dbg!(x);
+        }
+    }
+
+    #[async_std::test]
+    async fn async_std_read() {
+        env_logger::builder().is_test(true).try_init().ok();
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let mut conn = driver.run().await.unwrap();
+        if let Some(x) = conn.transport.next().await {
+            dbg!(x);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn actix_read() {
+        env_logger::builder().is_test(true).try_init().ok();
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let mut conn = driver.run().await.unwrap();
+        if let Some(x) = conn.transport.next().await {
+            dbg!(x);
+        }
+    }
 }
