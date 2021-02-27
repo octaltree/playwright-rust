@@ -18,18 +18,3 @@ impl<'a> Playwright<'a> {
     // fn webkit
     // fn selectors
 }
-
-impl<'a> Drop for Playwright<'a> {
-    fn drop(&mut self) {}
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::env;
-
-    crate::runtime_test!(initialize, {
-        let tmp = env::temp_dir().join("playwright-rust-test/driver");
-        let _ = Playwright::initialize(&tmp).await.unwrap();
-    });
-}

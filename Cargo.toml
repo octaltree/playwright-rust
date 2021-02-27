@@ -15,6 +15,7 @@ serde = { version = "1.0.123", features = ["derive"] }
 serde_json = "1.0.63"
 zip = "0.5.10"
 strong = { version = "0.3.2", features = ["serde"] }
+thiserror = "1.0.24"
 
 [build-dependencies]
 reqwest = { version = "0.11.1", features = ["blocking"] }

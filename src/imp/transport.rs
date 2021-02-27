@@ -4,13 +4,13 @@ use futures::{
     task::{Context, Poll}
 };
 use std::{
-    collections::VecDeque,
     convert::TryInto,
     env, io,
-    io::Read,
+    io::{Read, Write},
     pin::Pin,
     process::{ChildStdin, ChildStdout}
 };
+use thiserror::Error;
 
 #[derive(Debug)]
 pub(crate) struct Transport {
@@ -18,6 +18,14 @@ pub(crate) struct Transport {
     stdout: ChildStdout,
     length: Option<u32>,
     buf: Vec<u8>
+}
+
+#[derive(Error, Debug)]
+pub enum SendError {
+    #[error(transparent)]
+    Serde(#[from] serde_json::error::Error),
+    #[error(transparent)]
+    Io(#[from] io::Error)
 }
 
 impl Transport {
@@ -32,7 +40,16 @@ impl Transport {
         }
     }
 
-    fn send() { unimplemented!() }
+    // TODO: guarantee ordering with que
+    // pub(crate) async fn send(&mut self, req: &message::Request) -> Result<(), SendError> {
+    //    let serialized = serde_json::to_vec(&req)?;
+    //    log::debug!("SEND>{:?}", &serialized);
+    //    let length = serialized.len() as u32;
+    //    let mut bytes = length.to_le_bytes().to_vec();
+    //    bytes.extend(serialized);
+    //    self.stdin.write(&bytes)?;
+    //    Ok(())
+    //}
 }
 
 impl Stream for Transport {
@@ -102,7 +119,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let mut conn = driver.run().await.unwrap();
-        if let Some(x) = conn.transport.next().await {
+        while let Some(x) = conn.transport.next().await {
             dbg!(x);
         }
     }
