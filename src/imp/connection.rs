@@ -1,27 +1,38 @@
-use crate::imp::{message, transport::Transport};
+use crate::imp::{
+    message,
+    playwright::Playwright,
+    remote_object::{ChannelOwner, RemoteObject},
+    transport::Transport
+};
 use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
 use serde_json::{map::Map, value::Value};
 use std::{
-    convert::TryInto,
+    any::Any,
+    collections::HashMap,
     io,
     path::Path,
     pin::Pin,
-    process::{Child, Command, Stdio}
+    process::{Child, Command, Stdio},
+    sync::Arc
 };
 use strong::*;
 use thiserror::Error;
 
+// 値を待つfutureのHashMapと
 pub(crate) struct Connection {
-    child: Child,
+    _child: Child,
     pub(crate) transport: Transport,
-    buf: Vec<message::Response>
+    objects: HashMap<Str<message::Guid>, Arc<dyn RemoteObject>>,
+    buf: Vec<message::Response> /* root: Option<Arc<ChannelOwner<'_>>> /* owners: HashMap<Str<message::Guid>, Arc<dyn HasChannelOwner>> */ */
 }
 
 #[derive(Error, Debug)]
 pub enum ConnectionError {
+    #[error("Failed to initialize")]
+    InitializationError,
     #[error("Disconnected")]
     ReceiverClosed,
     #[error("Invalid message")]
@@ -41,15 +52,26 @@ impl Connection {
         let stdout = child.stdout.take().unwrap();
         let transport = Transport::try_new(stdin, stdout);
         Ok(Connection {
-            child,
+            _child: child,
             transport,
-            buf: Vec::new()
+            objects: HashMap::new(),
+            buf: Vec::new() // root: None // owners: HashMap::new(),
         })
     }
 
-    // async fn wait_initial_objects() -> Result<() {
-    //    while let Some(
-    //}
+    pub(crate) async fn wait_initial_object(&mut self) -> Result<Arc<Playwright>, ConnectionError> {
+        let guid: &S<message::Guid> = &S::validate("Playwright").unwrap();
+        let o = loop {
+            if let Some(o) = self.objects.get(guid) {
+                break o.clone();
+            }
+            self.next().await.ok_or(ConnectionError::ReceiverClosed)?;
+        };
+        let p = o
+            .downcast_arc::<Playwright>()
+            .map_err(|_| ConnectionError::InitializationError)?;
+        return Ok(p);
+    }
 
     // async fn processOneMessage(&mut self) -> Result<(), ConnectionError> {
     //    let task = self.transport.next();
@@ -77,6 +99,7 @@ impl Connection {
     //}
 
     fn dispatch(&mut self, msg: message::Response) -> Result<(), ConnectionError> {
+        log::trace!("{:?}", msg);
         match msg {
             message::Response::Result(msg) => {}
             message::Response::Initial(msg) => {
@@ -132,7 +155,7 @@ impl Connection {
 
     fn create_remote_object(
         &mut self,
-        parent: StrongBuf<message::Guid>,
+        parent: Str<message::Guid>,
         params: Map<String, Value>
     ) -> Result<(), ConnectionError> {
         let typ = params
@@ -140,7 +163,7 @@ impl Connection {
             .ok_or(ConnectionError::InvalidParams)?
             .as_str()
             .ok_or(ConnectionError::InvalidParams)?;
-        let guid: &Strong<message::Guid> = Strong::validate(
+        let guid: &S<message::Guid> = S::validate(
             params
                 .get("guid")
                 .ok_or(ConnectionError::InvalidParams)?

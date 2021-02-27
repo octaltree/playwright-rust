@@ -7,9 +7,9 @@ use thiserror::Error;
 pub(crate) struct Request<'a, 'b> {
     #[serde(default)]
     pub(crate) id: Option<i32>,
-    pub(crate) guid: Option<&'a Strong<Guid>>,
+    pub(crate) guid: Option<&'a S<Guid>>,
     #[serde(default)]
-    pub(crate) method: Option<&'b Strong<Method>>,
+    pub(crate) method: Option<&'b S<Method>>,
     #[serde(default)]
     pub(crate) params: Option<Map<String, Value>>,
     #[serde(default)]
@@ -39,8 +39,8 @@ pub(crate) enum ResponseResultBody {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct ResponseInitial {
-    pub(crate) guid: StrongBuf<Guid>,
-    pub(crate) method: StrongBuf<Method>,
+    pub(crate) guid: Str<Guid>,
+    pub(crate) method: Str<Method>,
     pub(crate) params: Map<String, Value>
 }
 
@@ -76,6 +76,24 @@ impl Validator for Method {
 }
 
 impl Method {
-    pub(crate) fn is_create(s: &Strong<Self>) -> bool { s.as_str() == "__create__" }
-    pub(crate) fn is_dispose(s: &Strong<Self>) -> bool { s.as_str() == "__dispose__" }
+    pub(crate) fn is_create(s: &S<Self>) -> bool { s.as_str() == "__create__" }
+    pub(crate) fn is_dispose(s: &S<Self>) -> bool { s.as_str() == "__dispose__" }
+}
+
+pub(crate) enum ObjectType {}
+
+#[derive(Error, Debug)]
+#[error("ObjectType {0:?} validation error")]
+pub(crate) struct ObjectTypeError(String);
+
+impl Validator for ObjectType {
+    type Err = ObjectTypeError;
+
+    fn validate(raw: &str) -> Result<(), Self::Err> {
+        if raw.is_empty() {
+            Err(ObjectTypeError(raw.to_string()))
+        } else {
+            Ok(())
+        }
+    }
 }

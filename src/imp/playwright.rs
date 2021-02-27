@@ -1,20 +1,14 @@
-use crate::imp::{connection::Connection, driver::Driver};
-use std::{io, path::Path};
+use crate::imp::remote_object::*;
+use std::sync::Arc;
 
-pub struct Playwright<'a> {
-    driver: Driver<'a>,
-    conn: Connection
+pub struct Playwright {
+    channel: Arc<ChannelOwner>
 }
 
-impl<'a> Playwright<'a> {
-    async fn initialize(path: &'a Path) -> io::Result<Playwright<'a>> {
-        let driver = Driver::try_new(&path)?;
-        let mut conn = driver.run().await?;
-        Ok(Self { driver, conn })
-    }
+impl Playwright {
+    fn new(channel: Arc<ChannelOwner>) -> Self { Self { channel } }
+}
 
-    // fn chromium
-    // fn firefox
-    // fn webkit
-    // fn selectors
+impl RemoteObject for Playwright {
+    fn channel_owner(&self) -> &ChannelOwner { &self.channel }
 }

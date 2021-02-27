@@ -119,7 +119,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let mut conn = driver.run().await.unwrap();
-        while let Some(x) = conn.transport.next().await {
+        if let Some(x) = conn.transport.next().await {
             dbg!(x);
         }
     }
