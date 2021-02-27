@@ -29,9 +29,10 @@ pub enum SendError {
 }
 
 impl Transport {
-    const BUFSIZE: usize = 30000;
+    const BUFSIZE: usize = 10000;
 
     pub(crate) fn try_new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
+        // FIXME: spawn loop buffering
         Transport {
             stdin,
             stdout,
@@ -56,9 +57,11 @@ impl Stream for Transport {
     type Item = message::Response;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        log::trace!("poll transaction");
         let this: &mut Self = self.get_mut();
         {
             let mut buf = [0; Self::BUFSIZE];
+            println!("foo");
             let n = match this.stdout.read(&mut buf) {
                 Ok(n) => n,
                 Err(e) => {
@@ -66,8 +69,10 @@ impl Stream for Transport {
                     return Poll::Ready(None);
                 }
             };
+            println!("bar{}", n);
             this.buf.extend(&buf[..n]);
         }
+        dbg!("a");
         macro_rules! pending {
             () => {{
                 cx.waker().wake_by_ref();
@@ -85,6 +90,7 @@ impl Stream for Transport {
                 pending!()
             }
         }
+        dbg!("b");
         match this.length.map(|u| u as usize) {
             None => pending!(),
             Some(l) if this.buf.len() < l => pending!(),
@@ -98,7 +104,6 @@ impl Stream for Transport {
                     }
                     Ok(r) => r
                 };
-                log::debug!("MSG>{:?}", &msg);
                 this.length = None;
                 this.buf = this.buf[l..].to_owned();
                 Poll::Ready(Some(msg))

@@ -9,6 +9,7 @@ pub(crate) trait RemoteObject: DowncastSync {
 }
 impl_downcast!(sync RemoteObject);
 
+#[derive(Debug)]
 pub(crate) struct ChannelOwner {
     // TODO: Rc?
     parent: Option<Arc<ChannelOwner>>,

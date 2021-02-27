@@ -1,6 +1,7 @@
 use crate::imp::remote_object::*;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Playwright {
     channel: Arc<ChannelOwner>
 }

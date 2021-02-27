@@ -179,6 +179,7 @@ impl Stream for Connection {
     type Item = ();
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<()>> {
+        log::trace!("poll connection");
         let this = self.get_mut();
         match Pin::new(&mut this.transport).poll_next(cx) {
             Poll::Pending => Poll::Pending,
