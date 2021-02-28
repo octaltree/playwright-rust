@@ -27,7 +27,6 @@ impl<'a> Playwright<'a> {
         let driver = Driver::try_new(&path)?;
         let mut conn = driver.run().await?;
         let p = conn.wait_initial_object().await?;
-        dbg!(&p);
         Ok(Self {
             driver,
             conn,
