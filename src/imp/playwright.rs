@@ -11,5 +11,5 @@ impl Playwright {
 }
 
 impl RemoteObject for Playwright {
-    fn channel_owner(&self) -> &ChannelOwner { &self.channel }
+    fn channel(&self) -> &ChannelOwner { &self.channel }
 }

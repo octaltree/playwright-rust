@@ -5,7 +5,9 @@ use std::{pin::Pin, sync::Arc};
 use strong::*;
 
 pub(crate) trait RemoteObject: DowncastSync {
-    fn channel_owner(&self) -> &ChannelOwner;
+    fn channel(&self) -> &ChannelOwner;
+
+    fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
 }
 impl_downcast!(sync RemoteObject);
 
@@ -48,11 +50,17 @@ pub(crate) struct DummyObject {
 }
 
 impl DummyObject {
-    fn new(channel: Arc<ChannelOwner>) -> Self { DummyObject { channel } }
+    pub(crate) fn new(channel: Arc<ChannelOwner>) -> Self { DummyObject { channel } }
+
+    pub(crate) fn new_root() -> Self {
+        DummyObject {
+            channel: Arc::new(ChannelOwner::new_root())
+        }
+    }
 }
 
 impl RemoteObject for DummyObject {
-    fn channel_owner(&self) -> &ChannelOwner { &self.channel }
+    fn channel(&self) -> &ChannelOwner { &self.channel }
 }
 
 pub(crate) fn create_remote_object(

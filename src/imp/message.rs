@@ -82,18 +82,6 @@ impl Method {
 
 pub(crate) enum ObjectType {}
 
-#[derive(Error, Debug)]
-#[error("ObjectType {0:?} validation error")]
-pub(crate) struct ObjectTypeError(String);
-
 impl Validator for ObjectType {
-    type Err = ObjectTypeError;
-
-    fn validate(raw: &str) -> Result<(), Self::Err> {
-        if raw.is_empty() {
-            Err(ObjectTypeError(raw.to_string()))
-        } else {
-            Ok(())
-        }
-    }
+    type Err = std::convert::Infallible;
 }

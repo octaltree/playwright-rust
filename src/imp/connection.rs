@@ -1,7 +1,7 @@
 use crate::imp::{
-    message,
+    self, message,
     playwright::Playwright,
-    remote_object::{ChannelOwner, RemoteObject},
+    remote_object::{ChannelOwner, DummyObject, RemoteObject},
     transport::Transport
 };
 use futures::{
@@ -18,8 +18,7 @@ use tokio::process::{Child, Command};
 pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
-    objects: HashMap<Str<message::Guid>, Arc<dyn RemoteObject>>,
-    buf: Vec<message::Response> /* root: Option<Arc<ChannelOwner<'_>>> /* owners: HashMap<Str<message::Guid>, Arc<dyn HasChannelOwner>> */ */
+    objects: HashMap<Str<message::Guid>, Arc<dyn RemoteObject>> /* buf: Vec<message::Response> /* root: Option<Arc<ChannelOwner<'_>>> /* owners: HashMap<Str<message::Guid>, Arc<dyn HasChannelOwner>> */ */ */
 }
 
 #[derive(Error, Debug)]
@@ -29,7 +28,9 @@ pub enum ConnectionError {
     #[error("Disconnected")]
     ReceiverClosed,
     #[error("Invalid message")]
-    InvalidParams
+    InvalidParams,
+    #[error("Parent object not found")]
+    ParentNotFound
 }
 
 impl Connection {
@@ -44,11 +45,19 @@ impl Connection {
         let stdin = child.stdin.take().unwrap();
         let stdout = child.stdout.take().unwrap();
         let transport = Transport::try_new(stdin, stdout);
+        let objects = {
+            let mut d = HashMap::new();
+            let root = DummyObject::new_root();
+            d.insert(
+                root.guid().to_owned(),
+                Arc::new(root) as Arc<dyn RemoteObject>
+            );
+            d
+        };
         Ok(Connection {
             _child: child,
             transport,
-            objects: HashMap::new(),
-            buf: Vec::new() // root: None // owners: HashMap::new(),
+            objects // buf: Vec::new() // root: None // owners: HashMap::new(),
         })
     }
 
@@ -94,68 +103,37 @@ impl Connection {
     fn dispatch(&mut self, msg: message::Response) -> Result<(), ConnectionError> {
         log::trace!("{:?}", msg);
         match msg {
-            message::Response::Result(msg) => {}
+            message::Response::Result(msg) => {
+                let id = &msg.id;
+            }
             message::Response::Initial(msg) => {
                 if message::Method::is_create(&msg.method) {
-                    self.create_remote_object(msg.guid, msg.params)?;
+                    self.create_remote_object(&msg.guid, msg.params)?;
                     return Ok(());
                 }
-                if message::Method::is_dispose(&msg.method) {}
+                if message::Method::is_dispose(&msg.method) {
+                    self.objects.remove(&msg.guid);
+                    return Ok(());
+                }
+                // object.channel.Emit(method, c.replaceGuidsWithChannels(msg.Params))
             }
         }
-        //    if (message.id != 0) {
-        //      WaitableResult<JsonElement> callback = callbacks.get(message.id);
-        //      if (callback == null) {
-        //        throw new PlaywrightException("Cannot find command to respond: " + message.id);
-        //      }
-        //      callbacks.remove(message.id);
-        ////      System.out.println("Message: " + message.id + " " + message);
-        //      if (message.error == null) {
-        //        callback.complete(message.result);
-        //      } else {
-        //        if (message.error.error != null) {
-        //          callback.completeExceptionally(new DriverException(message.error.error));
-        //        } else {
-        //          callback.completeExceptionally(new PlaywrightException(message.error.toString()));
-        //        }
-        //      }
-        //      return;
-        //    }
-
-        //    // TODO: throw?
-        //    if (message.method == null) {
-        //      return;
-        //    }
-        //    if (message.method.equals("__create__")) {
-        //      createRemoteObject(message.guid, message.params);
-        //      return;
-        //    }
-        //    if (message.method.equals("__dispose__")) {
-        //      ChannelOwner object = objects.get(message.guid);
-        //      if (object == null) {
-        //        throw new PlaywrightException("Cannot find object to dispose: " + message.guid);
-        //      }
-        //      object.disconnect();
-        //      return;
-        //    }
-        //    ChannelOwner object = objects.get(message.guid);
-        //    if (object == null) {
-        //      throw new PlaywrightException("Cannot find object to call " + message.method + ": " + message.guid);
-        //    }
-        //    object.handleEvent(message.method, message.params);
         Ok(())
     }
 
     fn create_remote_object(
         &mut self,
-        parent: Str<message::Guid>,
+        parent: &S<message::Guid>,
         params: Map<String, Value>
     ) -> Result<(), ConnectionError> {
-        let typ = params
-            .get("type")
-            .ok_or(ConnectionError::InvalidParams)?
-            .as_str()
-            .ok_or(ConnectionError::InvalidParams)?;
+        let typ: &S<message::ObjectType> = S::validate(
+            params
+                .get("type")
+                .ok_or(ConnectionError::InvalidParams)?
+                .as_str()
+                .ok_or(ConnectionError::InvalidParams)?
+        )
+        .unwrap();
         let guid: &S<message::Guid> = S::validate(
             params
                 .get("guid")
@@ -164,6 +142,14 @@ impl Connection {
                 .ok_or(ConnectionError::InvalidParams)?
         )
         .unwrap();
+        let parent = self
+            .objects
+            .get(parent)
+            .ok_or(ConnectionError::ParentNotFound)?;
+        // match typ.as_str() {
+        //    "Playwright" => Playwright(),
+        //    _ => DummyObject::new()
+        //}
         Ok(())
     }
 }
