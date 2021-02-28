@@ -142,14 +142,25 @@ impl Connection {
                 .ok_or(ConnectionError::InvalidParams)?
         )
         .unwrap();
+        let initializer = params
+            .get("initializer")
+            .ok_or(ConnectionError::InvalidParams)?;
         let parent = self
             .objects
             .get(parent)
             .ok_or(ConnectionError::ParentNotFound)?;
-        // match typ.as_str() {
-        //    "Playwright" => Playwright(),
-        //    _ => DummyObject::new()
-        //}
+        let c = ChannelOwner::new(
+            Arc::clone(parent),
+            typ.to_owned(),
+            guid.to_owned(),
+            initializer.to_owned()
+        );
+        let r = match typ.as_str() {
+            "Playwright" => Arc::new(Playwright::new(c)) as Arc<dyn RemoteObject>,
+            _ => Arc::new(DummyObject::new(c)) as Arc<_>
+        };
+        self.objects.insert(r.guid().to_owned(), r);
+        //(&**parent).push_child(r.clone());
         Ok(())
     }
 }

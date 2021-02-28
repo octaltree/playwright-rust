@@ -3,13 +3,14 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Playwright {
-    channel: Arc<ChannelOwner>
+    channel: ChannelOwner
 }
 
 impl Playwright {
-    fn new(channel: Arc<ChannelOwner>) -> Self { Self { channel } }
+    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
 }
 
 impl RemoteObject for Playwright {
     fn channel(&self) -> &ChannelOwner { &self.channel }
+    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }

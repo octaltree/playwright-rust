@@ -1,11 +1,12 @@
 use crate::imp::{connection::Connection, message};
 use downcast_rs::{impl_downcast, DowncastSync};
 use serde_json::value::Value;
-use std::{pin::Pin, sync::Arc};
+use std::{fmt::Debug, pin::Pin, sync::Arc};
 use strong::*;
 
-pub(crate) trait RemoteObject: DowncastSync {
+pub(crate) trait RemoteObject: Debug + DowncastSync {
     fn channel(&self) -> &ChannelOwner;
+    fn channel_mut(&mut self) -> &mut ChannelOwner;
 
     fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
 }
@@ -14,15 +15,15 @@ impl_downcast!(sync RemoteObject);
 #[derive(Debug)]
 pub(crate) struct ChannelOwner {
     // TODO: Rc?
-    parent: Option<Arc<ChannelOwner>>,
-    typ: Str<message::ObjectType>,
-    guid: Str<message::Guid>,
-    initializer: Value
+    pub(crate) parent: Option<Arc<dyn RemoteObject>>,
+    pub(crate) typ: Str<message::ObjectType>,
+    pub(crate) guid: Str<message::Guid>,
+    pub(crate) initializer: Value
 }
 
 impl ChannelOwner {
     pub(crate) fn new(
-        parent: Arc<ChannelOwner>,
+        parent: Arc<dyn RemoteObject>,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,
         initializer: Value
@@ -45,30 +46,32 @@ impl ChannelOwner {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct DummyObject {
-    channel: Arc<ChannelOwner>
+    channel: ChannelOwner
 }
 
 impl DummyObject {
-    pub(crate) fn new(channel: Arc<ChannelOwner>) -> Self { DummyObject { channel } }
+    pub(crate) fn new(channel: ChannelOwner) -> Self { DummyObject { channel } }
 
     pub(crate) fn new_root() -> Self {
         DummyObject {
-            channel: Arc::new(ChannelOwner::new_root())
+            channel: ChannelOwner::new_root()
         }
     }
 }
 
 impl RemoteObject for DummyObject {
     fn channel(&self) -> &ChannelOwner { &self.channel }
+    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }
 
-pub(crate) fn create_remote_object(
-    parent: Arc<ChannelOwner>,
-    t: Str<message::ObjectType>,
-    i: Str<message::Guid>,
-    initializer: Value
-) -> Arc<dyn RemoteObject> {
-    let channel = Arc::new(ChannelOwner::new(parent, t, i, initializer));
-    Arc::new(DummyObject::new(channel))
-}
+// pub(crate) fn create_remote_object(
+//    parent: Arc<ChannelOwner>,
+//    t: Str<message::ObjectType>,
+//    i: Str<message::Guid>,
+//    initializer: Value
+//) -> Arc<dyn RemoteObject> {
+//    let channel = Arc::new(ChannelOwner::new(parent, t, i, initializer));
+//    Arc::new(DummyObject::new())
+//}
