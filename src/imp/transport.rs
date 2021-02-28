@@ -7,10 +7,13 @@ use std::{
     convert::TryInto,
     env, io,
     io::{Read, Write},
-    pin::Pin,
-    process::{ChildStdin, ChildStdout}
+    pin::Pin
 };
 use thiserror::Error;
+use tokio::{
+    io::{AsyncRead, ReadBuf},
+    process::{ChildStdin, ChildStdout}
+};
 
 #[derive(Debug)]
 pub(crate) struct Transport {
@@ -56,59 +59,58 @@ impl Transport {
 impl Stream for Transport {
     type Item = message::Response;
 
+    // TODO: memory performance
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        log::trace!("poll transaction");
         let this: &mut Self = self.get_mut();
-        {
-            let mut buf = [0; Self::BUFSIZE];
-            println!("foo");
-            let n = match this.stdout.read(&mut buf) {
-                Ok(n) => n,
-                Err(e) => {
-                    log::error!("{:?}", e);
-                    return Poll::Ready(None);
-                }
-            };
-            println!("bar{}", n);
-            this.buf.extend(&buf[..n]);
-        }
-        dbg!("a");
         macro_rules! pending {
             () => {{
                 cx.waker().wake_by_ref();
                 return Poll::Pending;
             }};
         }
-        if this.length.is_none() {
-            if this.buf.len() >= 4 {
+        {
+            if this.length.is_none() && this.buf.len() >= 4 {
                 let off = this.buf.split_off(4);
                 let bytes: &[u8] = &this.buf;
                 this.length = Some(u32::from_le_bytes(bytes.try_into().unwrap()));
                 this.buf = off;
-            } else {
-                // TODO: Is it needed waiting for wake if len==0?
-                pending!()
+            }
+            match this.length.map(|u| u as usize) {
+                None => {}
+                Some(l) if this.buf.len() < l => {}
+                Some(l) => {
+                    let bytes: &[u8] = &this.buf[..l];
+                    log::debug!("RECV>{:?}", unsafe { std::str::from_utf8_unchecked(bytes) });
+                    let msg: message::Response = match serde_json::from_slice(bytes) {
+                        Err(e) => {
+                            log::error!("{:?}", e);
+                            return Poll::Ready(None);
+                        }
+                        Ok(r) => r
+                    };
+                    this.length = None;
+                    this.buf = this.buf[l..].to_owned();
+                    return Poll::Ready(Some(msg));
+                }
             }
         }
-        dbg!("b");
-        match this.length.map(|u| u as usize) {
-            None => pending!(),
-            Some(l) if this.buf.len() < l => pending!(),
-            Some(l) => {
-                let bytes: &[u8] = &this.buf[..l];
-                log::debug!("RECV>{:?}", unsafe { std::str::from_utf8_unchecked(bytes) });
-                let msg: message::Response = match serde_json::from_slice(bytes) {
-                    Err(e) => {
-                        log::error!("{:?}", e);
-                        return Poll::Ready(None);
-                    }
-                    Ok(r) => r
-                };
-                this.length = None;
-                this.buf = this.buf[l..].to_owned();
-                Poll::Ready(Some(msg))
-            }
+        {
+            let mut buf = [0; Self::BUFSIZE];
+            let mut buf = ReadBuf::new(&mut buf);
+            // FIXME: read前にバッファに残ってるのを返す バッファ処理してからreadする
+            // TODO: error with async_std
+            match Pin::new(&mut this.stdout).poll_read(cx, &mut buf) {
+                Poll::Pending => pending!(),
+                Poll::Ready(Ok(())) => {
+                    this.buf.extend(buf.filled());
+                }
+                Poll::Ready(Err(e)) => {
+                    log::error!("{:?}", e);
+                    return Poll::Ready(None);
+                }
+            };
         }
+        pending!();
     }
 }
 
@@ -120,17 +122,6 @@ mod tests {
 
     #[tokio::test]
     async fn tokio_read() {
-        env_logger::builder().is_test(true).try_init().ok();
-        let tmp = env::temp_dir().join("playwright-rust-test/driver");
-        let driver = Driver::try_new(&tmp).unwrap();
-        let mut conn = driver.run().await.unwrap();
-        if let Some(x) = conn.transport.next().await {
-            dbg!(x);
-        }
-    }
-
-    #[async_std::test]
-    async fn async_std_read() {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();

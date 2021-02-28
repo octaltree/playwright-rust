@@ -9,17 +9,10 @@ use futures::{
     task::{Context, Poll}
 };
 use serde_json::{map::Map, value::Value};
-use std::{
-    any::Any,
-    collections::HashMap,
-    io,
-    path::Path,
-    pin::Pin,
-    process::{Child, Command, Stdio},
-    sync::Arc
-};
+use std::{any::Any, collections::HashMap, io, path::Path, pin::Pin, process::Stdio, sync::Arc};
 use strong::*;
 use thiserror::Error;
+use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと
 pub(crate) struct Connection {
@@ -179,7 +172,6 @@ impl Stream for Connection {
     type Item = ();
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<()>> {
-        log::trace!("poll connection");
         let this = self.get_mut();
         match Pin::new(&mut this.transport).poll_next(cx) {
             Poll::Pending => Poll::Pending,
