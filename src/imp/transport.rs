@@ -11,7 +11,7 @@ use std::{
 };
 use thiserror::Error;
 use tokio::{
-    io::{AsyncRead, ReadBuf},
+    io::{AsyncRead, AsyncWriteExt, ReadBuf},
     process::{ChildStdin, ChildStdout}
 };
 
@@ -44,16 +44,15 @@ impl Transport {
         }
     }
 
-    // TODO: guarantee ordering with que
-    // pub(crate) async fn send(&mut self, req: &message::Request) -> Result<(), SendError> {
-    //    let serialized = serde_json::to_vec(&req)?;
-    //    log::debug!("SEND>{:?}", &serialized);
-    //    let length = serialized.len() as u32;
-    //    let mut bytes = length.to_le_bytes().to_vec();
-    //    bytes.extend(serialized);
-    //    self.stdin.write(&bytes)?;
-    //    Ok(())
-    //}
+    pub(crate) async fn send(&mut self, req: &message::Request<'_, '_>) -> Result<(), SendError> {
+        let serialized = serde_json::to_vec(&req)?;
+        log::debug!("SEND>{:?}", &serialized);
+        let length = serialized.len() as u32;
+        let mut bytes = length.to_le_bytes().to_vec();
+        bytes.extend(serialized);
+        self.stdin.write(&bytes).await?;
+        Ok(())
+    }
 }
 
 impl Stream for Transport {
@@ -116,8 +115,9 @@ impl Stream for Transport {
 
 #[cfg(test)]
 mod tests {
-    use crate::imp::driver::Driver;
+    use crate::imp::{driver::Driver, message::Request};
     use futures::stream::StreamExt;
+    use serde_json::value::Value;
     use std::env;
 
     #[tokio::test]
@@ -140,5 +140,22 @@ mod tests {
         if let Some(x) = conn.transport.next().await {
             dbg!(x);
         }
+    }
+
+    #[actix_rt::test]
+    async fn actix_write() {
+        env_logger::builder().is_test(true).try_init().ok();
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let mut conn = driver.run().await.unwrap();
+        conn.transport
+            .send(&Request {
+                id: 1,
+                guid: None,
+                method: None,
+                params: None
+            })
+            .await
+            .unwrap();
     }
 }
