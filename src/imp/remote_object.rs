@@ -1,21 +1,18 @@
-use crate::imp::{connection::Connection, message};
-use downcast_rs::{impl_downcast, DowncastSync};
+use crate::imp::{connection::Connection, message, prelude::*};
 use serde_json::value::Value;
 use std::{fmt::Debug, pin::Pin, sync::Arc};
 use strong::*;
 
-pub(crate) trait RemoteObject: Debug + DowncastSync {
+pub(crate) trait RemoteObject: Debug {
     fn channel(&self) -> &ChannelOwner;
     fn channel_mut(&mut self) -> &mut ChannelOwner;
 
     fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
 }
-impl_downcast!(sync RemoteObject);
 
 #[derive(Debug)]
 pub(crate) struct ChannelOwner {
-    // TODO: Rc?
-    pub(crate) parent: Option<Arc<dyn RemoteObject>>,
+    pub(crate) parent: Option<Weak<dyn RemoteObject>>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
     pub(crate) initializer: Value
@@ -23,7 +20,7 @@ pub(crate) struct ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
-        parent: Arc<dyn RemoteObject>,
+        parent: Weak<dyn RemoteObject>,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,
         initializer: Value

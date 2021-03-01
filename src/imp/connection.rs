@@ -1,6 +1,7 @@
 use crate::imp::{
-    self, message,
+    message,
     playwright::Playwright,
+    prelude::*,
     remote_object::{ChannelOwner, DummyObject, RemoteObject},
     transport::Transport
 };
@@ -8,20 +9,18 @@ use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
-use serde_json::{map::Map, value::Value};
 use std::{any::Any, collections::HashMap, io, path::Path, pin::Pin, process::Stdio, sync::Arc};
-use strong::*;
-use thiserror::Error;
 use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと
 pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
-    objects: HashMap<Str<message::Guid>, Arc<dyn RemoteObject>> /* buf: Vec<message::Response> /* root: Option<Arc<ChannelOwner<'_>>> /* owners: HashMap<Str<message::Guid>, Arc<dyn HasChannelOwner>> */ */ */
+    objects: HashMap<Str<message::Guid>, Rc<dyn RemoteObject>>,
+    playwright: Option<Weak<Playwright>> /* buf: Vec<message::Response> /* root: Option<Arc<ChannelOwner<'_>>> /* owners: HashMap<Str<message::Guid>, Arc<dyn HasChannelOwner>> */ */ */
 }
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum ConnectionError {
     #[error("Failed to initialize")]
     InitializationError,
@@ -50,28 +49,27 @@ impl Connection {
             let root = DummyObject::new_root();
             d.insert(
                 root.guid().to_owned(),
-                Arc::new(root) as Arc<dyn RemoteObject>
+                Rc::new(root) as Rc<dyn RemoteObject>
             );
             d
         };
         Ok(Connection {
             _child: child,
             transport,
-            objects // buf: Vec::new() // root: None // owners: HashMap::new(),
+            objects,
+            playwright: None // buf: Vec::new() // root: None // owners: HashMap::new(),
         })
     }
 
-    pub(crate) async fn wait_initial_object(&mut self) -> Result<Arc<Playwright>, ConnectionError> {
-        let guid: &S<message::Guid> = &S::validate("Playwright").unwrap();
-        let o = loop {
-            if let Some(o) = self.objects.get(guid) {
-                break o.clone();
+    pub(crate) async fn wait_initial_object(
+        &mut self
+    ) -> Result<Weak<Playwright>, ConnectionError> {
+        let p = loop {
+            if let Some(o) = &self.playwright {
+                break Weak::clone(o);
             }
             self.next().await.ok_or(ConnectionError::ReceiverClosed)?;
         };
-        let p = o
-            .downcast_arc::<Playwright>()
-            .map_err(|_| ConnectionError::InitializationError)?;
         return Ok(p);
     }
 
@@ -150,14 +148,18 @@ impl Connection {
             .get(parent)
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
-            Arc::clone(parent),
+            Rc::downgrade(parent),
             typ.to_owned(),
             guid.to_owned(),
             initializer.to_owned()
         );
         let r = match typ.as_str() {
-            "Playwright" => Arc::new(Playwright::new(c)) as Arc<dyn RemoteObject>,
-            _ => Arc::new(DummyObject::new(c)) as Arc<_>
+            "Playwright" => {
+                let p = Rc::new(Playwright::new(c));
+                self.playwright = Some(Rc::downgrade(&p));
+                p as Rc<dyn RemoteObject>
+            }
+            _ => Rc::new(DummyObject::new(c)) as Rc<_>
         };
         self.objects.insert(r.guid().to_owned(), r);
         //(&**parent).push_child(r.clone());

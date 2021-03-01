@@ -1,15 +1,16 @@
 use crate::imp::{
     self,
     connection::{Connection, ConnectionError},
-    driver::Driver
+    driver::Driver,
+    prelude::*
 };
 use std::{io, path::Path, sync::Arc};
 use thiserror::Error;
 
 pub struct Playwright<'a> {
     driver: Driver<'a>,
-    conn: Connection,
-    entry_point: Arc<imp::playwright::Playwright>
+    conn: Rc<Connection>,
+    inner: Weak<imp::playwright::Playwright>
 }
 
 #[derive(Debug, Error)]
@@ -29,20 +30,30 @@ impl<'a> Playwright<'a> {
         let p = conn.wait_initial_object().await?;
         Ok(Self {
             driver,
-            conn,
-            entry_point: p
+            conn: Rc::new(conn),
+            inner: p
         })
     }
 
-    // fn chromium
-    // fn firefox
-    // fn webkit
-    // fn selectors
+    // fn devices(&self) -> HashMap<String, String> { unimplemented!() }
+    // fn selectors(&self) -> &Selectors { unimplemented!() }
+    // fn chromium(&self) -> &BrowserType { unimplemented!() }
+    // fn firefox(&self) -> &BrowserType { unimplemented!() }
+    // fn webkit(&self) -> &BrowserType { unimplemented!() }
 }
 
 impl<'a> Drop for Playwright<'a> {
     fn drop(&mut self) {}
 }
+
+// struct Request{}
+
+// impl Request{
+//    fn url(&self) -> &str{unimplemented!()}
+//    fn resource_type(&self) -> &str{unimplemented!()}
+//    fn method(&self) -> &str{unimplemented!()}
+//    fn post_data(&self) -> Option<&str>{unimplemented!()}
+//}
 
 #[cfg(test)]
 mod tests {
