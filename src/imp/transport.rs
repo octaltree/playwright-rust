@@ -79,7 +79,7 @@ impl Stream for Transport {
                 Some(l) if this.buf.len() < l => {}
                 Some(l) => {
                     let bytes: &[u8] = &this.buf[..l];
-                    log::debug!("RECV>{:?}", unsafe { std::str::from_utf8_unchecked(bytes) });
+                    log::debug!("RECV>{}", unsafe { std::str::from_utf8_unchecked(bytes) });
                     let msg: message::Response = match serde_json::from_slice(bytes) {
                         Err(e) => {
                             log::error!("{:?}", e);

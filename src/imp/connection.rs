@@ -28,7 +28,9 @@ pub enum ConnectionError {
     #[error("Parent object not found")]
     ParentNotFound,
     #[error("Object not found")]
-    ObjectNotFound
+    ObjectNotFound,
+    #[error(transparent)]
+    Serde(#[from] serde_json::Error)
 }
 
 impl Connection {
@@ -122,25 +124,11 @@ impl Connection {
         parent: &S<message::Guid>,
         params: Map<String, Value>
     ) -> Result<(), ConnectionError> {
-        let typ: &S<message::ObjectType> = S::validate(
-            params
-                .get("type")
-                .ok_or(ConnectionError::InvalidParams)?
-                .as_str()
-                .ok_or(ConnectionError::InvalidParams)?
-        )
-        .unwrap();
-        let guid: &S<message::Guid> = S::validate(
-            params
-                .get("guid")
-                .ok_or(ConnectionError::InvalidParams)?
-                .as_str()
-                .ok_or(ConnectionError::InvalidParams)?
-        )
-        .unwrap();
-        let initializer = params
-            .get("initializer")
-            .ok_or(ConnectionError::InvalidParams)?;
+        let message::CreateParams {
+            typ,
+            guid,
+            initializer
+        } = serde_json::from_value(params.into())?;
         let parent = self
             .objects
             .get(parent)

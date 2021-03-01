@@ -43,6 +43,14 @@ pub(crate) struct ResponseInitial {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub(crate) struct CreateParams {
+    #[serde(rename = "type")]
+    pub(crate) typ: Str<ObjectType>,
+    pub(crate) guid: Str<Guid>,
+    pub(crate) initializer: Value
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct Error {
     pub(crate) name: String,
     pub(crate) message: String,
