@@ -6,14 +6,12 @@ use thiserror::Error;
 #[derive(Debug, Serialize)]
 pub(crate) struct Request<'a, 'b> {
     #[serde(default)]
-    pub(crate) id: Option<i32>,
+    pub(crate) id: i32,
     pub(crate) guid: Option<&'a S<Guid>>,
     #[serde(default)]
     pub(crate) method: Option<&'b S<Method>>,
     #[serde(default)]
-    pub(crate) params: Option<Map<String, Value>>,
-    #[serde(default)]
-    pub(crate) result: Value
+    pub(crate) params: Option<Map<String, Value>>
 }
 
 #[derive(Debug, Deserialize, Serialize)]
