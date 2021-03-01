@@ -4,7 +4,7 @@ use crate::imp::{
     driver::Driver,
     prelude::*
 };
-use std::{io, path::Path, sync::Arc};
+use std::{io, path::Path};
 use thiserror::Error;
 
 pub struct Playwright<'a> {

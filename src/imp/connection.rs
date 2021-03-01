@@ -9,7 +9,7 @@ use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
-use std::{any::Any, collections::HashMap, io, path::Path, pin::Pin, process::Stdio, sync::Arc};
+use std::{collections::HashMap, io, path::Path, pin::Pin, process::Stdio};
 use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと

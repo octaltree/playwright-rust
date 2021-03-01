@@ -5,7 +5,7 @@ use futures::{
 };
 use std::{
     convert::TryInto,
-    env, io,
+    io,
     io::{Read, Write},
     pin::Pin
 };
