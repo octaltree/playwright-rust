@@ -19,7 +19,7 @@ impl<'a> Driver<'a> {
         Ok(this)
     }
 
-    pub(crate) async fn run(&self) -> io::Result<Rc<RefCell<Connection>>> {
+    pub(crate) async fn run(&self) -> io::Result<Rc<Mutex<Connection>>> {
         Connection::try_new(&self.executable()).await
     }
 

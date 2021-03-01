@@ -5,7 +5,7 @@ use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
-use std::{io, path::Path, pin::Pin, process::Stdio};
+use std::{io, path::Path, pin::Pin, process::Stdio, thread};
 use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと
@@ -14,7 +14,7 @@ pub(crate) struct Connection {
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
     objects: HashMap<Str<message::Guid>, RemoteRc>,
-    conn: Option<Weak<RefCell<Connection>>>
+    conn: Option<Weak<Mutex<Connection>>>
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -30,7 +30,7 @@ pub enum ConnectionError {
 }
 
 impl Connection {
-    pub(crate) async fn try_new(exec: &Path) -> io::Result<Rc<RefCell<Connection>>> {
+    pub(crate) async fn try_new(exec: &Path) -> io::Result<Rc<Mutex<Connection>>> {
         let mut child = Command::new(exec)
             .args(&["run-driver"])
             .stdin(Stdio::piped())
@@ -47,13 +47,14 @@ impl Connection {
             d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
             d
         };
-        let conn = Rc::new(RefCell::new(Connection {
+        let _ = thread::spawn(|| {});
+        let conn = Rc::new(Mutex::new(Connection {
             _child: child,
             transport,
             objects,
             conn: None
         }));
-        conn.borrow_mut().conn = Some(Rc::downgrade(&conn));
+        conn.lock().unwrap().conn = Some(Rc::downgrade(&conn));
         Ok(conn)
     }
 

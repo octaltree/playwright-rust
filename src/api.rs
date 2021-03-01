@@ -9,7 +9,7 @@ use thiserror::Error;
 
 pub struct Playwright<'a> {
     driver: Driver<'a>,
-    conn: Rc<RefCell<Connection>>,
+    conn: Rc<Mutex<Connection>>,
     inner: Weak<imp::playwright::Playwright>
 }
 
@@ -27,7 +27,7 @@ impl<'a> Playwright<'a> {
     pub async fn initialize(path: &'a Path) -> Result<Playwright<'a>, PlaywrightError> {
         let driver = Driver::try_new(&path)?;
         let conn = driver.run().await?;
-        let p = conn.borrow_mut().wait_initial_object().await?;
+        let p = conn.lock().unwrap().wait_initial_object().await?;
         Ok(Self {
             driver,
             conn,

@@ -6,7 +6,7 @@ use std::{
 };
 
 pub(crate) struct ChannelOwner {
-    pub(crate) conn: Weak<RefCell<Connection>>,
+    pub(crate) conn: Weak<Mutex<Connection>>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
@@ -27,7 +27,7 @@ impl Debug for ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
-        conn: Weak<RefCell<Connection>>,
+        conn: Weak<Mutex<Connection>>,
         parent: RemoteWeak,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,

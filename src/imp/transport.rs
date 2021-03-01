@@ -126,7 +126,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let conn = driver.run().await.unwrap();
-        let c = &mut conn.borrow_mut();
+        let c = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
             dbg!(x);
@@ -139,7 +139,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let conn = driver.run().await.unwrap();
-        let c: &mut crate::imp::connection::Connection = &mut conn.borrow_mut();
+        let c: &mut crate::imp::connection::Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
             dbg!(x);
@@ -152,7 +152,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let conn = driver.run().await.unwrap();
-        let c: &mut crate::imp::connection::Connection = &mut conn.borrow_mut();
+        let c: &mut crate::imp::connection::Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         t.send(&Request {
             id: 1,
