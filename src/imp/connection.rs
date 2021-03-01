@@ -141,7 +141,7 @@ impl Connection {
             initializer.to_owned()
         );
         let r = match typ.as_str() {
-            "Playwright" => RemoteRc::Playwright(Rc::new(Playwright::new(c))),
+            "Playwright" => RemoteRc::Playwright(Rc::new(Playwright::try_new(c)?)),
             "Selectors" => RemoteRc::Selectors(Rc::new(imp::selectors::Selectors::new(c))),
             "BrowserType" => RemoteRc::BrowserType(Rc::new(imp::browser_type::BrowserType::new(c))),
             _ => RemoteRc::Dummy(Rc::new(DummyObject::new(c)))
