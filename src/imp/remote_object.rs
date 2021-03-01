@@ -12,6 +12,7 @@ pub(crate) trait RemoteObject: Debug {
 
 #[derive(Debug)]
 pub(crate) struct ChannelOwner {
+    // pub(crate) conn: Weak<Connection>,
     pub(crate) parent: Option<Weak<dyn RemoteObject>>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,

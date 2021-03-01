@@ -16,8 +16,10 @@ use tokio::process::{Child, Command};
 pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
+    // buf: Vec<message::Response>
     objects: HashMap<Str<message::Guid>, Rc<dyn RemoteObject>>,
-    playwright: Option<Weak<Playwright>> /* buf: Vec<message::Response> /* root: Option<Arc<ChannelOwner<'_>>> /* owners: HashMap<Str<message::Guid>, Arc<dyn HasChannelOwner>> */ */ */
+    playwright: Option<Weak<Playwright>>,
+    conn: Option<Weak<RefCell<Connection>>>
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -33,7 +35,7 @@ pub enum ConnectionError {
 }
 
 impl Connection {
-    pub(crate) async fn try_new(exec: &Path) -> io::Result<Connection> {
+    pub(crate) async fn try_new(exec: &Path) -> io::Result<Rc<RefCell<Connection>>> {
         let mut child = Command::new(exec)
             .args(&["run-driver"])
             .stdin(Stdio::piped())
@@ -53,12 +55,15 @@ impl Connection {
             );
             d
         };
-        Ok(Connection {
+        let conn = Rc::new(RefCell::new(Connection {
             _child: child,
             transport,
             objects,
-            playwright: None // buf: Vec::new() // root: None // owners: HashMap::new(),
-        })
+            playwright: None,
+            conn: None
+        }));
+        conn.borrow_mut().conn = Some(Rc::downgrade(&conn));
+        Ok(conn)
     }
 
     pub(crate) async fn wait_initial_object(

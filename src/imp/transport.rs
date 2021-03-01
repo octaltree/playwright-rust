@@ -125,8 +125,10 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let mut conn = driver.run().await.unwrap();
-        if let Some(x) = conn.transport.next().await {
+        let conn = driver.run().await.unwrap();
+        let c = &mut conn.borrow_mut();
+        let t = &mut c.transport;
+        if let Some(x) = t.next().await {
             dbg!(x);
         }
     }
@@ -136,8 +138,10 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let mut conn = driver.run().await.unwrap();
-        if let Some(x) = conn.transport.next().await {
+        let conn = driver.run().await.unwrap();
+        let c: &mut crate::imp::connection::Connection = &mut conn.borrow_mut();
+        let t = &mut c.transport;
+        if let Some(x) = t.next().await {
             dbg!(x);
         }
     }
@@ -147,15 +151,16 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let mut conn = driver.run().await.unwrap();
-        conn.transport
-            .send(&Request {
-                id: 1,
-                guid: None,
-                method: None,
-                params: None
-            })
-            .await
-            .unwrap();
+        let conn = driver.run().await.unwrap();
+        let c: &mut crate::imp::connection::Connection = &mut conn.borrow_mut();
+        let t = &mut c.transport;
+        t.send(&Request {
+            id: 1,
+            guid: None,
+            method: None,
+            params: None
+        })
+        .await
+        .unwrap();
     }
 }

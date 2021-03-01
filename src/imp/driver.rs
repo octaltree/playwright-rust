@@ -1,4 +1,4 @@
-use crate::imp::connection::Connection;
+use crate::imp::{connection::Connection, prelude::*};
 use std::{
     fs, io,
     path::{Path, PathBuf}
@@ -19,7 +19,7 @@ impl<'a> Driver<'a> {
         Ok(this)
     }
 
-    pub(crate) async fn run(&self) -> io::Result<Connection> {
+    pub(crate) async fn run(&self) -> io::Result<Rc<RefCell<Connection>>> {
         Connection::try_new(&self.executable()).await
     }
 
@@ -42,7 +42,7 @@ impl<'a> Driver<'a> {
         }
     }
 
-    fn executable(&self) -> PathBuf {
+    pub(crate) fn executable(&self) -> PathBuf {
         match self.platform() {
             Platform::Linux => self.path.join("playwright.sh"),
             Platform::Mac => self.path.join("playwright.sh"),
