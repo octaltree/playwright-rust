@@ -1,12 +1,15 @@
-use crate::imp::remote_object::*;
+use crate::imp::{prelude::*, remote_object::*};
 
 #[derive(Debug)]
-pub struct Playwright {
+pub(crate) struct Playwright {
     channel: ChannelOwner
 }
 
 impl Playwright {
-    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
+    pub(crate) fn new(channel: ChannelOwner) -> Self {
+        // TODO: BrowserType and Selectors from connection
+        Self { channel }
+    }
 }
 
 impl RemoteObject for Playwright {

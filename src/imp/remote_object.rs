@@ -1,17 +1,13 @@
-use crate::imp::{connection::Connection, message, prelude::*};
+use crate::imp::{self, connection::Connection, message, prelude::*};
 use serde_json::value::Value;
-use std::fmt::{self, Debug};
-
-pub(crate) trait RemoteObject: Debug {
-    fn channel(&self) -> &ChannelOwner;
-    fn channel_mut(&mut self) -> &mut ChannelOwner;
-
-    fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
-}
+use std::{
+    any::Any,
+    fmt::{self, Debug}
+};
 
 pub(crate) struct ChannelOwner {
     pub(crate) conn: Weak<RefCell<Connection>>,
-    pub(crate) parent: Option<Weak<dyn RemoteObject>>,
+    pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
     pub(crate) initializer: Value
@@ -32,7 +28,7 @@ impl Debug for ChannelOwner {
 impl ChannelOwner {
     pub(crate) fn new(
         conn: Weak<RefCell<Connection>>,
-        parent: Weak<dyn RemoteObject>,
+        parent: RemoteWeak,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,
         initializer: Value
@@ -64,17 +60,70 @@ pub(crate) struct DummyObject {
 
 impl DummyObject {
     pub(crate) fn new(channel: ChannelOwner) -> Self { DummyObject { channel } }
-
-    pub(crate) fn new_root() -> Self {
-        DummyObject {
-            channel: ChannelOwner::new_root()
-        }
-    }
 }
 
 impl RemoteObject for DummyObject {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+}
+
+#[derive(Debug)]
+pub(crate) struct RootObject {
+    channel: ChannelOwner
+}
+
+impl RootObject {
+    pub(crate) fn new() -> Self {
+        Self {
+            channel: ChannelOwner::new_root()
+        }
+    }
+}
+
+impl Default for RootObject {
+    fn default() -> Self { Self::new() }
+}
+
+impl RemoteObject for RootObject {
+    fn channel(&self) -> &ChannelOwner { &self.channel }
+    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+}
+
+pub(crate) trait RemoteObject: Any + Debug {
+    fn channel(&self) -> &ChannelOwner;
+    fn channel_mut(&mut self) -> &mut ChannelOwner;
+
+    fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
+}
+
+#[derive(Debug)]
+pub(crate) enum RemoteRc {
+    Dummy(Rc<DummyObject>),
+    Root(Rc<RootObject>),
+    Playwright(Rc<imp::playwright::Playwright>),
+    BrowserType(Rc<imp::browser_type::BrowserType>),
+    Selectors(Rc<imp::selectors::Selectors>)
+}
+
+#[derive(Debug)]
+pub(crate) enum RemoteWeak {
+    Dummy(Weak<DummyObject>),
+    Root(Weak<RootObject>),
+    Playwright(Weak<imp::playwright::Playwright>),
+    BrowserType(Weak<imp::browser_type::BrowserType>),
+    Selectors(Weak<imp::selectors::Selectors>)
+}
+
+impl RemoteRc {
+    pub(crate) fn downgrade(&self) -> RemoteWeak {
+        match self {
+            Self::Dummy(x) => RemoteWeak::Dummy(Rc::downgrade(x)),
+            Self::Root(x) => RemoteWeak::Root(Rc::downgrade(x)),
+            Self::Playwright(x) => RemoteWeak::Playwright(Rc::downgrade(x)),
+            Self::BrowserType(x) => RemoteWeak::BrowserType(Rc::downgrade(x)),
+            Self::Selectors(x) => RemoteWeak::Selectors(Rc::downgrade(x))
+        }
+    }
 }
 
 // pub(crate) fn create_remote_object(

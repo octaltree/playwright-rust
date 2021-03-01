@@ -1,9 +1,5 @@
 use crate::imp::{
-    message,
-    playwright::Playwright,
-    prelude::*,
-    remote_object::{ChannelOwner, DummyObject, RemoteObject},
-    transport::Transport
+    self, message, playwright::Playwright, prelude::*, remote_object::*, transport::Transport
 };
 use futures::{
     stream::{Stream, StreamExt},
@@ -17,8 +13,7 @@ pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
-    objects: HashMap<Str<message::Guid>, Rc<dyn RemoteObject>>,
-    playwright: Option<Weak<Playwright>>,
+    objects: HashMap<Str<message::Guid>, RemoteRc>,
     conn: Option<Weak<RefCell<Connection>>>
 }
 
@@ -48,18 +43,14 @@ impl Connection {
         let transport = Transport::try_new(stdin, stdout);
         let objects = {
             let mut d = HashMap::new();
-            let root = DummyObject::new_root();
-            d.insert(
-                root.guid().to_owned(),
-                Rc::new(root) as Rc<dyn RemoteObject>
-            );
+            let root = RootObject::new();
+            d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
             d
         };
         let conn = Rc::new(RefCell::new(Connection {
             _child: child,
             transport,
             objects,
-            playwright: None,
             conn: None
         }));
         conn.borrow_mut().conn = Some(Rc::downgrade(&conn));
@@ -69,9 +60,11 @@ impl Connection {
     pub(crate) async fn wait_initial_object(
         &mut self
     ) -> Result<Weak<Playwright>, ConnectionError> {
+        let i: &S<message::Guid> = S::validate("Playwright").unwrap();
+        // FIXME: timeout
         let p = loop {
-            if let Some(o) = &self.playwright {
-                break Weak::clone(o);
+            if let Some(RemoteRc::Playwright(p)) = self.objects.get(i) {
+                break Rc::downgrade(p);
             }
             self.next().await.ok_or(ConnectionError::ReceiverClosed)?;
         };
@@ -154,20 +147,18 @@ impl Connection {
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
             self.conn.clone().unwrap(),
-            Rc::downgrade(parent),
+            parent.downgrade(),
             typ.to_owned(),
             guid.to_owned(),
             initializer.to_owned()
         );
         let r = match typ.as_str() {
-            "Playwright" => {
-                let p = Rc::new(Playwright::new(c));
-                self.playwright = Some(Rc::downgrade(&p));
-                p as Rc<dyn RemoteObject>
-            }
-            _ => Rc::new(DummyObject::new(c)) as Rc<_>
+            "Playwright" => RemoteRc::Playwright(Rc::new(Playwright::new(c))),
+            "Selectors" => RemoteRc::Selectors(Rc::new(imp::selectors::Selectors::new(c))),
+            "BrowserType" => RemoteRc::BrowserType(Rc::new(imp::browser_type::BrowserType::new(c))),
+            _ => RemoteRc::Dummy(Rc::new(DummyObject::new(c)))
         };
-        self.objects.insert(r.guid().to_owned(), r);
+        self.objects.insert(guid.to_owned(), r);
         //(&**parent).push_child(r.clone());
         Ok(())
     }
