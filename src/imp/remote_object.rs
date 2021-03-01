@@ -1,6 +1,6 @@
 use crate::imp::{connection::Connection, message, prelude::*};
 use serde_json::value::Value;
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 
 pub(crate) trait RemoteObject: Debug {
     fn channel(&self) -> &ChannelOwner;
@@ -9,23 +9,36 @@ pub(crate) trait RemoteObject: Debug {
     fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
 }
 
-#[derive(Debug)]
 pub(crate) struct ChannelOwner {
-    // pub(crate) conn: Weak<Connection>,
+    pub(crate) conn: Weak<RefCell<Connection>>,
     pub(crate) parent: Option<Weak<dyn RemoteObject>>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
     pub(crate) initializer: Value
 }
 
+impl Debug for ChannelOwner {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ChannelOwner")
+            .field("conn", &"{..}")
+            .field("parent", &self.parent)
+            .field("typ", &self.typ)
+            .field("guid", &self.guid)
+            .field("initializer", &self.initializer)
+            .finish()
+    }
+}
+
 impl ChannelOwner {
     pub(crate) fn new(
+        conn: Weak<RefCell<Connection>>,
         parent: Weak<dyn RemoteObject>,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,
         initializer: Value
     ) -> Self {
         Self {
+            conn,
             parent: Some(parent),
             typ,
             guid,
@@ -35,6 +48,7 @@ impl ChannelOwner {
 
     pub(crate) fn new_root() -> Self {
         Self {
+            conn: Weak::new(),
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),

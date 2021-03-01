@@ -24,7 +24,7 @@ pub enum PlaywrightError {
 }
 
 impl<'a> Playwright<'a> {
-    async fn initialize(path: &'a Path) -> Result<Playwright<'a>, PlaywrightError> {
+    pub async fn initialize(path: &'a Path) -> Result<Playwright<'a>, PlaywrightError> {
         let driver = Driver::try_new(&path)?;
         let conn = driver.run().await?;
         let p = conn.borrow_mut().wait_initial_object().await?;

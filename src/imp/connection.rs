@@ -9,7 +9,7 @@ use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
-use std::{collections::HashMap, io, path::Path, pin::Pin, process::Stdio};
+use std::{io, path::Path, pin::Pin, process::Stdio};
 use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと
@@ -153,6 +153,7 @@ impl Connection {
             .get(parent)
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
+            self.conn.clone().unwrap(),
             Rc::downgrade(parent),
             typ.to_owned(),
             guid.to_owned(),
@@ -177,6 +178,10 @@ impl Stream for Connection {
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<()>> {
         let this = self.get_mut();
+        if this.conn.is_none() {
+            cx.waker().wake_by_ref();
+            return Poll::Pending;
+        }
         match Pin::new(&mut this.transport).poll_next(cx) {
             Poll::Pending => Poll::Pending,
             Poll::Ready(None) => Poll::Ready(None),
