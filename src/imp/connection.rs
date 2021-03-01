@@ -5,7 +5,7 @@ use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
-use std::{io, path::Path, pin::Pin, process::Stdio, thread};
+use std::{future::Future, io, path::Path, pin::Pin, process::Stdio, thread};
 use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと
@@ -26,7 +26,9 @@ pub enum ConnectionError {
     #[error("Invalid message")]
     InvalidParams,
     #[error("Parent object not found")]
-    ParentNotFound
+    ParentNotFound,
+    #[error("Object not found")]
+    ObjectNotFound
 }
 
 impl Connection {
@@ -47,29 +49,26 @@ impl Connection {
             d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
             d
         };
-        let _ = thread::spawn(|| {});
         let conn = Rc::new(Mutex::new(Connection {
             _child: child,
             transport,
             objects,
             conn: None
         }));
-        conn.lock().unwrap().conn = Some(Rc::downgrade(&conn));
+        let weak = Rc::downgrade(&conn);
+        // thread::spawn(move || {
+        //    let weak = weak;
+        //});
+        conn.lock().unwrap().conn = Some(weak);
         Ok(conn)
     }
 
-    pub(crate) async fn wait_initial_object(
-        &mut self
-    ) -> Result<Weak<Playwright>, ConnectionError> {
-        let i: &S<message::Guid> = S::validate("Playwright").unwrap();
-        // FIXME: timeout
-        let p = loop {
-            if let Some(RemoteRc::Playwright(p)) = self.objects.get(i) {
-                break Rc::downgrade(p);
-            }
-            self.next().await.ok_or(ConnectionError::ReceiverClosed)?;
-        };
-        return Ok(p);
+    pub(crate) fn get_object(&self, k: &S<message::Guid>) -> Option<RemoteWeak> {
+        self.objects.get(k).map(|r| r.downgrade())
+    }
+
+    pub(crate) fn wait_initial_object(c: Weak<Mutex<Connection>>) -> WaitInitialObject {
+        WaitInitialObject(c)
     }
 
     // async fn processOneMessage(&mut self) -> Result<(), ConnectionError> {
@@ -183,6 +182,38 @@ impl Stream for Connection {
                     Poll::Ready(None)
                 }
                 Ok(_) => Poll::Ready(Some(()))
+            }
+        }
+    }
+}
+
+pub(crate) struct WaitInitialObject(Weak<Mutex<Connection>>);
+
+impl Future for WaitInitialObject {
+    type Output = Result<Weak<Playwright>, ConnectionError>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let i: &S<message::Guid> = S::validate("Playwright").unwrap();
+        // FIXME: timeout
+        let this = self.get_mut();
+        let rc = this.0.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
+        let mut c = rc.lock().unwrap();
+        let p = c.get_object(i);
+        match p {
+            Some(RemoteWeak::Playwright(p)) => return Poll::Ready(Ok(p)),
+            Some(_) => return Poll::Ready(Err(ConnectionError::ObjectNotFound)),
+            None => {}
+        }
+        let c: Pin<&mut Connection> = Pin::new(&mut c);
+        match c.poll_next(cx) {
+            Poll::Ready(None) => Poll::Ready(Err(ConnectionError::ReceiverClosed)),
+            Poll::Pending => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+            Poll::Ready(Some(())) => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
             }
         }
     }

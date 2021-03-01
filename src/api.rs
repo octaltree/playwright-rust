@@ -27,7 +27,7 @@ impl<'a> Playwright<'a> {
     pub async fn initialize(path: &'a Path) -> Result<Playwright<'a>, PlaywrightError> {
         let driver = Driver::try_new(&path)?;
         let conn = driver.run().await?;
-        let p = conn.lock().unwrap().wait_initial_object().await?;
+        let p = Connection::wait_initial_object(Rc::downgrade(&conn)).await?;
         Ok(Self {
             driver,
             conn,
