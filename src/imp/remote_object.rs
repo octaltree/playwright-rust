@@ -1,12 +1,15 @@
 use crate::imp::{self, connection::Connection, message, prelude::*};
+use futures::channel::mpsc;
 use serde_json::value::Value;
 use std::{
     any::Any,
     fmt::{self, Debug}
 };
 
+pub(crate) struct RequestBody {}
+
 pub(crate) struct ChannelOwner {
-    // TODO: channel
+    pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
@@ -27,12 +30,14 @@ impl Debug for ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
+        tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,
         initializer: Value
     ) -> Self {
         Self {
+            tx,
             parent: Some(parent),
             typ,
             guid,
@@ -41,7 +46,9 @@ impl ChannelOwner {
     }
 
     pub(crate) fn new_root() -> Self {
+        let (tx, _) = mpsc::unbounded();
         Self {
+            tx,
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),

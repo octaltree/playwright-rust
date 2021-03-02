@@ -2,6 +2,7 @@ use crate::imp::{
     self, message, playwright::Playwright, prelude::*, remote_object::*, transport::Transport
 };
 use futures::{
+    channel::mpsc,
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
@@ -13,7 +14,9 @@ pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
-    objects: HashMap<Str<message::Guid>, RemoteRc>
+    objects: HashMap<Str<message::Guid>, RemoteRc>,
+    tx: UnboundedSender<RequestBody>,
+    rx: UnboundedReceiver<RequestBody>
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -50,11 +53,25 @@ impl Connection {
             d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
             d
         };
-        Ok(Rc::new(Mutex::new(Connection {
+        let (tx, rx) = mpsc::unbounded();
+        let conn = Rc::new(Mutex::new(Connection {
             _child: child,
             transport,
-            objects
-        })))
+            objects,
+            tx,
+            rx
+        }));
+        // let c = Arc::downgrade(&conn);
+        // tokio::spawn(async move {
+        //    loop {
+        //        let c = match c.upgrade() {
+        //            Some(c) => c,
+        //            None => break
+        //        };
+        //        c.lock().unwrap().next().await;
+        //    }
+        //});
+        Ok(conn)
     }
 
     pub(crate) fn get_object(&self, k: &S<message::Guid>) -> Option<RemoteWeak> {
@@ -126,6 +143,7 @@ impl Connection {
             .get(parent)
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
+            self.tx.clone(),
             parent.downgrade(),
             typ.to_owned(),
             guid.to_owned(),
@@ -177,7 +195,10 @@ impl Future for WaitInitialObject {
         match p {
             Some(RemoteWeak::Playwright(p)) => return Poll::Ready(Ok(p)),
             Some(_) => return Poll::Ready(Err(ConnectionError::ObjectNotFound)),
-            None => {}
+            None => {
+                // cx.waker().wake_by_ref();
+                // return Poll::Pending;
+            }
         }
         let c: Pin<&mut Connection> = Pin::new(&mut c);
         match c.poll_next(cx) {
