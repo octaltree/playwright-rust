@@ -1,5 +1,5 @@
 use crate::imp::{browser_type::BrowserType, core::*, prelude::*, selectors::Selectors};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::Deserialize;
 
 #[derive(Debug)]
 pub(crate) struct Playwright {
@@ -70,7 +70,7 @@ pub struct DeviceDescriptor {
 impl<'de> Deserialize<'de> for DeviceDescriptor {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: serde::Deserializer<'de>
     {
         #[derive(Deserialize)]
         struct DeviceDescriptorImpl {

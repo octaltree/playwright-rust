@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate serde;
+
 mod imp;
 
 mod api;
