@@ -8,13 +8,12 @@ pub(crate) struct Selectors {
 impl Selectors {
     pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
 
-    // TODO: 送信前エラー, 送信後エラーまとめる
     pub(crate) async fn register(
         &self,
         name: &str,
         script: &str,
         is_content_script: bool
-    ) -> Result<Rc<ResponseResult>, ConnectionError> {
+    ) -> Result<Rc<ResponseResult>, Rc<ConnectionError>> {
         let mut p = Map::<String, Value>::default();
         p.insert("name".into(), name.into());
         p.insert("script".into(), script.into());
@@ -29,7 +28,7 @@ impl Selectors {
             .tx
             .unbounded_send(r)
             .map_err(|_| ConnectionError::Channel)?;
-        Ok(w.await)
+        w.await
     }
 }
 

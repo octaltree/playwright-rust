@@ -149,7 +149,7 @@ pub(crate) struct RequestBody {
     guid: Str<Guid>,
     method: Str<Method>,
     params: Map<String, Value>,
-    place: Weak<Mutex<Option<Rc<ResponseResult>>>>,
+    place: Weak<Mutex<Option<WaitMessageResult>>>,
     waker: Weak<Mutex<Option<Waker>>>
 }
 
@@ -166,9 +166,11 @@ impl RequestBody {
     }
 }
 
+pub(crate) type WaitMessageResult = Result<Rc<ResponseResult>, Rc<ConnectionError>>;
+
 pub(crate) struct WaitMessage {
     // FIXME: Option<Result<ResponseResult, ConnectionError>>
-    place: Rc<Mutex<Option<Rc<ResponseResult>>>>,
+    place: Rc<Mutex<Option<WaitMessageResult>>>,
     waker: Rc<Mutex<Option<Waker>>>
 }
 
@@ -182,7 +184,7 @@ impl WaitMessage {
 }
 
 impl Future for WaitMessage {
-    type Output = Rc<ResponseResult>;
+    type Output = WaitMessageResult;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.get_mut();
@@ -198,7 +200,7 @@ impl Future for WaitMessage {
             Err(e) => Err(e).unwrap()
         };
         if let Some(x) = &*x {
-            return Poll::Ready(Rc::clone(x));
+            return Poll::Ready(x.clone());
         } else {
             pending!()
         }
