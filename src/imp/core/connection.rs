@@ -1,6 +1,6 @@
 use crate::imp::{self, core::*, playwright::Playwright, prelude::*};
 use futures::{
-    channel::mpsc,
+    channel::{mpsc, mpsc::TrySendError},
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
@@ -12,7 +12,7 @@ pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
-    objects: HashMap<Str<message::Guid>, RemoteRc>,
+    objects: HashMap<Str<Guid>, RemoteRc>,
     tx: UnboundedSender<RequestBody>,
     rx: UnboundedReceiver<RequestBody>
 }
@@ -30,7 +30,9 @@ pub enum ConnectionError {
     #[error("Object not found")]
     ObjectNotFound,
     #[error(transparent)]
-    Serde(#[from] serde_json::Error)
+    Serde(#[from] serde_json::Error),
+    #[error("Failed to send")]
+    Channel
 }
 
 impl Connection {
@@ -72,7 +74,7 @@ impl Connection {
         Ok(conn)
     }
 
-    pub(crate) fn get_object(&self, k: &S<message::Guid>) -> Option<RemoteWeak> {
+    pub(crate) fn get_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
         self.objects.get(k).map(|r| r.downgrade())
     }
 
@@ -105,18 +107,18 @@ impl Connection {
     // return await callback
     //}
 
-    fn dispatch(&mut self, msg: message::Response) -> Result<(), ConnectionError> {
+    fn dispatch(&mut self, msg: Response) -> Result<(), ConnectionError> {
         log::trace!("{:?}", msg);
         match msg {
-            message::Response::Result(msg) => {
+            Response::Result(msg) => {
                 let id = &msg.id;
             }
-            message::Response::Initial(msg) => {
-                if message::Method::is_create(&msg.method) {
+            Response::Initial(msg) => {
+                if Method::is_create(&msg.method) {
                     self.create_remote_object(&msg.guid, msg.params)?;
                     return Ok(());
                 }
-                if message::Method::is_dispose(&msg.method) {
+                if Method::is_dispose(&msg.method) {
                     self.objects.remove(&msg.guid);
                     return Ok(());
                 }
@@ -128,10 +130,10 @@ impl Connection {
 
     fn create_remote_object(
         &mut self,
-        parent: &S<message::Guid>,
+        parent: &S<Guid>,
         params: Map<String, Value>
     ) -> Result<(), ConnectionError> {
-        let message::CreateParams {
+        let CreateParams {
             typ,
             guid,
             initializer
@@ -184,7 +186,7 @@ impl Future for WaitInitialObject {
     type Output = Result<Weak<Playwright>, ConnectionError>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let i: &S<message::Guid> = S::validate("Playwright").unwrap();
+        let i: &S<Guid> = S::validate("Playwright").unwrap();
         // FIXME: timeout
         let this = self.get_mut();
         let rc = this.0.upgrade().ok_or(ConnectionError::ObjectNotFound)?;

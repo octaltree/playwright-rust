@@ -44,7 +44,7 @@ impl Transport {
         }
     }
 
-    pub(crate) async fn send(&mut self, req: &message::Request<'_, '_>) -> Result<(), SendError> {
+    pub(crate) async fn send(&mut self, req: &Request<'_, '_>) -> Result<(), SendError> {
         let serialized = serde_json::to_vec(&req)?;
         log::debug!("SEND>{:?}", &serialized);
         let length = serialized.len() as u32;
@@ -56,7 +56,7 @@ impl Transport {
 }
 
 impl Stream for Transport {
-    type Item = message::Response;
+    type Item = Response;
 
     // TODO: memory performance
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
@@ -80,7 +80,7 @@ impl Stream for Transport {
                 Some(l) => {
                     let bytes: &[u8] = &this.buf[..l];
                     log::debug!("RECV>{}", unsafe { std::str::from_utf8_unchecked(bytes) });
-                    let msg: message::Response = match serde_json::from_slice(bytes) {
+                    let msg: Response = match serde_json::from_slice(bytes) {
                         Err(e) => {
                             log::error!("{:?}", e);
                             return Poll::Ready(None);
@@ -115,7 +115,7 @@ impl Stream for Transport {
 
 #[cfg(test)]
 mod tests {
-    use crate::imp::core::*;
+    use crate::imp::{core::*, prelude::*};
     use futures::stream::StreamExt;
     use serde_json::value::Value;
     use std::env;
@@ -158,7 +158,7 @@ mod tests {
             id: 1,
             guid: None,
             method: None,
-            params: None
+            params: Map::default()
         })
         .await
         .unwrap();

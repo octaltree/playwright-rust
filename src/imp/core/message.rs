@@ -11,31 +11,31 @@ pub(crate) struct Request<'a, 'b> {
     #[serde(default)]
     pub(crate) method: Option<&'b S<Method>>,
     #[serde(default)]
-    pub(crate) params: Option<Map<String, Value>>
+    pub(crate) params: Map<String, Value>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(untagged)]
 pub(crate) enum Response {
     Result(ResponseResult),
     Initial(ResponseInitial)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct ResponseResult {
     pub(crate) id: i32,
     #[serde(flatten)]
     pub(crate) body: ResponseResultBody
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ResponseResultBody {
     Success(Value),
     Error(Error)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct ResponseInitial {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
@@ -50,7 +50,7 @@ pub(crate) struct CreateParams {
     pub(crate) initializer: Value
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct Error {
     pub(crate) name: String,
     pub(crate) message: String,

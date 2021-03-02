@@ -6,13 +6,30 @@ use std::{
     fmt::{self, Debug}
 };
 
-pub(crate) struct RequestBody {}
+pub(crate) struct RequestBody {
+    guid: Str<Guid>,
+    method: Str<Method>,
+    params: Map<String, Value>,
+    place: Weak<Mutex<Option<ResponseResult>>>
+}
+
+impl RequestBody {
+    pub(crate) fn set_params(mut self, params: Map<String, Value>) -> Self {
+        self.params = params;
+        self
+    }
+
+    pub(crate) fn set_place(mut self, place: Weak<Mutex<Option<ResponseResult>>>) -> Self {
+        self.place = place;
+        self
+    }
+}
 
 pub(crate) struct ChannelOwner {
     pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
-    pub(crate) typ: Str<message::ObjectType>,
-    pub(crate) guid: Str<message::Guid>,
+    pub(crate) typ: Str<ObjectType>,
+    pub(crate) guid: Str<Guid>,
     pub(crate) initializer: Value
 }
 
@@ -32,8 +49,8 @@ impl ChannelOwner {
     pub(crate) fn new(
         tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
-        typ: Str<message::ObjectType>,
-        guid: Str<message::Guid>,
+        typ: Str<ObjectType>,
+        guid: Str<Guid>,
         initializer: Value
     ) -> Self {
         Self {
@@ -53,6 +70,15 @@ impl ChannelOwner {
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),
             initializer: Value::default()
+        }
+    }
+
+    pub(crate) fn create_request(&self, method: Str<Method>) -> RequestBody {
+        RequestBody {
+            guid: self.guid.clone(),
+            method,
+            params: Map::default(),
+            place: Weak::new()
         }
     }
 }
@@ -97,7 +123,7 @@ pub(crate) trait RemoteObject: Any + Debug {
     fn channel(&self) -> &ChannelOwner;
     fn channel_mut(&mut self) -> &mut ChannelOwner;
 
-    fn guid(&self) -> &S<message::Guid> { &self.channel().guid }
+    fn guid(&self) -> &S<Guid> { &self.channel().guid }
 }
 
 #[derive(Debug)]
