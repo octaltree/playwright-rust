@@ -16,7 +16,7 @@ impl Selectors {
     ) -> Result<Rc<ResponseResult>, Rc<ConnectionError>> {
         let mut p = Map::<String, Value>::default();
         p.insert("name".into(), name.into());
-        p.insert("script".into(), script.into());
+        p.insert("source".into(), script.into());
         p.insert("contentScript".into(), is_content_script.into());
         let r = self
             .channel()

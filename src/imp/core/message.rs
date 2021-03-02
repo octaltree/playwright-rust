@@ -1,3 +1,4 @@
+use serde::{Deserialize, Deserializer};
 use serde_json::{map::Map, value::Value};
 use strong::*;
 use thiserror::Error;
@@ -13,25 +14,43 @@ pub(crate) struct Request<'a, 'b> {
     pub(crate) params: Map<String, Value>
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
 pub(crate) enum Response {
     Result(ResponseResult),
     Initial(ResponseInitial)
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct ResponseResult {
     pub(crate) id: i32,
-    #[serde(flatten)]
-    pub(crate) body: ResponseResultBody
+    pub(crate) body: Result<Value, Error>
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "lowercase")]
-pub(crate) enum ResponseResultBody {
-    Success(Value),
-    Error(ErrorWrap)
+impl<'de> Deserialize<'de> for ResponseResult {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        struct ResponseResultImpl {
+            id: i32,
+            result: Option<Value>,
+            error: Option<Error>
+        }
+        let ResponseResultImpl { id, result, error } =
+            ResponseResultImpl::deserialize(deserializer)?;
+        if let Some(e) = error {
+            return Ok(Self { id, body: Err(e) });
+        } else if let Some(x) = result {
+            return Ok(Self { id, body: Ok(x) });
+        } else {
+            return Ok(Self {
+                id,
+                body: Ok(Value::default())
+            });
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
