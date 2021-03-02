@@ -52,5 +52,6 @@ mod tests {
         let res = fut.await;
         dbg!(&res);
         assert!(res.is_ok());
+        assert!(res.unwrap().body.is_ok());
     });
 }
