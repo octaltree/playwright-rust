@@ -4,10 +4,10 @@ use serde::Deserialize;
 #[derive(Debug)]
 pub(crate) struct Playwright {
     channel: ChannelOwner,
-    pub(crate) chromium: Weak<BrowserType>,
-    pub(crate) firefox: Weak<BrowserType>,
-    pub(crate) webkit: Weak<BrowserType>,
-    pub(crate) selectors: Weak<Selectors>,
+    pub(crate) chromium: Rweak<BrowserType>,
+    pub(crate) firefox: Rweak<BrowserType>,
+    pub(crate) webkit: Rweak<BrowserType>,
+    pub(crate) selectors: Rweak<Selectors>,
     pub(crate) devices: Vec<DeviceDescriptor>
 }
 

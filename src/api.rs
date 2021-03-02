@@ -5,7 +5,7 @@ use thiserror::Error;
 pub struct Playwright<'a> {
     driver: Driver<'a>,
     conn: Rc<Mutex<Connection>>,
-    inner: Weak<imp::playwright::Playwright>
+    inner: Rweak<imp::playwright::Playwright>
 }
 
 #[derive(Debug, Error)]

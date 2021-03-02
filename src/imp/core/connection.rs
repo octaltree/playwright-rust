@@ -78,7 +78,7 @@ impl Connection {
         self.objects.get(k).map(|r| r.downgrade())
     }
 
-    pub(crate) fn wait_initial_object(c: Weak<Mutex<Connection>>) -> WaitInitialObject {
+    pub(crate) fn wait_initial_object(c: Rweak<Mutex<Connection>>) -> WaitInitialObject {
         WaitInitialObject(c)
     }
 
@@ -163,6 +163,7 @@ impl Connection {
     }
 }
 
+// TODO: レスポンスをさばく, channel読み出してコールバック登録とsend
 impl Stream for Connection {
     type Item = ();
 
@@ -182,10 +183,10 @@ impl Stream for Connection {
     }
 }
 
-pub(crate) struct WaitInitialObject(Weak<Mutex<Connection>>);
+pub(crate) struct WaitInitialObject(Rweak<Mutex<Connection>>);
 
 impl Future for WaitInitialObject {
-    type Output = Result<Weak<Playwright>, ConnectionError>;
+    type Output = Result<Rweak<Playwright>, ConnectionError>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let i: &S<Guid> = S::validate("Playwright").unwrap();

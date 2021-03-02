@@ -5,8 +5,8 @@ pub(crate) mod prelude {
         cell::RefCell,
         collections::HashMap,
         convert::{TryFrom, TryInto},
-        rc::{Rc, Weak},
-        sync::Mutex
+        rc::{Rc, Weak as Rweak},
+        sync::{Arc, Mutex, Weak as Aweak}
     };
     pub use strong::*;
 }

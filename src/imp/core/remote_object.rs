@@ -66,8 +66,8 @@ impl ChannelOwner {
             guid: self.guid.clone(),
             method,
             params: Map::default(),
-            place: Weak::new(),
-            waker: Weak::new()
+            place: Rweak::new(),
+            waker: Rweak::new()
         }
     }
 
@@ -135,11 +135,11 @@ pub(crate) enum RemoteRc {
 
 #[derive(Debug)]
 pub(crate) enum RemoteWeak {
-    Dummy(Weak<DummyObject>),
-    Root(Weak<RootObject>),
-    Playwright(Weak<imp::playwright::Playwright>),
-    BrowserType(Weak<imp::browser_type::BrowserType>),
-    Selectors(Weak<imp::selectors::Selectors>)
+    Dummy(Rweak<DummyObject>),
+    Root(Rweak<RootObject>),
+    Playwright(Rweak<imp::playwright::Playwright>),
+    BrowserType(Rweak<imp::browser_type::BrowserType>),
+    Selectors(Rweak<imp::selectors::Selectors>)
 }
 
 impl RemoteRc {
@@ -158,8 +158,8 @@ pub(crate) struct RequestBody {
     guid: Str<Guid>,
     method: Str<Method>,
     params: Map<String, Value>,
-    place: Weak<Mutex<Option<WaitMessageResult>>>,
-    waker: Weak<Mutex<Option<Waker>>>
+    place: Rweak<Mutex<Option<WaitMessageResult>>>,
+    waker: Rweak<Mutex<Option<Waker>>>
 }
 
 impl RequestBody {
