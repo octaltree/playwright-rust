@@ -10,7 +10,7 @@ use std::{
 };
 use tokio::process::{Child, Command};
 
-// 値を待つfutureのHashMapと
+// TODO: コールバックをonで登録してるとこあるから常に読み出し続ける必要がある?
 pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
@@ -169,14 +169,12 @@ impl Connection {
                     None => return Ok(())
                 };
                 log::trace!("success get rc");
+                *place.lock().unwrap() = Some(Ok(Rc::new(msg)));
                 let waker: &Option<Waker> = &waker.lock().unwrap();
-                log::trace!("success lock");
                 let waker = match waker {
                     Some(x) => x.clone(),
                     None => return Ok(())
                 };
-                log::trace!("set result");
-                *place.lock().unwrap() = Some(Ok(Rc::new(msg)));
                 waker.wake();
                 return Ok(());
             }
@@ -231,7 +229,6 @@ impl Connection {
     }
 }
 
-// TODO: レスポンスをさばく, channel読み出してコールバック登録とsend
 impl Stream for Connection {
     type Item = ();
 

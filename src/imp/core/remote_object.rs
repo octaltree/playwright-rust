@@ -224,14 +224,29 @@ impl Future for WaitMessage {
                 return Poll::Pending;
             }};
         }
-        let x = match this.place.try_lock() {
-            Ok(x) => x,
-            Err(TryLockError::WouldBlock) => pending!(),
-            Err(e) => Err(e).unwrap()
-        };
-        if let Some(x) = &*x {
-            return Poll::Ready(x.clone());
+        {
+            let x = match this.place.try_lock() {
+                Ok(x) => x,
+                Err(TryLockError::WouldBlock) => pending!(),
+                Err(e) => Err(e).unwrap()
+            };
+            // log::trace!("lock success");
+            if let Some(x) = &*x {
+                return Poll::Ready(x.clone());
+            }
         }
+        {
+            let mut x = match this.waker.try_lock() {
+                Ok(x) => x,
+                Err(TryLockError::WouldBlock) => pending!(),
+                Err(e) => Err(e).unwrap()
+            };
+            if x.is_none() {
+                log::trace!("set waker");
+                *x = Some(cx.waker().clone());
+            }
+        }
+
         let rc = this
             .conn
             .upgrade()

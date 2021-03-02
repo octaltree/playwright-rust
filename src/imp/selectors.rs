@@ -51,6 +51,6 @@ mod tests {
         log::trace!("fut");
         let res = fut.await;
         dbg!(&res);
-        assert!(res.is_err());
+        assert!(res.is_ok());
     });
 }
