@@ -4,10 +4,11 @@ use serde::{Deserialize, Deserializer, Serialize};
 #[derive(Debug)]
 pub(crate) struct Playwright {
     channel: ChannelOwner,
-    chromium: Weak<BrowserType>,
-    firefox: Weak<BrowserType>,
-    webkit: Weak<BrowserType>,
-    selectors: Weak<Selectors>
+    pub(crate) chromium: Weak<BrowserType>,
+    pub(crate) firefox: Weak<BrowserType>,
+    pub(crate) webkit: Weak<BrowserType>,
+    pub(crate) selectors: Weak<Selectors>,
+    pub(crate) devices: Vec<DeviceDescriptor>
 }
 
 impl Playwright {
@@ -15,26 +16,23 @@ impl Playwright {
         conn: &Connection,
         channel: ChannelOwner
     ) -> Result<Self, ConnectionError> {
-        // TODO: BrowserType and Selectors from connection
         let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
-        // let conn = channel
-        //    .conn
-        //    .upgrade()
-        //    .ok_or(ConnectionError::ObjectNotFound)?;
         let chromium = find_object!(conn, &i.chromium.guid, BrowserType)?;
         let firefox = find_object!(conn, &i.firefox.guid, BrowserType)?;
         let webkit = find_object!(conn, &i.webkit.guid, BrowserType)?;
         let selectors = find_object!(conn, &i.selectors.guid, Selectors)?;
+        let devices = i.device_descriptors;
         Ok(Self {
             channel,
             chromium,
             firefox,
             webkit,
-            selectors
+            selectors,
+            devices
         })
     }
 
-    // pub(crate) fn device(&self, name: &str) -> &DeviceDescriptor {}
+    pub(crate) fn devices(&self) -> &[DeviceDescriptor] { &self.devices }
 }
 
 impl RemoteObject for Playwright {
@@ -59,14 +57,14 @@ struct RefGuid {
 }
 
 #[derive(Debug)]
-struct DeviceDescriptor {
-    name: String,
-    user_agent: String,
-    viewport: Viewport,
-    device_scale_factor: f64,
-    is_mobile: bool,
-    has_touch: bool,
-    default_browser_type: String
+pub struct DeviceDescriptor {
+    pub name: String,
+    pub user_agent: String,
+    pub viewport: Viewport,
+    pub device_scale_factor: f64,
+    pub is_mobile: bool,
+    pub has_touch: bool,
+    pub default_browser_type: String
 }
 
 impl<'de> Deserialize<'de> for DeviceDescriptor {
@@ -114,7 +112,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
 }
 
 #[derive(Debug, Deserialize)]
-struct Viewport {
-    width: i32,
-    height: i32
+pub struct Viewport {
+    pub width: i32,
+    pub height: i32
 }
