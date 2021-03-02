@@ -1,29 +1,17 @@
 use crate::imp::{self, core::*, prelude::*};
-use futures::channel::mpsc;
+use futures::{
+    channel::mpsc,
+    task::{Context, Poll}
+};
 use serde_json::value::Value;
 use std::{
     any::Any,
-    fmt::{self, Debug}
+    fmt::{self, Debug},
+    future::Future,
+    pin::Pin,
+    sync::TryLockError,
+    task::Waker
 };
-
-pub(crate) struct RequestBody {
-    guid: Str<Guid>,
-    method: Str<Method>,
-    params: Map<String, Value>,
-    place: Weak<Mutex<Option<ResponseResult>>>
-}
-
-impl RequestBody {
-    pub(crate) fn set_params(mut self, params: Map<String, Value>) -> Self {
-        self.params = params;
-        self
-    }
-
-    pub(crate) fn set_place(mut self, place: Weak<Mutex<Option<ResponseResult>>>) -> Self {
-        self.place = place;
-        self
-    }
-}
 
 pub(crate) struct ChannelOwner {
     pub(crate) tx: UnboundedSender<RequestBody>,
@@ -78,7 +66,8 @@ impl ChannelOwner {
             guid: self.guid.clone(),
             method,
             params: Map::default(),
-            place: Weak::new()
+            place: Weak::new(),
+            waker: Weak::new()
         }
     }
 }
@@ -156,12 +145,62 @@ impl RemoteRc {
     }
 }
 
-// pub(crate) fn create_remote_object(
-//    parent: Arc<ChannelOwner>,
-//    t: Str<message::ObjectType>,
-//    i: Str<message::Guid>,
-//    initializer: Value
-//) -> Arc<dyn RemoteObject> {
-//    let channel = Arc::new(ChannelOwner::new(parent, t, i, initializer));
-//    Arc::new(DummyObject::new())
-//}
+pub(crate) struct RequestBody {
+    guid: Str<Guid>,
+    method: Str<Method>,
+    params: Map<String, Value>,
+    place: Weak<Mutex<Option<Rc<ResponseResult>>>>,
+    waker: Weak<Mutex<Option<Waker>>>
+}
+
+impl RequestBody {
+    pub(crate) fn set_params(mut self, params: Map<String, Value>) -> Self {
+        self.params = params;
+        self
+    }
+
+    pub(crate) fn set_wait(mut self, wait: &WaitMessage) -> Self {
+        self.place = Rc::downgrade(&wait.place);
+        self.waker = Rc::downgrade(&wait.waker);
+        self
+    }
+}
+
+pub(crate) struct WaitMessage {
+    // FIXME: Option<Result<ResponseResult, ConnectionError>>
+    place: Rc<Mutex<Option<Rc<ResponseResult>>>>,
+    waker: Rc<Mutex<Option<Waker>>>
+}
+
+impl WaitMessage {
+    pub(crate) fn new() -> Self {
+        let place = Rc::new(Mutex::new(None));
+        let waker = Rc::new(Mutex::new(None));
+        let weak = Rc::downgrade(&place);
+        WaitMessage { place, waker }
+    }
+}
+
+impl Future for WaitMessage {
+    type Output = Rc<ResponseResult>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        macro_rules! pending {
+            () => {{
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }};
+        }
+        let x = match this.place.try_lock() {
+            Ok(x) => x,
+            Err(TryLockError::WouldBlock) => pending!(),
+            Err(e) => Err(e).unwrap()
+        };
+        if let Some(x) = &*x {
+            return Poll::Ready(Rc::clone(x));
+        } else {
+            pending!()
+        }
+    }
+}
