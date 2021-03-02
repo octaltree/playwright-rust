@@ -1,9 +1,4 @@
-use crate::imp::{
-    self,
-    connection::{Connection, ConnectionError},
-    driver::Driver,
-    prelude::*
-};
+use crate::imp::{self, core::*, prelude::*};
 use std::{io, path::Path};
 use thiserror::Error;
 

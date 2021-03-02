@@ -1,3 +1,4 @@
+/// used from many modules
 pub(crate) mod prelude {
     pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
     pub use serde_json::{map::Map, value::Value};
@@ -24,11 +25,18 @@ mod macros {
     }
 }
 
-pub(crate) mod connection;
-pub(crate) mod driver;
-pub(crate) mod message;
-pub(crate) mod remote_object;
-pub(crate) mod transport;
+pub(crate) mod core {
+    mod connection;
+    mod driver;
+    mod message;
+    mod remote_object;
+    mod transport;
+    pub(crate) use connection::*;
+    pub(crate) use driver::*;
+    pub(crate) use message::*;
+    pub(crate) use remote_object::*;
+    pub(crate) use transport::*;
+}
 
 pub(crate) mod browser_type;
 pub(crate) mod playwright;

@@ -1,6 +1,4 @@
-use crate::imp::{
-    self, message, playwright::Playwright, prelude::*, remote_object::*, transport::Transport
-};
+use crate::imp::{self, core::*, playwright::Playwright, prelude::*};
 use futures::{
     channel::mpsc,
     stream::{Stream, StreamExt},
@@ -217,7 +215,7 @@ impl Future for WaitInitialObject {
 
 #[cfg(test)]
 mod tests {
-    use crate::imp::driver::Driver;
+    use crate::imp::core::*;
     use std::env;
 
     crate::runtime_test!(try_new, {

@@ -1,4 +1,4 @@
-use crate::imp::message;
+use crate::imp::core::*;
 use futures::{
     stream::Stream,
     task::{Context, Poll}
@@ -115,7 +115,7 @@ impl Stream for Transport {
 
 #[cfg(test)]
 mod tests {
-    use crate::imp::{driver::Driver, message::Request};
+    use crate::imp::core::*;
     use futures::stream::StreamExt;
     use serde_json::value::Value;
     use std::env;
@@ -139,7 +139,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let conn = driver.run().await.unwrap();
-        let c: &mut crate::imp::connection::Connection = &mut conn.lock().unwrap();
+        let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
             dbg!(x);
@@ -152,7 +152,7 @@ mod tests {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
         let conn = driver.run().await.unwrap();
-        let c: &mut crate::imp::connection::Connection = &mut conn.lock().unwrap();
+        let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         t.send(&Request {
             id: 1,

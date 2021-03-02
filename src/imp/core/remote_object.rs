@@ -1,4 +1,4 @@
-use crate::imp::{self, connection::Connection, message, prelude::*};
+use crate::imp::{self, core::*, prelude::*};
 use futures::channel::mpsc;
 use serde_json::value::Value;
 use std::{

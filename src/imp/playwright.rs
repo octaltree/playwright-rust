@@ -1,11 +1,4 @@
-use crate::imp::{
-    browser_type::BrowserType,
-    connection::{Connection, ConnectionError},
-    message::Guid,
-    prelude::*,
-    remote_object::*,
-    selectors::Selectors
-};
+use crate::imp::{browser_type::BrowserType, core::*, prelude::*, selectors::Selectors};
 use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug)]
@@ -28,21 +21,10 @@ impl Playwright {
         //    .conn
         //    .upgrade()
         //    .ok_or(ConnectionError::ObjectNotFound)?;
-        // log::trace!("lock playwright");
-        // let chromium = conn.lock().unwrap().get_object(&i.chromium.guid);
-        // macro_rules! find_object {
-        //    ($conn:expr, $guid:expr, $t:ident) => {
-        //        match $conn.get_object($guid) {
-        //            Some(RemoteWeak::$t(x)) => Ok(x),
-        //            _ => Err(ConnectionError::ObjectNotFound)
-        //        }
-        //    };
-        //}
         let chromium = find_object!(conn, &i.chromium.guid, BrowserType)?;
         let firefox = find_object!(conn, &i.firefox.guid, BrowserType)?;
         let webkit = find_object!(conn, &i.webkit.guid, BrowserType)?;
         let selectors = find_object!(conn, &i.selectors.guid, Selectors)?;
-        // log::trace!("success playwright");
         Ok(Self {
             channel,
             chromium,
