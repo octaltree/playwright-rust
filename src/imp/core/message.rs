@@ -6,9 +6,9 @@ use thiserror::Error;
 pub(crate) struct Request<'a, 'b> {
     #[serde(default)]
     pub(crate) id: i32,
-    pub(crate) guid: Option<&'a S<Guid>>,
+    pub(crate) guid: &'a S<Guid>,
     #[serde(default)]
-    pub(crate) method: Option<&'b S<Method>>,
+    pub(crate) method: &'b S<Method>,
     #[serde(default)]
     pub(crate) params: Map<String, Value>
 }
@@ -31,7 +31,7 @@ pub(crate) struct ResponseResult {
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ResponseResultBody {
     Success(Value),
-    Error(Error)
+    Error(ErrorWrap)
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -47,6 +47,11 @@ pub(crate) struct CreateParams {
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
     pub(crate) initializer: Value
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub(crate) struct ErrorWrap {
+    error: Error
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

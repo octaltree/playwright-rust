@@ -4,7 +4,10 @@ use futures::{
     stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
-use std::{future::Future, io, path::Path, pin::Pin, process::Stdio, thread};
+use std::{
+    collections::VecDeque, future::Future, io, path::Path, pin::Pin, process::Stdio,
+    sync::TryLockError, thread
+};
 use tokio::process::{Child, Command};
 
 // 値を待つfutureのHashMapと
@@ -14,7 +17,17 @@ pub(crate) struct Connection {
     // buf: Vec<message::Response>
     objects: HashMap<Str<Guid>, RemoteRc>,
     tx: UnboundedSender<RequestBody>,
-    rx: UnboundedReceiver<RequestBody>
+    rx: UnboundedReceiver<RequestBody>,
+    conn: Rweak<Mutex<Connection>>,
+    que: VecDeque<RequestBody>,
+    id: i32,
+    callbacks: HashMap<
+        i32,
+        (
+            Rweak<Mutex<Option<WaitMessageResult>>>,
+            Rweak<Mutex<Option<Waker>>>
+        )
+    >
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -32,7 +45,9 @@ pub enum ConnectionError {
     #[error(transparent)]
     Serde(#[from] serde_json::Error),
     #[error("Failed to send")]
-    Channel
+    Channel,
+    #[error(transparent)]
+    Send(#[from] SendError)
 }
 
 impl Connection {
@@ -59,8 +74,13 @@ impl Connection {
             transport,
             objects,
             tx,
-            rx
+            rx,
+            conn: Rweak::new(),
+            que: VecDeque::new(),
+            id: 0,
+            callbacks: HashMap::new()
         }));
+        conn.lock().unwrap().conn = Rc::downgrade(&conn);
         // let c = Arc::downgrade(&conn);
         // tokio::spawn(async move {
         //    loop {
@@ -72,6 +92,28 @@ impl Connection {
         //    }
         //});
         Ok(conn)
+    }
+
+    pub(crate) fn enqueue(&mut self, r: RequestBody) { self.que.push_back(r); }
+
+    pub(crate) async fn send_message(&mut self, r: RequestBody) -> Result<(), ConnectionError> {
+        self.id += 1;
+        let RequestBody {
+            guid,
+            method,
+            params,
+            place,
+            waker
+        } = r;
+        self.callbacks.insert(self.id, (place, waker));
+        let req = Request {
+            guid: &guid,
+            method: &method,
+            params,
+            id: self.id
+        };
+        self.transport.send(&req).await?;
+        Ok(())
     }
 
     pub(crate) fn get_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
@@ -143,6 +185,7 @@ impl Connection {
             .get(parent)
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
+            self.conn.clone(),
             self.tx.clone(),
             parent.downgrade(),
             typ.to_owned(),
@@ -193,7 +236,11 @@ impl Future for WaitInitialObject {
         // FIXME: timeout
         let this = self.get_mut();
         let rc = this.0.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
-        let mut c = rc.lock().unwrap();
+        let mut c = match rc.try_lock() {
+            Ok(x) => x,
+            Err(TryLockError::WouldBlock) => return Poll::Pending,
+            Err(e) => Err(e).unwrap()
+        };
         let p = c.get_object(i);
         match p {
             Some(RemoteWeak::Playwright(p)) => return Poll::Ready(Ok(p)),

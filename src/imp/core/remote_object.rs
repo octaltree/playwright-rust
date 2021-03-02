@@ -1,6 +1,7 @@
 use crate::imp::{self, core::*, prelude::*};
 use futures::{
     channel::mpsc,
+    stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
 use serde_json::value::Value;
@@ -14,6 +15,7 @@ use std::{
 };
 
 pub(crate) struct ChannelOwner {
+    pub(crate) conn: Rweak<Mutex<Connection>>,
     pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
@@ -24,7 +26,6 @@ pub(crate) struct ChannelOwner {
 impl Debug for ChannelOwner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ChannelOwner")
-            .field("conn", &"{..}")
             .field("parent", &self.parent)
             .field("typ", &self.typ)
             .field("guid", &self.guid)
@@ -35,6 +36,7 @@ impl Debug for ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
+        conn: Rweak<Mutex<Connection>>,
         tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
         typ: Str<ObjectType>,
@@ -42,6 +44,7 @@ impl ChannelOwner {
         initializer: Value
     ) -> Self {
         Self {
+            conn,
             tx,
             parent: Some(parent),
             typ,
@@ -53,6 +56,7 @@ impl ChannelOwner {
     pub(crate) fn new_root() -> Self {
         let (tx, _) = mpsc::unbounded();
         Self {
+            conn: Rweak::new(),
             tx,
             parent: None,
             typ: Str::validate("".into()).unwrap(),
@@ -71,12 +75,17 @@ impl ChannelOwner {
         }
     }
 
-    pub(crate) fn send_message(&self, r: RequestBody) -> Result<WaitMessage, ConnectionError> {
-        let w = WaitMessage::new();
+    pub(crate) async fn send_message(
+        &self,
+        r: RequestBody
+    ) -> Result<WaitMessage, ConnectionError> {
+        let w = WaitMessage::new(self.conn.clone());
         let r = r.set_wait(&w);
-        self.tx
-            .unbounded_send(r)
-            .map_err(|_| ConnectionError::Channel)?;
+        // self.tx
+        //    .unbounded_send(r)
+        //    .map_err(|_| ConnectionError::Channel)?;
+        let conn = self.conn.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
+        conn.lock().unwrap().send_message(r).await?;
         Ok(w)
     }
 }
@@ -155,11 +164,11 @@ impl RemoteRc {
 }
 
 pub(crate) struct RequestBody {
-    guid: Str<Guid>,
-    method: Str<Method>,
-    params: Map<String, Value>,
-    place: Rweak<Mutex<Option<WaitMessageResult>>>,
-    waker: Rweak<Mutex<Option<Waker>>>
+    pub(crate) guid: Str<Guid>,
+    pub(crate) method: Str<Method>,
+    pub(crate) params: Map<String, Value>,
+    pub(crate) place: Rweak<Mutex<Option<WaitMessageResult>>>,
+    pub(crate) waker: Rweak<Mutex<Option<Waker>>>
 }
 
 impl RequestBody {
@@ -190,15 +199,16 @@ pub(crate) type WaitMessageResult = Result<Rc<ResponseResult>, Rc<ConnectionErro
 pub(crate) struct WaitMessage {
     // FIXME: Option<Result<ResponseResult, ConnectionError>>
     place: Rc<Mutex<Option<WaitMessageResult>>>,
-    waker: Rc<Mutex<Option<Waker>>>
+    waker: Rc<Mutex<Option<Waker>>>,
+    conn: Rweak<Mutex<Connection>>
 }
 
 impl WaitMessage {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(conn: Rweak<Mutex<Connection>>) -> Self {
         let place = Rc::new(Mutex::new(None));
         let waker = Rc::new(Mutex::new(None));
         let weak = Rc::downgrade(&place);
-        WaitMessage { place, waker }
+        WaitMessage { place, waker, conn }
     }
 }
 
@@ -220,8 +230,27 @@ impl Future for WaitMessage {
         };
         if let Some(x) = &*x {
             return Poll::Ready(x.clone());
-        } else {
-            pending!()
+        }
+        let rc = this
+            .conn
+            .upgrade()
+            .ok_or(Rc::new(ConnectionError::ObjectNotFound))?;
+        let mut c = match rc.try_lock() {
+            Ok(x) => x,
+            Err(TryLockError::WouldBlock) => return Poll::Pending,
+            Err(e) => Err(e).unwrap()
+        };
+        let c: Pin<&mut Connection> = Pin::new(&mut c);
+        match c.poll_next(cx) {
+            Poll::Ready(None) => Poll::Ready(Err(Rc::new(ConnectionError::ReceiverClosed))),
+            Poll::Pending => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+            Poll::Ready(Some(())) => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
         }
     }
 }

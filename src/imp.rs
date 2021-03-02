@@ -6,7 +6,8 @@ pub(crate) mod prelude {
         collections::HashMap,
         convert::{TryFrom, TryInto},
         rc::{Rc, Weak as Rweak},
-        sync::{Arc, Mutex, Weak as Aweak}
+        sync::{Arc, Mutex, Weak as Aweak},
+        task::Waker
     };
     pub use strong::*;
 }

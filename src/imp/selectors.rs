@@ -22,7 +22,7 @@ impl Selectors {
             .channel()
             .create_request("register".to_owned().try_into().unwrap())
             .set_params(p);
-        let fut = self.channel().send_message(r)?;
+        let fut = self.channel().send_message(r).await?;
         fut.await
     }
 }
@@ -30,4 +30,25 @@ impl Selectors {
 impl RemoteObject for Selectors {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::imp::{core::*, prelude::*};
+    use std::env;
+
+    crate::runtime_test!(register, {
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let conn = driver.run().await.unwrap();
+        let p = Connection::wait_initial_object(Rc::downgrade(&conn))
+            .await
+            .unwrap();
+        let p = p.upgrade().unwrap();
+        let s: Rc<Selectors> = p.selectors.upgrade().unwrap();
+        let res = s.register("foo", "()", false).await;
+        dbg!(&res);
+        assert!(res.is_ok());
+    });
 }

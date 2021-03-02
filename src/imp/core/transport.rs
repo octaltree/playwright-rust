@@ -156,8 +156,8 @@ mod tests {
         let t = &mut c.transport;
         t.send(&Request {
             id: 1,
-            guid: None,
-            method: None,
+            guid: "".try_into().unwrap(),
+            method: "a".try_into().unwrap(),
             params: Map::default()
         })
         .await
