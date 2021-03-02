@@ -11,6 +11,19 @@ pub(crate) mod prelude {
     pub use strong::*;
 }
 
+#[macro_use]
+mod macros {
+    #[macro_export]
+    macro_rules! find_object {
+        ($conn:expr, $guid:expr, $t:ident) => {
+            match $conn.get_object($guid) {
+                Some(RemoteWeak::$t(x)) => Ok(x),
+                _ => Err(ConnectionError::ObjectNotFound)
+            }
+        };
+    }
+}
+
 pub(crate) mod connection;
 pub(crate) mod driver;
 pub(crate) mod message;
