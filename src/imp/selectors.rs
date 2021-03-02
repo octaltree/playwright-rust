@@ -47,8 +47,10 @@ mod tests {
             .unwrap();
         let p = p.upgrade().unwrap();
         let s: Rc<Selectors> = p.selectors.upgrade().unwrap();
-        let res = s.register("foo", "()", false).await;
+        let fut = s.register("foo", "()", false);
+        log::trace!("fut");
+        let res = fut.await;
         dbg!(&res);
-        assert!(res.is_ok());
+        assert!(res.is_err());
     });
 }

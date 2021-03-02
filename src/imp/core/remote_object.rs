@@ -217,6 +217,7 @@ impl Future for WaitMessage {
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.get_mut();
+        log::trace!("poll WaitMessage");
         macro_rules! pending {
             () => {{
                 cx.waker().wake_by_ref();
@@ -237,7 +238,7 @@ impl Future for WaitMessage {
             .ok_or(Rc::new(ConnectionError::ObjectNotFound))?;
         let mut c = match rc.try_lock() {
             Ok(x) => x,
-            Err(TryLockError::WouldBlock) => return Poll::Pending,
+            Err(TryLockError::WouldBlock) => pending!(),
             Err(e) => Err(e).unwrap()
         };
         let c: Pin<&mut Connection> = Pin::new(&mut c);

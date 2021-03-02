@@ -51,6 +51,7 @@ impl Transport {
         let mut bytes = length.to_le_bytes().to_vec();
         bytes.extend(serialized);
         self.stdin.write(&bytes).await?;
+        log::trace!("success send");
         Ok(())
     }
 }
@@ -63,7 +64,6 @@ impl Stream for Transport {
         let this: &mut Self = self.get_mut();
         macro_rules! pending {
             () => {{
-                cx.waker().wake_by_ref();
                 return Poll::Pending;
             }};
         }

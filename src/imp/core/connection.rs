@@ -47,7 +47,9 @@ pub enum ConnectionError {
     #[error("Failed to send")]
     Channel,
     #[error(transparent)]
-    Send(#[from] SendError)
+    Send(#[from] SendError),
+    #[error("Callback not found")]
+    CallbackNotFound
 }
 
 impl Connection {
@@ -153,7 +155,30 @@ impl Connection {
         log::trace!("{:?}", msg);
         match msg {
             Response::Result(msg) => {
-                let id = &msg.id;
+                log::trace!("result");
+                let (place, waker) = self
+                    .callbacks
+                    .get(&msg.id)
+                    .ok_or(ConnectionError::CallbackNotFound)?;
+                let place = match place.upgrade() {
+                    Some(p) => p,
+                    None => return Ok(())
+                };
+                let waker = match waker.upgrade() {
+                    Some(x) => x,
+                    None => return Ok(())
+                };
+                log::trace!("success get rc");
+                let waker: &Option<Waker> = &waker.lock().unwrap();
+                log::trace!("success lock");
+                let waker = match waker {
+                    Some(x) => x.clone(),
+                    None => return Ok(())
+                };
+                log::trace!("set result");
+                *place.lock().unwrap() = Some(Ok(Rc::new(msg)));
+                waker.wake();
+                return Ok(());
             }
             Response::Initial(msg) => {
                 if Method::is_create(&msg.method) {
@@ -238,7 +263,10 @@ impl Future for WaitInitialObject {
         let rc = this.0.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
         let mut c = match rc.try_lock() {
             Ok(x) => x,
-            Err(TryLockError::WouldBlock) => return Poll::Pending,
+            Err(TryLockError::WouldBlock) => {
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }
             Err(e) => Err(e).unwrap()
         };
         let p = c.get_object(i);
