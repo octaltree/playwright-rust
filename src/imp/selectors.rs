@@ -18,17 +18,12 @@ impl Selectors {
         p.insert("name".into(), name.into());
         p.insert("script".into(), script.into());
         p.insert("contentScript".into(), is_content_script.into());
-        let w = WaitMessage::new();
         let r = self
             .channel()
             .create_request("register".to_owned().try_into().unwrap())
-            .set_params(p)
-            .set_wait(&w);
-        self.channel()
-            .tx
-            .unbounded_send(r)
-            .map_err(|_| ConnectionError::Channel)?;
-        w.await
+            .set_params(p);
+        let fut = self.channel().send_message(r)?;
+        fut.await
     }
 }
 

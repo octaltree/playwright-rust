@@ -70,6 +70,15 @@ impl ChannelOwner {
             waker: Weak::new()
         }
     }
+
+    pub(crate) fn send_message(&self, r: RequestBody) -> Result<WaitMessage, ConnectionError> {
+        let w = WaitMessage::new();
+        let r = r.set_wait(&w);
+        self.tx
+            .unbounded_send(r)
+            .map_err(|_| ConnectionError::Channel)?;
+        Ok(w)
+    }
 }
 
 #[derive(Debug)]
@@ -154,6 +163,11 @@ pub(crate) struct RequestBody {
 }
 
 impl RequestBody {
+    pub(crate) fn set_method(mut self, method: Str<Method>) -> Self {
+        self.method = method;
+        self
+    }
+
     pub(crate) fn set_params(mut self, params: Map<String, Value>) -> Self {
         self.params = params;
         self
@@ -162,6 +176,11 @@ impl RequestBody {
     pub(crate) fn set_wait(mut self, wait: &WaitMessage) -> Self {
         self.place = Rc::downgrade(&wait.place);
         self.waker = Rc::downgrade(&wait.waker);
+        self
+    }
+
+    pub(crate) fn set_guid(mut self, guid: Str<Guid>) -> Self {
+        self.guid = guid;
         self
     }
 }
