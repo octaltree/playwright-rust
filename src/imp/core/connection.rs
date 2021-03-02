@@ -1,13 +1,10 @@
 use crate::imp::{self, core::*, playwright::Playwright, prelude::*};
 use futures::{
-    channel::{mpsc, mpsc::TrySendError},
-    stream::{Stream, StreamExt},
+    channel::mpsc,
+    stream::Stream,
     task::{Context, Poll}
 };
-use std::{
-    collections::VecDeque, future::Future, io, path::Path, pin::Pin, process::Stdio,
-    sync::TryLockError, thread
-};
+use std::{future::Future, io, path::Path, pin::Pin, process::Stdio, sync::TryLockError};
 use tokio::process::{Child, Command};
 
 // TODO: コールバックをonで登録してるとこあるから常に読み出し続ける必要がある?
@@ -19,7 +16,6 @@ pub(crate) struct Connection {
     tx: UnboundedSender<RequestBody>,
     rx: UnboundedReceiver<RequestBody>,
     conn: Rweak<Mutex<Connection>>,
-    que: VecDeque<RequestBody>,
     id: i32,
     callbacks: HashMap<
         i32,
@@ -78,7 +74,6 @@ impl Connection {
             tx,
             rx,
             conn: Rweak::new(),
-            que: VecDeque::new(),
             id: 0,
             callbacks: HashMap::new()
         }));
@@ -95,8 +90,6 @@ impl Connection {
         //});
         Ok(conn)
     }
-
-    pub(crate) fn enqueue(&mut self, r: RequestBody) { self.que.push_back(r); }
 
     pub(crate) async fn send_message(&mut self, r: RequestBody) -> Result<(), ConnectionError> {
         self.id += 1;
@@ -213,7 +206,7 @@ impl Connection {
             parent.downgrade(),
             typ.to_owned(),
             guid.to_owned(),
-            initializer.to_owned()
+            initializer
         );
         let r = match typ.as_str() {
             "Playwright" => RemoteRc::Playwright(Rc::new(Playwright::try_new(&self, c)?)),
@@ -223,7 +216,7 @@ impl Connection {
             }
             _ => RemoteRc::Dummy(Rc::new(DummyObject::new(c)))
         };
-        self.objects.insert(guid.to_owned(), r);
+        self.objects.insert(guid, r);
         //(&**parent).push_child(r.clone());
         Ok(())
     }

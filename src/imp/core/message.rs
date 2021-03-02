@@ -41,14 +41,14 @@ impl<'de> Deserialize<'de> for ResponseResult {
         let ResponseResultImpl { id, result, error } =
             ResponseResultImpl::deserialize(deserializer)?;
         if let Some(e) = error {
-            return Ok(Self { id, body: Err(e) });
+            Ok(Self { id, body: Err(e) })
         } else if let Some(x) = result {
-            return Ok(Self { id, body: Ok(x) });
+            Ok(Self { id, body: Ok(x) })
         } else {
-            return Ok(Self {
+            Ok(Self {
                 id,
                 body: Ok(Value::default())
-            });
+            })
         }
     }
 }

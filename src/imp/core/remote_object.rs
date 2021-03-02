@@ -1,7 +1,7 @@
 use crate::imp::{self, core::*, prelude::*};
 use futures::{
     channel::mpsc,
-    stream::{Stream, StreamExt},
+    stream::Stream,
     task::{Context, Poll}
 };
 use serde_json::value::Value;
@@ -207,7 +207,6 @@ impl WaitMessage {
     pub(crate) fn new(conn: Rweak<Mutex<Connection>>) -> Self {
         let place = Rc::new(Mutex::new(None));
         let waker = Rc::new(Mutex::new(None));
-        let weak = Rc::downgrade(&place);
         WaitMessage { place, waker, conn }
     }
 }
@@ -250,7 +249,7 @@ impl Future for WaitMessage {
         let rc = this
             .conn
             .upgrade()
-            .ok_or(Rc::new(ConnectionError::ObjectNotFound))?;
+            .ok_or_else(|| Rc::new(ConnectionError::ObjectNotFound))?;
         let mut c = match rc.try_lock() {
             Ok(x) => x,
             Err(TryLockError::WouldBlock) => pending!(),

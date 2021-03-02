@@ -3,12 +3,7 @@ use futures::{
     stream::Stream,
     task::{Context, Poll}
 };
-use std::{
-    convert::TryInto,
-    io,
-    io::{Read, Write},
-    pin::Pin
-};
+use std::{convert::TryInto, io, pin::Pin};
 use thiserror::Error;
 use tokio::{
     io::{AsyncRead, AsyncWriteExt, ReadBuf},
