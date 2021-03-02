@@ -1,24 +1,35 @@
-use crate::imp::{connection::ConnectionError, message::Guid, prelude::*, remote_object::*};
+use crate::imp::{
+    connection::{Connection, ConnectionError},
+    message::Guid,
+    prelude::*,
+    remote_object::*
+};
 use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug)]
 pub(crate) struct Playwright {
-    channel: ChannelOwner,
-    initializer: Initializer
+    channel: ChannelOwner
 }
 
 impl Playwright {
-    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(
+        conn: &Connection,
+        channel: ChannelOwner
+    ) -> Result<Self, ConnectionError> {
         // TODO: BrowserType and Selectors from connection
-
-        let initializer = serde_json::from_value(channel.initializer.clone())?;
-        Ok(Self {
-            channel,
-            initializer
-        })
+        let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
+        // let conn = channel
+        //    .conn
+        //    .upgrade()
+        //    .ok_or(ConnectionError::ObjectNotFound)?;
+        // log::trace!("lock playwright");
+        // let chromium = conn.lock().unwrap().get_object(&i.chromium.guid);
+        let chromium = conn.get_object(&i.chromium.guid);
+        // log::trace!("success playwright");
+        Ok(Self { channel })
     }
 
-    // pub(crate) fn device(&self, name: &str) -> &DeviceDescriptor { }
+    // pub(crate) fn device(&self, name: &str) -> &DeviceDescriptor {}
 }
 
 impl RemoteObject for Playwright {

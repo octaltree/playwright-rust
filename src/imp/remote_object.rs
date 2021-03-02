@@ -6,7 +6,6 @@ use std::{
 };
 
 pub(crate) struct ChannelOwner {
-    pub(crate) conn: Weak<Mutex<Connection>>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
@@ -27,14 +26,12 @@ impl Debug for ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
-        conn: Weak<Mutex<Connection>>,
         parent: RemoteWeak,
         typ: Str<message::ObjectType>,
         guid: Str<message::Guid>,
         initializer: Value
     ) -> Self {
         Self {
-            conn,
             parent: Some(parent),
             typ,
             guid,
@@ -44,7 +41,6 @@ impl ChannelOwner {
 
     pub(crate) fn new_root() -> Self {
         Self {
-            conn: Weak::new(),
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),
