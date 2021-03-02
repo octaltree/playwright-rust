@@ -13,8 +13,7 @@ pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
-    objects: HashMap<Str<message::Guid>, RemoteRc>,
-    conn: Option<Weak<Mutex<Connection>>>
+    objects: HashMap<Str<message::Guid>, RemoteRc>
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -51,18 +50,11 @@ impl Connection {
             d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
             d
         };
-        let conn = Rc::new(Mutex::new(Connection {
+        Ok(Rc::new(Mutex::new(Connection {
             _child: child,
             transport,
-            objects,
-            conn: None
-        }));
-        let weak = Rc::downgrade(&conn);
-        // thread::spawn(move || {
-        //    let weak = weak;
-        //});
-        conn.lock().unwrap().conn = Some(weak);
-        Ok(conn)
+            objects
+        })))
     }
 
     pub(crate) fn get_object(&self, k: &S<message::Guid>) -> Option<RemoteWeak> {
@@ -156,10 +148,6 @@ impl Stream for Connection {
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<()>> {
         let this = self.get_mut();
-        if this.conn.is_none() {
-            cx.waker().wake_by_ref();
-            return Poll::Pending;
-        }
         match Pin::new(&mut this.transport).poll_next(cx) {
             Poll::Pending => Poll::Pending,
             Poll::Ready(None) => Poll::Ready(None),

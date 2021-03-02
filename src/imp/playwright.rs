@@ -38,13 +38,14 @@ impl RemoteObject for Playwright {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Initializer {
     chromium: RefGuid,
     firefox: RefGuid,
     webkit: RefGuid,
     android: RefGuid,
     selectors: RefGuid,
-    deviceDescriptors: Vec<DeviceDescriptor>
+    device_descriptors: Vec<DeviceDescriptor>
 }
 
 #[derive(Debug, Deserialize)]

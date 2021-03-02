@@ -6,6 +6,7 @@ use std::{
 };
 
 pub(crate) struct ChannelOwner {
+    // TODO: channel
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<message::ObjectType>,
     pub(crate) guid: Str<message::Guid>,
