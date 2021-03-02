@@ -16,7 +16,7 @@ use std::{
 
 pub(crate) struct ChannelOwner {
     pub(crate) conn: Rweak<Mutex<Connection>>,
-    pub(crate) tx: UnboundedSender<RequestBody>,
+    // pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
@@ -37,7 +37,7 @@ impl Debug for ChannelOwner {
 impl ChannelOwner {
     pub(crate) fn new(
         conn: Rweak<Mutex<Connection>>,
-        tx: UnboundedSender<RequestBody>,
+        // tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
         typ: Str<ObjectType>,
         guid: Str<Guid>,
@@ -45,7 +45,6 @@ impl ChannelOwner {
     ) -> Self {
         Self {
             conn,
-            tx,
             parent: Some(parent),
             typ,
             guid,
@@ -54,10 +53,9 @@ impl ChannelOwner {
     }
 
     pub(crate) fn new_root() -> Self {
-        let (tx, _) = mpsc::unbounded();
+        // let (tx, _) = mpsc::unbounded();
         Self {
             conn: Rweak::new(),
-            tx,
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),

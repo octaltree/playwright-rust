@@ -13,8 +13,8 @@ pub(crate) struct Connection {
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
     objects: HashMap<Str<Guid>, RemoteRc>,
-    tx: UnboundedSender<RequestBody>,
-    rx: UnboundedReceiver<RequestBody>,
+    // tx: UnboundedSender<RequestBody>,
+    // rx: UnboundedReceiver<RequestBody>,
     conn: Rweak<Mutex<Connection>>,
     id: i32,
     callbacks: HashMap<
@@ -66,13 +66,11 @@ impl Connection {
             d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
             d
         };
-        let (tx, rx) = mpsc::unbounded();
+        // let (tx, rx) = mpsc::unbounded();
         let conn = Rc::new(Mutex::new(Connection {
             _child: child,
             transport,
             objects,
-            tx,
-            rx,
             conn: Rweak::new(),
             id: 0,
             callbacks: HashMap::new()
@@ -202,7 +200,7 @@ impl Connection {
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
             self.conn.clone(),
-            self.tx.clone(),
+            // self.tx.clone(),
             parent.downgrade(),
             typ.to_owned(),
             guid.to_owned(),
