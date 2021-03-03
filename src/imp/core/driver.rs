@@ -1,5 +1,5 @@
 use crate::imp::{core::*, prelude::*};
-use std::{fs, io, process::Command};
+use std::{fs, io};
 use zip::{result::ZipError, ZipArchive};
 
 pub struct Driver {
