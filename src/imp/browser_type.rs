@@ -21,6 +21,7 @@ impl BrowserType {
 
     pub(crate) fn executable(&self) -> &Path { &self.executable }
 
+    // TODO: builder pattern
     pub(crate) async fn launch(
         &self,
         args: LaunchArgs<'_, '_, '_>
@@ -43,14 +44,27 @@ impl BrowserType {
         Ok(b)
     }
 
-    // TODO: Ok BrowserContext
+    // TODO: required parameter
     pub(crate) async fn launch_persistent_context(
         &self,
         args: LaunchPersistentContextArgs
-    ) -> Result<(), Rc<ConnectionError>> {
+    ) -> Result<Rweak<BrowserContext>, Rc<ConnectionError>> {
         let m: Str<Method> = "launchPersistentContext".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
-        Ok(())
+        let LaunchPersistentContextResponse {
+            browser_context: OnlyGuid { guid }
+        } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
+        let b = find_object!(
+            self.channel()
+                .conn
+                .upgrade()
+                .ok_or(ConnectionError::ObjectNotFound)?
+                .lock()
+                .unwrap(),
+            &guid,
+            BrowserContext
+        )?;
+        Ok(b)
     }
 }
 
@@ -95,7 +109,7 @@ struct LaunchResponse {
     browser: OnlyGuid
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LaunchPersistentContextArgs {
     // userDataDir: Union[str, Path],
@@ -135,6 +149,12 @@ pub struct LaunchPersistentContextArgs {
 // recordHarOmitContent: bool = None,
 // recordVideoDir: Union[Path, str] = None,
 // recordVideoSize: ViewportSize = None,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LaunchPersistentContextResponse {
+    browser_context: OnlyGuid
 }
 
 #[cfg(test)]

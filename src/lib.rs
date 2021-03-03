@@ -6,7 +6,8 @@ mod imp;
 mod api;
 pub use api::*;
 
-#[cfg_attr(test, macro_export)]
+#[doc(hidden)]
+#[macro_export]
 macro_rules! runtime_test {
     ($name:tt, $main:stmt) => {
         #[test]
