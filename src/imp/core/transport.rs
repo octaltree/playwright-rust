@@ -110,7 +110,6 @@ impl Stream for Transport {
 mod tests {
     use crate::imp::{core::*, prelude::*};
     use futures::stream::StreamExt;
-    use serde_json::value::Value;
     use std::env;
 
     #[tokio::test]

@@ -56,7 +56,7 @@ struct RefGuid {
     guid: Str<Guid>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeviceDescriptor {
     pub name: String,
     pub user_agent: String,
@@ -111,7 +111,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Viewport {
     pub width: i32,
     pub height: i32

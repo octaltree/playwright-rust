@@ -32,12 +32,7 @@ impl BrowserType {
             browser: OnlyGuid { guid }
         } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
         let b = find_object!(
-            self.channel()
-                .conn
-                .upgrade()
-                .ok_or(ConnectionError::ObjectNotFound)?
-                .lock()
-                .unwrap(),
+            upgrade(&self.channel().conn)?.lock().unwrap(),
             &guid,
             Browser
         )?;
@@ -55,12 +50,7 @@ impl BrowserType {
             browser_context: OnlyGuid { guid }
         } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
         let b = find_object!(
-            self.channel()
-                .conn
-                .upgrade()
-                .ok_or(ConnectionError::ObjectNotFound)?
-                .lock()
-                .unwrap(),
+            upgrade(&self.channel().conn)?.lock().unwrap(),
             &guid,
             BrowserContext
         )?;

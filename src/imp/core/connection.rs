@@ -1,6 +1,5 @@
-use crate::imp::{self, core::*, playwright::Playwright, prelude::*};
+use crate::imp::{core::*, playwright::Playwright, prelude::*};
 use futures::{
-    channel::mpsc,
     stream::Stream,
     task::{Context, Poll}
 };
@@ -16,6 +15,7 @@ pub(crate) struct Connection {
     // rx: UnboundedReceiver<RequestBody>,
     conn: Rweak<Mutex<Connection>>,
     id: i32,
+    #[allow(clippy::type_complexity)]
     callbacks: HashMap<
         i32,
         (
@@ -244,7 +244,7 @@ impl Future for WaitInitialObject {
         let i: &S<Guid> = S::validate("Playwright").unwrap();
         // TODO: timeout
         let this = self.get_mut();
-        let rc = this.0.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
+        let rc = upgrade(&this.0)?;
         let mut c = match rc.try_lock() {
             Ok(x) => x,
             Err(TryLockError::WouldBlock) => {

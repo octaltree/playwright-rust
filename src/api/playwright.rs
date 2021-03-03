@@ -1,4 +1,4 @@
-use crate::imp::{self, core::*, prelude::*};
+use crate::imp::{self, core::*, playwright::*, prelude::*};
 use std::{env, io, process::Command};
 
 #[derive(Debug, thiserror::Error)]
@@ -12,14 +12,14 @@ pub enum PlaywrightError {
 }
 
 pub fn default_driver_dest() -> PathBuf {
-    let tmp: PathBuf = dirs::cache_dir().unwrap_or_else(|| env::temp_dir());
+    let tmp: PathBuf = dirs::cache_dir().unwrap_or_else(env::temp_dir);
     let dir: PathBuf = tmp.join("ms-playwright/playwright-rust/driver");
     dir
 }
 
 pub struct Playwright {
     driver: Driver,
-    conn: Rc<Mutex<Connection>>,
+    _conn: Rc<Mutex<Connection>>,
     inner: Rweak<imp::playwright::Playwright>
 }
 
@@ -29,7 +29,7 @@ impl Playwright {
         let p = Connection::wait_initial_object(Rc::downgrade(&conn)).await?;
         Ok(Self {
             driver,
-            conn,
+            _conn: conn,
             inner: p
         })
     }
@@ -45,6 +45,10 @@ impl Playwright {
             .args(&["install"])
             .status()?;
         Ok(())
+    }
+
+    pub fn devices(&self) -> Result<Vec<DeviceDescriptor>, PlaywrightError> {
+        Ok(upgrade(&self.inner)?.devices().to_vec())
     }
 
     // fn devices(&self) -> HashMap<String, String> { unimplemented!() }

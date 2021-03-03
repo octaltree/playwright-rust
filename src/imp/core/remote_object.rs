@@ -1,6 +1,5 @@
 use crate::imp::{self, core::*, prelude::*};
 use futures::{
-    channel::mpsc,
     stream::Stream,
     task::{Context, Poll}
 };
@@ -13,6 +12,10 @@ use std::{
     sync::TryLockError,
     task::Waker
 };
+
+pub(crate) fn upgrade<T>(w: &Rweak<T>) -> Result<Rc<T>, ConnectionError> {
+    w.upgrade().ok_or(ConnectionError::ObjectNotFound)
+}
 
 pub(crate) struct ChannelOwner {
     pub(crate) conn: Rweak<Mutex<Connection>>,
@@ -82,7 +85,7 @@ impl ChannelOwner {
         // self.tx
         //    .unbounded_send(r)
         //    .map_err(|_| ConnectionError::Channel)?;
-        let conn = self.conn.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
+        let conn = upgrade(&self.conn)?;
         conn.lock().unwrap().send_message(r).await?;
         Ok(w)
     }
@@ -282,10 +285,7 @@ impl Future for WaitMessage {
             }
         }
 
-        let rc = this
-            .conn
-            .upgrade()
-            .ok_or_else(|| Rc::new(ConnectionError::ObjectNotFound))?;
+        let rc = upgrade(&this.conn)?;
         let mut c = match rc.try_lock() {
             Ok(x) => x,
             Err(TryLockError::WouldBlock) => pending!(),
