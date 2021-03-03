@@ -215,6 +215,10 @@ impl Connection {
             "BrowserType" => {
                 RemoteRc::BrowserType(Rc::new(imp::browser_type::BrowserType::try_new(c)?))
             }
+            "Browser" => RemoteRc::Browser(Rc::new(imp::browser::Browser::try_new(c)?)),
+            "BrowserContext" => {
+                RemoteRc::BrowserContext(Rc::new(imp::browser_context::BrowserContext::try_new(c)?))
+            }
             _ => RemoteRc::Dummy(Rc::new(DummyObject::new(c)))
         };
         self.objects.insert(guid, r);

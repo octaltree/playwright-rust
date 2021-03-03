@@ -27,8 +27,9 @@ impl BrowserType {
     ) -> Result<Rweak<Browser>, Rc<ConnectionError>> {
         let m: Str<Method> = "launch".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
-        let OnlyGuid { guid } =
-            serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
+        let LaunchResponse {
+            browser: OnlyGuid { guid }
+        } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
         let b = find_object!(
             self.channel()
                 .conn
@@ -89,6 +90,11 @@ pub struct LaunchArgs<'a, 'b, 'c> {
                                  * firefoxUserPrefs: Dict[str, Union[str, float, bool]] = None, */
 }
 
+#[derive(Deserialize)]
+struct LaunchResponse {
+    browser: OnlyGuid
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LaunchPersistentContextArgs {
@@ -146,6 +152,7 @@ mod tests {
         let p = p.upgrade().unwrap();
         let chromium = p.chromium.upgrade().unwrap();
         let res = chromium.launch(LaunchArgs::default()).await;
-        dbg!(res);
+        dbg!(&res);
+        res.unwrap();
     });
 }

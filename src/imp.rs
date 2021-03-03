@@ -43,7 +43,7 @@ mod macros {
     }
 }
 
-pub mod core {
+pub(crate) mod core {
     mod connection;
     mod driver;
     mod message;
@@ -52,7 +52,7 @@ pub mod core {
     pub use connection::*;
     pub use driver::*;
     pub use message::*;
-    pub use remote_object::*;
+    pub(crate) use remote_object::*;
     pub use transport::*;
 }
 
