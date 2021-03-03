@@ -19,6 +19,7 @@ pub(crate) mod prelude {
 
 #[macro_use]
 mod macros {
+    #[doc(hidden)]
     #[macro_export]
     macro_rules! find_object {
         ($conn:expr, $guid:expr, $t:ident) => {
@@ -29,6 +30,7 @@ mod macros {
         };
     }
 
+    #[doc(hidden)]
     #[macro_export]
     macro_rules! send_message {
         ($r: expr, $method:expr, $args: expr) => {{
@@ -41,17 +43,17 @@ mod macros {
     }
 }
 
-pub(crate) mod core {
+pub mod core {
     mod connection;
     mod driver;
     mod message;
     mod remote_object;
     mod transport;
-    pub(crate) use connection::*;
-    pub(crate) use driver::*;
-    pub(crate) use message::*;
-    pub(crate) use remote_object::*;
-    pub(crate) use transport::*;
+    pub use connection::*;
+    pub use driver::*;
+    pub use message::*;
+    pub use remote_object::*;
+    pub use transport::*;
 }
 
 pub(crate) mod browser_type;

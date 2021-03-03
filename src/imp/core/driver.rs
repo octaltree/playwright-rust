@@ -1,35 +1,43 @@
 use crate::imp::{core::*, prelude::*};
 use std::{
     fs, io,
-    path::{Path, PathBuf}
+    path::{Path, PathBuf},
+    process::Command
 };
 use zip::{result::ZipError, ZipArchive};
 
-pub(crate) struct Driver<'a> {
-    path: &'a Path
+pub struct Driver {
+    path: PathBuf
 }
 
-impl<'a> Driver<'a> {
+impl Driver {
     const ZIP: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), "/driver.zip"));
     const PLATFORM: &'static str = include_str!(concat!(env!("OUT_DIR"), "/platform"));
 
-    pub(crate) fn try_new(path: &'a Path) -> io::Result<Self> {
-        let this = Self { path };
+    pub fn try_new<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
+        let this = Self { path: path.into() };
         this.prepare()?;
         Ok(this)
     }
 
-    pub(crate) async fn run(&self) -> io::Result<Rc<Mutex<Connection>>> {
+    pub(crate) async fn connect(&self) -> io::Result<Rc<Mutex<Connection>>> {
         Connection::try_new(&self.executable()).await
+    }
+
+    pub fn install(&self) -> io::Result<()> {
+        Command::new(self.executable())
+            .args(&["install"])
+            .status()?;
+        Ok(())
     }
 
     fn prepare(&self) -> Result<(), ZipError> {
         if self.path.is_dir() {
             return Ok(());
         }
-        fs::create_dir_all(self.path)?;
+        fs::create_dir_all(&self.path)?;
         let mut a = ZipArchive::new(io::Cursor::new(Self::ZIP))?;
-        a.extract(self.path)
+        a.extract(&self.path)
     }
 
     fn platform(&self) -> Platform {
@@ -42,7 +50,7 @@ impl<'a> Driver<'a> {
         }
     }
 
-    pub(crate) fn executable(&self) -> PathBuf {
+    pub fn executable(&self) -> PathBuf {
         match self.platform() {
             Platform::Linux => self.path.join("playwright.sh"),
             Platform::Mac => self.path.join("playwright.sh"),

@@ -292,6 +292,6 @@ mod tests {
     crate::runtime_test!(try_new, {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let _conn = driver.run().await.unwrap();
+        let _conn = driver.connect().await.unwrap();
     });
 }

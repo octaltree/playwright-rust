@@ -118,7 +118,7 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let conn = driver.run().await.unwrap();
+        let conn = driver.connect().await.unwrap();
         let c = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
@@ -131,7 +131,7 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let conn = driver.run().await.unwrap();
+        let conn = driver.connect().await.unwrap();
         let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
@@ -144,7 +144,7 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let conn = driver.run().await.unwrap();
+        let conn = driver.connect().await.unwrap();
         let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         t.send(&Request {

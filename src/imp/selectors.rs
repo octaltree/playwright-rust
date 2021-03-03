@@ -47,7 +47,7 @@ mod tests {
     crate::runtime_test!(register, {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let conn = driver.run().await.unwrap();
+        let conn = driver.connect().await.unwrap();
         let p = Connection::wait_initial_object(Rc::downgrade(&conn))
             .await
             .unwrap();

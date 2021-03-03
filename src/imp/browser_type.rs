@@ -19,7 +19,7 @@ impl BrowserType {
 
     pub(crate) fn name(&self) -> &str { &self.name }
 
-    pub(crate) fn executable_path(&self) -> &Path { &self.executable }
+    pub(crate) fn executable(&self) -> &Path { &self.executable }
 
     pub(crate) async fn launch(
         &self,
@@ -70,7 +70,8 @@ struct Initializer {
 #[serde(rename_all = "camelCase")]
 pub struct LaunchArgs<'a, 'b, 'c> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    executable_path: Option<&'a Path>,
+    #[serde(rename = "executablePath")]
+    executable: Option<&'a Path>,
     #[serde(skip_serializing_if = "Option::is_none")]
     args: Option<&'b [&'c str]> /* ignore_default_args
                                  * ignoreDefaultArgs: Union[bool, List[str]] = None,
@@ -138,7 +139,7 @@ mod tests {
     crate::runtime_test!(launch, {
         let tmp = env::temp_dir().join("playwright-rust-test/driver");
         let driver = Driver::try_new(&tmp).unwrap();
-        let conn = driver.run().await.unwrap();
+        let conn = driver.connect().await.unwrap();
         let p = Connection::wait_initial_object(Rc::downgrade(&conn))
             .await
             .unwrap();
