@@ -22,7 +22,7 @@ pub(crate) enum Response {
 }
 
 #[derive(Debug, Clone)]
-pub struct ResponseResult {
+pub(crate) struct ResponseResult {
     pub(crate) id: i32,
     pub(crate) body: Result<Value, Error>
 }
