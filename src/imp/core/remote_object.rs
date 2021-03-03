@@ -165,6 +165,28 @@ impl RemoteRc {
             Self::BrowserContext(x) => RemoteWeak::BrowserContext(Rc::downgrade(x))
         }
     }
+
+    pub(crate) fn try_new(
+        typ: &S<ObjectType>,
+        conn: &Connection,
+        c: ChannelOwner
+    ) -> Result<RemoteRc, ConnectionError> {
+        let r = match typ.as_str() {
+            "Playwright" => {
+                RemoteRc::Playwright(Rc::new(imp::playwright::Playwright::try_new(&conn, c)?))
+            }
+            "Selectors" => RemoteRc::Selectors(Rc::new(imp::selectors::Selectors::new(c))),
+            "BrowserType" => {
+                RemoteRc::BrowserType(Rc::new(imp::browser_type::BrowserType::try_new(c)?))
+            }
+            "Browser" => RemoteRc::Browser(Rc::new(imp::browser::Browser::try_new(c)?)),
+            "BrowserContext" => {
+                RemoteRc::BrowserContext(Rc::new(imp::browser_context::BrowserContext::try_new(c)?))
+            }
+            _ => RemoteRc::Dummy(Rc::new(DummyObject::new(c)))
+        };
+        Ok(r)
+    }
 }
 
 pub(crate) struct RequestBody {
