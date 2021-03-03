@@ -20,13 +20,6 @@ impl Driver {
         Connection::try_new(&self.executable()).await
     }
 
-    pub fn install(&self) -> io::Result<()> {
-        Command::new(self.executable())
-            .args(&["install"])
-            .status()?;
-        Ok(())
-    }
-
     fn prepare(&self) -> Result<(), ZipError> {
         if self.path.is_dir() {
             return Ok(());
