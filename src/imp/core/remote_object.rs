@@ -206,7 +206,6 @@ impl RequestBody {
 pub(crate) type WaitMessageResult = Result<Result<Rc<Value>, Rc<Error>>, Rc<ConnectionError>>;
 
 pub(crate) struct WaitMessage {
-    // FIXME: Option<Result<ResponseResult, ConnectionError>>
     place: Rc<Mutex<Option<WaitMessageResult>>>,
     waker: Rc<Mutex<Option<Waker>>>,
     conn: Rweak<Mutex<Connection>>

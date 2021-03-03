@@ -12,13 +12,13 @@ impl Selectors {
         &self,
         name: &str,
         script: &str,
-        is_content_script: bool
+        content_script: bool
     ) -> Result<(), Rc<ConnectionError>> {
         let m: Str<Method> = "register".to_owned().try_into().unwrap();
         let args = RegisterArgs {
             name,
             source: script,
-            is_content_script
+            content_script
         };
         let _ = send_message!(self, m, args);
         Ok(())
@@ -36,14 +36,12 @@ struct RegisterArgs<'a, 'b> {
     name: &'a str,
     source: &'b str,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
-    #[serde(rename = "contentScript")]
-    is_content_script: bool
+    content_script: bool
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::imp::{core::*, prelude::*};
     use std::env;
 
     crate::runtime_test!(register, {

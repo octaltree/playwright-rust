@@ -7,7 +7,6 @@ use futures::{
 use std::{future::Future, io, path::Path, pin::Pin, process::Stdio, sync::TryLockError};
 use tokio::process::{Child, Command};
 
-// TODO: コールバックをonで登録してるとこあるから常に読み出し続ける必要がある?
 pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
@@ -250,7 +249,7 @@ impl Future for WaitInitialObject {
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let i: &S<Guid> = S::validate("Playwright").unwrap();
-        // FIXME: timeout
+        // TODO: timeout
         let this = self.get_mut();
         let rc = this.0.upgrade().ok_or(ConnectionError::ObjectNotFound)?;
         let mut c = match rc.try_lock() {

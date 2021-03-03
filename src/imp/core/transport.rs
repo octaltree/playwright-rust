@@ -30,7 +30,6 @@ impl Transport {
     const BUFSIZE: usize = 10000;
 
     pub(crate) fn try_new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
-        // FIXME: spawn loop buffering
         Transport {
             stdin,
             stdout,
@@ -91,7 +90,6 @@ impl Stream for Transport {
         {
             let mut buf = [0; Self::BUFSIZE];
             let mut buf = ReadBuf::new(&mut buf);
-            // FIXME: read前にバッファに残ってるのを返す バッファ処理してからreadする
             // TODO: error with async_std
             match Pin::new(&mut this.stdout).poll_read(cx, &mut buf) {
                 Poll::Pending => pending!(),
