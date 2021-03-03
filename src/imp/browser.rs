@@ -1,5 +1,4 @@
 use crate::imp::{browser_context::BrowserContext, core::*, prelude::*};
-use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub(crate) struct Browser {

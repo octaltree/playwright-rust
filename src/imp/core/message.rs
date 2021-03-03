@@ -84,6 +84,11 @@ pub struct Error {
     pub(crate) stack: String
 }
 
+#[derive(Debug, Deserialize)]
+pub(crate) struct OnlyGuid {
+    pub(crate) guid: Str<Guid>
+}
+
 pub(crate) enum Guid {}
 
 impl Validator for Guid {

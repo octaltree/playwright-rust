@@ -9,6 +9,7 @@ pub(crate) mod prelude {
         cell::RefCell,
         collections::HashMap,
         convert::{TryFrom, TryInto},
+        path::{Path, PathBuf},
         rc::{Rc, Weak as Rweak},
         sync::{Arc, Mutex, Weak as Aweak},
         task::Waker

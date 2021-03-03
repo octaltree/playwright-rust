@@ -1,5 +1,4 @@
-use crate::imp::{core::*, prelude::*};
-use std::path::{Path, PathBuf};
+use crate::imp::{browser::Browser, browser_context::BrowserContext, core::*, prelude::*};
 
 #[derive(Debug)]
 pub(crate) struct BrowserType {
@@ -22,11 +21,25 @@ impl BrowserType {
 
     pub(crate) fn executable_path(&self) -> &Path { &self.executable }
 
-    // TODO: Ok Browser
-    pub(crate) async fn launch(&self, args: LaunchArgs) -> Result<(), Rc<ConnectionError>> {
+    pub(crate) async fn launch(
+        &self,
+        args: LaunchArgs<'_, '_, '_>
+    ) -> Result<Rweak<Browser>, Rc<ConnectionError>> {
         let m: Str<Method> = "launch".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
-        Ok(())
+        let OnlyGuid { guid } =
+            serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
+        let b = find_object!(
+            self.channel()
+                .conn
+                .upgrade()
+                .ok_or(ConnectionError::ObjectNotFound)?
+                .lock()
+                .unwrap(),
+            &guid,
+            Browser
+        )?;
+        Ok(b)
     }
 
     // TODO: Ok BrowserContext
@@ -53,24 +66,26 @@ struct Initializer {
     executable: PathBuf
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct LaunchArgs {
-    // executablePath: Union[str, Path] = None,
-// args: List[str] = None,
-// ignoreDefaultArgs: Union[bool, List[str]] = None,
-// handleSIGINT: bool = None,
-// handleSIGTERM: bool = None,
-// handleSIGHUP: bool = None,
-// timeout: float = None,
-// env: Env = None,
-// headless: bool = None,
-// devtools: bool = None,
-// proxy: ProxySettings = None,
-// downloadsPath: Union[str, Path] = None,
-// slowMo: float = None,
-// chromiumSandbox: bool = None,
-// firefoxUserPrefs: Dict[str, Union[str, float, bool]] = None,
+pub struct LaunchArgs<'a, 'b, 'c> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    executable_path: Option<&'a Path>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    args: Option<&'b [&'c str]> /* ignore_default_args
+                                 * ignoreDefaultArgs: Union[bool, List[str]] = None,
+                                 * handleSIGINT: bool = None,
+                                 * handleSIGTERM: bool = None,
+                                 * handleSIGHUP: bool = None,
+                                 * timeout: float = None,
+                                 * env: Env = None,
+                                 * headless: bool = None,
+                                 * devtools: bool = None,
+                                 * proxy: ProxySettings = None,
+                                 * downloadsPath: Union[str, Path] = None,
+                                 * slowMo: float = None,
+                                 * chromiumSandbox: bool = None,
+                                 * firefoxUserPrefs: Dict[str, Union[str, float, bool]] = None, */
 }
 
 #[derive(Serialize)]
@@ -113,4 +128,23 @@ pub struct LaunchPersistentContextArgs {
 // recordHarOmitContent: bool = None,
 // recordVideoDir: Union[Path, str] = None,
 // recordVideoSize: ViewportSize = None,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    crate::runtime_test!(launch, {
+        let tmp = env::temp_dir().join("playwright-rust-test/driver");
+        let driver = Driver::try_new(&tmp).unwrap();
+        let conn = driver.run().await.unwrap();
+        let p = Connection::wait_initial_object(Rc::downgrade(&conn))
+            .await
+            .unwrap();
+        let p = p.upgrade().unwrap();
+        let chromium = p.chromium.upgrade().unwrap();
+        let res = chromium.launch(LaunchArgs::default()).await;
+        dbg!(res);
+    });
 }

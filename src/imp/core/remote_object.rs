@@ -137,7 +137,9 @@ pub(crate) enum RemoteRc {
     Root(Rc<RootObject>),
     Playwright(Rc<imp::playwright::Playwright>),
     BrowserType(Rc<imp::browser_type::BrowserType>),
-    Selectors(Rc<imp::selectors::Selectors>)
+    Selectors(Rc<imp::selectors::Selectors>),
+    Browser(Rc<imp::browser::Browser>),
+    BrowserContext(Rc<imp::browser_context::BrowserContext>)
 }
 
 #[derive(Debug)]
@@ -146,7 +148,9 @@ pub(crate) enum RemoteWeak {
     Root(Rweak<RootObject>),
     Playwright(Rweak<imp::playwright::Playwright>),
     BrowserType(Rweak<imp::browser_type::BrowserType>),
-    Selectors(Rweak<imp::selectors::Selectors>)
+    Selectors(Rweak<imp::selectors::Selectors>),
+    Browser(Rweak<imp::browser::Browser>),
+    BrowserContext(Rweak<imp::browser_context::BrowserContext>)
 }
 
 impl RemoteRc {
@@ -156,7 +160,9 @@ impl RemoteRc {
             Self::Root(x) => RemoteWeak::Root(Rc::downgrade(x)),
             Self::Playwright(x) => RemoteWeak::Playwright(Rc::downgrade(x)),
             Self::BrowserType(x) => RemoteWeak::BrowserType(Rc::downgrade(x)),
-            Self::Selectors(x) => RemoteWeak::Selectors(Rc::downgrade(x))
+            Self::Selectors(x) => RemoteWeak::Selectors(Rc::downgrade(x)),
+            Self::Browser(x) => RemoteWeak::Browser(Rc::downgrade(x)),
+            Self::BrowserContext(x) => RemoteWeak::BrowserContext(Rc::downgrade(x))
         }
     }
 }
