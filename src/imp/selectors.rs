@@ -14,12 +14,12 @@ impl Selectors {
         script: &str,
         is_content_script: bool
     ) -> Result<(), Rc<ConnectionError>> {
+        let m: Str<Method> = "register".to_owned().try_into().unwrap();
         let args = RegisterArgs {
             name,
             source: script,
             is_content_script
         };
-        let m: Str<Method> = "register".to_owned().try_into().unwrap();
         let _ = send_message!(self, m, args);
         Ok(())
     }
