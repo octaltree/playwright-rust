@@ -192,7 +192,7 @@ impl RequestBody {
     }
 }
 
-pub(crate) type WaitMessageResult = Result<Rc<ResponseResult>, Rc<ConnectionError>>;
+pub(crate) type WaitMessageResult = Result<Result<Rc<Value>, Rc<Error>>, Rc<ConnectionError>>;
 
 pub(crate) struct WaitMessage {
     // FIXME: Option<Result<ResponseResult, ConnectionError>>

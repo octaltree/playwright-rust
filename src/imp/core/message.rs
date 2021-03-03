@@ -22,7 +22,7 @@ pub(crate) enum Response {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct ResponseResult {
+pub struct ResponseResult {
     pub(crate) id: i32,
     pub(crate) body: Result<Value, Error>
 }
@@ -73,8 +73,9 @@ pub(crate) struct ErrorWrap {
     error: Error
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub(crate) struct Error {
+#[derive(Debug, Deserialize, Serialize, Clone, thiserror::Error)]
+#[error("{name} {message:?}")]
+pub struct Error {
     pub(crate) name: String,
     pub(crate) message: String,
     pub(crate) stack: String

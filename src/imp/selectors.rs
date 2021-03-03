@@ -13,7 +13,7 @@ impl Selectors {
         name: &str,
         script: &str,
         is_content_script: bool
-    ) -> Result<Rc<ResponseResult>, Rc<ConnectionError>> {
+    ) -> Result<(), Rc<ConnectionError>> {
         let mut p = Map::<String, Value>::default();
         p.insert("name".into(), name.into());
         p.insert("source".into(), script.into());
@@ -23,7 +23,9 @@ impl Selectors {
             .create_request("register".to_owned().try_into().unwrap())
             .set_params(p);
         let fut = self.channel().send_message(r).await?;
-        fut.await
+        let res = fut.await?;
+        res.map_err(ConnectionError::ErrorResponded)?;
+        Ok(())
     }
 }
 
@@ -52,6 +54,5 @@ mod tests {
         let res = fut.await;
         dbg!(&res);
         assert!(res.is_ok());
-        assert!(res.unwrap().body.is_ok());
     });
 }

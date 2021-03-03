@@ -45,7 +45,9 @@ pub enum ConnectionError {
     #[error(transparent)]
     Send(#[from] SendError),
     #[error("Callback not found")]
-    CallbackNotFound
+    CallbackNotFound,
+    #[error(transparent)]
+    ErrorResponded(#[from] Rc<Error>)
 }
 
 impl Connection {
@@ -160,7 +162,7 @@ impl Connection {
                     None => return Ok(())
                 };
                 log::trace!("success get rc");
-                *place.lock().unwrap() = Some(Ok(Rc::new(msg)));
+                *place.lock().unwrap() = Some(Ok(msg.body.map(Rc::new).map_err(Rc::new)));
                 let waker: &Option<Waker> = &waker.lock().unwrap();
                 let waker = match waker {
                     Some(x) => x.clone(),
