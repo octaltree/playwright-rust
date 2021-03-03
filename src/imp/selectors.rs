@@ -14,14 +14,23 @@ impl Selectors {
         script: &str,
         is_content_script: bool
     ) -> Result<(), Rc<ConnectionError>> {
-        let mut p = Map::<String, Value>::default();
-        p.insert("name".into(), name.into());
-        p.insert("source".into(), script.into());
-        p.insert("contentScript".into(), is_content_script.into());
+        #[derive(Serialize)]
+        struct Body<'a, 'b> {
+            name: &'a str,
+            source: &'b str,
+            #[serde(skip_serializing_if = "std::ops::Not::not")]
+            #[serde(rename = "contentScript")]
+            is_content_script: bool
+        }
+        let b = Body {
+            name,
+            source: script,
+            is_content_script
+        };
         let r = self
             .channel()
             .create_request("register".to_owned().try_into().unwrap())
-            .set_params(p);
+            .set_body(b)?;
         let fut = self.channel().send_message(r).await?;
         let res = fut.await?;
         res.map_err(ConnectionError::ErrorResponded)?;

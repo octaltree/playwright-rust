@@ -47,7 +47,9 @@ pub enum ConnectionError {
     #[error("Callback not found")]
     CallbackNotFound,
     #[error(transparent)]
-    ErrorResponded(#[from] Rc<Error>)
+    ErrorResponded(#[from] Rc<Error>),
+    #[error("Value is not Object")]
+    NotObject
 }
 
 impl Connection {

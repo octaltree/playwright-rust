@@ -36,12 +36,15 @@ impl<'de> Deserialize<'de> for ResponseResult {
         struct ResponseResultImpl {
             id: i32,
             result: Option<Value>,
-            error: Option<Error>
+            error: Option<ErrorWrap>
         }
         let ResponseResultImpl { id, result, error } =
             ResponseResultImpl::deserialize(deserializer)?;
-        if let Some(e) = error {
-            Ok(Self { id, body: Err(e) })
+        if let Some(ErrorWrap { error }) = error {
+            Ok(Self {
+                id,
+                body: Err(error)
+            })
         } else if let Some(x) = result {
             Ok(Self { id, body: Ok(x) })
         } else {

@@ -1,6 +1,10 @@
 pub(crate) mod prelude {
     pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
-    pub use serde_json::{map::Map, value::Value};
+    pub use serde::{Deserialize, Serialize};
+    pub use serde_json::{
+        map::Map,
+        value::{to_value, Value}
+    };
     pub use std::{
         cell::RefCell,
         collections::HashMap,

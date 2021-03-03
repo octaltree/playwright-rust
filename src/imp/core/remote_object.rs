@@ -180,6 +180,17 @@ impl RequestBody {
         self
     }
 
+    pub(crate) fn set_body<T: Serialize>(mut self, body: T) -> Result<Self, ConnectionError> {
+        let v = serde_json::value::to_value(body).map_err(ConnectionError::Serde)?;
+        let p = match v {
+            Value::Object(m) => m,
+            _ => return Err(ConnectionError::NotObject)
+        };
+        log::debug!("{:?}", &p);
+        self.params = p;
+        Ok(self)
+    }
+
     pub(crate) fn set_wait(mut self, wait: &WaitMessage) -> Self {
         self.place = Rc::downgrade(&wait.place);
         self.waker = Rc::downgrade(&wait.waker);
