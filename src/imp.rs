@@ -27,6 +27,17 @@ mod macros {
             }
         };
     }
+
+    #[macro_export]
+    macro_rules! send_message {
+        ($r: expr, $method:expr, $args: expr) => {{
+            let r = $r.channel().create_request($method).set_args($args)?;
+            let fut = $r.channel().send_message(r).await?;
+            let res = fut.await?;
+            let res = res.map_err(ConnectionError::ErrorResponded)?;
+            res
+        }};
+    }
 }
 
 pub(crate) mod core {

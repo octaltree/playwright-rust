@@ -14,26 +14,13 @@ impl Selectors {
         script: &str,
         is_content_script: bool
     ) -> Result<(), Rc<ConnectionError>> {
-        #[derive(Serialize)]
-        struct Body<'a, 'b> {
-            name: &'a str,
-            source: &'b str,
-            #[serde(skip_serializing_if = "std::ops::Not::not")]
-            #[serde(rename = "contentScript")]
-            is_content_script: bool
-        }
-        let b = Body {
+        let args = RegisterArgs {
             name,
             source: script,
             is_content_script
         };
-        let r = self
-            .channel()
-            .create_request("register".to_owned().try_into().unwrap())
-            .set_body(b)?;
-        let fut = self.channel().send_message(r).await?;
-        let res = fut.await?;
-        res.map_err(ConnectionError::ErrorResponded)?;
+        let m: Str<Method> = "register".to_owned().try_into().unwrap();
+        let _ = send_message!(self, m, args);
         Ok(())
     }
 }
@@ -41,6 +28,16 @@ impl Selectors {
 impl RemoteObject for Selectors {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RegisterArgs<'a, 'b> {
+    name: &'a str,
+    source: &'b str,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[serde(rename = "contentScript")]
+    is_content_script: bool
 }
 
 #[cfg(test)]

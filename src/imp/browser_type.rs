@@ -21,6 +21,13 @@ impl BrowserType {
     pub(crate) fn name(&self) -> &str { &self.name }
 
     pub(crate) fn executable(&self) -> &Path { &self.executable }
+
+    // TOOD: Ok Browser
+    pub(crate) async fn launch(&self, args: LaunchArgs) -> Result<(), Rc<ConnectionError>> {
+        let m: Str<Method> = "launch".to_owned().try_into().unwrap();
+        let res = send_message!(self, m, args);
+        Ok(())
+    }
 }
 
 impl RemoteObject for BrowserType {
@@ -35,3 +42,6 @@ struct Initializer {
     #[serde(rename = "executablePath")]
     executable: PathBuf
 }
+
+#[derive(Serialize)]
+pub struct LaunchArgs {}

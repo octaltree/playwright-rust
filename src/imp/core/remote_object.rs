@@ -180,7 +180,7 @@ impl RequestBody {
         self
     }
 
-    pub(crate) fn set_body<T: Serialize>(mut self, body: T) -> Result<Self, ConnectionError> {
+    pub(crate) fn set_args<T: Serialize>(mut self, body: T) -> Result<Self, ConnectionError> {
         let v = serde_json::value::to_value(body).map_err(ConnectionError::Serde)?;
         let p = match v {
             Value::Object(m) => m,
