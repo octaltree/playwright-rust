@@ -1,18 +1,14 @@
 use crate::{
+    browser_type::BrowserType,
     imp::{self, core::*, playwright::*, prelude::*},
-    BrowserType, Selectors
+    selectors::Selectors,
+    Error
 };
-use std::{env, io, process::Command};
+use std::{io, process::Command};
 
 #[derive(Debug, thiserror::Error)]
-pub enum PlaywrightError {
-    #[error(transparent)]
-    Io(#[from] io::Error),
-    #[error(transparent)]
-    Connection(#[from] ConnectionError),
-    #[error("Failed to intialize")]
-    Initialization
-}
+#[error("")]
+pub struct TimeoutError {}
 
 pub struct Playwright {
     driver: Driver,
@@ -22,13 +18,13 @@ pub struct Playwright {
 
 impl Playwright {
     /// Installs playwright driver to "$CACHE_DIR/.ms-playwright/playwright-rust/driver"
-    pub async fn initialize() -> Result<Playwright, PlaywrightError> {
+    pub async fn initialize() -> Result<Playwright, Error> {
         let driver = Driver::install()?;
         Self::with_driver(driver).await
     }
 
     /// Constructs from installed playwright driver
-    pub async fn with_driver(driver: Driver) -> Result<Playwright, PlaywrightError> {
+    pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
         let conn = driver.connect().await?;
         let p = Connection::wait_initial_object(Rc::downgrade(&conn)).await?;
         Ok(Self {

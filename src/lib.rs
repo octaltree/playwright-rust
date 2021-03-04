@@ -1,9 +1,12 @@
 #[macro_use]
 extern crate serde;
 
-mod imp;
+// pub mod core;
+// pub mod remote_objects;
+// pub mod api;
 
 mod api;
+mod imp;
 pub use api::*;
 
 #[doc(hidden)]
