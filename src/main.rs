@@ -2,8 +2,7 @@ use playwright::*;
 use std::{env, process::Command};
 
 fn main() {
-    let dir = default_driver_dest();
-    let driver = Driver::try_new(&dir).unwrap();
+    let driver = Driver::install().unwrap();
     let envs = {
         // my_env.pop("NODE_OPTIONS", None)
         // my_env["PW_CLI_TARGET_LANG"] = "python"

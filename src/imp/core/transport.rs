@@ -115,8 +115,7 @@ mod tests {
     #[tokio::test]
     async fn tokio_read() {
         env_logger::builder().is_test(true).try_init().ok();
-        let tmp = env::temp_dir().join("playwright-rust-test/driver");
-        let driver = Driver::try_new(&tmp).unwrap();
+        let driver = Driver::install().unwrap();
         let conn = driver.connect().await.unwrap();
         let c = &mut conn.lock().unwrap();
         let t = &mut c.transport;
@@ -128,8 +127,7 @@ mod tests {
     #[actix_rt::test]
     async fn actix_read() {
         env_logger::builder().is_test(true).try_init().ok();
-        let tmp = env::temp_dir().join("playwright-rust-test/driver");
-        let driver = Driver::try_new(&tmp).unwrap();
+        let driver = Driver::install().unwrap();
         let conn = driver.connect().await.unwrap();
         let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
@@ -141,8 +139,7 @@ mod tests {
     #[actix_rt::test]
     async fn actix_write() {
         env_logger::builder().is_test(true).try_init().ok();
-        let tmp = env::temp_dir().join("playwright-rust-test/driver");
-        let driver = Driver::try_new(&tmp).unwrap();
+        let driver = Driver::install().unwrap();
         let conn = driver.connect().await.unwrap();
         let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;

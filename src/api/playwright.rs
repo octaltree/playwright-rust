@@ -14,12 +14,6 @@ pub enum PlaywrightError {
     Initialization
 }
 
-pub fn default_driver_dest() -> PathBuf {
-    let tmp: PathBuf = dirs::cache_dir().unwrap_or_else(env::temp_dir);
-    let dir: PathBuf = tmp.join("ms-playwright/playwright-rust/driver");
-    dir
-}
-
 pub struct Playwright {
     driver: Driver,
     _conn: Rc<Mutex<Connection>>,
@@ -29,8 +23,7 @@ pub struct Playwright {
 impl Playwright {
     /// Installs playwright driver to "$CACHE_DIR/.ms-playwright/playwright-rust/driver"
     pub async fn initialize() -> Result<Playwright, PlaywrightError> {
-        let dir = default_driver_dest();
-        let driver = Driver::try_new(dir)?;
+        let driver = Driver::install()?;
         Self::with_driver(driver).await
     }
 
@@ -55,23 +48,27 @@ impl Playwright {
 
     /// Launcher
     pub fn chromium(&self) -> BrowserType {
-        BrowserType::new(upgrade(&self.inner).unwrap().chromium.clone())
+        let inner = weak_and_then(&self.inner, |rc| rc.chromium.clone());
+        BrowserType::new(inner)
     }
 
     /// Launcher
     pub fn firefox(&self) -> BrowserType {
-        BrowserType::new(upgrade(&self.inner).unwrap().firefox.clone())
+        let inner = weak_and_then(&self.inner, |rc| rc.firefox.clone());
+        BrowserType::new(inner)
     }
 
     /// Launcher
     pub fn webkit(&self) -> BrowserType {
-        BrowserType::new(upgrade(&self.inner).unwrap().webkit.clone())
+        let inner = weak_and_then(&self.inner, |rc| rc.webkit.clone());
+        BrowserType::new(inner)
     }
 
     pub fn driver(&mut self) -> &mut Driver { &mut self.driver }
 
     pub fn selectors(&self) -> Selectors {
-        Selectors::new(upgrade(&self.inner).unwrap().selectors.clone())
+        let inner = weak_and_then(&self.inner, |rc| rc.selectors.clone());
+        Selectors::new(inner)
     }
 
     pub fn devices(&self) -> Vec<DeviceDescriptor> {

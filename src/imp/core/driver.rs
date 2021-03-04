@@ -1,5 +1,5 @@
 use crate::imp::{core::*, prelude::*};
-use std::{fs, io};
+use std::{env, fs, io};
 use zip::{result::ZipError, ZipArchive};
 
 pub struct Driver {
@@ -10,26 +10,29 @@ impl Driver {
     const ZIP: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), "/driver.zip"));
     const PLATFORM: &'static str = include_str!(concat!(env!("OUT_DIR"), "/platform"));
 
-    pub fn try_new<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
+    pub fn install() -> io::Result<Self> { Self::install_on(Self::default_dest()) }
+
+    pub fn install_on<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
         let this = Self { path: path.into() };
-        this.prepare()?;
+        if !this.path.is_dir() {
+            this.prepare()?;
+        }
         Ok(this)
     }
 
-    pub(crate) async fn connect(&self) -> io::Result<Rc<Mutex<Connection>>> {
-        Connection::try_new(&self.executable()).await
+    pub fn default_dest() -> PathBuf {
+        let tmp: PathBuf = dirs::cache_dir().unwrap_or_else(env::temp_dir);
+        let dir: PathBuf = tmp.join("ms-playwright/playwright-rust/driver");
+        dir
     }
 
-    fn prepare(&self) -> Result<(), ZipError> {
-        if self.path.is_dir() {
-            return Ok(());
-        }
+    pub fn prepare(&self) -> Result<(), ZipError> {
         fs::create_dir_all(&self.path)?;
         let mut a = ZipArchive::new(io::Cursor::new(Self::ZIP))?;
         a.extract(&self.path)
     }
 
-    fn platform(&self) -> Platform {
+    pub fn platform(&self) -> Platform {
         match Self::PLATFORM {
             "linux" => Platform::Linux,
             "mac" => Platform::Mac,
@@ -47,10 +50,14 @@ impl Driver {
             Platform::Win32x64 => self.path.join("playwright.cmd")
         }
     }
+
+    pub(crate) async fn connect(&self) -> io::Result<Rc<Mutex<Connection>>> {
+        Connection::try_new(&self.executable()).await
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
-enum Platform {
+pub enum Platform {
     Linux,
     Win32,
     Win32x64,
@@ -60,13 +67,7 @@ enum Platform {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::env;
 
     #[test]
-    fn write() {
-        let tmp = env::temp_dir();
-        let tmp = tmp.join("playwright-rust-test/driver");
-        let driver = Driver::try_new(&tmp).unwrap();
-        assert_eq!(driver.executable().parent().unwrap(), &tmp);
-    }
+    fn install() { let _driver = Driver::install().unwrap(); }
 }

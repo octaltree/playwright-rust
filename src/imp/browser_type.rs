@@ -150,11 +150,9 @@ struct LaunchPersistentContextResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::env;
 
     crate::runtime_test!(launch, {
-        let tmp = env::temp_dir().join("playwright-rust-test/driver");
-        let driver = Driver::try_new(&tmp).unwrap();
+        let driver = Driver::install().unwrap();
         let conn = driver.connect().await.unwrap();
         let p = Connection::wait_initial_object(Rc::downgrade(&conn))
             .await

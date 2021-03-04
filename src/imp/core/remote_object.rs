@@ -17,6 +17,17 @@ pub(crate) fn upgrade<T>(w: &Rweak<T>) -> Result<Rc<T>, ConnectionError> {
     w.upgrade().ok_or(ConnectionError::ObjectNotFound)
 }
 
+pub(crate) fn weak_and_then<T, U, F>(w: &Rweak<T>, f: F) -> Rweak<U>
+where
+    F: FnOnce(Rc<T>) -> Rweak<U>
+{
+    let rc = match w.upgrade() {
+        None => return Rweak::new(),
+        Some(rc) => rc
+    };
+    f(rc)
+}
+
 pub(crate) struct ChannelOwner {
     pub(crate) conn: Rweak<Mutex<Connection>>,
     // pub(crate) tx: UnboundedSender<RequestBody>,
