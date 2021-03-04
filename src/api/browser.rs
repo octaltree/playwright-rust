@@ -6,11 +6,11 @@ use crate::{
 };
 
 pub struct Browser {
-    inner: Rweak<imp::browser::Browser>
+    inner: Weak<imp::browser::Browser>
 }
 
 impl Browser {
-    pub(crate) fn new(inner: Rweak<imp::browser::Browser>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<imp::browser::Browser>) -> Self { Self { inner } }
 
     pub fn contexts(&self) -> Vec<BrowserContext> { unimplemented!() }
 

@@ -13,7 +13,7 @@ impl Selectors {
         name: &str,
         script: &str,
         content_script: bool
-    ) -> Result<(), Rc<ConnectionError>> {
+    ) -> Result<(), Arc<ConnectionError>> {
         let m: Str<Method> = "register".to_owned().try_into().unwrap();
         let args = RegisterArgs {
             name,
@@ -45,12 +45,12 @@ mod tests {
 
     crate::runtime_test!(register, {
         let driver = Driver::install().unwrap();
-        let conn = driver.connect().await.unwrap();
-        let p = Connection::wait_initial_object(Rc::downgrade(&conn))
+        let (conn, _stopper) = driver.connect().await.unwrap();
+        let p = Connection::wait_initial_object(Arc::downgrade(&conn))
             .await
             .unwrap();
         let p = p.upgrade().unwrap();
-        let s: Rc<Selectors> = p.selectors.upgrade().unwrap();
+        let s: Arc<Selectors> = p.selectors.upgrade().unwrap();
         let fut = s.register("foo", "()", false);
         log::trace!("fut");
         let res = fut.await;

@@ -51,7 +51,7 @@ impl Driver {
         }
     }
 
-    pub(crate) async fn connect(&self) -> io::Result<Rc<Mutex<Connection>>> {
+    pub(crate) async fn connect(&self) -> io::Result<(Arc<Mutex<Connection>>, Stopper)> {
         Connection::try_new(&self.executable()).await
     }
 }

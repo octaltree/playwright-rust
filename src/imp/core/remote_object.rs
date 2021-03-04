@@ -13,23 +13,23 @@ use std::{
     task::Waker
 };
 
-pub(crate) fn upgrade<T>(w: &Rweak<T>) -> Result<Rc<T>, ConnectionError> {
+pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, ConnectionError> {
     w.upgrade().ok_or(ConnectionError::ObjectNotFound)
 }
 
-pub(crate) fn weak_and_then<T, U, F>(w: &Rweak<T>, f: F) -> Rweak<U>
+pub(crate) fn weak_and_then<T, U, F>(w: &Weak<T>, f: F) -> Weak<U>
 where
-    F: FnOnce(Rc<T>) -> Rweak<U>
+    F: FnOnce(Arc<T>) -> Weak<U>
 {
     let rc = match w.upgrade() {
-        None => return Rweak::new(),
+        None => return Weak::new(),
         Some(rc) => rc
     };
     f(rc)
 }
 
 pub(crate) struct ChannelOwner {
-    pub(crate) conn: Rweak<Mutex<Connection>>,
+    pub(crate) conn: Weak<Mutex<Connection>>,
     // pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
@@ -50,7 +50,7 @@ impl Debug for ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
-        conn: Rweak<Mutex<Connection>>,
+        conn: Weak<Mutex<Connection>>,
         // tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
         typ: Str<ObjectType>,
@@ -69,7 +69,7 @@ impl ChannelOwner {
     pub(crate) fn new_root() -> Self {
         // let (tx, _) = mpsc::unbounded();
         Self {
-            conn: Rweak::new(),
+            conn: Weak::new(),
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),
@@ -82,8 +82,8 @@ impl ChannelOwner {
             guid: self.guid.clone(),
             method,
             params: Map::default(),
-            place: Rweak::new(),
-            waker: Rweak::new()
+            place: Weak::new(),
+            waker: Weak::new()
         }
     }
 
@@ -146,37 +146,34 @@ pub(crate) trait RemoteObject: Any + Debug {
 }
 
 #[derive(Debug)]
-pub(crate) enum RemoteRc {
-    Dummy(Rc<DummyObject>),
-    Root(Rc<RootObject>),
-    Playwright(Rc<imp::playwright::Playwright>),
-    BrowserType(Rc<imp::browser_type::BrowserType>),
-    Selectors(Rc<imp::selectors::Selectors>),
-    Browser(Rc<imp::browser::Browser>),
-    BrowserContext(Rc<imp::browser_context::BrowserContext>)
+pub(crate) enum RemoteArc {
+    Dummy(Arc<DummyObject>),
+    Root(Arc<RootObject>) /* Playwright(Arc<imp::playwright::Playwright>),
+                           * BrowserType(Arc<imp::browser_type::BrowserType>),
+                           * Selectors(Arc<imp::selectors::Selectors>),
+                           * Browser(Arc<imp::browser::Browser>),
+                           * BrowserContext(Arc<imp::browser_context::BrowserContext>) */
 }
 
 #[derive(Debug)]
 pub(crate) enum RemoteWeak {
-    Dummy(Rweak<DummyObject>),
-    Root(Rweak<RootObject>),
-    Playwright(Rweak<imp::playwright::Playwright>),
-    BrowserType(Rweak<imp::browser_type::BrowserType>),
-    Selectors(Rweak<imp::selectors::Selectors>),
-    Browser(Rweak<imp::browser::Browser>),
-    BrowserContext(Rweak<imp::browser_context::BrowserContext>)
+    Dummy(Weak<DummyObject>),
+    Root(Weak<RootObject>) /* Playwright(Weak<imp::playwright::Playwright>),
+                            * BrowserType(Weak<imp::browser_type::BrowserType>),
+                            * Selectors(Weak<imp::selectors::Selectors>),
+                            * Browser(Weak<imp::browser::Browser>),
+                            * BrowserContext(Weak<imp::browser_context::BrowserContext>) */
 }
 
-impl RemoteRc {
+impl RemoteArc {
     pub(crate) fn downgrade(&self) -> RemoteWeak {
         match self {
-            Self::Dummy(x) => RemoteWeak::Dummy(Rc::downgrade(x)),
-            Self::Root(x) => RemoteWeak::Root(Rc::downgrade(x)),
-            Self::Playwright(x) => RemoteWeak::Playwright(Rc::downgrade(x)),
-            Self::BrowserType(x) => RemoteWeak::BrowserType(Rc::downgrade(x)),
-            Self::Selectors(x) => RemoteWeak::Selectors(Rc::downgrade(x)),
-            Self::Browser(x) => RemoteWeak::Browser(Rc::downgrade(x)),
-            Self::BrowserContext(x) => RemoteWeak::BrowserContext(Rc::downgrade(x))
+            Self::Dummy(x) => RemoteWeak::Dummy(Arc::downgrade(x)),
+            Self::Root(x) => RemoteWeak::Root(Arc::downgrade(x)) /* Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x)),
+                                                                  * Self::BrowserType(x) => RemoteWeak::BrowserType(Arc::downgrade(x)),
+                                                                  * Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
+                                                                  * Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
+                                                                  * Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x)) */
         }
     }
 
@@ -184,20 +181,20 @@ impl RemoteRc {
         typ: &S<ObjectType>,
         conn: &Connection,
         c: ChannelOwner
-    ) -> Result<RemoteRc, ConnectionError> {
+    ) -> Result<RemoteArc, ConnectionError> {
         let r = match typ.as_str() {
-            "Playwright" => {
-                RemoteRc::Playwright(Rc::new(imp::playwright::Playwright::try_new(&conn, c)?))
-            }
-            "Selectors" => RemoteRc::Selectors(Rc::new(imp::selectors::Selectors::new(c))),
-            "BrowserType" => {
-                RemoteRc::BrowserType(Rc::new(imp::browser_type::BrowserType::try_new(c)?))
-            }
-            "Browser" => RemoteRc::Browser(Rc::new(imp::browser::Browser::try_new(c)?)),
-            "BrowserContext" => {
-                RemoteRc::BrowserContext(Rc::new(imp::browser_context::BrowserContext::try_new(c)?))
-            }
-            _ => RemoteRc::Dummy(Rc::new(DummyObject::new(c)))
+            //"Playwright" => {
+            //    RemoteArc::Playwright(Arc::new(imp::playwright::Playwright::try_new(&conn, c)?))
+            //}
+            //"Selectors" => RemoteArc::Selectors(Arc::new(imp::selectors::Selectors::new(c))),
+            //"BrowserType" => {
+            //    RemoteArc::BrowserType(Arc::new(imp::browser_type::BrowserType::try_new(c)?))
+            //}
+            //"Browser" => RemoteArc::Browser(Arc::new(imp::browser::Browser::try_new(c)?)),
+            //"BrowserContext" => RemoteArc::BrowserContext(Arc::new(
+            //    imp::browser_context::BrowserContext::try_new(c)?
+            //)),
+            _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)
     }
@@ -207,8 +204,8 @@ pub(crate) struct RequestBody {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
     pub(crate) params: Map<String, Value>,
-    pub(crate) place: Rweak<Mutex<Option<WaitMessageResult>>>,
-    pub(crate) waker: Rweak<Mutex<Option<Waker>>>
+    pub(crate) place: Weak<Mutex<Option<WaitMessageResult>>>,
+    pub(crate) waker: Weak<Mutex<Option<Waker>>>
 }
 
 impl RequestBody {
@@ -234,8 +231,8 @@ impl RequestBody {
     }
 
     pub(crate) fn set_wait(mut self, wait: &WaitMessage) -> Self {
-        self.place = Rc::downgrade(&wait.place);
-        self.waker = Rc::downgrade(&wait.waker);
+        self.place = Arc::downgrade(&wait.place);
+        self.waker = Arc::downgrade(&wait.waker);
         self
     }
 
@@ -245,18 +242,18 @@ impl RequestBody {
     }
 }
 
-pub(crate) type WaitMessageResult = Result<Result<Rc<Value>, Rc<Error>>, Rc<ConnectionError>>;
+pub(crate) type WaitMessageResult = Result<Result<Arc<Value>, Arc<Error>>, Arc<ConnectionError>>;
 
 pub(crate) struct WaitMessage {
-    place: Rc<Mutex<Option<WaitMessageResult>>>,
-    waker: Rc<Mutex<Option<Waker>>>,
-    conn: Rweak<Mutex<Connection>>
+    place: Arc<Mutex<Option<WaitMessageResult>>>,
+    waker: Arc<Mutex<Option<Waker>>>,
+    conn: Weak<Mutex<Connection>>
 }
 
 impl WaitMessage {
-    pub(crate) fn new(conn: Rweak<Mutex<Connection>>) -> Self {
-        let place = Rc::new(Mutex::new(None));
-        let waker = Rc::new(Mutex::new(None));
+    pub(crate) fn new(conn: Weak<Mutex<Connection>>) -> Self {
+        let place = Arc::new(Mutex::new(None));
+        let waker = Arc::new(Mutex::new(None));
         WaitMessage { place, waker, conn }
     }
 }
@@ -304,7 +301,7 @@ impl Future for WaitMessage {
         };
         let c: Pin<&mut Connection> = Pin::new(&mut c);
         match c.poll_next(cx) {
-            Poll::Ready(None) => Poll::Ready(Err(Rc::new(ConnectionError::ReceiverClosed))),
+            Poll::Ready(None) => Poll::Ready(Err(Arc::new(ConnectionError::ReceiverClosed))),
             Poll::Pending => {
                 cx.waker().wake_by_ref();
                 Poll::Pending

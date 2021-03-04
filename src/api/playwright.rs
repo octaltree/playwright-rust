@@ -13,7 +13,7 @@ pub enum Error {
     #[error(transparent)]
     Connection(#[from] crate::imp::core::ConnectionError),
     #[error(transparent)]
-    ConnectionRc(#[from] Rc<crate::imp::core::ConnectionError>),
+    ConnectionArc(#[from] Arc<crate::imp::core::ConnectionError>),
     #[error("Failed to intialize")]
     Initialization,
     #[error(transparent)]
@@ -26,8 +26,9 @@ pub struct TimeoutError {}
 
 pub struct Playwright {
     driver: Driver,
-    _conn: Rc<Mutex<Connection>>,
-    inner: Rweak<imp::playwright::Playwright>
+    _conn: Arc<Mutex<Connection>>,
+    _stopper: Stopper,
+    inner: Weak<imp::playwright::Playwright>
 }
 
 impl Playwright {
@@ -39,11 +40,12 @@ impl Playwright {
 
     /// Constructs from installed playwright driver
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
-        let conn = driver.connect().await?;
-        let p = Connection::wait_initial_object(Rc::downgrade(&conn)).await?;
+        let (conn, stopper) = driver.connect().await?;
+        let p = Connection::wait_initial_object(Arc::downgrade(&conn)).await?;
         Ok(Self {
             driver,
             _conn: conn,
+            _stopper: stopper,
             inner: p
         })
     }

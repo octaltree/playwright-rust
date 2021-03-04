@@ -25,7 +25,7 @@ impl BrowserType {
     pub(crate) async fn launch(
         &self,
         args: LaunchArgs<'_, '_, '_>
-    ) -> Result<Rweak<Browser>, Rc<ConnectionError>> {
+    ) -> Result<Weak<Browser>, Arc<ConnectionError>> {
         let m: Str<Method> = "launch".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
         let LaunchResponse {
@@ -43,7 +43,7 @@ impl BrowserType {
     pub(crate) async fn launch_persistent_context(
         &self,
         args: LaunchPersistentContextArgs
-    ) -> Result<Rweak<BrowserContext>, Rc<ConnectionError>> {
+    ) -> Result<Weak<BrowserContext>, Arc<ConnectionError>> {
         let m: Str<Method> = "launchPersistentContext".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
         let LaunchPersistentContextResponse {
@@ -153,8 +153,8 @@ mod tests {
 
     crate::runtime_test!(launch, {
         let driver = Driver::install().unwrap();
-        let conn = driver.connect().await.unwrap();
-        let p = Connection::wait_initial_object(Rc::downgrade(&conn))
+        let (conn, _stopper) = driver.connect().await.unwrap();
+        let p = Connection::wait_initial_object(Arc::downgrade(&conn))
             .await
             .unwrap();
         let p = p.upgrade().unwrap();

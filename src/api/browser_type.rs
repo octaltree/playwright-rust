@@ -7,11 +7,11 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct BrowserType {
-    inner: Rweak<imp::browser_type::BrowserType>
+    inner: Weak<imp::browser_type::BrowserType>
 }
 
 impl BrowserType {
-    pub(crate) fn new(inner: Rweak<imp::browser_type::BrowserType>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<imp::browser_type::BrowserType>) -> Self { Self { inner } }
 
     pub fn name(&self) -> String { upgrade(&self.inner).unwrap().name().into() }
 

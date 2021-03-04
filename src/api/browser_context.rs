@@ -8,11 +8,11 @@ use crate::{
 use std::time::Duration;
 
 pub struct BrowserContext {
-    inner: Rweak<imp::browser_context::BrowserContext>
+    inner: Weak<imp::browser_context::BrowserContext>
 }
 
 impl BrowserContext {
-    pub(crate) fn new(inner: Rweak<imp::browser_context::BrowserContext>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<imp::browser_context::BrowserContext>) -> Self { Self { inner } }
 
     fn pages(&self) -> Vec<Page> { unimplemented!() }
 

@@ -116,7 +116,7 @@ mod tests {
     async fn tokio_read() {
         env_logger::builder().is_test(true).try_init().ok();
         let driver = Driver::install().unwrap();
-        let conn = driver.connect().await.unwrap();
+        let (conn, _stopper) = driver.connect().await.unwrap();
         let c = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
@@ -128,7 +128,7 @@ mod tests {
     async fn actix_read() {
         env_logger::builder().is_test(true).try_init().ok();
         let driver = Driver::install().unwrap();
-        let conn = driver.connect().await.unwrap();
+        let (conn, _stopper) = driver.connect().await.unwrap();
         let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         if let Some(x) = t.next().await {
@@ -140,7 +140,7 @@ mod tests {
     async fn actix_write() {
         env_logger::builder().is_test(true).try_init().ok();
         let driver = Driver::install().unwrap();
-        let conn = driver.connect().await.unwrap();
+        let (conn, _stopper) = driver.connect().await.unwrap();
         let c: &mut Connection = &mut conn.lock().unwrap();
         let t = &mut c.transport;
         t.send(&Request {

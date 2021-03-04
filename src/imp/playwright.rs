@@ -7,10 +7,10 @@ use serde::Deserialize;
 #[derive(Debug)]
 pub(crate) struct Playwright {
     channel: ChannelOwner,
-    pub(crate) chromium: Rweak<BrowserType>,
-    pub(crate) firefox: Rweak<BrowserType>,
-    pub(crate) webkit: Rweak<BrowserType>,
-    pub(crate) selectors: Rweak<Selectors>,
+    pub(crate) chromium: Weak<BrowserType>,
+    pub(crate) firefox: Weak<BrowserType>,
+    pub(crate) webkit: Weak<BrowserType>,
+    pub(crate) selectors: Weak<Selectors>,
     pub(crate) devices: Vec<DeviceDescriptor>
 }
 
@@ -57,4 +57,46 @@ struct Initializer {
 #[derive(Debug, Deserialize)]
 struct RefGuid {
     guid: Str<Guid>
+}
+
+pub(crate) struct WaitInitialObject(Weak<Mutex<Connection>>);
+
+impl Future for WaitInitialObject {
+    type Output = Result<Weak<Playwright>, ConnectionError>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let i: &S<Guid> = S::validate("Playwright").unwrap();
+        // TODO: timeout
+        let this = self.get_mut();
+        let rc = upgrade(&this.0)?;
+        let mut c = match rc.try_lock() {
+            Ok(x) => x,
+            Err(TryLockError::WouldBlock) => {
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }
+            Err(e) => Err(e).unwrap()
+        };
+        let p = c.get_object(i);
+        match p {
+            Some(RemoteWeak::Playwright(p)) => return Poll::Ready(Ok(p)),
+            Some(_) => return Poll::Ready(Err(ConnectionError::ObjectNotFound)),
+            None => {
+                // cx.waker().wake_by_ref();
+                // return Poll::Pending;
+            }
+        }
+        let c: Pin<&mut Connection> = Pin::new(&mut c);
+        match c.poll_next(cx) {
+            Poll::Ready(None) => Poll::Ready(Err(ConnectionError::ReceiverClosed)),
+            Poll::Pending => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+            Poll::Ready(Some(())) => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        }
+    }
 }

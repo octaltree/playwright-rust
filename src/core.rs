@@ -10,8 +10,8 @@ pub(crate) mod prelude {
         collections::HashMap,
         convert::{TryFrom, TryInto},
         path::{Path, PathBuf},
-        rc::{Rc, Weak as Rweak},
-        sync::{Arc, Mutex, Weak as Aweak},
+        rc::{Arc, Weak as Weak},
+        sync::{Arc, Mutex, Weak as Weak},
         task::Waker
     };
     pub use strong::*;

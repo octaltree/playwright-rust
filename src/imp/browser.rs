@@ -4,7 +4,7 @@ use crate::imp::{browser_context::BrowserContext, core::*, prelude::*};
 pub(crate) struct Browser {
     channel: ChannelOwner,
     version: String,
-    contexts: Vec<Rweak<BrowserContext>>
+    contexts: Vec<Weak<BrowserContext>>
 }
 
 impl Browser {
@@ -17,10 +17,10 @@ impl Browser {
         })
     }
 
-    pub(crate) fn contexts(&self) -> &[Rweak<BrowserContext>] { &self.contexts }
+    pub(crate) fn contexts(&self) -> &[Weak<BrowserContext>] { &self.contexts }
     pub(crate) fn version(&self) -> &str { &self.version }
 
-    pub(crate) async fn close(&self) -> Result<(), Rc<ConnectionError>> {
+    pub(crate) async fn close(&self) -> Result<(), Arc<ConnectionError>> {
         // TODO: safe close error
         let m: Str<Method> = "close".to_owned().try_into().unwrap();
         #[derive(Serialize)]

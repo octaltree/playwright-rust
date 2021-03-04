@@ -10,8 +10,7 @@ pub(crate) mod prelude {
         collections::HashMap,
         convert::{TryFrom, TryInto},
         path::{Path, PathBuf},
-        rc::{Rc, Weak as Rweak},
-        sync::{Arc, Mutex, Weak as Aweak},
+        sync::{Arc, Mutex, Weak},
         task::Waker
     };
     pub use strong::*;
@@ -56,20 +55,20 @@ pub(crate) mod core {
     pub use transport::*;
 }
 
-pub(crate) mod browser_type;
-pub(crate) mod playwright;
-pub(crate) mod selectors;
+// pub(crate) mod browser_type;
+// pub(crate) mod playwright;
+// pub(crate) mod selectors;
 
-pub(crate) mod browser;
-pub(crate) mod browser_context;
-pub(crate) mod cdp_session;
-pub(crate) mod console_manager;
-pub(crate) mod dialog;
-pub(crate) mod download;
-pub(crate) mod frame;
-pub(crate) mod js_handle;
-pub(crate) mod network;
-pub(crate) mod page;
+// pub(crate) mod browser;
+// pub(crate) mod browser_context;
+// pub(crate) mod cdp_session;
+// pub(crate) mod console_manager;
+// pub(crate) mod dialog;
+// pub(crate) mod download;
+// pub(crate) mod frame;
+// pub(crate) mod js_handle;
+// pub(crate) mod network;
+// pub(crate) mod page;
 
 //_accessibility.py
 //_api_structures.py

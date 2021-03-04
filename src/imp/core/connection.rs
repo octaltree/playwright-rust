@@ -1,6 +1,6 @@
-use crate::imp::{core::*, playwright::Playwright, prelude::*};
+use crate::imp::{core::*, prelude::*};
 use futures::{
-    stream::Stream,
+    stream::{Stream, StreamExt},
     task::{Context, Poll}
 };
 use std::{future::Future, io, path::Path, pin::Pin, process::Stdio, sync::TryLockError};
@@ -10,19 +10,34 @@ pub(crate) struct Connection {
     _child: Child,
     pub(crate) transport: Transport,
     // buf: Vec<message::Response>
-    objects: HashMap<Str<Guid>, RemoteRc>,
+    objects: HashMap<Str<Guid>, RemoteArc>,
     // tx: UnboundedSender<RequestBody>,
     // rx: UnboundedReceiver<RequestBody>,
-    conn: Rweak<Mutex<Connection>>,
+    conn: Weak<Mutex<Connection>>,
     id: i32,
     #[allow(clippy::type_complexity)]
     callbacks: HashMap<
         i32,
         (
-            Rweak<Mutex<Option<WaitMessageResult>>>,
-            Rweak<Mutex<Option<Waker>>>
+            Weak<Mutex<Option<WaitMessageResult>>>,
+            Weak<Mutex<Option<Waker>>>
         )
-    >
+    >,
+    stopped: bool
+}
+
+pub(crate) struct Stopper {
+    conn: Weak<Mutex<Connection>>
+}
+
+impl Drop for Stopper {
+    fn drop(&mut self) {
+        let conn = match self.conn.upgrade() {
+            Some(c) => c,
+            None => return
+        };
+        conn.lock().unwrap().stopped = true;
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -46,13 +61,13 @@ pub enum ConnectionError {
     #[error("Callback not found")]
     CallbackNotFound,
     #[error(transparent)]
-    ErrorResponded(#[from] Rc<Error>),
+    ErrorResponded(#[from] Arc<Error>),
     #[error("Value is not Object")]
     NotObject
 }
 
 impl Connection {
-    pub(crate) async fn try_new(exec: &Path) -> io::Result<Rc<Mutex<Connection>>> {
+    pub(crate) async fn try_new(exec: &Path) -> io::Result<(Arc<Mutex<Connection>>, Stopper)> {
         let mut child = Command::new(exec)
             .args(&["run-driver"])
             .stdin(Stdio::piped())
@@ -66,30 +81,38 @@ impl Connection {
         let objects = {
             let mut d = HashMap::new();
             let root = RootObject::new();
-            d.insert(root.guid().to_owned(), RemoteRc::Root(Rc::new(root)));
+            d.insert(root.guid().to_owned(), RemoteArc::Root(Arc::new(root)));
             d
         };
         // let (tx, rx) = mpsc::unbounded();
-        let conn = Rc::new(Mutex::new(Connection {
+        let conn = Arc::new(Mutex::new(Connection {
             _child: child,
             transport,
             objects,
-            conn: Rweak::new(),
+            conn: Weak::new(),
             id: 0,
-            callbacks: HashMap::new()
+            callbacks: HashMap::new(),
+            stopped: false
         }));
-        conn.lock().unwrap().conn = Rc::downgrade(&conn);
-        // let c = Arc::downgrade(&conn);
-        // tokio::spawn(async move {
-        //    loop {
-        //        let c = match c.upgrade() {
-        //            Some(c) => c,
-        //            None => break
-        //        };
-        //        c.lock().unwrap().next().await;
-        //    }
-        //});
-        Ok(conn)
+        conn.lock().unwrap().conn = Arc::downgrade(&conn);
+        let c = Arc::downgrade(&conn);
+        let stopper = Stopper { conn: c.clone() };
+        tokio::spawn(async move {
+            let c = c.clone();
+            loop {
+                let rc = match c.upgrade() {
+                    Some(c) => c,
+                    None => break
+                };
+                let m = &mut rc.lock().unwrap();
+                if m.stopped {
+                    break;
+                }
+                while let Some(x) = m.transport.next().await {}
+                // m.next().await;
+            }
+        });
+        Ok((conn, stopper))
     }
 
     pub(crate) async fn send_message(&mut self, r: RequestBody) -> Result<(), ConnectionError> {
@@ -116,9 +139,9 @@ impl Connection {
         self.objects.get(k).map(|r| r.downgrade())
     }
 
-    pub(crate) fn wait_initial_object(c: Rweak<Mutex<Connection>>) -> WaitInitialObject {
-        WaitInitialObject(c)
-    }
+    // pub(crate) fn wait_initial_object(c: Weak<Mutex<Connection>>) -> WaitInitialObject {
+    //    WaitInitialObject(c)
+    //}
 
     // async fn processOneMessage(&mut self) -> Result<(), ConnectionError> {
     //    let task = self.transport.next();
@@ -163,7 +186,7 @@ impl Connection {
                     None => return Ok(())
                 };
                 log::trace!("success get rc");
-                *place.lock().unwrap() = Some(Ok(msg.body.map(Rc::new).map_err(Rc::new)));
+                *place.lock().unwrap() = Some(Ok(msg.body.map(Arc::new).map_err(Arc::new)));
                 let waker: &Option<Waker> = &waker.lock().unwrap();
                 let waker = match waker {
                     Some(x) => x.clone(),
@@ -209,7 +232,7 @@ impl Connection {
             guid.to_owned(),
             initializer
         );
-        let r = RemoteRc::try_new(&typ, &self, c)?;
+        let r = RemoteArc::try_new(&typ, &self, c)?;
         self.objects.insert(guid, r);
         //(&**parent).push_child(r.clone());
         Ok(())
@@ -230,48 +253,6 @@ impl Stream for Connection {
                     Poll::Ready(None)
                 }
                 Ok(_) => Poll::Ready(Some(()))
-            }
-        }
-    }
-}
-
-pub(crate) struct WaitInitialObject(Rweak<Mutex<Connection>>);
-
-impl Future for WaitInitialObject {
-    type Output = Result<Rweak<Playwright>, ConnectionError>;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let i: &S<Guid> = S::validate("Playwright").unwrap();
-        // TODO: timeout
-        let this = self.get_mut();
-        let rc = upgrade(&this.0)?;
-        let mut c = match rc.try_lock() {
-            Ok(x) => x,
-            Err(TryLockError::WouldBlock) => {
-                cx.waker().wake_by_ref();
-                return Poll::Pending;
-            }
-            Err(e) => Err(e).unwrap()
-        };
-        let p = c.get_object(i);
-        match p {
-            Some(RemoteWeak::Playwright(p)) => return Poll::Ready(Ok(p)),
-            Some(_) => return Poll::Ready(Err(ConnectionError::ObjectNotFound)),
-            None => {
-                // cx.waker().wake_by_ref();
-                // return Poll::Pending;
-            }
-        }
-        let c: Pin<&mut Connection> = Pin::new(&mut c);
-        match c.poll_next(cx) {
-            Poll::Ready(None) => Poll::Ready(Err(ConnectionError::ReceiverClosed)),
-            Poll::Pending => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
-            Poll::Ready(Some(())) => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
             }
         }
     }
