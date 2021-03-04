@@ -1,16 +1,5 @@
 mod playwright;
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error(transparent)]
-    Connection(#[from] crate::imp::core::ConnectionError),
-    #[error("Failed to intialize")]
-    Initialization,
-    #[error(transparent)]
-    Timeout(#[from] TimeoutError)
-}
+pub mod utils;
 
 pub mod accessibility;
 pub mod browser;
@@ -35,7 +24,7 @@ pub mod websocket;
 pub mod worker;
 
 pub use crate::imp::core::Driver;
-pub use playwright::*;
+pub use playwright::{Error, Playwright, TimeoutError};
 // pub use accessibility::Accessibility;
 // pub use browser::Browser;
 // pub use browser_context::BrowserContext;

@@ -1,10 +1,24 @@
 use crate::{
     browser_type::BrowserType,
-    imp::{self, core::*, playwright::*, prelude::*},
+    imp::{self, core::*, prelude::*},
     selectors::Selectors,
-    Error
+    utils::DeviceDescriptor
 };
 use std::{io, process::Command};
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Connection(#[from] crate::imp::core::ConnectionError),
+    #[error(transparent)]
+    ConnectionRc(#[from] Rc<crate::imp::core::ConnectionError>),
+    #[error("Failed to intialize")]
+    Initialization,
+    #[error(transparent)]
+    Timeout(#[from] TimeoutError)
+}
 
 #[derive(Debug, thiserror::Error)]
 #[error("")]

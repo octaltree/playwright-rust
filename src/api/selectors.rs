@@ -9,7 +9,7 @@ impl Selectors {
     pub(crate) fn new(inner: Rweak<selectors::Selectors>) -> Self { Self { inner } }
 
     pub async fn register(
-        &self,
+        &mut self,
         name: &str,
         script: &str,
         content_script: bool
