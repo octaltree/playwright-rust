@@ -1,7 +1,5 @@
 use crate::{
-    browser_type::BrowserType,
     imp::{self, core::*, prelude::*},
-    selectors::Selectors,
     utils::DeviceDescriptor
 };
 use std::{io, process::Command};
@@ -27,7 +25,7 @@ pub struct TimeoutError {}
 pub struct Playwright {
     driver: Driver,
     _conn: Arc<Mutex<Connection>>,
-    _stopper: Stopper,
+    _running: Running,
     inner: Weak<imp::playwright::Playwright>
 }
 
@@ -40,12 +38,12 @@ impl Playwright {
 
     /// Constructs from installed playwright driver
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
-        let (conn, stopper) = driver.connect().await?;
-        let p = Connection::wait_initial_object(Arc::downgrade(&conn)).await?;
+        let (conn, running) = Connection::run(&driver.executable())?;
+        let p = imp::playwright::Playwright::wait_initial_object(&conn).await?;
         Ok(Self {
             driver,
             _conn: conn,
-            _stopper: stopper,
+            _running: running,
             inner: p
         })
     }
@@ -58,30 +56,30 @@ impl Playwright {
         Ok(())
     }
 
-    /// Launcher
-    pub fn chromium(&self) -> BrowserType {
-        let inner = weak_and_then(&self.inner, |rc| rc.chromium.clone());
-        BrowserType::new(inner)
-    }
+    ///// Launcher
+    // pub fn chromium(&self) -> BrowserType {
+    //    let inner = weak_and_then(&self.inner, |rc| rc.chromium.clone());
+    //    BrowserType::new(inner)
+    //}
 
-    /// Launcher
-    pub fn firefox(&self) -> BrowserType {
-        let inner = weak_and_then(&self.inner, |rc| rc.firefox.clone());
-        BrowserType::new(inner)
-    }
+    ///// Launcher
+    // pub fn firefox(&self) -> BrowserType {
+    //    let inner = weak_and_then(&self.inner, |rc| rc.firefox.clone());
+    //    BrowserType::new(inner)
+    //}
 
-    /// Launcher
-    pub fn webkit(&self) -> BrowserType {
-        let inner = weak_and_then(&self.inner, |rc| rc.webkit.clone());
-        BrowserType::new(inner)
-    }
+    ///// Launcher
+    // pub fn webkit(&self) -> BrowserType {
+    //    let inner = weak_and_then(&self.inner, |rc| rc.webkit.clone());
+    //    BrowserType::new(inner)
+    //}
 
     pub fn driver(&mut self) -> &mut Driver { &mut self.driver }
 
-    pub fn selectors(&self) -> Selectors {
-        let inner = weak_and_then(&self.inner, |rc| rc.selectors.clone());
-        Selectors::new(inner)
-    }
+    // pub fn selectors(&self) -> Selectors {
+    //    let inner = weak_and_then(&self.inner, |rc| rc.selectors.clone());
+    //    Selectors::new(inner)
+    //}
 
     pub fn devices(&self) -> Vec<DeviceDescriptor> {
         upgrade(&self.inner).unwrap().devices().to_vec()

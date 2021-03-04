@@ -50,10 +50,6 @@ impl Driver {
             Platform::Win32x64 => self.path.join("playwright.cmd")
         }
     }
-
-    pub(crate) async fn connect(&self) -> io::Result<(Arc<Mutex<Connection>>, Stopper)> {
-        Connection::try_new(&self.executable()).await
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

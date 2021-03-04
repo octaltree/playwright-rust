@@ -87,19 +87,19 @@ impl ChannelOwner {
         }
     }
 
-    pub(crate) async fn send_message(
-        &self,
-        r: RequestBody
-    ) -> Result<WaitMessage, ConnectionError> {
-        let w = WaitMessage::new(self.conn.clone());
-        let r = r.set_wait(&w);
-        // self.tx
-        //    .unbounded_send(r)
-        //    .map_err(|_| ConnectionError::Channel)?;
-        let conn = upgrade(&self.conn)?;
-        conn.lock().unwrap().send_message(r).await?;
-        Ok(w)
-    }
+    // pub(crate) async fn send_message(
+    //    &self,
+    //    r: RequestBody
+    //) -> Result<WaitMessage, ConnectionError> {
+    //    let w = WaitMessage::new(self.conn.clone());
+    //    let r = r.set_wait(&w);
+    //    // self.tx
+    //    //    .unbounded_send(r)
+    //    //    .map_err(|_| ConnectionError::Channel)?;
+    //    let conn = upgrade(&self.conn)?;
+    //    conn.lock().unwrap().send_message(r).await?;
+    //    Ok(w)
+    //}
 }
 
 #[derive(Debug)]
@@ -148,32 +148,35 @@ pub(crate) trait RemoteObject: Any + Debug {
 #[derive(Debug)]
 pub(crate) enum RemoteArc {
     Dummy(Arc<DummyObject>),
-    Root(Arc<RootObject>) /* Playwright(Arc<imp::playwright::Playwright>),
-                           * BrowserType(Arc<imp::browser_type::BrowserType>),
-                           * Selectors(Arc<imp::selectors::Selectors>),
-                           * Browser(Arc<imp::browser::Browser>),
-                           * BrowserContext(Arc<imp::browser_context::BrowserContext>) */
+    Root(Arc<RootObject>),
+    // BrowserType(Arc<imp::browser_type::BrowserType>),
+    // Selectors(Arc<imp::selectors::Selectors>),
+    // Browser(Arc<imp::browser::Browser>),
+    // BrowserContext(Arc<imp::browser_context::BrowserContext>)
+    Playwright(Arc<imp::playwright::Playwright>)
 }
 
 #[derive(Debug)]
 pub(crate) enum RemoteWeak {
     Dummy(Weak<DummyObject>),
-    Root(Weak<RootObject>) /* Playwright(Weak<imp::playwright::Playwright>),
-                            * BrowserType(Weak<imp::browser_type::BrowserType>),
-                            * Selectors(Weak<imp::selectors::Selectors>),
-                            * Browser(Weak<imp::browser::Browser>),
-                            * BrowserContext(Weak<imp::browser_context::BrowserContext>) */
+    Root(Weak<RootObject>),
+    // BrowserType(Weak<imp::browser_type::BrowserType>),
+    // Selectors(Weak<imp::selectors::Selectors>),
+    // Browser(Weak<imp::browser::Browser>),
+    // BrowserContext(Weak<imp::browser_context::BrowserContext>)
+    Playwright(Weak<imp::playwright::Playwright>)
 }
 
 impl RemoteArc {
     pub(crate) fn downgrade(&self) -> RemoteWeak {
         match self {
             Self::Dummy(x) => RemoteWeak::Dummy(Arc::downgrade(x)),
-            Self::Root(x) => RemoteWeak::Root(Arc::downgrade(x)) /* Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x)),
-                                                                  * Self::BrowserType(x) => RemoteWeak::BrowserType(Arc::downgrade(x)),
-                                                                  * Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
-                                                                  * Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
-                                                                  * Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x)) */
+            Self::Root(x) => RemoteWeak::Root(Arc::downgrade(x)),
+            // Self::BrowserType(x) => RemoteWeak::BrowserType(Arc::downgrade(x)),
+            // Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
+            // Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
+            // Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x))
+            Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x))
         }
     }
 
@@ -258,58 +261,58 @@ impl WaitMessage {
     }
 }
 
-impl Future for WaitMessage {
-    type Output = WaitMessageResult;
+// impl Future for WaitMessage {
+//    type Output = WaitMessageResult;
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let this = self.get_mut();
-        log::trace!("poll WaitMessage");
-        macro_rules! pending {
-            () => {{
-                cx.waker().wake_by_ref();
-                return Poll::Pending;
-            }};
-        }
-        {
-            let x = match this.place.try_lock() {
-                Ok(x) => x,
-                Err(TryLockError::WouldBlock) => pending!(),
-                Err(e) => Err(e).unwrap()
-            };
-            // log::trace!("lock success");
-            if let Some(x) = &*x {
-                return Poll::Ready(x.clone());
-            }
-        }
-        {
-            let mut x = match this.waker.try_lock() {
-                Ok(x) => x,
-                Err(TryLockError::WouldBlock) => pending!(),
-                Err(e) => Err(e).unwrap()
-            };
-            if x.is_none() {
-                log::trace!("set waker");
-                *x = Some(cx.waker().clone());
-            }
-        }
+//    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+//        let this = self.get_mut();
+//        log::trace!("poll WaitMessage");
+//        macro_rules! pending {
+//            () => {{
+//                cx.waker().wake_by_ref();
+//                return Poll::Pending;
+//            }};
+//        }
+//        {
+//            let x = match this.place.try_lock() {
+//                Ok(x) => x,
+//                Err(TryLockError::WouldBlock) => pending!(),
+//                Err(e) => Err(e).unwrap()
+//            };
+//            // log::trace!("lock success");
+//            if let Some(x) = &*x {
+//                return Poll::Ready(x.clone());
+//            }
+//        }
+//        {
+//            let mut x = match this.waker.try_lock() {
+//                Ok(x) => x,
+//                Err(TryLockError::WouldBlock) => pending!(),
+//                Err(e) => Err(e).unwrap()
+//            };
+//            if x.is_none() {
+//                log::trace!("set waker");
+//                *x = Some(cx.waker().clone());
+//            }
+//        }
 
-        let rc = upgrade(&this.conn)?;
-        let mut c = match rc.try_lock() {
-            Ok(x) => x,
-            Err(TryLockError::WouldBlock) => pending!(),
-            Err(e) => Err(e).unwrap()
-        };
-        let c: Pin<&mut Connection> = Pin::new(&mut c);
-        match c.poll_next(cx) {
-            Poll::Ready(None) => Poll::Ready(Err(Arc::new(ConnectionError::ReceiverClosed))),
-            Poll::Pending => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
-            Poll::Ready(Some(())) => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
-        }
-    }
-}
+//        let rc = upgrade(&this.conn)?;
+//        let mut c = match rc.try_lock() {
+//            Ok(x) => x,
+//            Err(TryLockError::WouldBlock) => pending!(),
+//            Err(e) => Err(e).unwrap()
+//        };
+//        let c: Pin<&mut Connection> = Pin::new(&mut c);
+//        match c.poll_next(cx) {
+//            Poll::Ready(None) => Poll::Ready(Err(Arc::new(ConnectionError::ReceiverClosed))),
+//            Poll::Pending => {
+//                cx.waker().wake_by_ref();
+//                Poll::Pending
+//            }
+//            Poll::Ready(Some(())) => {
+//                cx.waker().wake_by_ref();
+//                Poll::Pending
+//            }
+//        }
+//    }
+//}

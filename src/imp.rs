@@ -1,3 +1,6 @@
+pub(crate) mod impl_future {
+    pub use std::{future::Future, pin::Pin, task::Context};
+}
 pub(crate) mod prelude {
     pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
     pub use serde::{Deserialize, Serialize};
@@ -9,11 +12,22 @@ pub(crate) mod prelude {
         cell::RefCell,
         collections::HashMap,
         convert::{TryFrom, TryInto},
+        future::Future,
         path::{Path, PathBuf},
+        pin::Pin,
         sync::{Arc, Mutex, Weak},
-        task::Waker
+        task::{Poll, Waker}
     };
     pub use strong::*;
+    pub type Wm<T> = Weak<Mutex<T>>;
+    pub type Am<T> = Arc<Mutex<T>>;
+
+    #[cfg(feature = "rt-actix")]
+    pub use actix_rt::spawn;
+    #[cfg(feature = "rt-async-std")]
+    pub use async_std::task::spawn;
+    #[cfg(feature = "rt-tokio")]
+    pub use tokio::task::spawn;
 }
 
 #[macro_use]
@@ -56,7 +70,7 @@ pub(crate) mod core {
 }
 
 // pub(crate) mod browser_type;
-// pub(crate) mod playwright;
+pub(crate) mod playwright;
 // pub(crate) mod selectors;
 
 // pub(crate) mod browser;

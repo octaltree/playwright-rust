@@ -5,27 +5,37 @@ extern crate serde;
 // pub mod remote_objects;
 // pub mod api;
 
-// mod api;
+mod api;
 mod imp;
-// pub use api::*;
+pub use api::*;
 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! runtime_test {
     ($name:tt, $main:stmt) => {
+        #[cfg(feature = "rt-tokio")]
         #[test]
         fn $name() {
             env_logger::builder().is_test(true).try_init().ok();
-            log::trace!("actix");
-            actix_rt::System::new().block_on(async { $main });
-            log::trace!("tokio");
             tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
                 .unwrap()
                 .block_on(async { $main });
-            // log::trace!("async_std");
-            // async_std::task::block_on(async { $main });
+        }
+
+        #[cfg(feature = "rt-actix")]
+        #[test]
+        fn $name() {
+            env_logger::builder().is_test(true).try_init().ok();
+            actix_rt::System::new().block_on(async { $main });
+        }
+
+        #[cfg(feature = "rt-async-std")]
+        #[test]
+        fn $name() {
+            env_logger::builder().is_test(true).try_init().ok();
+            async_std::task::block_on(async { $main });
         }
     };
 }

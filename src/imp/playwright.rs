@@ -1,16 +1,16 @@
 use crate::{
-    imp::{browser_type::BrowserType, core::*, prelude::*, selectors::Selectors},
+    imp::{core::*, impl_future::*, prelude::*},
     utils::DeviceDescriptor
 };
 use serde::Deserialize;
+use std::sync::TryLockError;
 
 #[derive(Debug)]
 pub(crate) struct Playwright {
-    channel: ChannelOwner,
-    pub(crate) chromium: Weak<BrowserType>,
-    pub(crate) firefox: Weak<BrowserType>,
-    pub(crate) webkit: Weak<BrowserType>,
-    pub(crate) selectors: Weak<Selectors>,
+    channel: ChannelOwner, /* pub(crate) chromium: Weak<BrowserType>,
+                            * pub(crate) firefox: Weak<BrowserType>,
+                            * pub(crate) webkit: Weak<BrowserType>,
+                            * pub(crate) selectors: Weak<Selectors>, */
     pub(crate) devices: Vec<DeviceDescriptor>
 }
 
@@ -20,22 +20,26 @@ impl Playwright {
         channel: ChannelOwner
     ) -> Result<Self, ConnectionError> {
         let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
-        let chromium = find_object!(conn, &i.chromium.guid, BrowserType)?;
-        let firefox = find_object!(conn, &i.firefox.guid, BrowserType)?;
-        let webkit = find_object!(conn, &i.webkit.guid, BrowserType)?;
-        let selectors = find_object!(conn, &i.selectors.guid, Selectors)?;
+        // let chromium = find_object!(conn, &i.chromium.guid, BrowserType)?;
+        // let firefox = find_object!(conn, &i.firefox.guid, BrowserType)?;
+        // let webkit = find_object!(conn, &i.webkit.guid, BrowserType)?;
+        // let selectors = find_object!(conn, &i.selectors.guid, Selectors)?;
         let devices = i.device_descriptors;
         Ok(Self {
             channel,
-            chromium,
-            firefox,
-            webkit,
-            selectors,
-            devices
+            devices /* chromium,
+                     * firefox,
+                     * webkit,
+                     * selectors,
+                     * devices */
         })
     }
 
     pub(crate) fn devices(&self) -> &[DeviceDescriptor] { &self.devices }
+
+    pub(crate) fn wait_initial_object(conn: &Am<Connection>) -> WaitInitialObject {
+        WaitInitialObject(Arc::downgrade(conn))
+    }
 }
 
 impl RemoteObject for Playwright {
@@ -65,11 +69,13 @@ impl Future for WaitInitialObject {
     type Output = Result<Weak<Playwright>, ConnectionError>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        log::trace!("poll WaitInitialObject");
         let i: &S<Guid> = S::validate("Playwright").unwrap();
         // TODO: timeout
         let this = self.get_mut();
         let rc = upgrade(&this.0)?;
-        let mut c = match rc.try_lock() {
+        log::trace!("lock");
+        let c = match rc.try_lock() {
             Ok(x) => x,
             Err(TryLockError::WouldBlock) => {
                 cx.waker().wake_by_ref();
@@ -77,23 +83,10 @@ impl Future for WaitInitialObject {
             }
             Err(e) => Err(e).unwrap()
         };
-        let p = c.get_object(i);
-        match p {
-            Some(RemoteWeak::Playwright(p)) => return Poll::Ready(Ok(p)),
-            Some(_) => return Poll::Ready(Err(ConnectionError::ObjectNotFound)),
-            None => {
-                // cx.waker().wake_by_ref();
-                // return Poll::Pending;
-            }
-        }
-        let c: Pin<&mut Connection> = Pin::new(&mut c);
-        match c.poll_next(cx) {
-            Poll::Ready(None) => Poll::Ready(Err(ConnectionError::ReceiverClosed)),
-            Poll::Pending => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
-            Poll::Ready(Some(())) => {
+        log::trace!("success lock");
+        match find_object!(c, i, Playwright) {
+            Ok(p) => Poll::Ready(Ok(p)),
+            Err(_) => {
                 cx.waker().wake_by_ref();
                 Poll::Pending
             }

@@ -8,6 +8,9 @@ build = "src/build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[build-dependencies]
+reqwest = { version = "0.11.1", features = ["blocking"] }
+
 [dependencies]
 futures = "0.3.13"
 log = "0.4.14"
@@ -17,14 +20,16 @@ zip = "0.5.10"
 strong = { version = "0.3.3", features = ["serde", "shorthand"] }
 thiserror = "1.0.24"
 downcast-rs = "1.2.0"
-tokio = { version = "1.2.0", features = ["process"] }
+tokio = { version = "1.2.0", features = ["process", "sync"] }
+actix-rt = { version = "2.0.2", optional = true }
+async-std = { version = "1.9.0", features = ["attributes"], optional = true }
 dirs = "3.0.1"
-
-[build-dependencies]
-reqwest = { version = "0.11.1", features = ["blocking"] }
 
 [dev-dependencies]
 env_logger = "0.8.3"
-actix-rt = "2.0.2"
-tokio = { version = "1.2.0", features = ["macros"] }
-#async-std = { version = "1.9.0", features = ["attributes"] }
+
+[features]
+default = ["rt-actix"]
+rt-tokio = []
+rt-actix = ["actix-rt"]
+rt-async-std = ["async-std"]

@@ -1,14 +1,11 @@
 use crate::imp::core::*;
-use futures::{
-    stream::Stream,
-    task::{Context, Poll}
-};
-use std::{convert::TryInto, io, pin::Pin};
-use thiserror::Error;
-use tokio::{
-    io::{AsyncRead, AsyncWriteExt, ReadBuf},
+use std::{
+    convert::TryInto,
+    io,
+    io::{Read, Write},
     process::{ChildStdin, ChildStdout}
 };
+use thiserror::Error;
 
 #[derive(Debug)]
 pub(crate) struct Transport {
@@ -19,7 +16,7 @@ pub(crate) struct Transport {
 }
 
 #[derive(Error, Debug)]
-pub enum SendError {
+pub enum TransportError {
     #[error(transparent)]
     Serde(#[from] serde_json::error::Error),
     #[error(transparent)]
@@ -29,7 +26,7 @@ pub enum SendError {
 impl Transport {
     const BUFSIZE: usize = 10000;
 
-    pub(crate) fn try_new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
+    pub(super) fn try_new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
         Transport {
             stdin,
             stdout,
@@ -38,29 +35,20 @@ impl Transport {
         }
     }
 
-    pub(crate) async fn send(&mut self, req: &Request<'_, '_>) -> Result<(), SendError> {
+    pub(super) fn send(&mut self, req: &Request<'_, '_>) -> Result<(), TransportError> {
+        log::debug!("SEND>{:?}", &req);
         let serialized = serde_json::to_vec(&req)?;
-        log::debug!("SEND>{:?}", &serialized);
         let length = serialized.len() as u32;
         let mut bytes = length.to_le_bytes().to_vec();
         bytes.extend(serialized);
-        self.stdin.write(&bytes).await?;
-        log::trace!("success send");
+        self.stdin.write_all(&bytes)?;
+        log::trace!("success sending");
         Ok(())
     }
-}
-
-impl Stream for Transport {
-    type Item = Response;
 
     // TODO: memory performance
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let this: &mut Self = self.get_mut();
-        macro_rules! pending {
-            () => {{
-                return Poll::Pending;
-            }};
-        }
+    pub(super) fn try_read(&mut self) -> Result<Option<Response>, TransportError> {
+        let this = self;
         {
             if this.length.is_none() && this.buf.len() >= 4 {
                 let off = this.buf.split_off(4);
@@ -74,82 +62,18 @@ impl Stream for Transport {
                 Some(l) => {
                     let bytes: &[u8] = &this.buf[..l];
                     log::debug!("RECV>{}", unsafe { std::str::from_utf8_unchecked(bytes) });
-                    let msg: Response = match serde_json::from_slice(bytes) {
-                        Err(e) => {
-                            log::error!("{:?}", e);
-                            return Poll::Ready(None);
-                        }
-                        Ok(r) => r
-                    };
+                    let msg: Response = serde_json::from_slice(bytes)?;
                     this.length = None;
                     this.buf = this.buf[l..].to_owned();
-                    return Poll::Ready(Some(msg));
+                    return Ok(Some(msg));
                 }
             }
         }
         {
             let mut buf = [0; Self::BUFSIZE];
-            let mut buf = ReadBuf::new(&mut buf);
-            // TODO: error with async_std
-            match Pin::new(&mut this.stdout).poll_read(cx, &mut buf) {
-                Poll::Pending => pending!(),
-                Poll::Ready(Ok(())) => {
-                    this.buf.extend(buf.filled());
-                }
-                Poll::Ready(Err(e)) => {
-                    log::error!("{:?}", e);
-                    return Poll::Ready(None);
-                }
-            };
+            let n = this.stdout.read(&mut buf)?;
+            this.buf.extend(&buf[..n]);
         }
-        pending!();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::imp::{core::*, prelude::*};
-    use futures::stream::StreamExt;
-    use std::env;
-
-    #[tokio::test]
-    async fn tokio_read() {
-        env_logger::builder().is_test(true).try_init().ok();
-        let driver = Driver::install().unwrap();
-        let (conn, _stopper) = driver.connect().await.unwrap();
-        let c = &mut conn.lock().unwrap();
-        let t = &mut c.transport;
-        if let Some(x) = t.next().await {
-            dbg!(x);
-        }
-    }
-
-    #[actix_rt::test]
-    async fn actix_read() {
-        env_logger::builder().is_test(true).try_init().ok();
-        let driver = Driver::install().unwrap();
-        let (conn, _stopper) = driver.connect().await.unwrap();
-        let c: &mut Connection = &mut conn.lock().unwrap();
-        let t = &mut c.transport;
-        if let Some(x) = t.next().await {
-            dbg!(x);
-        }
-    }
-
-    #[actix_rt::test]
-    async fn actix_write() {
-        env_logger::builder().is_test(true).try_init().ok();
-        let driver = Driver::install().unwrap();
-        let (conn, _stopper) = driver.connect().await.unwrap();
-        let c: &mut Connection = &mut conn.lock().unwrap();
-        let t = &mut c.transport;
-        t.send(&Request {
-            id: 1,
-            guid: "".try_into().unwrap(),
-            method: "a".try_into().unwrap(),
-            params: Map::default()
-        })
-        .await
-        .unwrap();
+        Ok(None)
     }
 }
