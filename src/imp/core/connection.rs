@@ -236,7 +236,10 @@ impl Context {
         self.objects.get(k).map(|r| r.downgrade())
     }
 
-    fn send_message(&mut self, r: RequestBody) -> Result<(), ConnectionError> {
+    pub(in crate::imp::core) fn send_message(
+        &mut self,
+        r: RequestBody
+    ) -> Result<(), ConnectionError> {
         self.id += 1;
         let RequestBody {
             guid,

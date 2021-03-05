@@ -70,12 +70,12 @@ pub(crate) mod core {
     pub use transport::*;
 }
 
-// pub(crate) mod browser_type;
+pub(crate) mod browser_type;
 pub(crate) mod playwright;
-// pub(crate) mod selectors;
+pub(crate) mod selectors;
 
-// pub(crate) mod browser;
-// pub(crate) mod browser_context;
+pub(crate) mod browser;
+pub(crate) mod browser_context;
 // pub(crate) mod cdp_session;
 // pub(crate) mod console_manager;
 // pub(crate) mod dialog;

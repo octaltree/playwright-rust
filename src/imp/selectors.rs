@@ -42,15 +42,14 @@ struct RegisterArgs<'a, 'b> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::imp::playwright::Playwright;
 
     crate::runtime_test!(register, {
         let driver = Driver::install().unwrap();
-        let (conn, _stopper) = driver.connect().await.unwrap();
-        let p = Connection::wait_initial_object(Arc::downgrade(&conn))
-            .await
-            .unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
-        let s: Arc<Selectors> = p.selectors.upgrade().unwrap();
+        let s: Arc<Selectors> = p.selectors().upgrade().unwrap();
         let fut = s.register("foo", "()", false);
         log::trace!("fut");
         let res = fut.await;

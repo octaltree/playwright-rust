@@ -26,7 +26,6 @@ where
 
 pub(crate) struct ChannelOwner {
     pub(crate) ctx: Weak<Mutex<Context>>,
-    // pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
@@ -47,7 +46,6 @@ impl Debug for ChannelOwner {
 impl ChannelOwner {
     pub(crate) fn new(
         ctx: Weak<Mutex<Context>>,
-        // tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
         typ: Str<ObjectType>,
         guid: Str<Guid>,
@@ -63,7 +61,6 @@ impl ChannelOwner {
     }
 
     pub(crate) fn new_root() -> Self {
-        // let (tx, _) = mpsc::unbounded();
         Self {
             ctx: Weak::new(),
             parent: None,
@@ -82,19 +79,16 @@ impl ChannelOwner {
         }
     }
 
-    // pub(crate) async fn send_message(
-    //    &self,
-    //    r: RequestBody
-    //) -> Result<WaitMessage, ConnectionError> {
-    //    let w = WaitMessage::new(self.conn.clone());
-    //    let r = r.set_wait(&w);
-    //    // self.tx
-    //    //    .unbounded_send(r)
-    //    //    .map_err(|_| ConnectionError::Channel)?;
-    //    let conn = upgrade(&self.conn)?;
-    //    conn.lock().unwrap().send_message(r).await?;
-    //    Ok(w)
-    //}
+    pub(crate) async fn send_message(
+        &self,
+        r: RequestBody
+    ) -> Result<WaitData<WaitMessageResult>, ConnectionError> {
+        let wait = WaitData::new();
+        let r = r.set_wait(&wait);
+        let ctx = upgrade(&self.ctx)?;
+        ctx.lock().unwrap().send_message(r)?;
+        Ok(wait)
+    }
 }
 
 #[derive(Debug)]
@@ -144,10 +138,10 @@ pub(crate) trait RemoteObject: Any + Debug {
 pub(crate) enum RemoteArc {
     Dummy(Arc<DummyObject>),
     Root(Arc<RootObject>),
-    // BrowserType(Arc<imp::browser_type::BrowserType>),
-    // Selectors(Arc<imp::selectors::Selectors>),
-    // Browser(Arc<imp::browser::Browser>),
-    // BrowserContext(Arc<imp::browser_context::BrowserContext>)
+    BrowserType(Arc<imp::browser_type::BrowserType>),
+    Selectors(Arc<imp::selectors::Selectors>),
+    Browser(Arc<imp::browser::Browser>),
+    BrowserContext(Arc<imp::browser_context::BrowserContext>),
     Playwright(Arc<imp::playwright::Playwright>)
 }
 
@@ -155,10 +149,10 @@ pub(crate) enum RemoteArc {
 pub(crate) enum RemoteWeak {
     Dummy(Weak<DummyObject>),
     Root(Weak<RootObject>),
-    // BrowserType(Weak<imp::browser_type::BrowserType>),
-    // Selectors(Weak<imp::selectors::Selectors>),
-    // Browser(Weak<imp::browser::Browser>),
-    // BrowserContext(Weak<imp::browser_context::BrowserContext>)
+    BrowserType(Weak<imp::browser_type::BrowserType>),
+    Selectors(Weak<imp::selectors::Selectors>),
+    Browser(Weak<imp::browser::Browser>),
+    BrowserContext(Weak<imp::browser_context::BrowserContext>),
     Playwright(Weak<imp::playwright::Playwright>)
 }
 
@@ -167,10 +161,10 @@ impl RemoteArc {
         match self {
             Self::Dummy(x) => RemoteWeak::Dummy(Arc::downgrade(x)),
             Self::Root(x) => RemoteWeak::Root(Arc::downgrade(x)),
-            // Self::BrowserType(x) => RemoteWeak::BrowserType(Arc::downgrade(x)),
-            // Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
-            // Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
-            // Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x))
+            Self::BrowserType(x) => RemoteWeak::BrowserType(Arc::downgrade(x)),
+            Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
+            Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
+            Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x)),
             Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x))
         }
     }
@@ -184,14 +178,14 @@ impl RemoteArc {
             "Playwright" => {
                 RemoteArc::Playwright(Arc::new(imp::playwright::Playwright::try_new(ctx, c)?))
             }
-            //"Selectors" => RemoteArc::Selectors(Arc::new(imp::selectors::Selectors::new(c))),
-            //"BrowserType" => {
-            //    RemoteArc::BrowserType(Arc::new(imp::browser_type::BrowserType::try_new(c)?))
-            //}
-            //"Browser" => RemoteArc::Browser(Arc::new(imp::browser::Browser::try_new(c)?)),
-            //"BrowserContext" => RemoteArc::BrowserContext(Arc::new(
-            //    imp::browser_context::BrowserContext::try_new(c)?
-            //)),
+            "Selectors" => RemoteArc::Selectors(Arc::new(imp::selectors::Selectors::new(c))),
+            "BrowserType" => {
+                RemoteArc::BrowserType(Arc::new(imp::browser_type::BrowserType::try_new(c)?))
+            }
+            "Browser" => RemoteArc::Browser(Arc::new(imp::browser::Browser::try_new(c)?)),
+            "BrowserContext" => RemoteArc::BrowserContext(Arc::new(
+                imp::browser_context::BrowserContext::try_new(c)?
+            )),
             _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)

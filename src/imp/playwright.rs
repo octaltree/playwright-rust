@@ -1,5 +1,5 @@
 use crate::{
-    imp::{core::*, impl_future::*, prelude::*},
+    imp::{browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors},
     utils::DeviceDescriptor
 };
 use serde::Deserialize;
@@ -7,32 +7,41 @@ use std::sync::TryLockError;
 
 #[derive(Debug)]
 pub(crate) struct Playwright {
-    channel: ChannelOwner, /* pub(crate) chromium: Weak<BrowserType>,
-                            * pub(crate) firefox: Weak<BrowserType>,
-                            * pub(crate) webkit: Weak<BrowserType>,
-                            * pub(crate) selectors: Weak<Selectors>, */
-    pub(crate) devices: Vec<DeviceDescriptor>
+    channel: ChannelOwner,
+    chromium: Weak<BrowserType>,
+    firefox: Weak<BrowserType>,
+    webkit: Weak<BrowserType>,
+    selectors: Weak<Selectors>,
+    devices: Vec<DeviceDescriptor>
 }
 
 impl Playwright {
-    pub(crate) fn try_new(conn: &Context, channel: ChannelOwner) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, ConnectionError> {
         let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
-        // let chromium = find_object!(conn, &i.chromium.guid, BrowserType)?;
-        // let firefox = find_object!(conn, &i.firefox.guid, BrowserType)?;
-        // let webkit = find_object!(conn, &i.webkit.guid, BrowserType)?;
-        // let selectors = find_object!(conn, &i.selectors.guid, Selectors)?;
+        let chromium = find_object!(ctx, &i.chromium.guid, BrowserType)?;
+        let firefox = find_object!(ctx, &i.firefox.guid, BrowserType)?;
+        let webkit = find_object!(ctx, &i.webkit.guid, BrowserType)?;
+        let selectors = find_object!(ctx, &i.selectors.guid, Selectors)?;
         let devices = i.device_descriptors;
         Ok(Self {
             channel,
-            devices /* chromium,
-                     * firefox,
-                     * webkit,
-                     * selectors,
-                     * devices */
+            devices,
+            chromium,
+            firefox,
+            webkit,
+            selectors
         })
     }
 
     pub(crate) fn devices(&self) -> &[DeviceDescriptor] { &self.devices }
+
+    pub(crate) fn chromium(&self) -> Weak<BrowserType> { self.chromium.clone() }
+
+    pub(crate) fn firefox(&self) -> Weak<BrowserType> { self.firefox.clone() }
+
+    pub(crate) fn webkit(&self) -> Weak<BrowserType> { self.webkit.clone() }
+
+    pub(crate) fn selectors(&self) -> Weak<Selectors> { self.selectors.clone() }
 
     pub(crate) fn wait_initial_object(conn: &Connection) -> WaitInitialObject {
         WaitInitialObject(conn.context())

@@ -32,7 +32,7 @@ impl BrowserType {
             browser: OnlyGuid { guid }
         } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
         let b = find_object!(
-            upgrade(&self.channel().conn)?.lock().unwrap(),
+            upgrade(&self.channel().ctx)?.lock().unwrap(),
             &guid,
             Browser
         )?;
@@ -50,7 +50,7 @@ impl BrowserType {
             browser_context: OnlyGuid { guid }
         } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
         let b = find_object!(
-            upgrade(&self.channel().conn)?.lock().unwrap(),
+            upgrade(&self.channel().ctx)?.lock().unwrap(),
             &guid,
             BrowserContext
         )?;
@@ -150,15 +150,14 @@ struct LaunchPersistentContextResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::imp::playwright::Playwright;
 
     crate::runtime_test!(launch, {
         let driver = Driver::install().unwrap();
-        let (conn, _stopper) = driver.connect().await.unwrap();
-        let p = Connection::wait_initial_object(Arc::downgrade(&conn))
-            .await
-            .unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
-        let chromium = p.chromium.upgrade().unwrap();
+        let chromium = p.chromium().upgrade().unwrap();
         let res = chromium.launch(LaunchArgs::default()).await;
         dbg!(&res);
         res.unwrap();
