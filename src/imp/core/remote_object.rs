@@ -132,6 +132,9 @@ pub(crate) trait RemoteObject: Any + Debug {
     fn channel_mut(&mut self) -> &mut ChannelOwner;
 
     fn guid(&self) -> &S<Guid> { &self.channel().guid }
+    fn context(&self) -> Result<Arc<Mutex<Context>>, ConnectionError> {
+        upgrade(&self.channel().ctx)
+    }
 }
 
 #[derive(Debug)]

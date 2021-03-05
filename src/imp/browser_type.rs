@@ -1,7 +1,4 @@
-use crate::{
-    api::browser_type::LaunchArgs,
-    imp::{browser::Browser, browser_context::BrowserContext, core::*, prelude::*}
-};
+use crate::imp::{browser::Browser, browser_context::BrowserContext, core::*, prelude::*};
 
 #[derive(Debug)]
 pub(crate) struct BrowserType {
@@ -34,11 +31,7 @@ impl BrowserType {
         let LaunchResponse {
             browser: OnlyGuid { guid }
         } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
-        let b = find_object!(
-            upgrade(&self.channel().ctx)?.lock().unwrap(),
-            &guid,
-            Browser
-        )?;
+        let b = find_object!(self.context()?.lock().unwrap(), &guid, Browser)?;
         Ok(b)
     }
 
@@ -59,6 +52,30 @@ impl BrowserType {
         )?;
         Ok(b)
     }
+}
+
+// TODO: インポート必要なの辛いよね
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct LaunchArgs<'a, 'b, 'c> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "executablePath")]
+    executable: Option<&'a Path>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    args: Option<&'b [&'c str]> /* ignore_default_args
+                                 * ignoreDefaultArgs: Union[bool, List[str]] = None,
+                                 * handleSIGINT: bool = None,
+                                 * handleSIGTERM: bool = None,
+                                 * handleSIGHUP: bool = None,
+                                 * timeout: float = None,
+                                 * env: Env = None,
+                                 * headless: bool = None,
+                                 * devtools: bool = None,
+                                 * proxy: ProxySettings = None,
+                                 * downloadsPath: Union[str, Path] = None,
+                                 * slowMo: float = None,
+                                 * chromiumSandbox: bool = None,
+                                 * firefoxUserPrefs: Dict[str, Union[str, float, bool]] = None, */
 }
 
 impl RemoteObject for BrowserType {
