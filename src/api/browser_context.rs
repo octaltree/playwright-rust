@@ -1,10 +1,11 @@
 use crate::{
-    api::{
-        browser::Browser,
-        page::Page,
+    api::{browser::Browser, page::Page},
+    imp::{
+        self,
+        core::*,
+        prelude::*,
         utils::{Cookie, StorageState}
     },
-    imp::{self, core::*, prelude::*},
     Error
 };
 use std::time::Duration;

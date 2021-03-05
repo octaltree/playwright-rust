@@ -1,5 +1,4 @@
 pub mod playwright;
-pub mod utils;
 
 pub mod accessibility;
 pub mod browser;
@@ -22,6 +21,8 @@ pub mod selectors;
 pub mod video;
 pub mod websocket;
 pub mod worker;
+
+pub use crate::imp::utils::*;
 
 // pub use accessibility::Accessibility;
 // pub use browser::Browser;

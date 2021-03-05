@@ -1,10 +1,9 @@
 use crate::{
     api::{
         accessibility::Accessibility, browser_context::BrowserContext,
-        element_handle::ElementHandle, frame::Frame, input_device::*, utils::Viewport,
-        video::Video, worker::Worker
+        element_handle::ElementHandle, frame::Frame, input_device::*, video::Video, worker::Worker
     },
-    imp::{self, core::*, prelude::*},
+    imp::{self, core::*, prelude::*, utils::Viewport},
     Error
 };
 use std::time::Duration;

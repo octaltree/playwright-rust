@@ -1,15 +1,6 @@
 use crate::imp::prelude::*;
 
-#[derive(Debug, Clone)]
-pub struct DeviceDescriptor {
-    pub name: String,
-    pub user_agent: String,
-    pub viewport: Viewport,
-    pub device_scale_factor: f64,
-    pub is_mobile: bool,
-    pub has_touch: bool,
-    pub default_browser_type: String
-}
+pub use crate::imp::playwright::DeviceDescriptor;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Viewport {

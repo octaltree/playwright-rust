@@ -73,6 +73,7 @@ pub(crate) mod core {
 pub(crate) mod browser_type;
 pub(crate) mod playwright;
 pub(crate) mod selectors;
+pub(crate) mod utils;
 
 pub(crate) mod browser;
 pub(crate) mod browser_context;

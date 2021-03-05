@@ -1,6 +1,6 @@
-use crate::{
-    api::utils::DeviceDescriptor,
-    imp::{browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors}
+use crate::imp::{
+    browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors,
+    utils::Viewport
 };
 use serde::Deserialize;
 use std::sync::TryLockError;
@@ -94,5 +94,60 @@ impl Future for WaitInitialObject {
                 Poll::Pending
             }
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceDescriptor {
+    pub name: String,
+    pub user_agent: String,
+    pub viewport: Viewport,
+    pub device_scale_factor: f64,
+    pub is_mobile: bool,
+    pub has_touch: bool,
+    pub default_browser_type: String
+}
+
+impl<'de> Deserialize<'de> for DeviceDescriptor {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        struct DeviceDescriptorImpl {
+            name: String,
+            descriptor: Descriptor
+        }
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Descriptor {
+            user_agent: String,
+            viewport: Viewport,
+            device_scale_factor: f64,
+            is_mobile: bool,
+            has_touch: bool,
+            default_browser_type: String
+        }
+        let DeviceDescriptorImpl {
+            name,
+            descriptor:
+                Descriptor {
+                    user_agent,
+                    viewport,
+                    device_scale_factor,
+                    is_mobile,
+                    has_touch,
+                    default_browser_type
+                }
+        } = DeviceDescriptorImpl::deserialize(deserializer)?;
+        Ok(DeviceDescriptor {
+            name,
+            user_agent,
+            viewport,
+            device_scale_factor,
+            is_mobile,
+            has_touch,
+            default_browser_type
+        })
     }
 }

@@ -1,5 +1,6 @@
+pub use crate::imp::playwright::DeviceDescriptor;
 use crate::{
-    api::{browser_type::BrowserType, selectors::Selectors, utils::DeviceDescriptor},
+    api::{browser_type::BrowserType, selectors::Selectors},
     imp::{self, core::*, prelude::*}
 };
 use std::{io, process::Command};
