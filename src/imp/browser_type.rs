@@ -1,4 +1,7 @@
-use crate::imp::{browser::Browser, browser_context::BrowserContext, core::*, prelude::*};
+use crate::{
+    api::browser_type::LaunchArgs,
+    imp::{browser::Browser, browser_context::BrowserContext, core::*, prelude::*}
+};
 
 #[derive(Debug)]
 pub(crate) struct BrowserType {
@@ -69,29 +72,6 @@ struct Initializer {
     name: String,
     #[serde(rename = "executablePath")]
     executable: PathBuf
-}
-
-#[derive(Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct LaunchArgs<'a, 'b, 'c> {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "executablePath")]
-    executable: Option<&'a Path>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    args: Option<&'b [&'c str]> /* ignore_default_args
-                                 * ignoreDefaultArgs: Union[bool, List[str]] = None,
-                                 * handleSIGINT: bool = None,
-                                 * handleSIGTERM: bool = None,
-                                 * handleSIGHUP: bool = None,
-                                 * timeout: float = None,
-                                 * env: Env = None,
-                                 * headless: bool = None,
-                                 * devtools: bool = None,
-                                 * proxy: ProxySettings = None,
-                                 * downloadsPath: Union[str, Path] = None,
-                                 * slowMo: float = None,
-                                 * chromiumSandbox: bool = None,
-                                 * firefoxUserPrefs: Dict[str, Union[str, float, bool]] = None, */
 }
 
 #[derive(Deserialize)]

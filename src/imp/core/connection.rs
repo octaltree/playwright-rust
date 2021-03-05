@@ -198,9 +198,10 @@ impl Context {
                 }
                 if Method::is_dispose(&msg.method) {
                     self.objects.remove(&msg.guid);
+                    // TODO: dispose children and notify parent
                     return Ok(());
                 }
-                // object.channel.Emit(method, c.replaceGuidsWithChannels(msg.Params))
+                // TODO: object.channel.Emit(method, c.replaceGuidsWithChannels(msg.Params))
             }
         }
         Ok(())
@@ -286,7 +287,7 @@ mod tests {
         Connection::start(&conn);
     });
 
-    crate::runtime_test!(event, {
+    crate::runtime_test!(tokio_event, {
         let driver = Driver::install().unwrap();
         let conn = Connection::try_new(&driver.executable()).unwrap();
         Connection::start(&conn);
