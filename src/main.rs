@@ -3,13 +3,14 @@ use playwright::*;
 
 fn main() {
     env_logger::init();
-    tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(async {
-            let p = Playwright::initialize().await.unwrap(); // if drop all resources are disposed
-                                                             // p.prepare().unwrap(); // install browsers
+            let d = Driver::new(Driver::default_dest());
+            let p = Playwright::with_driver(d).await.unwrap(); // if drop all resources are disposed
+                                                               // p.prepare().unwrap(); // install browsers
         });
     //    let driver = Driver::install().unwrap();
     //    let envs = {

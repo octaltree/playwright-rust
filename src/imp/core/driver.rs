@@ -10,26 +10,27 @@ impl Driver {
     const ZIP: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), "/driver.zip"));
     const PLATFORM: &'static str = include_str!(concat!(env!("OUT_DIR"), "/platform"));
 
-    pub fn install() -> io::Result<Self> { Self::install_on(Self::default_dest()) }
-
-    pub fn install_on<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
-        let this = Self { path: path.into() };
+    pub fn install() -> io::Result<Self> {
+        let this = Self::new(Self::default_dest());
         if !this.path.is_dir() {
             this.prepare()?;
         }
         Ok(this)
     }
 
-    pub fn default_dest() -> PathBuf {
-        let tmp: PathBuf = dirs::cache_dir().unwrap_or_else(env::temp_dir);
-        let dir: PathBuf = tmp.join("ms-playwright/playwright-rust/driver");
-        dir
-    }
-
+    /// Without prepare
+    pub fn new<P: Into<PathBuf>>(path: P) -> Self { Self { path: path.into() } }
+    ///
     pub fn prepare(&self) -> Result<(), ZipError> {
         fs::create_dir_all(&self.path)?;
         let mut a = ZipArchive::new(io::Cursor::new(Self::ZIP))?;
         a.extract(&self.path)
+    }
+
+    pub fn default_dest() -> PathBuf {
+        let tmp: PathBuf = dirs::cache_dir().unwrap_or_else(env::temp_dir);
+        let dir: PathBuf = tmp.join("ms-playwright/playwright-rust/driver");
+        dir
     }
 
     pub fn platform(&self) -> Platform {

@@ -1,4 +1,4 @@
-use crate::imp::{self, core::*, prelude::*};
+use crate::imp::{self, core::*, impl_future::*, prelude::*};
 use serde_json::value::Value;
 use std::{
     any::Any,
@@ -78,8 +78,7 @@ impl ChannelOwner {
             guid: self.guid.clone(),
             method,
             params: Map::default(),
-            place: Weak::new(),
-            waker: Weak::new()
+            place: WaitPlaces::new_empty()
         }
     }
 
@@ -203,8 +202,7 @@ pub(crate) struct RequestBody {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
     pub(crate) params: Map<String, Value>,
-    pub(crate) place: Weak<Mutex<Option<WaitMessageResult>>>,
-    pub(crate) waker: Weak<Mutex<Option<Waker>>>
+    pub(crate) place: WaitPlaces<WaitMessageResult>
 }
 
 impl RequestBody {
@@ -229,9 +227,8 @@ impl RequestBody {
         Ok(self)
     }
 
-    pub(crate) fn set_wait(mut self, wait: &WaitMessage) -> Self {
-        self.place = Arc::downgrade(&wait.place);
-        self.waker = Arc::downgrade(&wait.waker);
+    pub(crate) fn set_wait(mut self, wait: &WaitData<WaitMessageResult>) -> Self {
+        self.place = wait.place();
         self
     }
 
@@ -243,72 +240,78 @@ impl RequestBody {
 
 pub(crate) type WaitMessageResult = Result<Result<Arc<Value>, Arc<Error>>, Arc<ConnectionError>>;
 
-pub(crate) struct WaitMessage {
-    place: Arc<Mutex<Option<WaitMessageResult>>>,
-    waker: Arc<Mutex<Option<Waker>>>,
-    conn: Weak<Mutex<Connection>>
+#[derive(Clone)]
+pub(crate) struct WaitPlaces<T> {
+    pub(crate) value: Wm<Option<T>>,
+    pub(crate) waker: Wm<Option<Waker>>
 }
 
-impl WaitMessage {
-    pub(crate) fn new(conn: Weak<Mutex<Connection>>) -> Self {
-        let place = Arc::new(Mutex::new(None));
-        let waker = Arc::new(Mutex::new(None));
-        WaitMessage { place, waker, conn }
+pub(crate) struct WaitData<T> {
+    place: Arc<Mutex<Option<T>>>,
+    waker: Arc<Mutex<Option<Waker>>>
+}
+
+impl<T> WaitPlaces<T> {
+    pub(crate) fn new_empty() -> Self {
+        Self {
+            value: Weak::new(),
+            waker: Weak::new()
+        }
     }
 }
 
-// impl Future for WaitMessage {
-//    type Output = WaitMessageResult;
+impl<T> WaitData<T> {
+    pub(crate) fn new() -> Self {
+        let place = Arc::new(Mutex::new(None));
+        let waker = Arc::new(Mutex::new(None));
+        Self { place, waker }
+    }
 
-//    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-//        let this = self.get_mut();
-//        log::trace!("poll WaitMessage");
-//        macro_rules! pending {
-//            () => {{
-//                cx.waker().wake_by_ref();
-//                return Poll::Pending;
-//            }};
-//        }
-//        {
-//            let x = match this.place.try_lock() {
-//                Ok(x) => x,
-//                Err(TryLockError::WouldBlock) => pending!(),
-//                Err(e) => Err(e).unwrap()
-//            };
-//            // log::trace!("lock success");
-//            if let Some(x) = &*x {
-//                return Poll::Ready(x.clone());
-//            }
-//        }
-//        {
-//            let mut x = match this.waker.try_lock() {
-//                Ok(x) => x,
-//                Err(TryLockError::WouldBlock) => pending!(),
-//                Err(e) => Err(e).unwrap()
-//            };
-//            if x.is_none() {
-//                log::trace!("set waker");
-//                *x = Some(cx.waker().clone());
-//            }
-//        }
+    pub(crate) fn place(&self) -> WaitPlaces<T> {
+        let wp = Arc::downgrade(&self.place);
+        let ww = Arc::downgrade(&self.waker);
+        WaitPlaces {
+            value: wp,
+            waker: ww
+        }
+    }
+}
 
-//        let rc = upgrade(&this.conn)?;
-//        let mut c = match rc.try_lock() {
-//            Ok(x) => x,
-//            Err(TryLockError::WouldBlock) => pending!(),
-//            Err(e) => Err(e).unwrap()
-//        };
-//        let c: Pin<&mut Connection> = Pin::new(&mut c);
-//        match c.poll_next(cx) {
-//            Poll::Ready(None) => Poll::Ready(Err(Arc::new(ConnectionError::ReceiverClosed))),
-//            Poll::Pending => {
-//                cx.waker().wake_by_ref();
-//                Poll::Pending
-//            }
-//            Poll::Ready(Some(())) => {
-//                cx.waker().wake_by_ref();
-//                Poll::Pending
-//            }
-//        }
-//    }
-//}
+impl<T> Future for WaitData<T>
+where
+    T: Clone
+{
+    type Output = T;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        log::trace!("poll WaitData");
+        macro_rules! pending {
+            () => {{
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }};
+        }
+        {
+            let x = match this.place.try_lock() {
+                Ok(x) => x,
+                Err(TryLockError::WouldBlock) => pending!(),
+                Err(e) => Err(e).unwrap()
+            };
+            if let Some(x) = &*x {
+                return Poll::Ready(x.clone());
+            }
+        }
+        {
+            let mut x = match this.waker.try_lock() {
+                Ok(x) => x,
+                Err(TryLockError::WouldBlock) => pending!(),
+                Err(e) => Err(e).unwrap()
+            };
+            if x.is_none() {
+                *x = Some(cx.waker().clone());
+            }
+        }
+        Poll::Pending
+    }
+}

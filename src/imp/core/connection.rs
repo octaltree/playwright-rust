@@ -1,4 +1,4 @@
-use crate::imp::{core::*, prelude::*};
+use crate::imp::{core::*, playwright::Playwright, prelude::*};
 use std::{
     io,
     path::Path,
@@ -17,8 +17,9 @@ pub(crate) struct Context {
     ctx: Wm<Context>,
     id: i32,
     #[allow(clippy::type_complexity)]
-    callbacks: HashMap<i32, (Wm<Option<WaitMessageResult>>, Wm<Option<Waker>>)>,
-    writer: Writer
+    callbacks: HashMap<i32, WaitPlaces<WaitMessageResult>>,
+    writer: Writer,
+    callback_initial_object: WaitPlaces<Result<Weak<Playwright>, Arc<ConnectionError>>>
 }
 
 pub(crate) struct Connection {
@@ -101,11 +102,13 @@ impl Connection {
                         Some(x) => x,
                         None => break
                     };
+                    log::trace!("lock");
                     let mut reader = match r.try_lock() {
                         Ok(x) => x,
                         Err(TryLockError::WouldBlock) => continue,
                         Err(e) => Err(e).unwrap()
                     };
+                    log::trace!("success lock");
                     match reader.try_read() {
                         Ok(Some(x)) => x,
                         Ok(None) => continue,
@@ -138,11 +141,21 @@ impl Connection {
                     };
                     ctx.dispatch(response).unwrap()
                 }
+                sleep(Duration::from_nanos(0)).await;
             }
         });
     }
 
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
+
+    pub(crate) fn wait_initial_object(
+        self: &Connection
+    ) -> WaitData<Result<Weak<Playwright>, Arc<ConnectionError>>> {
+        let w = WaitData::new();
+        let mut ctx = self.ctx.lock().unwrap();
+        ctx.callback_initial_object = w.place();
+        w
+    }
 }
 
 impl Context {
@@ -159,7 +172,8 @@ impl Context {
             ctx: Weak::new(),
             id: 0,
             callbacks: HashMap::new(),
-            writer
+            writer,
+            callback_initial_object: WaitPlaces::new_empty()
         };
         let am = Arc::new(Mutex::new(ctx));
         am.lock().unwrap().ctx = Arc::downgrade(&am);
@@ -205,6 +219,23 @@ impl Context {
         Ok(())
     }
 
+    fn wake_playwright(&mut self, r: RemoteWeak) -> Option<()> {
+        log::trace!("wake_playwright");
+        let place = &self.callback_initial_object;
+        let r = match r {
+            RemoteWeak::Playwright(p) => Ok(p),
+            _ => Err(Arc::new(ConnectionError::ObjectNotFound))
+        };
+        log::trace!("foo");
+        let value = place.value.upgrade()?;
+        *value.lock().unwrap() = Some(r);
+        log::trace!("value set");
+        let waker = place.waker.upgrade()?;
+        waker.lock().unwrap().clone()?.wake();
+        log::trace!("waked");
+        Some(())
+    }
+
     fn create_remote_object(
         &mut self,
         parent: &S<Guid>,
@@ -228,6 +259,9 @@ impl Context {
             initializer
         );
         let r = RemoteArc::try_new(&typ, &self, c)?;
+        if guid == S::validate("Playwright").unwrap() {
+            self.wake_playwright(r.downgrade());
+        }
         self.objects.insert(guid, r);
         //(&**parent).push_child(r.clone());
         Ok(())
@@ -243,10 +277,9 @@ impl Context {
             guid,
             method,
             params,
-            place,
-            waker
+            place
         } = r;
-        self.callbacks.insert(self.id, (place, waker));
+        self.callbacks.insert(self.id, place);
         let req = Request {
             guid: &guid,
             method: &method,
