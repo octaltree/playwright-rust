@@ -1,7 +1,16 @@
-// use playwright::*;
+use playwright::*;
 // use std::{env, process::Command};
 
 fn main() {
+    env_logger::init();
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let p = Playwright::initialize().await.unwrap(); // if drop all resources are disposed
+                                                             // p.prepare().unwrap(); // install browsers
+        });
     //    let driver = Driver::install().unwrap();
     //    let envs = {
     //        // my_env.pop("NODE_OPTIONS", None)

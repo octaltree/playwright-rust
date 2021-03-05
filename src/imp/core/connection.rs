@@ -1,10 +1,5 @@
 use crate::imp::{core::*, prelude::*};
-use futures::{
-    stream::{Stream, StreamExt},
-    task::{Context, Poll}
-};
 use std::{
-    future::Future,
     io,
     path::Path,
     pin::Pin,
@@ -16,16 +11,21 @@ use tokio::sync::broadcast;
 #[derive(Debug)]
 pub struct Event {}
 
-pub(crate) struct Connection {
+pub(crate) struct Context {
     evt_tx: Option<broadcast::Sender<Arc<Event>>>,
-    _child: Child,
-    transport: Transport,
     objects: HashMap<Str<Guid>, RemoteArc>,
-    conn: Wm<Connection>,
+    ctx: Wm<Context>,
     id: i32,
     #[allow(clippy::type_complexity)]
     callbacks: HashMap<i32, (Wm<Option<WaitMessageResult>>, Wm<Option<Waker>>)>,
-    stopped: bool
+    writer: Writer
+}
+
+pub(crate) struct Connection {
+    _child: Child,
+    ctx: Am<Context>,
+    reader: Am<Reader>,
+    stopped: Am<bool>
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -54,28 +54,12 @@ pub enum ConnectionError {
     NotObject
 }
 
-pub(crate) struct Running {
-    conn: Weak<Mutex<Connection>>
-}
-
-impl Drop for Running {
-    fn drop(&mut self) {
-        let conn = match self.conn.upgrade() {
-            Some(c) => c,
-            None => return
-        };
-        conn.lock().unwrap().stopped = true;
-    }
+impl Drop for Connection {
+    fn drop(&mut self) { *self.stopped.lock().unwrap() = true; }
 }
 
 impl Connection {
-    pub(crate) fn run(exec: &Path) -> io::Result<(Am<Connection>, Running)> {
-        let conn = Self::try_new(exec)?;
-        let running = Self::start(&conn);
-        Ok((conn, running))
-    }
-
-    fn try_new(exec: &Path) -> io::Result<Am<Connection>> {
+    fn try_new(exec: &Path) -> io::Result<Connection> {
         let mut child = Command::new(exec)
             .args(&["run-driver"])
             .stdin(Stdio::piped())
@@ -85,98 +69,101 @@ impl Connection {
         // TODO: env "NODE_OPTIONS"
         let stdin = child.stdin.take().unwrap();
         let stdout = child.stdout.take().unwrap();
-        let transport = Transport::try_new(stdin, stdout);
+        let reader = Reader::new(stdout);
+        let writer = Writer::new(stdin);
+        let ctx = Context::new(writer);
+        Ok(Self {
+            _child: child,
+            ctx,
+            stopped: Arc::new(Mutex::new(false)),
+            reader: Arc::new(Mutex::new(reader))
+        })
+    }
+
+    pub(crate) fn run(exec: &Path) -> io::Result<Connection> {
+        let conn = Self::try_new(exec)?;
+        conn.start();
+        Ok(conn)
+    }
+
+    fn start(&self) {
+        let c2 = Arc::downgrade(&self.ctx);
+        let r2 = Arc::downgrade(&self.reader);
+        let s2 = Arc::downgrade(&self.stopped);
+        spawn(async move {
+            log::trace!("succcess starting connection");
+            let c = c2;
+            let r = r2;
+            let s = s2;
+            loop {
+                let response = {
+                    let r = match r.upgrade() {
+                        Some(x) => x,
+                        None => break
+                    };
+                    let mut reader = match r.try_lock() {
+                        Ok(x) => x,
+                        Err(TryLockError::WouldBlock) => continue,
+                        Err(e) => Err(e).unwrap()
+                    };
+                    match reader.try_read() {
+                        Ok(Some(x)) => x,
+                        Ok(None) => continue,
+                        Err(e) => Err(e).unwrap()
+                    }
+                };
+                {
+                    let s = match s.upgrade() {
+                        Some(x) => x,
+                        None => break
+                    };
+                    let stopped = match s.try_lock() {
+                        Ok(x) => *x,
+                        Err(TryLockError::WouldBlock) => continue,
+                        Err(e) => Err(e).unwrap()
+                    };
+                    if stopped {
+                        break;
+                    }
+                }
+                // dispatch
+                {
+                    let c = match c.upgrade() {
+                        Some(x) => x,
+                        None => break
+                    };
+                    let mut ctx = match c.lock() {
+                        Ok(x) => x,
+                        Err(e) => Err(e).unwrap()
+                    };
+                    ctx.dispatch(response).unwrap()
+                }
+            }
+        });
+    }
+
+    pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
+}
+
+impl Context {
+    fn new(writer: Writer) -> Am<Context> {
         let objects = {
             let mut d = HashMap::new();
             let root = RootObject::new();
             d.insert(root.guid().to_owned(), RemoteArc::Root(Arc::new(root)));
             d
         };
-        let conn = Arc::new(Mutex::new(Connection {
-            evt_tx: Option::<broadcast::Sender<Arc<Event>>>::default(),
-            _child: child,
-            transport,
+        let ctx = Context {
+            evt_tx: None,
             objects,
-            conn: Weak::new(),
+            ctx: Weak::new(),
             id: 0,
             callbacks: HashMap::new(),
-            stopped: false
-        }));
-        conn.lock().unwrap().conn = Arc::downgrade(&conn);
-        Ok(conn)
-    }
-
-    pub(in crate::imp) fn weak(&self) -> Wm<Connection> { self.conn.clone() }
-
-    pub(in crate::imp) fn get_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
-        self.objects.get(k).map(|r| r.downgrade())
-    }
-
-    fn send_message(&mut self, r: RequestBody) -> Result<(), ConnectionError> {
-        self.id += 1;
-        let RequestBody {
-            guid,
-            method,
-            params,
-            place,
-            waker
-        } = r;
-        self.callbacks.insert(self.id, (place, waker));
-        let req = Request {
-            guid: &guid,
-            method: &method,
-            params,
-            id: self.id
+            writer
         };
-        self.transport.send(&req)?;
-        Ok(())
-    }
-
-    fn subscribe_event(&mut self) -> broadcast::Receiver<Arc<Event>> {
-        if let Some(tx) = &self.evt_tx {
-            return tx.subscribe();
-        }
-        let (tx, rx) = broadcast::channel(100);
-        self.evt_tx = Some(tx);
-        return rx;
-    }
-
-    fn emit_event<E: Into<Arc<Event>>>(&self, e: E) {
-        let tx = match &self.evt_tx {
-            None => return,
-            Some(tx) => tx
-        };
-        tx.send(e.into()).ok();
-    }
-
-    fn start(this: &Am<Connection>) -> Running {
-        let weak = Arc::downgrade(this);
-        let running = Running { conn: weak.clone() };
-        spawn(async move {
-            log::trace!("succcess starting connection");
-            let c = weak.clone();
-            (|| -> Result<(), ConnectionError> {
-                while let Some(rc) = c.upgrade() {
-                    let m = &mut match rc.try_lock() {
-                        Ok(x) => x,
-                        Err(TryLockError::WouldBlock) => continue,
-                        Err(e) => Err(e).unwrap()
-                    };
-                    if m.stopped {
-                        break;
-                    }
-                    let r = m.transport.try_read()?;
-                    let r = match r {
-                        Some(r) => r,
-                        None => continue
-                    };
-                    m.dispatch(r)?;
-                }
-                Ok(())
-            })()
-            .unwrap();
-        });
-        running
+        let am = Arc::new(Mutex::new(ctx));
+        am.lock().unwrap().ctx = Arc::downgrade(&am);
+        am
     }
 
     fn dispatch(&mut self, msg: Response) -> Result<(), ConnectionError> {
@@ -195,7 +182,6 @@ impl Connection {
                 //    None => return Ok(())
                 //};
                 // log::trace!("success get rc");
-                //*place.lock().unwrap() = Some(Ok(msg.body.map(Arc::new).map_err(Arc::new)));
                 // let waker: &Option<Waker> = &waker.lock().unwrap();
                 // let waker = match waker {
                 //    Some(x) => x.clone(),
@@ -234,7 +220,7 @@ impl Connection {
             .get(parent)
             .ok_or(ConnectionError::ParentNotFound)?;
         let c = ChannelOwner::new(
-            self.conn.clone(),
+            self.ctx.clone(),
             // self.tx.clone(),
             parent.downgrade(),
             typ.to_owned(),
@@ -245,6 +231,47 @@ impl Connection {
         self.objects.insert(guid, r);
         //(&**parent).push_child(r.clone());
         Ok(())
+    }
+
+    pub(in crate::imp) fn get_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
+        self.objects.get(k).map(|r| r.downgrade())
+    }
+
+    fn send_message(&mut self, r: RequestBody) -> Result<(), ConnectionError> {
+        self.id += 1;
+        let RequestBody {
+            guid,
+            method,
+            params,
+            place,
+            waker
+        } = r;
+        self.callbacks.insert(self.id, (place, waker));
+        let req = Request {
+            guid: &guid,
+            method: &method,
+            params,
+            id: self.id
+        };
+        self.writer.send(&req)?;
+        Ok(())
+    }
+
+    fn subscribe_event(&mut self) -> broadcast::Receiver<Arc<Event>> {
+        if let Some(tx) = &self.evt_tx {
+            return tx.subscribe();
+        }
+        let (tx, rx) = broadcast::channel(100);
+        self.evt_tx = Some(tx);
+        return rx;
+    }
+
+    fn emit_event<E: Into<Arc<Event>>>(&self, e: E) {
+        let tx = match &self.evt_tx {
+            None => return,
+            Some(tx) => tx
+        };
+        tx.send(e.into()).ok();
     }
 }
 

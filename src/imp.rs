@@ -1,5 +1,5 @@
 pub(crate) mod impl_future {
-    pub use std::{future::Future, pin::Pin, task::Context};
+    pub use std::{future::Future, pin::Pin, task};
 }
 pub(crate) mod prelude {
     pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -22,10 +22,10 @@ pub(crate) mod prelude {
     pub type Wm<T> = Weak<Mutex<T>>;
     pub type Am<T> = Arc<Mutex<T>>;
 
-    #[cfg(feature = "rt-actix")]
-    pub use actix_rt::spawn;
     #[cfg(feature = "rt-async-std")]
     pub use async_std::task::spawn;
+    #[cfg(feature = "rt-actix")]
+    pub use tokio::task::spawn;
     #[cfg(feature = "rt-tokio")]
     pub use tokio::task::spawn;
 }
@@ -35,8 +35,8 @@ mod macros {
     #[doc(hidden)]
     #[macro_export]
     macro_rules! find_object {
-        ($conn:expr, $guid:expr, $t:ident) => {
-            match $conn.get_object($guid) {
+        ($c:expr, $guid:expr, $t:ident) => {
+            match $c.get_object($guid) {
                 Some(RemoteWeak::$t(x)) => Ok(x),
                 _ => Err(ConnectionError::ObjectNotFound)
             }

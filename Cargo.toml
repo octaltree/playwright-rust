@@ -20,16 +20,17 @@ zip = "0.5.10"
 strong = { version = "0.3.3", features = ["serde", "shorthand"] }
 thiserror = "1.0.24"
 downcast-rs = "1.2.0"
-tokio = { version = "1.2.0", features = ["process", "sync"] }
+tokio = { version = "1.2.0", features = ["sync", "rt-multi-thread"] }
 actix-rt = { version = "2.0.2", optional = true }
 async-std = { version = "1.9.0", features = ["attributes"], optional = true }
 dirs = "3.0.1"
+env_logger = "0.8.3"
 
 [dev-dependencies]
 env_logger = "0.8.3"
 
 [features]
-default = ["rt-actix"]
+default = ["rt-tokio"]
 rt-tokio = []
 rt-actix = ["actix-rt"]
 rt-async-std = ["async-std"]

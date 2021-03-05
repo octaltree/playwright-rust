@@ -15,10 +15,7 @@ pub(crate) struct Playwright {
 }
 
 impl Playwright {
-    pub(crate) fn try_new(
-        conn: &Connection,
-        channel: ChannelOwner
-    ) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(conn: &Context, channel: ChannelOwner) -> Result<Self, ConnectionError> {
         let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
         // let chromium = find_object!(conn, &i.chromium.guid, BrowserType)?;
         // let firefox = find_object!(conn, &i.firefox.guid, BrowserType)?;
@@ -37,8 +34,8 @@ impl Playwright {
 
     pub(crate) fn devices(&self) -> &[DeviceDescriptor] { &self.devices }
 
-    pub(crate) fn wait_initial_object(conn: &Am<Connection>) -> WaitInitialObject {
-        WaitInitialObject(Arc::downgrade(conn))
+    pub(crate) fn wait_initial_object(ctx: Wm<Context>) -> WaitInitialObject {
+        WaitInitialObject(ctx)
     }
 }
 
@@ -63,18 +60,17 @@ struct RefGuid {
     guid: Str<Guid>
 }
 
-pub(crate) struct WaitInitialObject(Weak<Mutex<Connection>>);
+pub(crate) struct WaitInitialObject(Wm<Context>);
 
 impl Future for WaitInitialObject {
     type Output = Result<Weak<Playwright>, ConnectionError>;
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
         log::trace!("poll WaitInitialObject");
         let i: &S<Guid> = S::validate("Playwright").unwrap();
         // TODO: timeout
         let this = self.get_mut();
         let rc = upgrade(&this.0)?;
-        log::trace!("lock");
         let c = match rc.try_lock() {
             Ok(x) => x,
             Err(TryLockError::WouldBlock) => {
@@ -83,7 +79,7 @@ impl Future for WaitInitialObject {
             }
             Err(e) => Err(e).unwrap()
         };
-        log::trace!("success lock");
+        log::trace!("foo");
         match find_object!(c, i, Playwright) {
             Ok(p) => Poll::Ready(Ok(p)),
             Err(_) => {

@@ -24,8 +24,7 @@ pub struct TimeoutError {}
 
 pub struct Playwright {
     driver: Driver,
-    _conn: Arc<Mutex<Connection>>,
-    _running: Running,
+    _conn: Connection,
     inner: Weak<imp::playwright::Playwright>
 }
 
@@ -38,12 +37,11 @@ impl Playwright {
 
     /// Constructs from installed playwright driver
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
-        let (conn, running) = Connection::run(&driver.executable())?;
-        let p = imp::playwright::Playwright::wait_initial_object(&conn).await?;
+        let conn = Connection::run(&driver.executable())?;
+        let p = imp::playwright::Playwright::wait_initial_object(conn.context()).await?;
         Ok(Self {
             driver,
             _conn: conn,
-            _running: running,
             inner: p
         })
     }

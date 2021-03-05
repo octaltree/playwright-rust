@@ -1,8 +1,4 @@
 use crate::imp::{self, core::*, prelude::*};
-use futures::{
-    stream::Stream,
-    task::{Context, Poll}
-};
 use serde_json::value::Value;
 use std::{
     any::Any,
@@ -29,7 +25,7 @@ where
 }
 
 pub(crate) struct ChannelOwner {
-    pub(crate) conn: Weak<Mutex<Connection>>,
+    pub(crate) ctx: Weak<Mutex<Context>>,
     // pub(crate) tx: UnboundedSender<RequestBody>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
@@ -50,7 +46,7 @@ impl Debug for ChannelOwner {
 
 impl ChannelOwner {
     pub(crate) fn new(
-        conn: Weak<Mutex<Connection>>,
+        ctx: Weak<Mutex<Context>>,
         // tx: UnboundedSender<RequestBody>,
         parent: RemoteWeak,
         typ: Str<ObjectType>,
@@ -58,7 +54,7 @@ impl ChannelOwner {
         initializer: Value
     ) -> Self {
         Self {
-            conn,
+            ctx,
             parent: Some(parent),
             typ,
             guid,
@@ -69,7 +65,7 @@ impl ChannelOwner {
     pub(crate) fn new_root() -> Self {
         // let (tx, _) = mpsc::unbounded();
         Self {
-            conn: Weak::new(),
+            ctx: Weak::new(),
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),
@@ -182,13 +178,13 @@ impl RemoteArc {
 
     pub(crate) fn try_new(
         typ: &S<ObjectType>,
-        conn: &Connection,
+        ctx: &Context,
         c: ChannelOwner
     ) -> Result<RemoteArc, ConnectionError> {
         let r = match typ.as_str() {
-            //"Playwright" => {
-            //    RemoteArc::Playwright(Arc::new(imp::playwright::Playwright::try_new(&conn, c)?))
-            //}
+            "Playwright" => {
+                RemoteArc::Playwright(Arc::new(imp::playwright::Playwright::try_new(ctx, c)?))
+            }
             //"Selectors" => RemoteArc::Selectors(Arc::new(imp::selectors::Selectors::new(c))),
             //"BrowserType" => {
             //    RemoteArc::BrowserType(Arc::new(imp::browser_type::BrowserType::try_new(c)?))

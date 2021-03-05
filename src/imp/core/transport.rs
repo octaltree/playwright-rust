@@ -8,11 +8,15 @@ use std::{
 use thiserror::Error;
 
 #[derive(Debug)]
-pub(crate) struct Transport {
-    stdin: ChildStdin,
+pub(super) struct Reader {
     stdout: ChildStdout,
     length: Option<u32>,
     buf: Vec<u8>
+}
+
+#[derive(Debug)]
+pub(super) struct Writer {
+    stdin: ChildStdin
 }
 
 #[derive(Error, Debug)]
@@ -23,30 +27,18 @@ pub enum TransportError {
     Io(#[from] io::Error)
 }
 
-impl Transport {
+impl Reader {
     const BUFSIZE: usize = 10000;
 
-    pub(super) fn try_new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
-        Transport {
-            stdin,
+    pub(super) fn new(stdout: ChildStdout) -> Self {
+        Self {
             stdout,
             length: None,
             buf: Vec::new()
         }
     }
 
-    pub(super) fn send(&mut self, req: &Request<'_, '_>) -> Result<(), TransportError> {
-        log::debug!("SEND>{:?}", &req);
-        let serialized = serde_json::to_vec(&req)?;
-        let length = serialized.len() as u32;
-        let mut bytes = length.to_le_bytes().to_vec();
-        bytes.extend(serialized);
-        self.stdin.write_all(&bytes)?;
-        log::trace!("success sending");
-        Ok(())
-    }
-
-    // TODO: memory performance
+    // TODO: heap efficiency
     pub(super) fn try_read(&mut self) -> Result<Option<Response>, TransportError> {
         let this = self;
         {
@@ -75,5 +67,20 @@ impl Transport {
             this.buf.extend(&buf[..n]);
         }
         Ok(None)
+    }
+}
+
+impl Writer {
+    pub(super) fn new(stdin: ChildStdin) -> Self { Self { stdin } }
+
+    pub(super) fn send(&mut self, req: &Request<'_, '_>) -> Result<(), TransportError> {
+        log::debug!("SEND>{:?}", &req);
+        let serialized = serde_json::to_vec(&req)?;
+        let length = serialized.len() as u32;
+        let mut bytes = length.to_le_bytes().to_vec();
+        bytes.extend(serialized);
+        self.stdin.write_all(&bytes)?;
+        log::trace!("success sending");
+        Ok(())
     }
 }
