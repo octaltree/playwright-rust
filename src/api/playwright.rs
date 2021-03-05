@@ -38,7 +38,7 @@ impl Playwright {
     /// Constructs from installed playwright driver
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
         let conn = Connection::run(&driver.executable())?;
-        let p = conn.wait_initial_object().await?;
+        let p = imp::playwright::Playwright::wait_initial_object(&conn).await?;
         Ok(Self {
             driver,
             _conn: conn,

@@ -18,8 +18,7 @@ pub(crate) struct Context {
     id: i32,
     #[allow(clippy::type_complexity)]
     callbacks: HashMap<i32, WaitPlaces<WaitMessageResult>>,
-    writer: Writer,
-    callback_initial_object: WaitPlaces<Result<Weak<Playwright>, Arc<ConnectionError>>>
+    writer: Writer
 }
 
 pub(crate) struct Connection {
@@ -147,15 +146,6 @@ impl Connection {
     }
 
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
-
-    pub(crate) fn wait_initial_object(
-        self: &Connection
-    ) -> WaitData<Result<Weak<Playwright>, Arc<ConnectionError>>> {
-        let w = WaitData::new();
-        let mut ctx = self.ctx.lock().unwrap();
-        ctx.callback_initial_object = w.place();
-        w
-    }
 }
 
 impl Context {
@@ -172,8 +162,7 @@ impl Context {
             ctx: Weak::new(),
             id: 0,
             callbacks: HashMap::new(),
-            writer,
-            callback_initial_object: WaitPlaces::new_empty()
+            writer
         };
         let am = Arc::new(Mutex::new(ctx));
         am.lock().unwrap().ctx = Arc::downgrade(&am);
@@ -219,23 +208,6 @@ impl Context {
         Ok(())
     }
 
-    fn wake_playwright(&mut self, r: RemoteWeak) -> Option<()> {
-        log::trace!("wake_playwright");
-        let place = &self.callback_initial_object;
-        let r = match r {
-            RemoteWeak::Playwright(p) => Ok(p),
-            _ => Err(Arc::new(ConnectionError::ObjectNotFound))
-        };
-        log::trace!("foo");
-        let value = place.value.upgrade()?;
-        *value.lock().unwrap() = Some(r);
-        log::trace!("value set");
-        let waker = place.waker.upgrade()?;
-        waker.lock().unwrap().clone()?.wake();
-        log::trace!("waked");
-        Some(())
-    }
-
     fn create_remote_object(
         &mut self,
         parent: &S<Guid>,
@@ -259,9 +231,6 @@ impl Context {
             initializer
         );
         let r = RemoteArc::try_new(&typ, &self, c)?;
-        if guid == S::validate("Playwright").unwrap() {
-            self.wake_playwright(r.downgrade());
-        }
         self.objects.insert(guid, r);
         //(&**parent).push_child(r.clone());
         Ok(())

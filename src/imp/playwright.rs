@@ -1,5 +1,5 @@
 use crate::{
-    imp::{core::*, prelude::*},
+    imp::{core::*, impl_future::*, prelude::*},
     utils::DeviceDescriptor
 };
 use serde::Deserialize;
@@ -34,9 +34,9 @@ impl Playwright {
 
     pub(crate) fn devices(&self) -> &[DeviceDescriptor] { &self.devices }
 
-    // pub(crate) fn wait_initial_object(ctx: Wm<Context>) -> WaitInitialObject {
-    //    WaitInitialObject(ctx)
-    //}
+    pub(crate) fn wait_initial_object(conn: &Connection) -> WaitInitialObject {
+        WaitInitialObject(conn.context())
+    }
 }
 
 impl RemoteObject for Playwright {
@@ -60,32 +60,32 @@ struct RefGuid {
     guid: Str<Guid>
 }
 
-// pub(crate) struct WaitInitialObject(Wm<Context>);
+pub(crate) struct WaitInitialObject(Wm<Context>);
 
-// impl Future for WaitInitialObject {
-//    type Output = Result<Weak<Playwright>, ConnectionError>;
+impl Future for WaitInitialObject {
+    type Output = Result<Weak<Playwright>, ConnectionError>;
 
-//    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
-//        log::trace!("poll WaitInitialObject");
-//        let i: &S<Guid> = S::validate("Playwright").unwrap();
-//        // TODO: timeout
-//        let this = self.get_mut();
-//        let rc = upgrade(&this.0)?;
-//        let c = match rc.try_lock() {
-//            Ok(x) => x,
-//            Err(TryLockError::WouldBlock) => {
-//                cx.waker().wake_by_ref();
-//                return Poll::Pending;
-//            }
-//            Err(e) => Err(e).unwrap()
-//        };
-//        log::trace!("foo");
-//        match find_object!(c, i, Playwright) {
-//            Ok(p) => Poll::Ready(Ok(p)),
-//            Err(_) => {
-//                cx.waker().wake_by_ref();
-//                Poll::Pending
-//            }
-//        }
-//    }
-//}
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
+        log::trace!("poll WaitInitialObject");
+        let i: &S<Guid> = S::validate("Playwright").unwrap();
+        // TODO: timeout
+        let this = self.get_mut();
+        let rc = upgrade(&this.0)?;
+        let c = match rc.try_lock() {
+            Ok(x) => x,
+            Err(TryLockError::WouldBlock) => {
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }
+            Err(e) => Err(e).unwrap()
+        };
+        log::trace!("foo");
+        match find_object!(c, i, Playwright) {
+            Ok(p) => Poll::Ready(Ok(p)),
+            Err(_) => {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        }
+    }
+}
