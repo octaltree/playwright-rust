@@ -1,6 +1,6 @@
 use crate::{
-    imp::{self, core::*, prelude::*},
-    utils::DeviceDescriptor
+    api::{browser_type::BrowserType, selectors::Selectors, utils::DeviceDescriptor},
+    imp::{self, core::*, prelude::*}
 };
 use std::{io, process::Command};
 
@@ -54,30 +54,30 @@ impl Playwright {
         Ok(())
     }
 
-    ///// Launcher
-    // pub fn chromium(&self) -> BrowserType {
-    //    let inner = weak_and_then(&self.inner, |rc| rc.chromium.clone());
-    //    BrowserType::new(inner)
-    //}
+    /// Launcher
+    pub fn chromium(&self) -> BrowserType {
+        let inner = weak_and_then(&self.inner, |rc| rc.chromium());
+        BrowserType::new(inner)
+    }
 
-    ///// Launcher
-    // pub fn firefox(&self) -> BrowserType {
-    //    let inner = weak_and_then(&self.inner, |rc| rc.firefox.clone());
-    //    BrowserType::new(inner)
-    //}
+    /// Launcher
+    pub fn firefox(&self) -> BrowserType {
+        let inner = weak_and_then(&self.inner, |rc| rc.firefox());
+        BrowserType::new(inner)
+    }
 
-    ///// Launcher
-    // pub fn webkit(&self) -> BrowserType {
-    //    let inner = weak_and_then(&self.inner, |rc| rc.webkit.clone());
-    //    BrowserType::new(inner)
-    //}
+    /// Launcher
+    pub fn webkit(&self) -> BrowserType {
+        let inner = weak_and_then(&self.inner, |rc| rc.webkit());
+        BrowserType::new(inner)
+    }
 
     pub fn driver(&mut self) -> &mut Driver { &mut self.driver }
 
-    // pub fn selectors(&self) -> Selectors {
-    //    let inner = weak_and_then(&self.inner, |rc| rc.selectors.clone());
-    //    Selectors::new(inner)
-    //}
+    pub fn selectors(&self) -> Selectors {
+        let inner = weak_and_then(&self.inner, |rc| rc.selectors());
+        Selectors::new(inner)
+    }
 
     pub fn devices(&self) -> Vec<DeviceDescriptor> {
         upgrade(&self.inner).unwrap().devices().to_vec()

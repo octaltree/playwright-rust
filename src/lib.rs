@@ -5,9 +5,11 @@ extern crate serde;
 // pub mod remote_objects;
 // pub mod api;
 
-mod api;
+pub mod api;
 mod imp;
-pub use api::*;
+
+pub use crate::imp::core::Driver;
+pub use api::playwright::{Error, Playwright, TimeoutError};
 
 #[doc(hidden)]
 #[macro_export]

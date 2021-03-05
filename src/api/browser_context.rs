@@ -1,8 +1,10 @@
 use crate::{
-    browser::Browser,
+    api::{
+        browser::Browser,
+        page::Page,
+        utils::{Cookie, StorageState}
+    },
     imp::{self, core::*, prelude::*},
-    page::Page,
-    utils::{Cookie, StorageState},
     Error
 };
 use std::time::Duration;

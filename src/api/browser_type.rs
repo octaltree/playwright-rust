@@ -1,6 +1,5 @@
 use crate::{
-    browser::Browser,
-    browser_context::BrowserContext,
+    api::{browser::Browser, browser_context::BrowserContext},
     imp::{self, core::*, prelude::*},
     Error
 };

@@ -1,6 +1,6 @@
 use crate::{
-    imp::{browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors},
-    utils::DeviceDescriptor
+    api::utils::DeviceDescriptor,
+    imp::{browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors}
 };
 use serde::Deserialize;
 use std::sync::TryLockError;
