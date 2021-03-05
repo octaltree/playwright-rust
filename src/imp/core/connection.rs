@@ -278,11 +278,20 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
-    use crate::imp::core::*;
+    use crate::imp::{core::*, prelude::*};
 
     crate::runtime_test!(start, {
         let driver = Driver::install().unwrap();
         let conn = Connection::try_new(&driver.executable()).unwrap();
         Connection::start(&conn);
+    });
+
+    crate::runtime_test!(event, {
+        let driver = Driver::install().unwrap();
+        let conn = Connection::try_new(&driver.executable()).unwrap();
+        Connection::start(&conn);
+        let mut rx = conn.ctx.lock().unwrap().subscribe_event();
+        conn.ctx.lock().unwrap().emit_event(Event {});
+        rx.recv().await.unwrap();
     });
 }
