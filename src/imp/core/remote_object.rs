@@ -222,7 +222,7 @@ impl RequestBody {
             Value::Object(m) => m,
             _ => return Err(ConnectionError::NotObject)
         };
-        log::debug!("{:?}", &p);
+        log::debug!("set request {:?}", &p);
         self.params = p;
         Ok(self)
     }

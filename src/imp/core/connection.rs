@@ -101,13 +101,11 @@ impl Connection {
                         Some(x) => x,
                         None => break
                     };
-                    log::trace!("lock");
                     let mut reader = match r.try_lock() {
                         Ok(x) => x,
                         Err(TryLockError::WouldBlock) => continue,
                         Err(e) => Err(e).unwrap()
                     };
-                    log::trace!("success lock");
                     match reader.try_read() {
                         Ok(Some(x)) => x,
                         Ok(None) => continue,

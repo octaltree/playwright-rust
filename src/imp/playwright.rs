@@ -66,7 +66,6 @@ impl Future for WaitInitialObject {
     type Output = Result<Weak<Playwright>, ConnectionError>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
-        log::trace!("poll WaitInitialObject");
         let i: &S<Guid> = S::validate("Playwright").unwrap();
         // TODO: timeout
         let this = self.get_mut();
@@ -79,7 +78,6 @@ impl Future for WaitInitialObject {
             }
             Err(e) => Err(e).unwrap()
         };
-        log::trace!("foo");
         match find_object!(c, i, Playwright) {
             Ok(p) => Poll::Ready(Ok(p)),
             Err(_) => {
