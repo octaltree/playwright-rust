@@ -30,7 +30,7 @@ impl BrowserType {
     //}
 }
 
-/// [`launcher`]
+/// [`BrowserType::launcher`]
 pub struct Launcher<'a, 'b, 'c> {
     inner: Weak<imp::browser_type::BrowserType>,
     args: LaunchArgs<'a, 'b, 'c>
