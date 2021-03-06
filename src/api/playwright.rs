@@ -6,6 +6,7 @@ use crate::{
 };
 use std::{io, process::Command};
 
+/// Entry point
 pub struct Playwright {
     driver: Driver,
     _conn: Connection,
