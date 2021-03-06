@@ -15,7 +15,7 @@ runtime_test!(awesome, {
     p.prepare().unwrap(); // install browsers
     register_selector(&p).await;
     let mut bt = p.firefox();
-    let b = launch(&mut bt).await;
+    let mut b = launch(&mut bt).await;
 });
 
 async fn register_selector(p: &Playwright) {

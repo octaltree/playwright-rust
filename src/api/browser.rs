@@ -11,15 +11,31 @@ pub struct Browser {
 impl Browser {
     pub(crate) fn new(inner: Weak<imp::browser::Browser>) -> Self { Self { inner } }
 
-    pub fn contexts(&self) -> Vec<BrowserContext> { unimplemented!() }
+    pub fn contexts(&self) -> Result<Vec<BrowserContext>, Error> {
+        Ok(upgrade(&self.inner)?
+            .contexts()
+            .iter()
+            .cloned()
+            .map(BrowserContext::new)
+            .collect())
+    }
 
-    pub fn version(&self) -> String { unimplemented!() }
+    pub fn version(&self) -> Result<String, Error> {
+        Ok(upgrade(&self.inner)?.version().to_owned())
+    }
 
-    pub fn is_connntected(&self) -> bool { unimplemented!() }
+    pub fn exists(&self) -> bool { self.inner.upgrade().is_some() }
 
     pub async fn new_context(&mut self) -> Result<BrowserContext, Error> { unimplemented!() }
 
     pub async fn new_page(&mut self) -> Result<Page, Error> { unimplemented!() }
 
-    pub async fn close(&mut self) -> Result<(), Error> { unimplemented!() }
+    /// All browsers will be closed when the connection is terminated, but
+    /// it needs to be called explicitly to close it at any given time.
+    pub async fn close(&mut self) -> Result<(), Arc<ConnectionError>> {
+        let inner = upgrade(&self.inner)?;
+        inner.close().await
+    }
 }
+
+// TODO: async drop

@@ -21,12 +21,27 @@ impl Browser {
     pub(crate) fn version(&self) -> &str { &self.version }
 
     pub(crate) async fn close(&self) -> Result<(), Arc<ConnectionError>> {
-        // TODO: safe close error
         let m: Str<Method> = "close".to_owned().try_into().unwrap();
         #[derive(Serialize)]
         struct CloseArgs {}
         let args = CloseArgs {};
-        let _ = send_message!(self, m, args);
+        async fn catch(
+            this: &Browser,
+            m: Str<Method>,
+            args: CloseArgs
+        ) -> Result<Arc<Value>, Arc<ConnectionError>> {
+            Ok(send_message!(this, m, args))
+        }
+        let result = catch(self, m, args).await;
+        let err = match result {
+            Ok(_) => return Ok(()),
+            Err(e) => e
+        };
+        let _responded_error = match *err {
+            ConnectionError::ErrorResponded(ref e) => e,
+            _ => Err(err)?
+        };
+        // TODO: has been closed
         Ok(())
     }
 
