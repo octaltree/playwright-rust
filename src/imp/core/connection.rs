@@ -139,6 +139,7 @@ impl Connection {
                 }
                 sleep(Duration::from_nanos(0)).await;
             }
+            log::trace!("Done");
         });
     }
 

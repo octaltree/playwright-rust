@@ -1,4 +1,10 @@
-use crate::imp::{browser::Browser, browser_context::BrowserContext, core::*, prelude::*};
+use crate::imp::{
+    browser::Browser,
+    browser_context::BrowserContext,
+    core::*,
+    prelude::*,
+    utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
+};
 
 #[derive(Debug)]
 pub(crate) struct BrowserType {
@@ -21,7 +27,6 @@ impl BrowserType {
 
     pub(crate) fn executable(&self) -> &Path { &self.executable }
 
-    // TODO: builder pattern
     pub(crate) async fn launch(
         &self,
         args: LaunchArgs<'_, '_, '_>
@@ -38,23 +43,18 @@ impl BrowserType {
     // TODO: required parameter
     pub(crate) async fn launch_persistent_context(
         &self,
-        args: LaunchPersistentContextArgs
+        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_>
     ) -> Result<Weak<BrowserContext>, Arc<ConnectionError>> {
         let m: Str<Method> = "launchPersistentContext".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
         let LaunchPersistentContextResponse {
-            browser_context: OnlyGuid { guid }
+            context: OnlyGuid { guid }
         } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
-        let b = find_object!(
-            upgrade(&self.channel().ctx)?.lock().unwrap(),
-            &guid,
-            BrowserContext
-        )?;
+        let b = find_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         Ok(b)
     }
 }
 
-// TODO: インポート必要なの辛いよね
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LaunchArgs<'a, 'b, 'c> {
@@ -62,20 +62,38 @@ pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     #[serde(rename = "executablePath")]
     executable: Option<&'a Path>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    args: Option<&'b [&'c str]> /* ignore_default_args
-                                 * ignoreDefaultArgs: Union[bool, List[str]] = None,
-                                 * handleSIGINT: bool = None,
-                                 * handleSIGTERM: bool = None,
-                                 * handleSIGHUP: bool = None,
-                                 * timeout: float = None,
-                                 * env: Env = None,
-                                 * headless: bool = None,
-                                 * devtools: bool = None,
-                                 * proxy: ProxySettings = None,
-                                 * downloadsPath: Union[str, Path] = None,
-                                 * slowMo: float = None,
-                                 * chromiumSandbox: bool = None,
-                                 * firefoxUserPrefs: Dict[str, Union[str, float, bool]] = None, */
+    args: Option<&'b [String]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ignore_all_default_args: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "handleSIGINT")]
+    handle_sigint: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "handleSIGTERM")]
+    handle_sigterm: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "handleSIGHUP")]
+    handle_sighup: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    env: Option<Map<String, Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    headless: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    devtools: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    proxy: Option<ProxySettings>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "downloadsPath")]
+    downloads: Option<&'c Path>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "slowMo")]
+    slowmo: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    chromium_sandbox: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    firefox_user_prefs: Option<Map<String, Value>>
 }
 
 impl RemoteObject for BrowserType {
@@ -96,52 +114,155 @@ struct LaunchResponse {
     browser: OnlyGuid
 }
 
-#[derive(Serialize, Default)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LaunchPersistentContextArgs {
-    // userDataDir: Union[str, Path],
-// executablePath: Union[str, Path] = None,
-// args: List[str] = None,
-// ignoreDefaultArgs: Union[bool, List[str]] = None,
-// handleSIGINT: bool = None,
-// handleSIGTERM: bool = None,
-// handleSIGHUP: bool = None,
-// timeout: float = None,
-// env: Env = None,
-// headless: bool = None,
-// devtools: bool = None,
-// proxy: ProxySettings = None,
-// downloadsPath: Union[str, Path] = None,
-// slowMo: float = None,
-// viewport: ViewportSize = None,
-// noViewport: bool = None,
-// ignoreHTTPSErrors: bool = None,
-// javaScriptEnabled: bool = None,
-// bypassCSP: bool = None,
-// userAgent: str = None,
-// locale: str = None,
-// timezoneId: str = None,
-// geolocation: Geolocation = None,
-// permissions: List[str] = None,
-// extraHTTPHeaders: Dict[str, str] = None,
-// offline: bool = None,
-// httpCredentials: HttpCredentials = None,
-// deviceScaleFactor: float = None,
-// isMobile: bool = None,
-// hasTouch: bool = None,
-// colorScheme: ColorScheme = None,
-// acceptDownloads: bool = None,
-// chromiumSandbox: bool = None,
-// recordHarPath: Union[Path, str] = None,
-// recordHarOmitContent: bool = None,
-// recordVideoDir: Union[Path, str] = None,
-// recordVideoSize: ViewportSize = None,
+pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g> {
+    user_data_dir: &'a Path,
+    sdk_language: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "executablePath")]
+    executable: Option<&'a Path>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    args: Option<&'b [String]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ignore_all_default_args: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "handleSIGINT")]
+    handle_sigint: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "handleSIGTERM")]
+    handle_sigterm: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "handleSIGHUP")]
+    handle_sighup: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    env: Option<Map<String, Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    headless: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    devtools: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    proxy: Option<ProxySettings>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "downloadsPath")]
+    downloads: Option<&'c Path>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "slowMo")]
+    slowmo: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    viewport: Option<Viewport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    no_viewport: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "ignoreHTTPSErrors")]
+    ignore_http_errors: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "javaScriptEnabled")]
+    js_enabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "bypassCSP")]
+    bypass_csp: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    user_agent: Option<&'c str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    locale: Option<&'c str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timezone_id: Option<&'c str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    geolocation: Option<Geolocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    permissions: Option<&'d [String]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "extraHTTPHeaders")]
+    extra_http_headers: Option<HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    offline: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    http_credentials: Option<&'e HttpCredentials>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    device_scale_factor: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    is_mobile: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_touch: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    color_scheme: Option<ColorScheme>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    accept_downloads: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    chromium_sandbox: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    record_video: Option<RecordVideo<'f>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    record_har: Option<RecordHar<'g>>
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct RecordVideo<'a> {
+    dir: &'a Path,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    size: Option<Viewport>
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct RecordHar<'a> {
+    path: &'a Path,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    omit_content: Option<bool>
+}
+
+impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_> {
+    fn new(user_data_dir: &'a Path) -> Self {
+        let sdk_language = "rust";
+        Self {
+            user_data_dir,
+            sdk_language,
+            executable: None,
+            args: None,
+            ignore_all_default_args: None,
+            handle_sigint: None,
+            handle_sigterm: None,
+            handle_sighup: None,
+            timeout: None,
+            env: None,
+            headless: None,
+            devtools: None,
+            proxy: None,
+            downloads: None,
+            slowmo: None,
+            viewport: None,
+            no_viewport: None,
+            ignore_http_errors: None,
+            js_enabled: None,
+            bypass_csp: None,
+            user_agent: None,
+            locale: None,
+            timezone_id: None,
+            geolocation: None,
+            permissions: None,
+            extra_http_headers: None,
+            offline: None,
+            http_credentials: None,
+            device_scale_factor: None,
+            is_mobile: None,
+            has_touch: None,
+            color_scheme: None,
+            accept_downloads: None,
+            chromium_sandbox: None,
+            record_video: None,
+            record_har: None
+        }
+    }
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LaunchPersistentContextResponse {
-    browser_context: OnlyGuid
+    context: OnlyGuid
 }
 
 #[cfg(test)]
@@ -156,6 +277,19 @@ mod tests {
         let p = p.upgrade().unwrap();
         let chromium = p.chromium().upgrade().unwrap();
         let res = chromium.launch(LaunchArgs::default()).await;
+        dbg!(&res);
+        res.unwrap();
+    });
+
+    crate::runtime_test!(launch_persistent_context, {
+        let driver = Driver::install().unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
+        let p = p.upgrade().unwrap();
+        let firefox = p.firefox().upgrade().unwrap();
+        let res = firefox
+            .launch_persistent_context(LaunchPersistentContextArgs::new(".".as_ref()))
+            .await;
         dbg!(&res);
         res.unwrap();
     });

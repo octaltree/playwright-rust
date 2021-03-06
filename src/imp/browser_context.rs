@@ -2,14 +2,13 @@ use crate::imp::{core::*, prelude::*};
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
-    channel: ChannelOwner,
-    name: String
+    channel: ChannelOwner
 }
 
 impl BrowserContext {
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, ConnectionError> {
-        let Initializer { name } = serde_json::from_value(channel.initializer.clone())?;
-        Ok(Self { channel, name })
+        let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
+        Ok(Self { channel })
     }
 
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
@@ -44,6 +43,4 @@ impl RemoteObject for BrowserContext {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Initializer {
-    name: String
-}
+struct Initializer {}
