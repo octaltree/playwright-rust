@@ -89,7 +89,7 @@ impl Connection {
         let c2 = Arc::downgrade(&self.ctx);
         let r2 = Arc::downgrade(&self.reader);
         let s2 = Arc::downgrade(&self.stopped);
-        spawn(async move {
+        std::thread::spawn(move || {
             log::trace!("succcess starting connection");
             let c = c2;
             let r = r2;
@@ -137,7 +137,6 @@ impl Connection {
                     };
                     ctx.dispatch(response).unwrap()
                 }
-                sleep(Duration::from_nanos(0)).await;
             }
             log::trace!("Done");
         });

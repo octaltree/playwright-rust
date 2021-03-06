@@ -1,4 +1,7 @@
-use playwright::*;
+use playwright::{
+    api::{Browser, BrowserType},
+    *
+};
 
 runtime_test!(hello, {
     env_logger::builder().is_test(true).try_init().ok();
@@ -11,9 +14,14 @@ runtime_test!(awesome, {
     let p = Playwright::initialize().await.unwrap(); // if drop all resources are disposed
     p.prepare().unwrap(); // install browsers
     register_selector(&p).await;
-    let chromium = p.chromium();
+    let mut bt = p.firefox();
+    let b = launch(&mut bt).await;
 });
 
 async fn register_selector(p: &Playwright) {
     p.selectors().register("foo", "", false).await.unwrap();
+}
+
+async fn launch(t: &mut BrowserType) -> Browser {
+    t.launcher().headless(false).launch().await.unwrap()
 }
