@@ -1,4 +1,4 @@
-use crate::imp::{browser_context::BrowserContext, core::*, prelude::*};
+use crate::imp::{browser_context::BrowserContext, core::*, prelude::*, utils::Viewport};
 
 #[derive(Debug)]
 pub(crate) struct Browser {

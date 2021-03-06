@@ -114,7 +114,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
     optional_setter!(downloads, &'d Path);
     optional_setter!(slowmo, f64);
     optional_setter!(viewport, Viewport);
-    optional_setter!(no_viewport, bool);
+    optional_setter!(no_default_viewport, bool);
     optional_setter!(ignore_http_errors, bool);
     optional_setter!(js_enabled, bool);
     optional_setter!(bypass_csp, bool);
