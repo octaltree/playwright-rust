@@ -26,7 +26,7 @@ impl Browser {
 
     pub fn exists(&self) -> bool { self.inner.upgrade().is_some() }
 
-    async fn new_context(&mut self) -> Result<BrowserContext, Error> { unimplemented!() }
+    async fn new_context(&mut self) -> Result<BrowserContext, Arc<Error>> { unimplemented!() }
 
     /// Shortcut of [`BrowserContext::new_page`] and [`Browser::new_context`].
     async fn new_page(&mut self) -> Result<Page, Error> { unimplemented!() }

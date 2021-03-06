@@ -2,6 +2,7 @@ use crate::imp::{
     browser_context::BrowserContext,
     browser_type::{RecordHar, RecordVideo},
     core::*,
+    page::Page,
     prelude::*,
     utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, StorageState, Viewport}
 };
@@ -65,14 +66,18 @@ impl Browser {
         let c = find_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         self.contexts.lock().unwrap().push(c.clone());
         // TODO
-        // self._contexts.append(context)
         // context._browser = self
         // context._options = params
         Ok(c)
     }
 
-    // TODO: new_context
-    // TODO: new_page
+    pub(crate) async fn new_page(
+        &self,
+        args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>
+    ) -> Result<Weak<Page>, Arc<Error>> {
+        let context = self.new_context(args).await?;
+        unimplemented!()
+    }
 }
 
 impl RemoteObject for Browser {
