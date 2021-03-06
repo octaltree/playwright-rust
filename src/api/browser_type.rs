@@ -61,24 +61,27 @@ impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
         }
     }
 
-    optional_setter!(executable, &'a Path);
-    optional_setter!(args, &'b [String]);
-    optional_setter!(ignore_all_default_args, bool);
-    optional_setter!(handle_sigint, bool);
-    optional_setter!(handle_sigterm, bool);
-    optional_setter!(handle_sighup, bool);
-    optional_setter!(timeout, f64);
-    optional_setter!(env, Map<String, Value>);
-    optional_setter!(headless, bool);
-    optional_setter!(devtools, bool);
-    optional_setter!(proxy, ProxySettings);
-    optional_setter!(downloads, &'c Path);
-    optional_setter!(slowmo, f64);
-    optional_setter!(chromium_sandbox, f64);
-    optional_setter!(firefox_user_prefs, Map<String, Value>);
+    optional_setter!(
+        executable, &'a Path;
+        args, &'b [String];
+        ignore_all_default_args, bool;
+        handle_sigint, bool;
+        handle_sigterm, bool;
+        handle_sighup, bool;
+        timeout, f64;
+        env, Map<String, Value>;
+        headless, bool;
+        devtools, bool;
+        proxy, ProxySettings;
+        downloads, &'c Path;
+        slowmo, f64;
+        chromium_sandbox, f64;
+        firefox_user_prefs, Map<String, Value>);
 }
 
 /// [`BrowserType::persistent_context_launcher`]
+///
+/// Has launch args and context args
 pub struct PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     inner: Weak<imp::browser_type::BrowserType>,
     args: LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
@@ -100,38 +103,39 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         }
     }
 
-    optional_setter!(executable, &'b Path);
-    optional_setter!(args, &'c [String]);
-    optional_setter!(ignore_all_default_args, bool);
-    optional_setter!(handle_sigint, bool);
-    optional_setter!(handle_sigterm, bool);
-    optional_setter!(handle_sighup, bool);
-    optional_setter!(timeout, f64);
-    optional_setter!(env, Map<String, Value>);
-    optional_setter!(headless, bool);
-    optional_setter!(devtools, bool);
-    optional_setter!(proxy, ProxySettings);
-    optional_setter!(downloads, &'d Path);
-    optional_setter!(slowmo, f64);
-    optional_setter!(viewport, Viewport);
-    optional_setter!(no_default_viewport, bool);
-    optional_setter!(ignore_http_errors, bool);
-    optional_setter!(js_enabled, bool);
-    optional_setter!(bypass_csp, bool);
-    optional_setter!(user_agent, &'e str);
-    optional_setter!(locale, &'f str);
-    optional_setter!(timezone_id, &'g str);
-    optional_setter!(geolocation, Geolocation);
-    optional_setter!(permissions, &'h [String]);
-    optional_setter!(extra_http_headers, HashMap<String, String>);
-    optional_setter!(offline, bool);
-    optional_setter!(http_credentials, &'i HttpCredentials);
-    optional_setter!(device_scale_factor, f64);
-    optional_setter!(is_mobile, bool);
-    optional_setter!(has_touch, bool);
-    optional_setter!(color_scheme, ColorScheme);
-    optional_setter!(accept_downloads, bool);
-    optional_setter!(chromium_sandbox, bool);
-    optional_setter!(record_video, RecordVideo<'j>);
-    optional_setter!(record_har, RecordHar<'k>);
+    optional_setter!(
+        executable, &'b Path;
+        args, &'c [String];
+        ignore_all_default_args, bool;
+        handle_sigint, bool;
+        handle_sigterm, bool;
+        handle_sighup, bool;
+        timeout, f64;
+        env, Map<String, Value>;
+        headless, bool;
+        devtools, bool;
+        proxy, ProxySettings;
+        downloads, &'d Path;
+        slowmo, f64;
+        viewport, Viewport;
+        no_default_viewport, bool;
+        ignore_http_errors, bool;
+        js_enabled, bool;
+        bypass_csp, bool;
+        user_agent, &'e str;
+        locale, &'f str;
+        timezone_id, &'g str;
+        geolocation, Geolocation;
+        permissions, &'h [String];
+        extra_http_headers, HashMap<String, String>;
+        offline, bool;
+        http_credentials, &'i HttpCredentials;
+        device_scale_factor, f64;
+        is_mobile, bool;
+        has_touch, bool;
+        color_scheme, ColorScheme;
+        accept_downloads, bool;
+        chromium_sandbox, bool;
+        record_video, RecordVideo<'j>;
+        record_har, RecordHar<'k>);
 }

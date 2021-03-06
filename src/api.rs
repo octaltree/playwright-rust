@@ -1,17 +1,23 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! optional_setter {
-    ($field:ident, $t: ty) => {
-        paste::paste! {
-            pub fn [<clear_$field>](mut self) -> Self {
-                self.args.$field = None;
-                self
+    ($($field:ident, $t: ty);*) => {
+        $(
+            paste::paste! {
+                pub fn [<$field>](mut self, x:$t ) -> Self {
+                    self.args.$field = Some(x);
+                    self
+                }
             }
-            pub fn [<$field>](mut self, x:$t ) -> Self {
-                self.args.$field = Some(x);
-                self
+        )*
+        $(
+            paste::paste! {
+                pub fn [<clear_$field>](mut self) -> Self {
+                    self.args.$field = None;
+                    self
+                }
             }
-        }
+        )*
     };
 }
 

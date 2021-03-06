@@ -37,19 +37,50 @@ pub enum ColorScheme {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StorageState {
-    // cookies: Optional[List[Cookie]]
-// origins: Optional[List[OriginState]]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cookies: Option<Vec<Cookie>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origins: Option<Vec<OriginState>>
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Cookie {
-    // name: str
-// value: str
-// url: Optional[str]
-// domain: Optional[str]
-// path: Optional[str]
-// expires: Optional[float]
-// httpOnly: Optional[bool]
-// secure: Optional[bool]
-// sameSite: Optional[Literal["Lax", "None", "Strict"]]
+    pub name: String,
+    pub value: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http_only: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub secure: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub same_site: Option<SameSite>
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum SameSite {
+    Lax,
+    None,
+    Strict
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OriginState {
+    origin: String,
+    local_storage: Vec<LocalStorageEntry>
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LocalStorageEntry {
+    name: String,
+    value: String
 }

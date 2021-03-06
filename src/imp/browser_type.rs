@@ -113,11 +113,13 @@ struct LaunchResponse {
     browser: OnlyGuid
 }
 
+// launch args | context args | {user_data_dir: }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     user_data_dir: &'a Path,
     sdk_language: &'static str,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "executablePath")]
     pub(crate) executable: Option<&'b Path>,
@@ -150,6 +152,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) viewport: Option<Viewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
