@@ -14,7 +14,7 @@ pub(crate) struct BrowserType {
 }
 
 impl BrowserType {
-    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { name, executable } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,
@@ -30,12 +30,12 @@ impl BrowserType {
     pub(crate) async fn launch(
         &self,
         args: LaunchArgs<'_, '_, '_>
-    ) -> Result<Weak<Browser>, Arc<ConnectionError>> {
+    ) -> Result<Weak<Browser>, Arc<Error>> {
         let m: Str<Method> = "launch".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
         let LaunchResponse {
             browser: OnlyGuid { guid }
-        } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
+        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
         let b = find_object!(self.context()?.lock().unwrap(), &guid, Browser)?;
         Ok(b)
     }
@@ -43,12 +43,12 @@ impl BrowserType {
     pub(crate) async fn launch_persistent_context(
         &self,
         args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
-    ) -> Result<Weak<BrowserContext>, Arc<ConnectionError>> {
+    ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let m: Str<Method> = "launchPersistentContext".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
         let LaunchPersistentContextResponse {
             context: OnlyGuid { guid }
-        } = serde_json::from_value((*res).clone()).map_err(ConnectionError::Serde)?;
+        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
         let b = find_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         Ok(b)
     }

@@ -16,7 +16,7 @@ pub(crate) struct Playwright {
 }
 
 impl Playwright {
-    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
         let chromium = find_object!(ctx, &i.chromium.guid, BrowserType)?;
         let firefox = find_object!(ctx, &i.firefox.guid, BrowserType)?;
@@ -72,7 +72,7 @@ struct RefGuid {
 pub(crate) struct WaitInitialObject(Wm<Context>);
 
 impl Future for WaitInitialObject {
-    type Output = Result<Weak<Playwright>, ConnectionError>;
+    type Output = Result<Weak<Playwright>, Error>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
         let i: &S<Guid> = S::validate("Playwright").unwrap();

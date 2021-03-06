@@ -6,7 +6,7 @@ pub(crate) struct BrowserContext {
 }
 
 impl BrowserContext {
-    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self { channel })
     }

@@ -24,7 +24,7 @@ pub(crate) enum Response {
 #[derive(Debug, Clone)]
 pub(crate) struct ResponseResult {
     pub(crate) id: i32,
-    pub(crate) body: Result<Value, Error>
+    pub(crate) body: Result<Value, ErrorMessage>
 }
 
 impl<'de> Deserialize<'de> for ResponseResult {
@@ -73,12 +73,12 @@ pub(crate) struct CreateParams {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct ErrorWrap {
-    error: Error
+    error: ErrorMessage
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, thiserror::Error)]
 #[error("{name} {message:?}")]
-pub struct Error {
+pub struct ErrorMessage {
     pub(crate) name: String,
     pub(crate) message: String,
     pub(crate) stack: String

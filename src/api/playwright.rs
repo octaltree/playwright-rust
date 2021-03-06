@@ -1,27 +1,10 @@
 pub use crate::imp::playwright::DeviceDescriptor;
 use crate::{
     api::{browser_type::BrowserType, selectors::Selectors},
-    imp::{self, core::*, prelude::*}
+    imp::{self, core::*, prelude::*},
+    Error
 };
 use std::{io, process::Command};
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error(transparent)]
-    Connection(#[from] crate::imp::core::ConnectionError),
-    #[error(transparent)]
-    ConnectionArc(#[from] Arc<crate::imp::core::ConnectionError>),
-    #[error("Failed to intialize")]
-    Initialization,
-    #[error(transparent)]
-    Timeout(#[from] TimeoutError)
-}
-
-#[derive(Debug, thiserror::Error)]
-#[error("")]
-pub struct TimeoutError {}
 
 pub struct Playwright {
     driver: Driver,
@@ -81,6 +64,8 @@ impl Playwright {
     }
 
     pub fn devices(&self) -> Vec<DeviceDescriptor> {
-        upgrade(&self.inner).unwrap().devices().to_vec()
+        upgrade(&self.inner)
+            .map(|x| x.devices().to_vec())
+            .unwrap_or_default()
     }
 }

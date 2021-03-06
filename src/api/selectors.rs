@@ -13,7 +13,7 @@ impl Selectors {
         name: &str,
         script: &str,
         content_script: bool
-    ) -> Result<(), Arc<ConnectionError>> {
+    ) -> Result<(), Arc<Error>> {
         let inner = upgrade(&self.inner)?;
         inner.register(name, script, content_script).await
     }

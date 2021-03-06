@@ -48,7 +48,7 @@ pub struct Launcher<'a, 'b, 'c> {
 }
 
 impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
-    pub async fn launch(self) -> Result<Browser, Error> {
+    pub async fn launch(self) -> Result<Browser, Arc<Error>> {
         let Self { inner, args } = self;
         let r = upgrade(&inner)?.launch(args).await?;
         Ok(Browser::new(r))
@@ -87,7 +87,7 @@ pub struct PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
 impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
     PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
 {
-    pub async fn launch(self) -> Result<BrowserContext, Error> {
+    pub async fn launch(self) -> Result<BrowserContext, Arc<Error>> {
         let Self { inner, args } = self;
         let r = upgrade(&inner)?.launch_persistent_context(args).await?;
         Ok(BrowserContext::new(r))

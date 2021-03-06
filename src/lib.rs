@@ -8,8 +8,8 @@ extern crate serde;
 pub mod api;
 mod imp;
 
-pub use crate::imp::core::Driver;
-pub use api::playwright::{Error, Playwright, TimeoutError};
+pub use crate::imp::core::{Driver, Error};
+pub use api::playwright::Playwright;
 
 #[doc(hidden)]
 #[macro_export]

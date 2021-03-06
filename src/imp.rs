@@ -39,7 +39,7 @@ mod macros {
         ($c:expr, $guid:expr, $t:ident) => {
             match $c.get_object($guid) {
                 Some(RemoteWeak::$t(x)) => Ok(x),
-                _ => Err(ConnectionError::ObjectNotFound)
+                _ => Err(Error::ObjectNotFound)
             }
         };
     }
@@ -51,7 +51,7 @@ mod macros {
             let r = $r.channel().create_request($method).set_args($args)?;
             let fut = $r.channel().send_message(r).await?;
             let res = fut.await?;
-            let res = res.map_err(ConnectionError::ErrorResponded)?;
+            let res = res.map_err(Error::ErrorResponded)?;
             res
         }};
     }

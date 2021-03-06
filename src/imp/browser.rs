@@ -8,7 +8,7 @@ pub(crate) struct Browser {
 }
 
 impl Browser {
-    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, ConnectionError> {
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { version } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,
@@ -20,7 +20,7 @@ impl Browser {
     pub(crate) fn contexts(&self) -> &[Weak<BrowserContext>] { &self.contexts }
     pub(crate) fn version(&self) -> &str { &self.version }
 
-    pub(crate) async fn close(&self) -> Result<(), Arc<ConnectionError>> {
+    pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
         let m: Str<Method> = "close".to_owned().try_into().unwrap();
         #[derive(Serialize)]
         struct CloseArgs {}
@@ -29,7 +29,7 @@ impl Browser {
             this: &Browser,
             m: Str<Method>,
             args: CloseArgs
-        ) -> Result<Arc<Value>, Arc<ConnectionError>> {
+        ) -> Result<Arc<Value>, Arc<Error>> {
             Ok(send_message!(this, m, args))
         }
         let result = catch(self, m, args).await;
@@ -38,7 +38,7 @@ impl Browser {
             Err(e) => e
         };
         let _responded_error = match *err {
-            ConnectionError::ErrorResponded(ref e) => e,
+            Error::ErrorResponded(ref e) => e,
             _ => Err(err)?
         };
         // TODO: has been closed

@@ -9,8 +9,8 @@ use std::{
     task::Waker
 };
 
-pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, ConnectionError> {
-    w.upgrade().ok_or(ConnectionError::ObjectNotFound)
+pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, Error> {
+    w.upgrade().ok_or(Error::ObjectNotFound)
 }
 
 pub(crate) fn weak_and_then<T, U, F>(w: &Weak<T>, f: F) -> Weak<U>
@@ -82,7 +82,7 @@ impl ChannelOwner {
     pub(crate) async fn send_message(
         &self,
         r: RequestBody
-    ) -> Result<WaitData<WaitMessageResult>, ConnectionError> {
+    ) -> Result<WaitData<WaitMessageResult>, Error> {
         let wait = WaitData::new();
         let r = r.set_wait(&wait);
         let ctx = upgrade(&self.ctx)?;
@@ -132,9 +132,7 @@ pub(crate) trait RemoteObject: Any + Debug {
     fn channel_mut(&mut self) -> &mut ChannelOwner;
 
     fn guid(&self) -> &S<Guid> { &self.channel().guid }
-    fn context(&self) -> Result<Arc<Mutex<Context>>, ConnectionError> {
-        upgrade(&self.channel().ctx)
-    }
+    fn context(&self) -> Result<Arc<Mutex<Context>>, Error> { upgrade(&self.channel().ctx) }
 }
 
 #[derive(Debug)]
@@ -176,7 +174,7 @@ impl RemoteArc {
         typ: &S<ObjectType>,
         ctx: &Context,
         c: ChannelOwner
-    ) -> Result<RemoteArc, ConnectionError> {
+    ) -> Result<RemoteArc, Error> {
         let r = match typ.as_str() {
             "Playwright" => {
                 RemoteArc::Playwright(Arc::new(imp::playwright::Playwright::try_new(ctx, c)?))
@@ -213,11 +211,11 @@ impl RequestBody {
         self
     }
 
-    pub(crate) fn set_args<T: Serialize>(mut self, body: T) -> Result<Self, ConnectionError> {
-        let v = serde_json::value::to_value(body).map_err(ConnectionError::Serde)?;
+    pub(crate) fn set_args<T: Serialize>(mut self, body: T) -> Result<Self, Error> {
+        let v = serde_json::value::to_value(body).map_err(Error::Serde)?;
         let p = match v {
             Value::Object(m) => m,
-            _ => return Err(ConnectionError::NotObject)
+            _ => return Err(Error::NotObject)
         };
         log::debug!("set request {:?}", &p);
         self.params = p;
@@ -235,7 +233,7 @@ impl RequestBody {
     }
 }
 
-pub(crate) type WaitMessageResult = Result<Result<Arc<Value>, Arc<Error>>, Arc<ConnectionError>>;
+pub(crate) type WaitMessageResult = Result<Result<Arc<Value>, Arc<ErrorMessage>>, Arc<Error>>;
 
 #[derive(Clone)]
 pub(crate) struct WaitPlaces<T> {

@@ -13,7 +13,7 @@ impl Selectors {
         name: &str,
         script: &str,
         content_script: bool
-    ) -> Result<(), Arc<ConnectionError>> {
+    ) -> Result<(), Arc<Error>> {
         let m: Str<Method> = "register".to_owned().try_into().unwrap();
         let args = RegisterArgs {
             name,

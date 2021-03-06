@@ -28,7 +28,9 @@ pub(crate) struct Connection {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum ConnectionError {
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] io::Error),
     #[error("Failed to initialize")]
     InitializationError,
     #[error("Disconnected")]
@@ -48,7 +50,7 @@ pub enum ConnectionError {
     #[error("Callback not found")]
     CallbackNotFound,
     #[error(transparent)]
-    ErrorResponded(#[from] Arc<Error>),
+    ErrorResponded(#[from] Arc<ErrorMessage>),
     #[error("Value is not Object")]
     NotObject
 }
@@ -166,13 +168,11 @@ impl Context {
         am
     }
 
-    fn dispatch(&mut self, msg: Response) -> Result<(), ConnectionError> {
+    fn dispatch(&mut self, msg: Response) -> Result<(), Error> {
         match msg {
             Response::Result(msg) => {
-                let WaitPlaces { value, waker } = self
-                    .callbacks
-                    .get(&msg.id)
-                    .ok_or(ConnectionError::CallbackNotFound)?;
+                let WaitPlaces { value, waker } =
+                    self.callbacks.get(&msg.id).ok_or(Error::CallbackNotFound)?;
                 let place = match value.upgrade() {
                     Some(p) => p,
                     None => return Ok(())
@@ -211,16 +211,13 @@ impl Context {
         &mut self,
         parent: &S<Guid>,
         params: Map<String, Value>
-    ) -> Result<(), ConnectionError> {
+    ) -> Result<(), Error> {
         let CreateParams {
             typ,
             guid,
             initializer
         } = serde_json::from_value(params.into())?;
-        let parent = self
-            .objects
-            .get(parent)
-            .ok_or(ConnectionError::ParentNotFound)?;
+        let parent = self.objects.get(parent).ok_or(Error::ParentNotFound)?;
         let c = ChannelOwner::new(
             self.ctx.clone(),
             parent.downgrade(),
@@ -237,10 +234,7 @@ impl Context {
         self.objects.get(k).map(|r| r.downgrade())
     }
 
-    pub(in crate::imp::core) fn send_message(
-        &mut self,
-        r: RequestBody
-    ) -> Result<(), ConnectionError> {
+    pub(in crate::imp::core) fn send_message(&mut self, r: RequestBody) -> Result<(), Error> {
         self.id += 1;
         let RequestBody {
             guid,

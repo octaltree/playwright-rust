@@ -32,7 +32,7 @@ impl Browser {
 
     /// All browsers will be closed when the connection is terminated, but
     /// it needs to be called explicitly to close it at any given time.
-    pub async fn close(&mut self) -> Result<(), Arc<ConnectionError>> {
+    pub async fn close(&mut self) -> Result<(), Arc<Error>> {
         let inner = upgrade(&self.inner)?;
         inner.close().await
     }
