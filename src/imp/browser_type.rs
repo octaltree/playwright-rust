@@ -42,7 +42,7 @@ impl BrowserType {
 
     pub(crate) async fn launch_persistent_context(
         &self,
-        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_>
+        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
     ) -> Result<Weak<BrowserContext>, Arc<ConnectionError>> {
         let m: Str<Method> = "launchPersistentContext".to_owned().try_into().unwrap();
         let res = send_message!(self, m, args);
@@ -115,14 +115,14 @@ struct LaunchResponse {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g> {
+pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     user_data_dir: &'a Path,
     sdk_language: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "executablePath")]
-    pub(crate) executable: Option<&'a Path>,
+    pub(crate) executable: Option<&'b Path>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) args: Option<&'b [String]>,
+    pub(crate) args: Option<&'c [String]>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) ignore_all_default_args: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -146,7 +146,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g> {
     pub(crate) proxy: Option<ProxySettings>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "downloadsPath")]
-    pub(crate) downloads: Option<&'c Path>,
+    pub(crate) downloads: Option<&'d Path>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
@@ -164,22 +164,22 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g> {
     #[serde(rename = "bypassCSP")]
     pub(crate) bypass_csp: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) user_agent: Option<&'c str>,
+    pub(crate) user_agent: Option<&'e str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) locale: Option<&'c str>,
+    pub(crate) locale: Option<&'f str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) timezone_id: Option<&'c str>,
+    pub(crate) timezone_id: Option<&'g str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) geolocation: Option<Geolocation>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) permissions: Option<&'d [String]>,
+    pub(crate) permissions: Option<&'h [String]>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "extraHTTPHeaders")]
     pub(crate) extra_http_headers: Option<HashMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) offline: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) http_credentials: Option<&'e HttpCredentials>,
+    pub(crate) http_credentials: Option<&'i HttpCredentials>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) device_scale_factor: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -193,14 +193,14 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) chromium_sandbox: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) record_video: Option<RecordVideo<'f>>,
+    pub(crate) record_video: Option<RecordVideo<'j>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) record_har: Option<RecordHar<'g>>
+    pub(crate) record_har: Option<RecordHar<'k>>
 }
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct RecordVideo<'a> {
+pub struct RecordVideo<'a> {
     dir: &'a Path,
     #[serde(skip_serializing_if = "Option::is_none")]
     size: Option<Viewport>
@@ -208,14 +208,14 @@ pub(crate) struct RecordVideo<'a> {
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct RecordHar<'a> {
+pub struct RecordHar<'a> {
     path: &'a Path,
     #[serde(skip_serializing_if = "Option::is_none")]
     omit_content: Option<bool>
 }
 
-impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_> {
-    fn new(user_data_dir: &'a Path) -> Self {
+impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
+    pub(crate) fn new(user_data_dir: &'a Path) -> Self {
         let sdk_language = "rust";
         Self {
             user_data_dir,
