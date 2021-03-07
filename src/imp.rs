@@ -47,8 +47,9 @@ mod macros {
     #[doc(hidden)]
     #[macro_export]
     macro_rules! send_message {
-        ($r: expr, $method:expr, $args: expr) => {{
-            let r = $r.channel().create_request($method).set_args($args)?;
+        ($r: expr, $method:literal, $args: expr) => {{
+            let m: Str<Method> = $method.to_owned().try_into().unwrap();
+            let r = $r.channel().create_request(m).set_args($args)?;
             let fut = $r.channel().send_message(r).await?;
             let res = fut.await?;
             let res = res.map_err(Error::ErrorResponded)?;
@@ -85,6 +86,7 @@ pub(crate) mod frame;
 pub(crate) mod js_handle;
 pub(crate) mod network;
 pub(crate) mod page;
+pub(crate) mod worker;
 
 //_accessibility.py
 //_api_structures.py

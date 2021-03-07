@@ -52,7 +52,13 @@ pub enum Error {
     #[error(transparent)]
     ErrorResponded(#[from] Arc<ErrorMessage>),
     #[error("Value is not Object")]
-    NotObject
+    NotObject,
+    #[error("guid not found in {0:?}")]
+    GuidNotFound(Value)
+}
+
+pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
+    as_only_guid(v).ok_or(Error::GuidNotFound(v.clone()))
 }
 
 impl Drop for Connection {

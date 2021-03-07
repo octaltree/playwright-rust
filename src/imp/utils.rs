@@ -84,3 +84,11 @@ pub struct LocalStorageEntry {
     pub name: String,
     pub value: String
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum DocumentLoadState {
+    DomContentLoaded,
+    Load,
+    NetworkIdle
+}

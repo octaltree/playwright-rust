@@ -31,11 +31,8 @@ impl BrowserType {
         &self,
         args: LaunchArgs<'_, '_, '_>
     ) -> Result<Weak<Browser>, Arc<Error>> {
-        let m: Str<Method> = "launch".to_owned().try_into().unwrap();
-        let res = send_message!(self, m, args);
-        let LaunchResponse {
-            browser: OnlyGuid { guid }
-        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
+        let res = send_message!(self, "launch", args);
+        let guid = only_guid(&res)?;
         let b = find_object!(self.context()?.lock().unwrap(), &guid, Browser)?;
         Ok(b)
     }
@@ -44,11 +41,8 @@ impl BrowserType {
         &self,
         args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
-        let m: Str<Method> = "launchPersistentContext".to_owned().try_into().unwrap();
-        let res = send_message!(self, m, args);
-        let LaunchPersistentContextResponse {
-            context: OnlyGuid { guid }
-        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
+        let res = send_message!(self, "launchPersistentContext", args);
+        let guid = only_guid(&res)?;
         let b = find_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         Ok(b)
     }
@@ -106,11 +100,6 @@ struct Initializer {
     name: String,
     #[serde(rename = "executablePath")]
     executable: PathBuf
-}
-
-#[derive(Deserialize)]
-struct LaunchResponse {
-    browser: OnlyGuid
 }
 
 // launch args | context args | {user_data_dir: }
@@ -259,12 +248,6 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             record_har: None
         }
     }
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct LaunchPersistentContextResponse {
-    context: OnlyGuid
 }
 
 #[cfg(test)]

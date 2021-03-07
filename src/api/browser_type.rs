@@ -6,7 +6,7 @@ use crate::{
     api::{browser::Browser, browser_context::BrowserContext},
     imp::{
         self,
-        browser_type::{LaunchArgs, LaunchPersistentContextArgs},
+        browser_type::{BrowserType as Impl, LaunchArgs, LaunchPersistentContextArgs},
         core::*,
         prelude::*
     },
@@ -15,11 +15,11 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct BrowserType {
-    inner: Weak<imp::browser_type::BrowserType>
+    inner: Weak<Impl>
 }
 
 impl BrowserType {
-    pub(crate) fn new(inner: Weak<imp::browser_type::BrowserType>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
     /// # Errors
     /// Returns error only if this function is called after object is disposed.
@@ -45,7 +45,7 @@ impl BrowserType {
 
 /// [`BrowserType::launcher`]
 pub struct Launcher<'a, 'b, 'c> {
-    inner: Weak<imp::browser_type::BrowserType>,
+    inner: Weak<Impl>,
     args: LaunchArgs<'a, 'b, 'c>
 }
 
@@ -56,7 +56,7 @@ impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
         Ok(Browser::new(r))
     }
 
-    fn new(inner: Weak<imp::browser_type::BrowserType>) -> Self {
+    fn new(inner: Weak<Impl>) -> Self {
         Launcher {
             inner,
             args: LaunchArgs::default()
@@ -85,7 +85,7 @@ impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
 ///
 /// Has launch args and context args
 pub struct PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
-    inner: Weak<imp::browser_type::BrowserType>,
+    inner: Weak<Impl>,
     args: LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
 }
 
@@ -98,7 +98,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         Ok(BrowserContext::new(r))
     }
 
-    fn new(inner: Weak<imp::browser_type::BrowserType>, user_data_dir: &'a Path) -> Self {
+    fn new(inner: Weak<Impl>, user_data_dir: &'a Path) -> Self {
         Self {
             inner,
             args: LaunchPersistentContextArgs::new(user_data_dir)

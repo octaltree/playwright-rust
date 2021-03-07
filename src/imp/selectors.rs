@@ -14,13 +14,12 @@ impl Selectors {
         script: &str,
         content_script: bool
     ) -> Result<(), Arc<Error>> {
-        let m: Str<Method> = "register".to_owned().try_into().unwrap();
         let args = RegisterArgs {
             name,
             source: script,
             content_script
         };
-        let _ = send_message!(self, m, args);
+        let _ = send_message!(self, "register", args);
         Ok(())
     }
 }

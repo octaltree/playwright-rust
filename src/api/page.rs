@@ -3,17 +3,22 @@ use crate::{
         accessibility::Accessibility, browser_context::BrowserContext,
         element_handle::ElementHandle, frame::Frame, input_device::*, video::Video, worker::Worker
     },
-    imp::{self, core::*, prelude::*, utils::Viewport},
+    imp::{self, core::*, page::Page as Impl, prelude::*, utils::Viewport},
     Error
 };
 use std::time::Duration;
 
 pub struct Page {
-    inner: Weak<imp::page::Page>
+    inner: Weak<Impl>
 }
 
 impl Page {
-    pub(crate) fn new(inner: Weak<imp::page::Page>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
+
+    pub fn main_frame(&self) -> Frame {
+        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
+        Frame::new(inner)
+    }
 
     fn accessibility(&self) -> Accessibility { unimplemented!() }
 
@@ -24,8 +29,6 @@ impl Page {
     fn touchscreen(&self) -> TouchScreen { unimplemented!() }
 
     fn context(&self) -> BrowserContext { unimplemented!() }
-
-    fn main_frame(&self) -> Frame { unimplemented!() }
 
     fn frames(&self) -> Vec<Frame> { unimplemented!() }
 

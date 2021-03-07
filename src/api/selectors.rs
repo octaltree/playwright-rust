@@ -1,12 +1,12 @@
-use crate::imp::{core::*, prelude::*, selectors};
+use crate::imp::{core::*, prelude::*, selectors, selectors::Selectors as Impl};
 
 #[derive(Debug, Clone)]
 pub struct Selectors {
-    inner: Weak<selectors::Selectors>
+    inner: Weak<Impl>
 }
 
 impl Selectors {
-    pub(crate) fn new(inner: Weak<selectors::Selectors>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
     pub async fn register(
         &mut self,

@@ -35,9 +35,6 @@ impl Browser {
         ContextBuilder::new(self.inner.clone())
     }
 
-    /// Shortcut of [`BrowserContext::new_page`] and [`Browser::new_context`].
-    async fn new_page(&mut self) -> Result<Page, Error> { unimplemented!() }
-
     /// All temporary browsers will be closed when the connection is terminated, but
     /// it needs to be called explicitly to close it at any given time.
     pub async fn close(&mut self) -> Result<(), Arc<Error>> {

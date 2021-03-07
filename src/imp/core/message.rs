@@ -1,7 +1,6 @@
 use serde::{Deserialize, Deserializer};
 use serde_json::{map::Map, value::Value};
 use strong::*;
-use thiserror::Error;
 
 #[derive(Debug, Serialize)]
 pub(crate) struct Request<'a, 'b> {
@@ -97,7 +96,7 @@ impl Validator for Guid {
 
 pub(crate) enum Method {}
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 #[error("Method {0:?} validation error")]
 pub(crate) struct MethodError(String);
 
@@ -122,4 +121,19 @@ pub(crate) enum ObjectType {}
 
 impl Validator for ObjectType {
     type Err = std::convert::Infallible;
+}
+
+/// If {"<type>": {"guid": str}} then str
+pub(crate) fn as_only_guid(v: &Value) -> Option<&S<Guid>> {
+    // {"<type>": {"guid": str}}
+    let m: &Map<String, Value> = v.as_object()?;
+    if m.len() != 1 {
+        return None;
+    }
+    let v: &Value = m.values().next()?;
+    // {"guid": str}
+    let m: &Map<String, Value> = v.as_object()?;
+    let v: &Value = m.get("guid")?;
+    let s: &str = v.as_str()?;
+    S::validate(s).ok()
 }

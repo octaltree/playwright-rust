@@ -1,7 +1,7 @@
 pub use crate::imp::playwright::DeviceDescriptor;
 use crate::{
     api::{browser_type::BrowserType, selectors::Selectors},
-    imp::{self, core::*, prelude::*},
+    imp::{self, core::*, playwright::Playwright as Impl, prelude::*},
     Error
 };
 use std::{io, process::Command};
@@ -10,7 +10,7 @@ use std::{io, process::Command};
 pub struct Playwright {
     driver: Driver,
     _conn: Connection,
-    inner: Weak<imp::playwright::Playwright>
+    inner: Weak<Impl>
 }
 
 impl Playwright {
@@ -23,7 +23,7 @@ impl Playwright {
     /// Constructs from installed playwright driver
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
         let conn = Connection::run(&driver.executable())?;
-        let p = imp::playwright::Playwright::wait_initial_object(&conn).await?;
+        let p = Impl::wait_initial_object(&conn).await?;
         Ok(Self {
             driver,
             _conn: conn,

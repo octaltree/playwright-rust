@@ -144,6 +144,7 @@ pub(crate) enum RemoteArc {
     Browser(Arc<imp::browser::Browser>),
     BrowserContext(Arc<imp::browser_context::BrowserContext>),
     Page(Arc<imp::page::Page>),
+    Frame(Arc<imp::frame::Frame>),
     Playwright(Arc<imp::playwright::Playwright>)
 }
 
@@ -156,6 +157,7 @@ pub(crate) enum RemoteWeak {
     Browser(Weak<imp::browser::Browser>),
     BrowserContext(Weak<imp::browser_context::BrowserContext>),
     Page(Weak<imp::page::Page>),
+    Frame(Weak<imp::frame::Frame>),
     Playwright(Weak<imp::playwright::Playwright>)
 }
 
@@ -169,6 +171,7 @@ impl RemoteArc {
             Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
             Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x)),
             Self::Page(x) => RemoteWeak::Page(Arc::downgrade(x)),
+            Self::Frame(x) => RemoteWeak::Frame(Arc::downgrade(x)),
             Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x))
         }
     }
@@ -190,7 +193,8 @@ impl RemoteArc {
             "BrowserContext" => RemoteArc::BrowserContext(Arc::new(
                 imp::browser_context::BrowserContext::try_new(c)?
             )),
-            "Page" => RemoteArc::Page(Arc::new(imp::page::Page::new(c))),
+            "Page" => RemoteArc::Page(Arc::new(imp::page::Page::try_new(ctx, c)?)),
+            "Frame" => RemoteArc::Frame(Arc::new(imp::frame::Frame::new(c))),
             _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)

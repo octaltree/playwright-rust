@@ -21,11 +21,8 @@ impl BrowserContext {
     pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
 
     pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
-        let m: Str<Method> = "newPage".to_owned().try_into().unwrap();
-        let res = send_message!(self, m, Map::new());
-        let NewPageResponse {
-            page: OnlyGuid { guid }
-        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
+        let res = send_message!(self, "newPage", Map::new());
+        let guid = only_guid(&res)?;
         let p = find_object!(self.context()?.lock().unwrap(), &guid, Page)?;
         Ok(p)
     }
@@ -33,7 +30,6 @@ impl BrowserContext {
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:
-    // TODO: async def new_page(self) -> Page:
     // TODO: async def cookies(self, urls: Union[str, List[str]] = None) -> List[Cookie]:
     // TODO: async def add_cookies(self, cookies: List[Cookie]) -> None:
     // TODO: async def clear_cookies(self) -> None:
@@ -52,11 +48,6 @@ impl BrowserContext {
     // TODO: async def storage_state(self, path: Union[str, Path] = None) -> StorageState:
     // TODO: async def wait_for_event(
     // TODO: def expect_page(
-}
-
-#[derive(Deserialize, Debug)]
-struct NewPageResponse {
-    page: OnlyGuid
 }
 
 impl RemoteObject for BrowserContext {

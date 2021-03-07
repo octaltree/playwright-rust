@@ -56,17 +56,12 @@ impl RemoteObject for Playwright {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Initializer {
-    chromium: RefGuid,
-    firefox: RefGuid,
-    webkit: RefGuid,
-    android: RefGuid,
-    selectors: RefGuid,
+    chromium: OnlyGuid,
+    firefox: OnlyGuid,
+    webkit: OnlyGuid,
+    android: OnlyGuid,
+    selectors: OnlyGuid,
     device_descriptors: Vec<DeviceDescriptor>
-}
-
-#[derive(Debug, Deserialize)]
-struct RefGuid {
-    guid: Str<Guid>
 }
 
 pub(crate) struct WaitInitialObject(Wm<Context>);

@@ -2,6 +2,7 @@ use crate::{
     api::{browser::Browser, page::Page},
     imp::{
         self,
+        browser_context::BrowserContext as Impl,
         core::*,
         prelude::*,
         utils::{Cookie, StorageState}
@@ -11,11 +12,11 @@ use crate::{
 use std::time::Duration;
 
 pub struct BrowserContext {
-    inner: Weak<imp::browser_context::BrowserContext>
+    inner: Weak<Impl>
 }
 
 impl BrowserContext {
-    pub(crate) fn new(inner: Weak<imp::browser_context::BrowserContext>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
     fn pages(&self) -> Result<Vec<Page>, Error> {
         Ok(upgrade(&self.inner)?

@@ -30,18 +30,13 @@ impl Browser {
     pub(crate) fn version(&self) -> &str { &self.version }
 
     pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
-        let m: Str<Method> = "close".to_owned().try_into().unwrap();
         #[derive(Serialize)]
         struct CloseArgs {}
         let args = CloseArgs {};
-        async fn catch(
-            this: &Browser,
-            m: Str<Method>,
-            args: CloseArgs
-        ) -> Result<Arc<Value>, Arc<Error>> {
-            Ok(send_message!(this, m, args))
+        async fn catch(this: &Browser, args: CloseArgs) -> Result<Arc<Value>, Arc<Error>> {
+            Ok(send_message!(this, "close", args))
         }
-        let result = catch(self, m, args).await;
+        let result = catch(self, args).await;
         let err = match result {
             Ok(_) => return Ok(()),
             Err(e) => e
@@ -58,11 +53,8 @@ impl Browser {
         &self,
         args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
-        let m: Str<Method> = "newContext".to_owned().try_into().unwrap();
-        let res = send_message!(self, m, args);
-        let NewContextResponse {
-            context: OnlyGuid { guid }
-        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
+        let res = send_message!(self, "newContext", args);
+        let guid = only_guid(&res)?;
         let c = find_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         self.contexts.lock().unwrap().push(c.clone());
         // TODO
@@ -181,12 +173,6 @@ impl Default for NewContextArgs<'_, '_, '_, '_, '_, '_, '_> {
             storage_state: None
         }
     }
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct NewContextResponse {
-    context: OnlyGuid
 }
 
 #[cfg(test)]

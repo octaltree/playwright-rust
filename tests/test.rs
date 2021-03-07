@@ -1,5 +1,5 @@
 use playwright::{
-    api::{Browser, BrowserContext, BrowserType},
+    api::{Browser, BrowserContext, BrowserType, DocumentLoadState},
     *
 };
 
@@ -18,7 +18,13 @@ runtime_test!(awesome, {
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
-    // tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+    p.main_frame()
+        .goto_builder("https://example.com/")
+        .wait_until(DocumentLoadState::Load)
+        .goto()
+        .await
+        .unwrap();
+    tokio::time::sleep(std::time::Duration::from_secs(20)).await;
 });
 
 async fn register_selector(p: &Playwright) {
@@ -26,7 +32,7 @@ async fn register_selector(p: &Playwright) {
 }
 
 async fn launch(t: &mut BrowserType) -> Browser {
-    t.launcher().headless(true).launch().await.unwrap()
+    t.launcher().headless(false).launch().await.unwrap()
 }
 
 async fn new_context(b: &mut Browser) -> BrowserContext {

@@ -1,12 +1,49 @@
-use crate::imp::{core::*, prelude::*};
+use crate::imp::{core::*, prelude::*, utils::DocumentLoadState};
 
 #[derive(Debug)]
 pub(crate) struct Frame {
-    channel: ChannelOwner
+    channel: ChannelOwner,
+    var: Mutex<Variable>
 }
 
+#[derive(Debug)]
+struct Variable {}
+
 impl Frame {
-    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
+    pub(crate) fn new(channel: ChannelOwner) -> Self {
+        let var = Mutex::new(Variable {});
+        Self { channel, var }
+    }
+
+    // TODO: return response
+    pub(crate) async fn goto(&self, args: GotoArgs<'_, '_>) -> Result<(), Arc<Error>> {
+        let v = send_message!(self, "goto", args);
+        let o: Option<&S<Guid>> = as_only_guid(&v);
+        Ok(())
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct GotoArgs<'a, 'b> {
+    url: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) wait_until: Option<DocumentLoadState>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) referer: Option<&'b str>
+}
+
+impl<'a> GotoArgs<'a, '_> {
+    pub(crate) fn new(url: &'a str) -> Self {
+        Self {
+            url,
+            timeout: None,
+            wait_until: None,
+            referer: None
+        }
+    }
 }
 
 impl RemoteObject for Frame {
