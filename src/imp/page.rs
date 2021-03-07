@@ -107,6 +107,17 @@ impl Page {
         let _ = send_message!(self, "keyboardPress", args);
         Ok(())
     }
+
+    pub(crate) async fn screen_tap(&self, x: f64, y: f64) -> Result<(), Arc<Error>> {
+        #[derive(Serialize)]
+        struct Args {
+            x: f64,
+            y: f64
+        }
+        let args = Args { x, y };
+        let _ = send_message!(self, "touchscreenTap", args);
+        Ok(())
+    }
 }
 
 impl BindingCall {
