@@ -184,11 +184,11 @@ pub(crate) struct MouseClickArgs {
     x: f64,
     y: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
-    delay: Option<f64>,
+    pub(crate) delay: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    button: Option<MouseButton>,
+    pub(crate) button: Option<MouseButton>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    click_count: Option<i32>
+    pub(crate) click_count: Option<i32>
 }
 
 impl MouseClickArgs {

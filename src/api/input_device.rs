@@ -1,5 +1,9 @@
 pub use crate::imp::utils::MouseButton;
-use crate::imp::{core::*, page::Page as PageImpl, prelude::*};
+use crate::imp::{
+    core::*,
+    page::{MouseClickArgs, Page as PageImpl},
+    prelude::*
+};
 
 pub struct Keyboard {
     inner: Weak<PageImpl>
@@ -63,8 +67,11 @@ impl Mouse {
         inner.mouse_up(button, click_count).await
     }
 
-    // TODO: clicker
-    // TODO: dblclicker
+    pub fn clicker(&mut self, x: f64, y: f64) -> Clicker { Clicker::new(self.inner.clone(), x, y) }
+
+    pub fn dblclicker(&mut self, x: f64, y: f64) -> DblClicker {
+        DblClicker::new(self.inner.clone(), x, y)
+    }
 }
 
 impl TouchScreen {
@@ -75,3 +82,33 @@ impl TouchScreen {
         inner.screen_tap(x, y).await
     }
 }
+
+macro_rules! clicker {
+    ($t: ident, $f: ident, $mf: ident) => {
+        pub struct $t {
+            inner: Weak<PageImpl>,
+            args: MouseClickArgs
+        }
+
+        impl $t {
+            pub(crate) fn new(inner: Weak<PageImpl>, x:f64, y:f64) -> Self {
+                let args = MouseClickArgs::new(x,y);
+                Self { inner, args }
+            }
+
+            pub async fn $f(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$mf(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                delay, f64;
+                button, MouseButton;
+                click_count, i32);
+        }
+    }
+}
+
+clicker!(Clicker, click, mouse_click);
+clicker!(DblClicker, dblclick, mouse_dblclick);
