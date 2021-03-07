@@ -30,13 +30,10 @@ impl Browser {
     pub(crate) fn version(&self) -> &str { &self.version }
 
     pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
-        #[derive(Serialize)]
-        struct CloseArgs {}
-        let args = CloseArgs {};
-        async fn catch(this: &Browser, args: CloseArgs) -> Result<Arc<Value>, Arc<Error>> {
-            Ok(send_message!(this, "close", args))
+        async fn catch(this: &Browser) -> Result<Arc<Value>, Arc<Error>> {
+            Ok(send_message!(this, "close", Map::new()))
         }
-        let result = catch(self, args).await;
+        let result = catch(self).await;
         let err = match result {
             Ok(_) => return Ok(()),
             Err(e) => e
