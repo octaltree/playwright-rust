@@ -1,7 +1,6 @@
 use crate::imp::{core::*, prelude::*};
 use std::{
     io,
-    path::Path,
     process::{Child, Command, Stdio},
     sync::TryLockError
 };

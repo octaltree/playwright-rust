@@ -21,7 +21,8 @@ use std::time::Duration;
 pub struct Page {
     inner: Weak<Impl>,
     pub keyboard: Keyboard,
-    pub touch_screen: TouchScreen
+    pub touch_screen: TouchScreen,
+    pub mouse: Mouse
 }
 
 impl Page {
@@ -29,7 +30,8 @@ impl Page {
         Self {
             inner: inner.clone(),
             keyboard: Keyboard::new(inner.clone()),
-            touch_screen: TouchScreen::new(inner)
+            touch_screen: TouchScreen::new(inner.clone()),
+            mouse: Mouse::new(inner)
         }
     }
 
@@ -60,12 +62,6 @@ impl Page {
     }
 
     fn accessibility(&self) -> Accessibility { unimplemented!() }
-
-    fn keyboard(&self) -> Keyboard { unimplemented!() }
-
-    fn mouse(&self) -> Mouse { unimplemented!() }
-
-    fn touchscreen(&self) -> TouchScreen { unimplemented!() }
 
     fn context(&self) -> BrowserContext { unimplemented!() }
 

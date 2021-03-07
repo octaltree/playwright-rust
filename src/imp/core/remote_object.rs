@@ -61,12 +61,7 @@ impl ChannelOwner {
     }
 
     pub(crate) fn create_request(&self, method: Str<Method>) -> RequestBody {
-        RequestBody {
-            guid: self.guid.clone(),
-            method,
-            params: Map::default(),
-            place: WaitPlaces::new_empty()
-        }
+        RequestBody::new(self.guid.clone(), method)
     }
 
     pub(crate) async fn send_message(
@@ -240,25 +235,33 @@ pub(crate) struct RequestBody {
 }
 
 impl RequestBody {
-    pub(crate) fn set_method(mut self, method: Str<Method>) -> Self {
-        self.method = method;
-        self
+    pub(crate) fn new(guid: Str<Guid>, method: Str<Method>) -> RequestBody {
+        RequestBody {
+            guid,
+            method,
+            params: Map::default(),
+            place: WaitPlaces::new_empty()
+        }
     }
+
+    // pub(crate) fn set_method(mut self, method: Str<Method>) -> Self {
+    //    self.method = method;
+    //    self
+    //}
 
     pub(crate) fn set_params(mut self, params: Map<String, Value>) -> Self {
         self.params = params;
         self
     }
 
-    pub(crate) fn set_args<T: Serialize>(mut self, body: T) -> Result<Self, Error> {
+    pub(crate) fn set_args<T: Serialize>(self, body: T) -> Result<Self, Error> {
         let v = serde_json::value::to_value(body).map_err(Error::Serde)?;
         let p = match v {
             Value::Object(m) => m,
             _ => return Err(Error::NotObject)
         };
         log::debug!("set request {:?}", &p);
-        self.params = p;
-        Ok(self)
+        Ok(self.set_params(p))
     }
 
     pub(crate) fn set_wait(mut self, wait: &WaitData<WaitMessageResult>) -> Self {
@@ -266,10 +269,10 @@ impl RequestBody {
         self
     }
 
-    pub(crate) fn set_guid(mut self, guid: Str<Guid>) -> Self {
-        self.guid = guid;
-        self
-    }
+    // pub(crate) fn set_guid(mut self, guid: Str<Guid>) -> Self {
+    //    self.guid = guid;
+    //    self
+    //}
 }
 
 pub(crate) type WaitMessageResult = Result<Result<Arc<Value>, Arc<ErrorMessage>>, Arc<Error>>;

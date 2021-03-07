@@ -1,5 +1,5 @@
 use playwright::{
-    api::{Browser, BrowserContext, BrowserType, DocumentLoadState, Response},
+    api::{Browser, BrowserContext, BrowserType, Response},
     *
 };
 
@@ -20,7 +20,6 @@ runtime_test!(awesome, {
     let _response: Option<Response> = p
         .main_frame()
         .goto_builder("https://example.com/")
-        //.wait_until(DocumentLoadState::Load)
         .goto()
         .await
         .unwrap();

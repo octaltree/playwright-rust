@@ -185,6 +185,6 @@ mod tests {
         let chromium = p.chromium().upgrade().unwrap();
         let b = chromium.launch(LaunchArgs::default()).await.unwrap();
         let b = b.upgrade().unwrap();
-        b.new_context(NewContextArgs::default()).await;
+        b.new_context(NewContextArgs::default()).await.unwrap();
     });
 }

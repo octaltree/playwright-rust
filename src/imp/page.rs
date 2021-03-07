@@ -192,7 +192,7 @@ pub(crate) struct MouseClickArgs {
 }
 
 impl MouseClickArgs {
-    fn new(x: f64, y: f64) -> Self {
+    pub(crate) fn new(x: f64, y: f64) -> Self {
         Self {
             x,
             y,

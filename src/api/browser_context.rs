@@ -17,7 +17,7 @@ pub struct BrowserContext {
 impl BrowserContext {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
-    fn pages(&self) -> Result<Vec<Page>, Error> {
+    pub fn pages(&self) -> Result<Vec<Page>, Error> {
         Ok(upgrade(&self.inner)?
             .pages()
             .iter()
