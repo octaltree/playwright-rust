@@ -1,5 +1,5 @@
 use playwright::{
-    api::{Browser, BrowserType},
+    api::{Browser, BrowserContext, BrowserType},
     *
 };
 
@@ -16,6 +16,7 @@ runtime_test!(awesome, {
     register_selector(&p).await;
     let mut bt = p.firefox();
     let mut b = launch(&mut bt).await;
+    let mut c = new_context(&mut b).await;
 });
 
 async fn register_selector(p: &Playwright) {
@@ -24,4 +25,9 @@ async fn register_selector(p: &Playwright) {
 
 async fn launch(t: &mut BrowserType) -> Browser {
     t.launcher().headless(true).launch().await.unwrap()
+}
+
+async fn new_context(b: &mut Browser) -> BrowserContext {
+    let a = "asdf".to_string();
+    b.context_builder().user_agent(&a).build().await.unwrap()
 }

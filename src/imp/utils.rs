@@ -23,8 +23,8 @@ pub struct Geolocation {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct HttpCredentials {
-    username: String,
-    password: String
+    pub username: String,
+    pub password: String
 }
 
 #[derive(Debug, Deserialize, Clone, Copy, Serialize)]
@@ -74,13 +74,13 @@ pub enum SameSite {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OriginState {
-    origin: String,
-    local_storage: Vec<LocalStorageEntry>
+    pub origin: String,
+    pub local_storage: Vec<LocalStorageEntry>
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LocalStorageEntry {
-    name: String,
-    value: String
+    pub name: String,
+    pub value: String
 }
