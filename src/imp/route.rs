@@ -1,17 +1,15 @@
 use crate::imp::{core::*, prelude::*};
 
 #[derive(Debug)]
-pub(crate) struct Response {
+pub(crate) struct Route {
     channel: ChannelOwner
 }
 
-impl Response {
-    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
-        Ok(Self { channel })
-    }
+impl Route {
+    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
 }
 
-impl RemoteObject for Response {
+impl RemoteObject for Route {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }

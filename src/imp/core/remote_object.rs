@@ -135,33 +135,35 @@ pub(crate) trait RemoteObject: Any + Debug {
     fn context(&self) -> Result<Arc<Mutex<Context>>, Error> { upgrade(&self.channel().ctx) }
 }
 
-#[derive(Debug)]
-pub(crate) enum RemoteArc {
-    Dummy(Arc<DummyObject>),
-    Root(Arc<RootObject>),
-    BrowserType(Arc<imp::browser_type::BrowserType>),
-    Selectors(Arc<imp::selectors::Selectors>),
-    Browser(Arc<imp::browser::Browser>),
-    BrowserContext(Arc<imp::browser_context::BrowserContext>),
-    Page(Arc<imp::page::Page>),
-    Frame(Arc<imp::frame::Frame>),
-    Response(Arc<imp::response::Response>),
-    Playwright(Arc<imp::playwright::Playwright>)
+macro_rules! remote_enum {
+    ($t:ident, $p: ident) => {
+        #[derive(Debug)]
+        pub(crate) enum $t {
+            Dummy($p<DummyObject>),
+            Root($p<RootObject>),
+            BrowserType($p<imp::browser_type::BrowserType>),
+            Selectors($p<imp::selectors::Selectors>),
+            Browser($p<imp::browser::Browser>),
+            BrowserContext($p<imp::browser_context::BrowserContext>),
+            Page($p<imp::page::Page>),
+            Frame($p<imp::frame::Frame>),
+            Response($p<imp::response::Response>),
+            Request($p<imp::request::Request>),
+            Route($p<imp::route::Route>),
+            WebSocket($p<imp::websocket::WebSocket>),
+            Worker($p<imp::worker::Worker>),
+            Dialog($p<imp::dialog::Dialog>),
+            Download($p<imp::download::Download>),
+            ConsoleMessage($p<imp::console_message::ConsoleMessage>),
+            CdpSession($p<imp::cdp_session::CdpSession>),
+            Playwright($p<imp::playwright::Playwright>)
+        }
+    };
 }
 
-#[derive(Debug)]
-pub(crate) enum RemoteWeak {
-    Dummy(Weak<DummyObject>),
-    Root(Weak<RootObject>),
-    BrowserType(Weak<imp::browser_type::BrowserType>),
-    Selectors(Weak<imp::selectors::Selectors>),
-    Browser(Weak<imp::browser::Browser>),
-    BrowserContext(Weak<imp::browser_context::BrowserContext>),
-    Page(Weak<imp::page::Page>),
-    Frame(Weak<imp::frame::Frame>),
-    Response(Weak<imp::response::Response>),
-    Playwright(Weak<imp::playwright::Playwright>)
-}
+remote_enum! {RemoteArc, Arc}
+
+remote_enum! {RemoteWeak, Weak}
 
 impl RemoteArc {
     pub(crate) fn downgrade(&self) -> RemoteWeak {
@@ -184,6 +186,14 @@ impl RemoteArc {
             Page,
             Frame,
             Response,
+            Request,
+            Route,
+            WebSocket,
+            Worker,
+            Dialog,
+            Download,
+            ConsoleMessage,
+            CdpSession,
             Playwright
         )
     }
@@ -207,7 +217,17 @@ impl RemoteArc {
             )),
             "Page" => RemoteArc::Page(Arc::new(imp::page::Page::try_new(ctx, c)?)),
             "Frame" => RemoteArc::Frame(Arc::new(imp::frame::Frame::new(c))),
-            "Response" => RemoteArc::Response(Arc::new(imp::response::Response::new(c))),
+            "Response" => RemoteArc::Response(Arc::new(imp::response::Response::try_new(ctx, c)?)),
+            "Request" => RemoteArc::Request(Arc::new(imp::request::Request::try_new(ctx, c)?)),
+            "Route" => RemoteArc::Route(Arc::new(imp::route::Route::new(c))),
+            "WebSocket" => RemoteArc::WebSocket(Arc::new(imp::websocket::WebSocket::new(c))),
+            "Worker" => RemoteArc::Worker(Arc::new(imp::worker::Worker::new(c))),
+            "Dialog" => RemoteArc::Dialog(Arc::new(imp::dialog::Dialog::new(c))),
+            "Download" => RemoteArc::Download(Arc::new(imp::download::Download::new(c))),
+            "ConsoleMessage" => {
+                RemoteArc::ConsoleMessage(Arc::new(imp::console_message::ConsoleMessage::new(c)))
+            }
+            "CdpSession" => RemoteArc::CdpSession(Arc::new(imp::cdp_session::CdpSession::new(c))),
             _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)

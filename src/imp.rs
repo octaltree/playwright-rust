@@ -79,14 +79,16 @@ pub(crate) mod utils;
 pub(crate) mod browser;
 pub(crate) mod browser_context;
 pub(crate) mod cdp_session;
-pub(crate) mod console_manager;
+pub(crate) mod console_message;
 pub(crate) mod dialog;
 pub(crate) mod download;
 pub(crate) mod frame;
 pub(crate) mod js_handle;
-pub(crate) mod network;
 pub(crate) mod page;
+pub(crate) mod request;
 pub(crate) mod response;
+pub(crate) mod route;
+pub(crate) mod websocket;
 pub(crate) mod worker;
 
 //_accessibility.py
