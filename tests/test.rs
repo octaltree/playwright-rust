@@ -13,8 +13,7 @@ runtime_test!(awesome, {
     env_logger::builder().is_test(true).try_init().ok();
     let p = Playwright::initialize().await.unwrap(); // if drop all resources are disposed
     p.prepare().unwrap(); // install browsers
-    register_selector(&p).await;
-    let mut bt = p.firefox();
+    let mut bt = p.chromium();
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
@@ -25,13 +24,9 @@ runtime_test!(awesome, {
         .goto()
         .await
         .unwrap();
-    p.reload_builder().reload().await.unwrap();
-    // tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+    p.clicker("a").click().await.unwrap();
+    p.go_back_builder().go_back().await.unwrap();
 });
-
-async fn register_selector(p: &Playwright) {
-    p.selectors().register("foo", "", false).await.unwrap();
-}
 
 async fn launch(t: &mut BrowserType) -> Browser {
     t.launcher().headless(true).launch().await.unwrap()

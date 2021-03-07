@@ -1,4 +1,7 @@
-pub use crate::{api::frame::GotoBuilder, imp::utils::DocumentLoadState};
+pub use crate::{
+    api::frame::{Clicker, DblClicker, GotoBuilder},
+    imp::utils::DocumentLoadState
+};
 use crate::{
     api::{
         accessibility::Accessibility, browser_context::BrowserContext,
@@ -37,6 +40,16 @@ impl Page {
     pub fn go_back_builder(&mut self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
     pub fn go_forward_builder(&mut self) -> GoForwardBuilder {
         GoForwardBuilder::new(self.inner.clone())
+    }
+
+    pub fn clicker<'a>(&mut self, selector: &'a str) -> Clicker<'a> {
+        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
+        Clicker::new(inner, selector)
+    }
+
+    pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
+        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
+        DblClicker::new(inner, selector)
     }
 
     fn accessibility(&self) -> Accessibility { unimplemented!() }

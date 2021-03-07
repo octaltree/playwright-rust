@@ -1,6 +1,6 @@
 use crate::imp::{
     core::*,
-    frame::{Frame, GotoArgs},
+    frame::{ClickArgs, Frame, GotoArgs},
     prelude::*,
     response::Response,
     utils::{DocumentLoadState, Viewport}
@@ -50,15 +50,6 @@ impl Page {
     }
 
     pub(crate) fn main_frame(&self) -> Weak<Frame> { self.main_frame.clone() }
-
-    pub(crate) async fn goto(
-        &self,
-        args: GotoArgs<'_, '_>
-    ) -> Result<Option<Weak<Response>>, Arc<Error>> {
-        let f = upgrade(&self.main_frame)?;
-        let res = f.goto(args).await?;
-        Ok(res)
-    }
 
     navigation! {reload, "reload"}
     navigation! {go_back, "goBack"}

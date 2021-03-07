@@ -71,14 +71,22 @@ impl<'a> GotoArgs<'a, '_> {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ClickArgs<'a> {
     selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) position: Option<Position>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) delay: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) button: Option<MouseButton>,
     /// Is ignored if dblclick
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) click_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) force: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
