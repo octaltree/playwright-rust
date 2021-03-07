@@ -24,7 +24,7 @@ runtime_test!(awesome, {
         .goto()
         .await
         .unwrap();
-    tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+    // tokio::time::sleep(std::time::Duration::from_secs(20)).await;
 });
 
 async fn register_selector(p: &Playwright) {
