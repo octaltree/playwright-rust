@@ -143,6 +143,7 @@ pub(crate) enum RemoteArc {
     Selectors(Arc<imp::selectors::Selectors>),
     Browser(Arc<imp::browser::Browser>),
     BrowserContext(Arc<imp::browser_context::BrowserContext>),
+    Page(Arc<imp::page::Page>),
     Playwright(Arc<imp::playwright::Playwright>)
 }
 
@@ -154,6 +155,7 @@ pub(crate) enum RemoteWeak {
     Selectors(Weak<imp::selectors::Selectors>),
     Browser(Weak<imp::browser::Browser>),
     BrowserContext(Weak<imp::browser_context::BrowserContext>),
+    Page(Weak<imp::page::Page>),
     Playwright(Weak<imp::playwright::Playwright>)
 }
 
@@ -166,6 +168,7 @@ impl RemoteArc {
             Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
             Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
             Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x)),
+            Self::Page(x) => RemoteWeak::Page(Arc::downgrade(x)),
             Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x))
         }
     }
@@ -187,6 +190,7 @@ impl RemoteArc {
             "BrowserContext" => RemoteArc::BrowserContext(Arc::new(
                 imp::browser_context::BrowserContext::try_new(c)?
             )),
+            "Page" => RemoteArc::Page(Arc::new(imp::page::Page::new(c))),
             _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)

@@ -17,6 +17,8 @@ runtime_test!(awesome, {
     let mut bt = p.firefox();
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
+    let mut p = c.new_page().await.unwrap();
+    // tokio::time::sleep(std::time::Duration::from_secs(20)).await;
 });
 
 async fn register_selector(p: &Playwright) {

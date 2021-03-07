@@ -31,8 +31,10 @@ impl BrowserType {
         Ok(upgrade(&self.inner)?.executable().into())
     }
 
+    /// launch [`Browser`]
     pub fn launcher(&mut self) -> Launcher<'_, '_, '_> { Launcher::new(self.inner.clone()) }
 
+    /// launch_persistent_context [`BrowserContext`]
     pub fn persistent_context_launcher<'a>(
         &mut self,
         user_data_dir: &'a Path

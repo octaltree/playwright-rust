@@ -17,7 +17,19 @@ pub struct BrowserContext {
 impl BrowserContext {
     pub(crate) fn new(inner: Weak<imp::browser_context::BrowserContext>) -> Self { Self { inner } }
 
-    fn pages(&self) -> Vec<Page> { unimplemented!() }
+    fn pages(&self) -> Result<Vec<Page>, Error> {
+        Ok(upgrade(&self.inner)?
+            .pages()
+            .iter()
+            .cloned()
+            .map(Page::new)
+            .collect())
+    }
+
+    pub async fn new_page(&mut self) -> Result<Page, Arc<Error>> {
+        let inner = upgrade(&self.inner)?;
+        Ok(Page::new(inner.new_page().await?))
+    }
 
     /// Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
     fn browser(&self) -> Option<Browser> { unimplemented!() }
@@ -29,8 +41,6 @@ impl BrowserContext {
     async fn set_default_timeout(&mut self, timeout: Duration) -> Result<(), Error> {
         unimplemented!()
     }
-
-    async fn new_page(&mut self) -> Result<Page, Error> { unimplemented!() }
 
     async fn cookies(&mut self) -> Result<Vec<Cookie>, Error> { unimplemented!() }
 

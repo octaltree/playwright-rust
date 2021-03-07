@@ -30,6 +30,7 @@ impl Browser {
 
     pub fn exists(&self) -> bool { self.inner.upgrade().is_some() }
 
+    /// new_context [`BrowserContext`]
     pub fn context_builder(&mut self) -> ContextBuilder<'_, '_, '_, '_, '_, '_, '_> {
         ContextBuilder::new(self.inner.clone())
     }
@@ -37,7 +38,7 @@ impl Browser {
     /// Shortcut of [`BrowserContext::new_page`] and [`Browser::new_context`].
     async fn new_page(&mut self) -> Result<Page, Error> { unimplemented!() }
 
-    /// All browsers will be closed when the connection is terminated, but
+    /// All temporary browsers will be closed when the connection is terminated, but
     /// it needs to be called explicitly to close it at any given time.
     pub async fn close(&mut self) -> Result<(), Arc<Error>> {
         let inner = upgrade(&self.inner)?;

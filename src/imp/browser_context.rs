@@ -1,19 +1,37 @@
-use crate::imp::{core::*, prelude::*};
+use crate::imp::{core::*, page::Page, prelude::*};
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
-    channel: ChannelOwner
+    channel: ChannelOwner,
+    var: Mutex<Variable>
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct Variable {
+    pages: Vec<Weak<Page>>
 }
 
 impl BrowserContext {
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
-        Ok(Self { channel })
+        let var = Mutex::new(Variable::default());
+        Ok(Self { channel, var })
+    }
+
+    pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
+
+    pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
+        let m: Str<Method> = "newPage".to_owned().try_into().unwrap();
+        let res = send_message!(self, m, Map::new());
+        let NewPageResponse {
+            page: OnlyGuid { guid }
+        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
+        let p = find_object!(self.context()?.lock().unwrap(), &guid, Page)?;
+        Ok(p)
     }
 
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
-    // TODO: def pages(self) -> List[Page]:
     // TODO: def browser(self) -> Optional["Browser"]:
     // TODO: async def new_page(self) -> Page:
     // TODO: async def cookies(self, urls: Union[str, List[str]] = None) -> List[Cookie]:
@@ -34,6 +52,11 @@ impl BrowserContext {
     // TODO: async def storage_state(self, path: Union[str, Path] = None) -> StorageState:
     // TODO: async def wait_for_event(
     // TODO: def expect_page(
+}
+
+#[derive(Deserialize, Debug)]
+struct NewPageResponse {
+    page: OnlyGuid
 }
 
 impl RemoteObject for BrowserContext {

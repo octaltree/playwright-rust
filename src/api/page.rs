@@ -8,10 +8,12 @@ use crate::{
 };
 use std::time::Duration;
 
-pub struct Page {}
+pub struct Page {
+    inner: Weak<imp::page::Page>
+}
 
 impl Page {
-    // pub(crate) fn new(inner: Weak<imp::page::Page>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<imp::page::Page>) -> Self { Self { inner } }
 
     fn accessibility(&self) -> Accessibility { unimplemented!() }
 
