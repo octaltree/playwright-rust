@@ -24,23 +24,13 @@ where
     f(rc)
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct ChannelOwner {
     pub(crate) ctx: Weak<Mutex<Context>>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
     pub(crate) initializer: Value
-}
-
-impl Debug for ChannelOwner {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ChannelOwner")
-            .field("parent", &self.parent)
-            .field("typ", &self.typ)
-            .field("guid", &self.guid)
-            .field("initializer", &self.initializer)
-            .finish()
-    }
 }
 
 impl ChannelOwner {
@@ -137,7 +127,7 @@ pub(crate) trait RemoteObject: Any + Debug {
 
 macro_rules! remote_enum {
     ($t:ident, $p: ident) => {
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         pub(crate) enum $t {
             Dummy($p<DummyObject>),
             Root($p<RootObject>),
@@ -284,7 +274,7 @@ impl RequestBody {
 
 pub(crate) type WaitMessageResult = Result<Result<Arc<Value>, Arc<ErrorMessage>>, Arc<Error>>;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct WaitPlaces<T> {
     pub(crate) value: Wm<Option<T>>,
     pub(crate) waker: Wm<Option<Waker>>

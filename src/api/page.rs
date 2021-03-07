@@ -6,7 +6,7 @@ use crate::{
     api::{
         accessibility::Accessibility, browser_context::BrowserContext,
         element_handle::ElementHandle, frame::Frame, input_device::*, response::Response,
-        video::Video, worker::Worker
+        video::Video, worker::Worker, Keyboard
     },
     imp::{
         core::*,
@@ -19,11 +19,17 @@ use crate::{
 use std::time::Duration;
 
 pub struct Page {
-    inner: Weak<Impl>
+    inner: Weak<Impl>,
+    pub keyboard: Keyboard
 }
 
 impl Page {
-    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        Self {
+            inner: inner.clone(),
+            keyboard: Keyboard::new(inner)
+        }
+    }
 
     pub fn main_frame(&self) -> Frame {
         let inner = weak_and_then(&self.inner, |rc| rc.main_frame());

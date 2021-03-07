@@ -54,6 +54,59 @@ impl Page {
     navigation! {reload, "reload"}
     navigation! {go_back, "goBack"}
     navigation! {go_forward, "goForward"}
+
+    pub(crate) async fn key_down<'b>(&self, key: &'b str) -> Result<(), Arc<Error>> {
+        let mut args = HashMap::new();
+        args.insert("key", key);
+        let _ = send_message!(self, "keyboardDown", args);
+        Ok(())
+    }
+
+    pub(crate) async fn key_up<'b>(&self, key: &'b str) -> Result<(), Arc<Error>> {
+        let mut args = HashMap::new();
+        args.insert("key", key);
+        let _ = send_message!(self, "keyboardUp", args);
+        Ok(())
+    }
+
+    pub(crate) async fn key_input_text<'b>(&self, text: &'b str) -> Result<(), Arc<Error>> {
+        let mut args = HashMap::new();
+        args.insert("text", text);
+        let _ = send_message!(self, "keyboardInsertText", args);
+        Ok(())
+    }
+
+    pub(crate) async fn key_type<'b>(
+        &self,
+        text: &'b str,
+        delay: Option<f64>
+    ) -> Result<(), Arc<Error>> {
+        #[derive(Serialize)]
+        struct Args<'b> {
+            text: &'b str,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            delay: Option<f64>
+        }
+        let args = Args { text, delay };
+        let _ = send_message!(self, "keyboardInsertText", args);
+        Ok(())
+    }
+
+    pub(crate) async fn key_press<'b>(
+        &self,
+        text: &'b str,
+        delay: Option<f64>
+    ) -> Result<(), Arc<Error>> {
+        #[derive(Serialize)]
+        struct Args<'b> {
+            text: &'b str,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            delay: Option<f64>
+        }
+        let args = Args { text, delay };
+        let _ = send_message!(self, "keyboardPress", args);
+        Ok(())
+    }
 }
 
 impl BindingCall {

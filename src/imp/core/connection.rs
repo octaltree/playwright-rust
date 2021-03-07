@@ -10,6 +10,7 @@ use tokio::sync::broadcast;
 #[derive(Debug)]
 pub struct Event {}
 
+#[derive(Debug)]
 pub(crate) struct Context {
     evt_tx: Option<broadcast::Sender<Arc<Event>>>,
     objects: HashMap<Str<Guid>, RemoteArc>,
@@ -20,6 +21,7 @@ pub(crate) struct Context {
     writer: Writer
 }
 
+#[derive(Debug)]
 pub(crate) struct Connection {
     _child: Child,
     ctx: Am<Context>,
