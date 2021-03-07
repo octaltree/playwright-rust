@@ -1,4 +1,4 @@
-use crate::imp::{prelude::*, response::Response as Impl};
+use crate::imp::{core::*, prelude::*, response::Response as Impl};
 
 pub struct Response {
     inner: Weak<Impl>
@@ -6,4 +6,12 @@ pub struct Response {
 
 impl Response {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
+
+    pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().into()) }
+    pub fn status(&self) -> Result<i32, Error> { Ok(upgrade(&self.inner)?.status()) }
+    pub fn status_text(&self) -> Result<String, Error> {
+        Ok(upgrade(&self.inner)?.status_text().into())
+    }
+
+    pub fn ok(&self) -> Result<bool, Error> { Ok(upgrade(&self.inner)?.ok()) }
 }

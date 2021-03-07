@@ -1,4 +1,7 @@
-use crate::imp::{core::*, prelude::*, request::Request as Impl};
+use crate::{
+    api::frame::Frame,
+    imp::{core::*, prelude::*, request::Request as Impl}
+};
 
 pub struct Request {
     inner: Weak<Impl>
@@ -14,4 +17,13 @@ impl Request {
     }
 
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().into()) }
+
+    pub fn is_navigated_request(&self) -> Result<bool, Error> {
+        Ok(upgrade(&self.inner)?.is_navigated_request())
+    }
+
+    pub fn frame(&self) -> Frame {
+        let inner = weak_and_then(&self.inner, |rc| rc.frame());
+        Frame::new(inner)
+    }
 }
