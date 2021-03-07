@@ -1,10 +1,17 @@
-pub use crate::api::frame::GotoBuilder;
+pub use crate::{api::frame::GotoBuilder, imp::utils::DocumentLoadState};
 use crate::{
     api::{
         accessibility::Accessibility, browser_context::BrowserContext,
-        element_handle::ElementHandle, frame::Frame, input_device::*, video::Video, worker::Worker
+        element_handle::ElementHandle, frame::Frame, input_device::*, response::Response,
+        video::Video, worker::Worker
     },
-    imp::{self, core::*, page::Page as Impl, prelude::*, utils::Viewport},
+    imp::{
+        self,
+        core::*,
+        page::{Page as Impl, ReloadArgs},
+        prelude::*,
+        utils::Viewport
+    },
     Error
 };
 use std::time::Duration;
@@ -24,6 +31,12 @@ impl Page {
     pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
         let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
         GotoBuilder::new(inner, url)
+    }
+
+    pub fn reload_builder(&mut self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
+    pub fn go_back_builder(&mut self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
+    pub fn go_forward_builder(&mut self) -> GoForwardBuilder {
+        GoForwardBuilder::new(self.inner.clone())
     }
 
     fn accessibility(&self) -> Accessibility { unimplemented!() }
@@ -78,3 +91,33 @@ impl Page {
 
     // TODO
 }
+
+macro_rules! navigation {
+    ($t: ident, $f: ident) => {
+        pub struct $t {
+            inner: Weak<Impl>,
+            args: ReloadArgs
+        }
+
+        impl $t {
+            pub(crate) fn new(inner: Weak<Impl>) -> Self {
+                let args = ReloadArgs::default();
+                Self { inner, args }
+            }
+
+            pub async fn $f(self) -> Result<Option<Response>, Arc<Error>> {
+                let Self { inner, args } = self;
+                let r = upgrade(&inner)?.$f(args).await?;
+                Ok(r.map(Response::new))
+            }
+
+            optional_setter!(
+                timeout, f64;
+                wait_until, DocumentLoadState);
+        }
+    }
+}
+
+navigation!(ReloadBuilder, reload);
+navigation!(GoBackBuilder, go_back);
+navigation!(GoForwardBuilder, go_forward);

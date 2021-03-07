@@ -3,7 +3,7 @@ use crate::imp::{
     frame::{Frame, GotoArgs},
     prelude::*,
     response::Response,
-    utils::Viewport
+    utils::{DocumentLoadState, Viewport}
 };
 
 #[derive(Debug)]
@@ -16,6 +16,23 @@ pub(crate) struct Page {
 #[derive(Debug)]
 pub(crate) struct BindingCall {
     channel: ChannelOwner
+}
+
+macro_rules! navigation {
+    ($f: ident, $m: literal) => {
+        pub(crate) async fn $f(
+            &self,
+            args: ReloadArgs
+        ) -> Result<Option<Weak<Response>>, Arc<Error>> {
+            let v = send_message!(self, $m, args);
+            let guid = match as_only_guid(&v) {
+                Some(g) => g,
+                None => return Ok(None)
+            };
+            let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+            Ok(Some(r))
+        }
+    };
 }
 
 impl Page {
@@ -42,6 +59,10 @@ impl Page {
         let res = f.goto(args).await?;
         Ok(res)
     }
+
+    navigation! {reload, "reload"}
+    navigation! {go_back, "goBack"}
+    navigation! {go_forward, "goForward"}
 }
 
 impl BindingCall {
@@ -64,4 +85,13 @@ struct Initializer {
     main_frame: OnlyGuid,
     #[serde(rename = "viewportSIze")]
     viewport: Option<Viewport>
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ReloadArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) wait_until: Option<DocumentLoadState>
 }
