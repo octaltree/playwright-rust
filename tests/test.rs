@@ -34,7 +34,7 @@ async fn register_selector(p: &Playwright) {
 }
 
 async fn launch(t: &mut BrowserType) -> Browser {
-    t.launcher().headless(false).launch().await.unwrap()
+    t.launcher().headless(true).launch().await.unwrap()
 }
 
 async fn new_context(b: &mut Browser) -> BrowserContext {

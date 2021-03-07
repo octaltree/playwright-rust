@@ -1,4 +1,9 @@
-use crate::imp::{core::*, prelude::*, response::Response, utils::DocumentLoadState};
+use crate::imp::{
+    core::*,
+    prelude::*,
+    response::Response,
+    utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
+};
 
 #[derive(Debug)]
 pub(crate) struct Frame {
@@ -27,6 +32,16 @@ impl Frame {
         let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
         Ok(Some(r))
     }
+
+    pub(crate) async fn click(&self, args: ClickArgs<'_>) -> Result<(), Arc<Error>> {
+        let _ = send_message!(self, "click", args);
+        Ok(())
+    }
+
+    pub(crate) async fn dblclick(&self, args: ClickArgs<'_>) -> Result<(), Arc<Error>> {
+        let _ = send_message!(self, "dblclick", args);
+        Ok(())
+    }
 }
 
 #[derive(Serialize)]
@@ -48,6 +63,38 @@ impl<'a> GotoArgs<'a, '_> {
             timeout: None,
             wait_until: None,
             referer: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ClickArgs<'a> {
+    selector: &'a str,
+    pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    pub(crate) position: Option<Position>,
+    pub(crate) delay: Option<f64>,
+    pub(crate) button: Option<MouseButton>,
+    /// Is ignored if dblclick
+    pub(crate) click_count: Option<i32>,
+    pub(crate) timeout: Option<f64>,
+    pub(crate) force: Option<bool>,
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a> ClickArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            modifiers: None,
+            position: None,
+            delay: None,
+            button: None,
+            /// Is ignored if dblclick
+            click_count: None,
+            timeout: None,
+            force: None,
+            no_wait_after: None
         }
     }
 }

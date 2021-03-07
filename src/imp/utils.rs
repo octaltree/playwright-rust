@@ -27,7 +27,7 @@ pub struct HttpCredentials {
     pub password: String
 }
 
-#[derive(Debug, Deserialize, Clone, Copy, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum ColorScheme {
     Dark,
@@ -64,7 +64,7 @@ pub struct Cookie {
     pub same_site: Option<SameSite>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
 pub enum SameSite {
     Lax,
     None,
@@ -85,10 +85,36 @@ pub struct LocalStorageEntry {
     pub value: String
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum DocumentLoadState {
     DomContentLoaded,
     Load,
     NetworkIdle
+}
+
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+pub enum KeyboardModifier {
+    Alt,
+    Control,
+    Meta,
+    Shift
+}
+
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum MouseButton {
+    Left,
+    Middle,
+    Right
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
+pub struct Position {
+    x: f64,
+    y: f64
+}
+
+impl From<(f64, f64)> for Position {
+    fn from((x, y): (f64, f64)) -> Self { Self { x, y } }
 }

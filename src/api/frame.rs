@@ -1,8 +1,9 @@
+pub use crate::imp::utils::{KeyboardModifier, MouseButton, Position};
 use crate::{
     api::response::Response,
     imp::{
         core::*,
-        frame::{Frame as Impl, GotoArgs},
+        frame::{ClickArgs, Frame as Impl, GotoArgs},
         prelude::*,
         utils::DocumentLoadState
     }
@@ -17,6 +18,14 @@ impl Frame {
 
     pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.inner.clone(), url)
+    }
+
+    pub fn clicker<'a>(&mut self, selector: &'a str) -> Clicker<'a> {
+        Clicker::new(self.inner.clone(), selector)
+    }
+
+    pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
+        DblClicker::new(self.inner.clone(), selector)
     }
 }
 
@@ -42,3 +51,38 @@ impl<'a, 'b> GotoBuilder<'a, 'b> {
         wait_until, DocumentLoadState;
         referer, &'b str);
 }
+
+macro_rules! clicker {
+    ($t: ident, $f: ident) => {
+        pub struct $t<'a> {
+            inner: Weak<Impl>,
+            args: ClickArgs<'a>
+        }
+
+        impl<'a> $t<'a> {
+            pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+                let args = ClickArgs::new(selector);
+                Self { inner, args }
+            }
+
+            pub async fn $f(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$f(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                modifiers, Vec<KeyboardModifier>;
+                position, Position;
+                delay, f64;
+                button, MouseButton;
+                click_count, i32;
+                timeout, f64;
+                force, bool;
+                no_wait_after, bool);
+        }
+    }
+}
+
+clicker!(Clicker, click);
+clicker!(DblClicker, dblclick);
