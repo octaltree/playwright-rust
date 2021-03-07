@@ -6,7 +6,7 @@ use crate::{
     api::{
         accessibility::Accessibility, browser_context::BrowserContext,
         element_handle::ElementHandle, frame::Frame, input_device::*, response::Response,
-        video::Video, worker::Worker, Keyboard
+        video::Video, worker::Worker, Keyboard, TouchScreen
     },
     imp::{
         core::*,
@@ -20,14 +20,16 @@ use std::time::Duration;
 
 pub struct Page {
     inner: Weak<Impl>,
-    pub keyboard: Keyboard
+    pub keyboard: Keyboard,
+    pub touch_screen: TouchScreen
 }
 
 impl Page {
     pub(crate) fn new(inner: Weak<Impl>) -> Self {
         Self {
             inner: inner.clone(),
-            keyboard: Keyboard::new(inner)
+            keyboard: Keyboard::new(inner.clone()),
+            touch_screen: TouchScreen::new(inner)
         }
     }
 
