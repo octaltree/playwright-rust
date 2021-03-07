@@ -1,4 +1,4 @@
-use crate::imp::{core::*, prelude::*, selectors, selectors::Selectors as Impl};
+use crate::imp::{core::*, prelude::*, selectors::Selectors as Impl};
 
 #[derive(Debug, Clone)]
 pub struct Selectors {

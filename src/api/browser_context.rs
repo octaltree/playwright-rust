@@ -1,7 +1,6 @@
 use crate::{
     api::{browser::Browser, page::Page},
     imp::{
-        self,
         browser_context::BrowserContext as Impl,
         core::*,
         prelude::*,

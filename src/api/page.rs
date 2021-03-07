@@ -9,7 +9,6 @@ use crate::{
         video::Video, worker::Worker
     },
     imp::{
-        self,
         core::*,
         page::{Page as Impl, ReloadArgs},
         prelude::*,

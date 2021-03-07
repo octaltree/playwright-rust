@@ -5,7 +5,6 @@ pub use crate::imp::{
 use crate::{
     api::{browser::Browser, browser_context::BrowserContext},
     imp::{
-        self,
         browser_type::{BrowserType as Impl, LaunchArgs, LaunchPersistentContextArgs},
         core::*,
         prelude::*

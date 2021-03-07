@@ -82,6 +82,7 @@ pub(crate) mod cdp_session;
 pub(crate) mod console_message;
 pub(crate) mod dialog;
 pub(crate) mod download;
+pub(crate) mod element_handle;
 pub(crate) mod frame;
 pub(crate) mod js_handle;
 pub(crate) mod page;

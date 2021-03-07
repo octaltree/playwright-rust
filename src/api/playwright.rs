@@ -1,7 +1,7 @@
 pub use crate::imp::playwright::DeviceDescriptor;
 use crate::{
     api::{browser_type::BrowserType, selectors::Selectors},
-    imp::{self, core::*, playwright::Playwright as Impl, prelude::*},
+    imp::{core::*, playwright::Playwright as Impl, prelude::*},
     Error
 };
 use std::{io, process::Command};

@@ -156,6 +156,8 @@ macro_rules! remote_enum {
             Download($p<imp::download::Download>),
             ConsoleMessage($p<imp::console_message::ConsoleMessage>),
             CdpSession($p<imp::cdp_session::CdpSession>),
+            JsHandle($p<imp::js_handle::JsHandle>),
+            ElementHandle($p<imp::element_handle::ElementHandle>),
             Playwright($p<imp::playwright::Playwright>)
         }
     };
@@ -194,6 +196,8 @@ impl RemoteArc {
             Download,
             ConsoleMessage,
             CdpSession,
+            JsHandle,
+            ElementHandle,
             Playwright
         )
     }
@@ -228,6 +232,10 @@ impl RemoteArc {
                 RemoteArc::ConsoleMessage(Arc::new(imp::console_message::ConsoleMessage::new(c)))
             }
             "CdpSession" => RemoteArc::CdpSession(Arc::new(imp::cdp_session::CdpSession::new(c))),
+            "JsHandle" => RemoteArc::JsHandle(Arc::new(imp::js_handle::JsHandle::try_new(ctx, c)?)),
+            "ElementHandle" => {
+                RemoteArc::ElementHandle(Arc::new(imp::element_handle::ElementHandle::new(c)))
+            }
             _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)
