@@ -1,3 +1,4 @@
+pub use crate::api::frame::GotoBuilder;
 use crate::{
     api::{
         accessibility::Accessibility, browser_context::BrowserContext,
@@ -18,6 +19,11 @@ impl Page {
     pub fn main_frame(&self) -> Frame {
         let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
         Frame::new(inner)
+    }
+
+    pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
+        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
+        GotoBuilder::new(inner, url)
     }
 
     fn accessibility(&self) -> Accessibility { unimplemented!() }

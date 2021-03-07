@@ -15,7 +15,6 @@ impl Frame {
         Self { channel, var }
     }
 
-    // TODO: return response
     pub(crate) async fn goto(
         &self,
         args: GotoArgs<'_, '_>

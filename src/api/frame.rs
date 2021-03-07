@@ -1,5 +1,5 @@
 use crate::{
-    api::Response,
+    api::response::Response,
     imp::{
         core::*,
         frame::{Frame as Impl, GotoArgs},
@@ -26,7 +26,7 @@ pub struct GotoBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> GotoBuilder<'a, 'b> {
-    fn new(inner: Weak<Impl>, url: &'a str) -> Self {
+    pub(crate) fn new(inner: Weak<Impl>, url: &'a str) -> Self {
         let args = GotoArgs::new(url);
         Self { inner, args }
     }
