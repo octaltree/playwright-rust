@@ -174,9 +174,9 @@ impl Context {
         am
     }
 
-    fn dispatch(&mut self, msg: Response) -> Result<(), Error> {
+    fn dispatch(&mut self, msg: Res) -> Result<(), Error> {
         match msg {
-            Response::Result(msg) => {
+            Res::Result(msg) => {
                 let WaitPlaces { value, waker } =
                     self.callbacks.get(&msg.id).ok_or(Error::CallbackNotFound)?;
                 let place = match value.upgrade() {
@@ -196,7 +196,7 @@ impl Context {
                 waker.wake();
                 return Ok(());
             }
-            Response::Initial(msg) => {
+            Res::Initial(msg) => {
                 if Method::is_create(&msg.method) {
                     self.create_remote_object(&msg.guid, msg.params)?;
                     //(&**parent).push_child(r.clone());
@@ -249,7 +249,7 @@ impl Context {
             place
         } = r;
         self.callbacks.insert(self.id, place);
-        let req = Request {
+        let req = Req {
             guid: &guid,
             method: &method,
             params,

@@ -3,7 +3,7 @@ use serde_json::{map::Map, value::Value};
 use strong::*;
 
 #[derive(Debug, Serialize)]
-pub(crate) struct Request<'a, 'b> {
+pub(crate) struct Req<'a, 'b> {
     #[serde(default)]
     pub(crate) id: i32,
     pub(crate) guid: &'a S<Guid>,
@@ -15,18 +15,18 @@ pub(crate) struct Request<'a, 'b> {
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
-pub(crate) enum Response {
-    Result(ResponseResult),
-    Initial(ResponseInitial)
+pub(crate) enum Res {
+    Result(ResResult),
+    Initial(ResInitial)
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct ResponseResult {
+pub(crate) struct ResResult {
     pub(crate) id: i32,
     pub(crate) body: Result<Value, ErrorMessage>
 }
 
-impl<'de> Deserialize<'de> for ResponseResult {
+impl<'de> Deserialize<'de> for ResResult {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>
@@ -56,7 +56,7 @@ impl<'de> Deserialize<'de> for ResponseResult {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub(crate) struct ResponseInitial {
+pub(crate) struct ResInitial {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
     pub(crate) params: Map<String, Value>

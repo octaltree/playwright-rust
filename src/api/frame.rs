@@ -1,9 +1,11 @@
-use crate::imp::{
-    self,
-    core::*,
-    frame::{Frame as Impl, GotoArgs},
-    prelude::*,
-    utils::DocumentLoadState
+use crate::{
+    api::Response,
+    imp::{
+        core::*,
+        frame::{Frame as Impl, GotoArgs},
+        prelude::*,
+        utils::DocumentLoadState
+    }
 };
 
 pub struct Frame {
@@ -29,11 +31,10 @@ impl<'a, 'b> GotoBuilder<'a, 'b> {
         Self { inner, args }
     }
 
-    pub async fn goto(self) -> Result<(), Arc<Error>> {
+    pub async fn goto(self) -> Result<Option<Response>, Arc<Error>> {
         let Self { inner, args } = self;
         let r = upgrade(&inner)?.goto(args).await?;
-        // TODO
-        Ok(())
+        Ok(r.map(Response::new))
     }
 
     optional_setter!(

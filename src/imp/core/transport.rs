@@ -39,7 +39,7 @@ impl Reader {
     }
 
     // TODO: heap efficiency
-    pub(super) fn try_read(&mut self) -> Result<Option<Response>, TransportError> {
+    pub(super) fn try_read(&mut self) -> Result<Option<Res>, TransportError> {
         let this = self;
         {
             if this.length.is_none() && this.buf.len() >= 4 {
@@ -54,7 +54,7 @@ impl Reader {
                 Some(l) => {
                     let bytes: &[u8] = &this.buf[..l];
                     log::debug!("RECV {}", unsafe { std::str::from_utf8_unchecked(bytes) });
-                    let msg: Response = serde_json::from_slice(bytes)?;
+                    let msg: Res = serde_json::from_slice(bytes)?;
                     this.length = None;
                     this.buf = this.buf[l..].to_owned();
                     return Ok(Some(msg));
@@ -73,7 +73,7 @@ impl Reader {
 impl Writer {
     pub(super) fn new(stdin: ChildStdin) -> Self { Self { stdin } }
 
-    pub(super) fn send(&mut self, req: &Request<'_, '_>) -> Result<(), TransportError> {
+    pub(super) fn send(&mut self, req: &Req<'_, '_>) -> Result<(), TransportError> {
         log::debug!("SEND {:?}", &req);
         let serialized = serde_json::to_vec(&req)?;
         let length = serialized.len() as u32;

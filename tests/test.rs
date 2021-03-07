@@ -1,5 +1,5 @@
 use playwright::{
-    api::{Browser, BrowserContext, BrowserType, DocumentLoadState},
+    api::{Browser, BrowserContext, BrowserType, DocumentLoadState, Response},
     *
 };
 
@@ -18,7 +18,8 @@ runtime_test!(awesome, {
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
-    p.main_frame()
+    let _response: Option<Response> = p
+        .main_frame()
         .goto_builder("https://example.com/")
         .wait_until(DocumentLoadState::Load)
         .goto()
@@ -32,7 +33,7 @@ async fn register_selector(p: &Playwright) {
 }
 
 async fn launch(t: &mut BrowserType) -> Browser {
-    t.launcher().headless(false).launch().await.unwrap()
+    t.launcher().headless(true).launch().await.unwrap()
 }
 
 async fn new_context(b: &mut Browser) -> BrowserContext {

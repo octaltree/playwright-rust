@@ -145,6 +145,7 @@ pub(crate) enum RemoteArc {
     BrowserContext(Arc<imp::browser_context::BrowserContext>),
     Page(Arc<imp::page::Page>),
     Frame(Arc<imp::frame::Frame>),
+    Response(Arc<imp::response::Response>),
     Playwright(Arc<imp::playwright::Playwright>)
 }
 
@@ -158,22 +159,33 @@ pub(crate) enum RemoteWeak {
     BrowserContext(Weak<imp::browser_context::BrowserContext>),
     Page(Weak<imp::page::Page>),
     Frame(Weak<imp::frame::Frame>),
+    Response(Weak<imp::response::Response>),
     Playwright(Weak<imp::playwright::Playwright>)
 }
 
 impl RemoteArc {
     pub(crate) fn downgrade(&self) -> RemoteWeak {
-        match self {
-            Self::Dummy(x) => RemoteWeak::Dummy(Arc::downgrade(x)),
-            Self::Root(x) => RemoteWeak::Root(Arc::downgrade(x)),
-            Self::BrowserType(x) => RemoteWeak::BrowserType(Arc::downgrade(x)),
-            Self::Selectors(x) => RemoteWeak::Selectors(Arc::downgrade(x)),
-            Self::Browser(x) => RemoteWeak::Browser(Arc::downgrade(x)),
-            Self::BrowserContext(x) => RemoteWeak::BrowserContext(Arc::downgrade(x)),
-            Self::Page(x) => RemoteWeak::Page(Arc::downgrade(x)),
-            Self::Frame(x) => RemoteWeak::Frame(Arc::downgrade(x)),
-            Self::Playwright(x) => RemoteWeak::Playwright(Arc::downgrade(x))
+        macro_rules! downgrade {
+            ($($t:ident),*) => {
+                match self {
+                    $(
+                        Self::$t(x) => RemoteWeak::$t(Arc::downgrade(x))
+                    ),*
+                }
+            }
         }
+        downgrade!(
+            Dummy,
+            Root,
+            BrowserType,
+            Selectors,
+            Browser,
+            BrowserContext,
+            Page,
+            Frame,
+            Response,
+            Playwright
+        )
     }
 
     pub(crate) fn try_new(
@@ -195,6 +207,7 @@ impl RemoteArc {
             )),
             "Page" => RemoteArc::Page(Arc::new(imp::page::Page::try_new(ctx, c)?)),
             "Frame" => RemoteArc::Frame(Arc::new(imp::frame::Frame::new(c))),
+            "Response" => RemoteArc::Response(Arc::new(imp::response::Response::new(c))),
             _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
         };
         Ok(r)

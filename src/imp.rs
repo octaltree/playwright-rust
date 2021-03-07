@@ -86,6 +86,7 @@ pub(crate) mod frame;
 pub(crate) mod js_handle;
 pub(crate) mod network;
 pub(crate) mod page;
+pub(crate) mod response;
 pub(crate) mod worker;
 
 //_accessibility.py

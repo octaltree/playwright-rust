@@ -1,4 +1,4 @@
-use crate::imp::{core::*, prelude::*, utils::DocumentLoadState};
+use crate::imp::{core::*, prelude::*, response::Response, utils::DocumentLoadState};
 
 #[derive(Debug)]
 pub(crate) struct Frame {
@@ -16,10 +16,17 @@ impl Frame {
     }
 
     // TODO: return response
-    pub(crate) async fn goto(&self, args: GotoArgs<'_, '_>) -> Result<(), Arc<Error>> {
+    pub(crate) async fn goto(
+        &self,
+        args: GotoArgs<'_, '_>
+    ) -> Result<Option<Weak<Response>>, Arc<Error>> {
         let v = send_message!(self, "goto", args);
-        let o: Option<&S<Guid>> = as_only_guid(&v);
-        Ok(())
+        let guid = match as_only_guid(&v) {
+            Some(g) => g,
+            None => return Ok(None)
+        };
+        let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+        Ok(Some(r))
     }
 }
 
