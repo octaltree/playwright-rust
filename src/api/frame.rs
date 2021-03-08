@@ -39,6 +39,12 @@ impl Frame {
         let es = upgrade(&self.inner)?.query_selector_all(selector).await?;
         Ok(es.into_iter().map(ElementHandle::new).collect())
     }
+
+    pub async fn frame_element(&mut self) -> ArcResult<ElementHandle> {
+        Ok(ElementHandle::new(
+            upgrade(&self.inner)?.frame_element().await?
+        ))
+    }
 }
 
 pub struct GotoBuilder<'a, 'b> {

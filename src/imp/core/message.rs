@@ -137,3 +137,26 @@ pub(crate) fn as_only_guid(v: &Value) -> Option<&S<Guid>> {
     let s: &str = v.as_str()?;
     S::validate(s).ok()
 }
+
+// pub(crate) fn parse_value(v: &Value) -> Result<Value, ()> {
+//    if let Value::Object(v) = v {
+//        if v.contains_key("v") {
+//            match  v.get("v").unwrap() {
+//                Value::String("Infinity") =>
+//            }
+//            //}else if v.contains_key("a") { // array
+//            //}else if v.contains_key("d") { // datetime
+//            //}else if v.contains_key("o") { // object
+//            //}else if v.contains_key("n") {
+//            //    s.get("n").unwrap()
+//            //}else if v.contains_key("s") {
+//            //    s.get("s").unwrap()
+//            //}else if v.contains_key("b") { // bytes?
+//            //    v.get("b").unwrap()
+//        } else {
+//            v.clone()
+//        }
+//    } else {
+//        v.clone()
+//    }
+//}

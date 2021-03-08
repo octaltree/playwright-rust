@@ -73,6 +73,13 @@ impl Frame {
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
     }
+
+    pub(crate) async fn frame_element(&self) -> ArcResult<Weak<ElementHandle>> {
+        let v = send_message!(self, "frameElement", Map::new());
+        let guid = only_guid(&v)?;
+        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        Ok(e)
+    }
 }
 
 #[derive(Deserialize)]
