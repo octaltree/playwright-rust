@@ -60,15 +60,6 @@ impl Page {
     ///// Returns frame matching the specified criteria. Either `name` or `url` must be specified.
     // fn frame(&self) -> Option<Frame> { unimplemented!() }
 
-    ///// Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
-    // async fn is_checked(self) -> Option<ElementHandle> { unimplemented!() }
-
-    ///// Returns whether the element is disabled, the opposite of [enabled](./actionability.md#enabled).
-    // async fn is_disabled(self) -> Option<ElementHandle> { unimplemented!() }
-
-    ///// Returns whether the element is [editable](./actionability.md#editable).
-    // async fn is_editable(self) -> Option<ElementHandle> { unimplemented!() }
-
     //// TODO
 }
 

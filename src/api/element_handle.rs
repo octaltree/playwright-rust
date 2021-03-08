@@ -2,7 +2,10 @@ use crate::{
     api::Frame,
     imp::{
         core::*,
-        element_handle::{CheckArgs, ClickArgs, ElementHandle as Impl, HoverArgs},
+        element_handle::{
+            CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, PressArgs, TapArgs,
+            TypeArgs
+        },
         prelude::*,
         utils::{KeyboardModifier, MouseButton, Position}
     }
@@ -76,6 +79,22 @@ impl ElementHandle {
 
     pub async fn uncheck_builder(&mut self) -> UncheckBuilder {
         UncheckBuilder::new(self.inner.clone())
+    }
+
+    pub async fn tap(&mut self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
+
+    pub async fn fill<'a>(&mut self, value: &'a str) -> FillBuilder<'a> {
+        FillBuilder::new(self.inner.clone(), value)
+    }
+
+    pub async fn focus(&mut self) -> ArcResult<()> { upgrade(&self.inner)?.focus().await }
+
+    pub async fn type_builder<'a>(&mut self, text: &'a str) -> TypeBuilder<'a> {
+        TypeBuilder::new(self.inner.clone(), text)
+    }
+
+    pub async fn press_builder<'a>(&mut self, key: &'a str) -> PressBuilder<'a> {
+        PressBuilder::new(self.inner.clone(), key)
     }
 }
 
@@ -166,3 +185,80 @@ macro_rules! check_builder {
 
 check_builder!(CheckBuilder, check);
 check_builder!(UncheckBuilder, uncheck);
+
+pub struct TapBuilder {
+    inner: Weak<Impl>,
+    args: TapArgs
+}
+
+impl TapBuilder {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = TapArgs::default();
+        Self { inner, args }
+    }
+
+    pub async fn tap(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.tap(args).await?;
+        Ok(())
+    }
+
+    optional_setter!(
+        modifiers, Vec<KeyboardModifier>;
+        position, Position;
+        timeout, f64;
+        force, bool;
+        no_wait_after, bool);
+}
+
+pub struct FillBuilder<'a> {
+    inner: Weak<Impl>,
+    args: FillArgs<'a>
+}
+
+impl<'a> FillBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, value: &'a str) -> Self {
+        let args = FillArgs::new(value);
+        Self { inner, args }
+    }
+
+    pub async fn fill(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.fill(args).await?;
+        Ok(())
+    }
+
+    optional_setter!(
+        timeout, f64;
+        no_wait_after, bool);
+}
+
+macro_rules! type_builder {
+    ($t: ident, $a: ident, $f: ident, $m: ident) => {
+        pub struct $t<'a> {
+            inner: Weak<Impl>,
+            args: $a<'a>
+        }
+
+        impl<'a> $t<'a> {
+            pub(crate) fn new(inner: Weak<Impl>, $f: &'a str) -> Self {
+                let args = $a::new($f);
+                Self { inner, args }
+            }
+
+            pub async fn $m(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$m(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                delay, f64;
+                timeout, f64;
+                no_wait_after, bool);
+        }
+    }
+}
+
+type_builder!(TypeBuilder, TypeArgs, text, r#type);
+type_builder!(PressBuilder, PressArgs, key, press);

@@ -136,6 +136,31 @@ impl ElementHandle {
         let _ = send_message!(self, "uncheck", args);
         Ok(())
     }
+
+    pub(crate) async fn tap(&self, args: TapArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "tap", args);
+        Ok(())
+    }
+
+    pub(crate) async fn fill(&self, args: FillArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "fill", args);
+        Ok(())
+    }
+
+    pub(crate) async fn focus(&self) -> ArcResult<()> {
+        let _ = send_message!(self, "focus", Map::new());
+        Ok(())
+    }
+
+    pub(crate) async fn r#type(&self, args: TypeArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "type", args);
+        Ok(())
+    }
+
+    pub(crate) async fn press(&self, args: PressArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "press", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -188,6 +213,68 @@ pub(crate) struct CheckArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct TapArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) position: Option<Position>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct FillArgs<'a> {
+    value: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a> FillArgs<'a> {
+    pub(crate) fn new(value: &'a str) -> Self {
+        Self {
+            value,
+            timeout: None,
+            no_wait_after: None
+        }
+    }
+}
+
+macro_rules! type_args {
+    ($t:ident, $f:ident) => {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        pub(crate) struct $t<'a> {
+            $f: &'a str,
+            pub(crate) delay: Option<f64>,
+            pub(crate) timeout: Option<f64>,
+            pub(crate) no_wait_after: Option<bool>
+        }
+
+        impl<'a> $t<'a> {
+            pub(crate) fn new($f: &'a str) -> Self {
+                Self {
+                    $f,
+                    delay: None,
+                    timeout: None,
+                    no_wait_after: None
+                }
+            }
+        }
+    };
+}
+
+type_args! {TypeArgs, text}
+type_args! {PressArgs, key}
 
 impl RemoteObject for ElementHandle {
     fn channel(&self) -> &ChannelOwner { &self.channel }
