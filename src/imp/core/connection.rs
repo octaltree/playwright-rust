@@ -2,7 +2,10 @@ use crate::imp::{core::*, prelude::*};
 use std::{
     io,
     process::{Child, Command, Stdio},
-    sync::TryLockError
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        TryLockError
+    }
 };
 use tokio::sync::broadcast;
 
@@ -25,7 +28,7 @@ pub(crate) struct Connection {
     _child: Child,
     ctx: Am<Context>,
     reader: Am<Reader>,
-    stopped: Am<bool>
+    should_stop: Arc<AtomicBool>
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -63,7 +66,7 @@ pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
 }
 
 impl Drop for Connection {
-    fn drop(&mut self) { *self.stopped.lock().unwrap() = true; }
+    fn drop(&mut self) { self.should_stop.store(true, Ordering::Relaxed); }
 }
 
 impl Connection {
@@ -83,7 +86,7 @@ impl Connection {
         Ok(Self {
             _child: child,
             ctx,
-            stopped: Arc::new(Mutex::new(false)),
+            should_stop: Arc::new(false.into()),
             reader: Arc::new(Mutex::new(reader))
         })
     }
@@ -97,7 +100,7 @@ impl Connection {
     fn start(&self) {
         let c2 = Arc::downgrade(&self.ctx);
         let r2 = Arc::downgrade(&self.reader);
-        let s2 = Arc::downgrade(&self.stopped);
+        let s2 = Arc::downgrade(&self.should_stop);
         std::thread::spawn(move || {
             log::trace!("succcess starting connection");
             let c = c2;
@@ -125,12 +128,8 @@ impl Connection {
                         Some(x) => x,
                         None => break
                     };
-                    let stopped = match s.try_lock() {
-                        Ok(x) => *x,
-                        Err(TryLockError::WouldBlock) => continue,
-                        Err(e) => Err(e).unwrap()
-                    };
-                    if stopped {
+                    let should_stop = s.load(Ordering::Relaxed);
+                    if should_stop {
                         break;
                     }
                 }
