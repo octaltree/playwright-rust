@@ -15,6 +15,26 @@ pub(crate) struct Frame {
 #[derive(Debug)]
 struct Variable {}
 
+macro_rules! is_checked {
+    ($f: ident, $m: literal) => {
+        pub(crate) async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+            #[derive(Serialize)]
+            struct Args<'a> {
+                selector: &'a str,
+                #[serde(skip_serializing_if = "Option::is_none")]
+                timeout: Option<f64>
+            }
+            let args = Args { selector, timeout };
+            let v = send_message!(self, $m, args);
+            let b = first(&v)
+                .ok_or(Error::InvalidParams)?
+                .as_bool()
+                .ok_or(Error::InvalidParams)?;
+            Ok(b)
+        }
+    };
+}
+
 impl Frame {
     pub(crate) fn new(channel: ChannelOwner) -> Self {
         let var = Mutex::new(Variable {});
@@ -117,6 +137,13 @@ impl Frame {
         let _ = send_message!(self, "hover", args);
         Ok(())
     }
+
+    is_checked!(is_checked, "isChecked");
+    is_checked!(is_disabled, "isDisabled");
+    is_checked!(is_editable, "isEditable");
+    is_checked!(is_enabled, "isEnabled");
+    is_checked!(is_hidden, "isHidden");
+    is_checked!(is_visible, "isVisible");
 }
 
 #[derive(Deserialize)]

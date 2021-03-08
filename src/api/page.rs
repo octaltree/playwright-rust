@@ -74,6 +74,15 @@ impl Page {
     //// TODO
 }
 
+macro_rules! is_checked {
+    ($f: ident, $c: meta) => {
+        #[$c]
+        pub async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+            self.main_frame().$f(selector, timeout).await
+        }
+    };
+}
+
 /// Shorthand of main_frame
 impl Page {
     pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
@@ -91,12 +100,12 @@ impl Page {
         self.main_frame().wait_for_selector_builder(selector)
     }
 
-    // is_checked
-    // is_disabled
-    // is_editable
-    // is_enabled
-    // is_hidden
-    // is_visible
+    is_checked! {is_checked, doc = "Errors if the element is not a checkbox or radio input."}
+    is_checked! {is_disabled, doc = ""}
+    is_checked! {is_editable, doc = ""}
+    is_checked! {is_enabled, doc = ""}
+    is_checked! {is_hidden, doc = ""}
+    is_checked! {is_visible, doc =""}
     // dispatch_event
     // evaluate
     // evaluate_handle

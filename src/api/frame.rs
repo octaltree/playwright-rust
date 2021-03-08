@@ -15,6 +15,14 @@ pub struct Frame {
     inner: Weak<Impl>
 }
 
+macro_rules! is_checked {
+    ($f: ident) => {
+        pub async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+            upgrade(&self.inner)?.$f(selector, timeout).await
+        }
+    };
+}
+
 impl Frame {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
@@ -68,6 +76,13 @@ impl Frame {
     pub fn hover_builder<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
         HoverBuilder::new(self.inner.clone(), selector)
     }
+
+    is_checked! {is_checked}
+    is_checked! {is_disabled}
+    is_checked! {is_editable}
+    is_checked! {is_enabled}
+    is_checked! {is_hidden}
+    is_checked! {is_visible}
 }
 
 pub struct GotoBuilder<'a, 'b> {
