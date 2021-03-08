@@ -120,41 +120,51 @@ pub(crate) trait RemoteObject: Any + Debug {
     fn context(&self) -> Result<Arc<Mutex<Context>>, Error> { upgrade(&self.channel().ctx) }
 }
 
-macro_rules! remote_enum {
-    ($t:ident, $p: ident) => {
-        #[derive(Debug, Clone)]
-        pub(crate) enum $t {
-            Dummy($p<DummyObject>),
-            Root($p<RootObject>),
-            BrowserType($p<imp::browser_type::BrowserType>),
-            Selectors($p<imp::selectors::Selectors>),
-            Browser($p<imp::browser::Browser>),
-            BrowserContext($p<imp::browser_context::BrowserContext>),
-            Page($p<imp::page::Page>),
-            Frame($p<imp::frame::Frame>),
-            Response($p<imp::response::Response>),
-            Request($p<imp::request::Request>),
-            Route($p<imp::route::Route>),
-            WebSocket($p<imp::websocket::WebSocket>),
-            Worker($p<imp::worker::Worker>),
-            Dialog($p<imp::dialog::Dialog>),
-            Download($p<imp::download::Download>),
-            ConsoleMessage($p<imp::console_message::ConsoleMessage>),
-            CdpSession($p<imp::cdp_session::CdpSession>),
-            JsHandle($p<imp::js_handle::JsHandle>),
-            ElementHandle($p<imp::element_handle::ElementHandle>),
-            Playwright($p<imp::playwright::Playwright>)
-        }
+mod remote_enum {
+    use super::*;
+    use imp::{
+        browser::Browser, browser_context::BrowserContext, browser_type::BrowserType,
+        cdp_session::CdpSession, console_message::ConsoleMessage, dialog::Dialog,
+        download::Download, element_handle::ElementHandle, frame::Frame, js_handle::JsHandle,
+        page::Page, playwright::Playwright, request::Request, response::Response, route::Route,
+        selectors::Selectors, websocket::WebSocket, worker::Worker
     };
-}
 
-remote_enum! {RemoteArc, Arc}
+    macro_rules! remote_enum {
+        ($t:ident, $p: ident) => {
+            #[derive(Debug, Clone)]
+            pub(crate) enum $t {
+                Dummy($p<DummyObject>),
+                Root($p<RootObject>),
+                BrowserType($p<BrowserType>),
+                Selectors($p<Selectors>),
+                Browser($p<Browser>),
+                BrowserContext($p<BrowserContext>),
+                Page($p<Page>),
+                Frame($p<Frame>),
+                Response($p<Response>),
+                Request($p<Request>),
+                Route($p<Route>),
+                WebSocket($p<WebSocket>),
+                Worker($p<Worker>),
+                Dialog($p<Dialog>),
+                Download($p<Download>),
+                ConsoleMessage($p<ConsoleMessage>),
+                CdpSession($p<CdpSession>),
+                JsHandle($p<JsHandle>),
+                ElementHandle($p<ElementHandle>),
+                Playwright($p<Playwright>)
+            }
+        };
+    }
 
-remote_enum! {RemoteWeak, Weak}
+    remote_enum! {RemoteArc, Arc}
 
-impl RemoteArc {
-    pub(crate) fn downgrade(&self) -> RemoteWeak {
-        macro_rules! downgrade {
+    remote_enum! {RemoteWeak, Weak}
+
+    impl RemoteArc {
+        pub(crate) fn downgrade(&self) -> RemoteWeak {
+            macro_rules! downgrade {
             ($($t:ident),*) => {
                 match self {
                     $(
@@ -163,69 +173,64 @@ impl RemoteArc {
                 }
             }
         }
-        downgrade!(
-            Dummy,
-            Root,
-            BrowserType,
-            Selectors,
-            Browser,
-            BrowserContext,
-            Page,
-            Frame,
-            Response,
-            Request,
-            Route,
-            WebSocket,
-            Worker,
-            Dialog,
-            Download,
-            ConsoleMessage,
-            CdpSession,
-            JsHandle,
-            ElementHandle,
-            Playwright
-        )
-    }
+            downgrade!(
+                Dummy,
+                Root,
+                BrowserType,
+                Selectors,
+                Browser,
+                BrowserContext,
+                Page,
+                Frame,
+                Response,
+                Request,
+                Route,
+                WebSocket,
+                Worker,
+                Dialog,
+                Download,
+                ConsoleMessage,
+                CdpSession,
+                JsHandle,
+                ElementHandle,
+                Playwright
+            )
+        }
 
-    pub(crate) fn try_new(
-        typ: &S<ObjectType>,
-        ctx: &Context,
-        c: ChannelOwner
-    ) -> Result<RemoteArc, Error> {
-        let r = match typ.as_str() {
-            "Playwright" => {
-                RemoteArc::Playwright(Arc::new(imp::playwright::Playwright::try_new(ctx, c)?))
-            }
-            "Selectors" => RemoteArc::Selectors(Arc::new(imp::selectors::Selectors::new(c))),
-            "BrowserType" => {
-                RemoteArc::BrowserType(Arc::new(imp::browser_type::BrowserType::try_new(c)?))
-            }
-            "Browser" => RemoteArc::Browser(Arc::new(imp::browser::Browser::try_new(c)?)),
-            "BrowserContext" => RemoteArc::BrowserContext(Arc::new(
-                imp::browser_context::BrowserContext::try_new(c)?
-            )),
-            "Page" => RemoteArc::Page(Arc::new(imp::page::Page::try_new(ctx, c)?)),
-            "Frame" => RemoteArc::Frame(Arc::new(imp::frame::Frame::new(c))),
-            "Response" => RemoteArc::Response(Arc::new(imp::response::Response::try_new(ctx, c)?)),
-            "Request" => RemoteArc::Request(Arc::new(imp::request::Request::try_new(ctx, c)?)),
-            "Route" => RemoteArc::Route(Arc::new(imp::route::Route::new(c))),
-            "WebSocket" => RemoteArc::WebSocket(Arc::new(imp::websocket::WebSocket::new(c))),
-            "Worker" => RemoteArc::Worker(Arc::new(imp::worker::Worker::new(c))),
-            "Dialog" => RemoteArc::Dialog(Arc::new(imp::dialog::Dialog::new(c))),
-            "Download" => RemoteArc::Download(Arc::new(imp::download::Download::new(c))),
-            "ConsoleMessage" => {
-                RemoteArc::ConsoleMessage(Arc::new(imp::console_message::ConsoleMessage::new(c)))
-            }
-            "CdpSession" => RemoteArc::CdpSession(Arc::new(imp::cdp_session::CdpSession::new(c))),
-            "JsHandle" => RemoteArc::JsHandle(Arc::new(imp::js_handle::JsHandle::try_new(ctx, c)?)),
-            "ElementHandle" => {
-                RemoteArc::ElementHandle(Arc::new(imp::element_handle::ElementHandle::new(c)))
-            }
-            _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
-        };
-        Ok(r)
+        pub(crate) fn try_new(
+            typ: &S<ObjectType>,
+            ctx: &Context,
+            c: ChannelOwner
+        ) -> Result<RemoteArc, Error> {
+            let r = match typ.as_str() {
+                "Playwright" => RemoteArc::Playwright(Arc::new(Playwright::try_new(ctx, c)?)),
+                "Selectors" => RemoteArc::Selectors(Arc::new(Selectors::new(c))),
+                "BrowserType" => RemoteArc::BrowserType(Arc::new(BrowserType::try_new(c)?)),
+                "Browser" => RemoteArc::Browser(Arc::new(Browser::try_new(c)?)),
+                "BrowserContext" => {
+                    RemoteArc::BrowserContext(Arc::new(BrowserContext::try_new(c)?))
+                }
+                "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
+                "Frame" => RemoteArc::Frame(Arc::new(Frame::new(c))),
+                "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
+                "Request" => RemoteArc::Request(Arc::new(Request::try_new(ctx, c)?)),
+                "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
+                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(ctx, c)?)),
+                "Worker" => RemoteArc::Worker(Arc::new(Worker::new(c))),
+                "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
+                "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
+                "ConsoleMessage" => RemoteArc::ConsoleMessage(Arc::new(ConsoleMessage::new(c))),
+                "CdpSession" => RemoteArc::CdpSession(Arc::new(CdpSession::new(c))),
+                "JsHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(ctx, c)?)),
+                "ElementHandle" => RemoteArc::ElementHandle(Arc::new(ElementHandle::new(c))),
+                _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
+            };
+            Ok(r)
+        }
     }
 }
+
+pub(crate) use remote_enum::{RemoteArc, RemoteWeak};
 
 pub(crate) struct RequestBody {
     pub(crate) guid: Str<Guid>,
