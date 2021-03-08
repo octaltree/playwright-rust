@@ -1,14 +1,27 @@
-use crate::imp::{core::*, prelude::*};
+use crate::imp::{core::*, prelude::*, request::Request};
 
 #[derive(Debug)]
 pub(crate) struct Route {
-    channel: ChannelOwner
+    channel: ChannelOwner,
+    request: Weak<Request>
 }
 
 impl Route {
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { request } = serde_json::from_value(channel.initializer.clone())?;
-        Ok(Self { channel })
+        let request = find_object!(ctx, &request.guid, Request)?;
+        Ok(Self { channel, request })
+    }
+
+    pub(crate) fn request(&self) -> Weak<Request> { self.request.clone() }
+
+    pub(crate) async fn abort(&self, err_code: Option<&str>) -> Result<(), Arc<Error>> {
+        let mut args = HashMap::new();
+        if let Some(x) = err_code {
+            args.insert("errCode", x);
+        }
+        let _ = send_message!(self, "abort", args);
+        Ok(())
     }
 }
 

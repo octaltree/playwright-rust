@@ -11,6 +11,8 @@ impl WebSocket {
         let Initializer { url } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self { channel, url })
     }
+
+    pub(crate) fn url(&self) -> &str { &self.url }
 }
 
 impl RemoteObject for WebSocket {
