@@ -23,8 +23,11 @@ runtime_test!(awesome, {
         .goto()
         .await
         .unwrap();
-    let _ = p.main_frame().query_selector_all("a").await.unwrap();
-    let _ = p.main_frame().title().await.unwrap();
+    // let _ = p.main_frame().query_selector_all("a").await.unwrap();
+    // let _ = p.main_frame().title().await.unwrap();
+    let a = p.query_selector("a").await.unwrap().unwrap();
+    let v = a.get_attribute("href").await.unwrap();
+    dbg!(v);
     p.go_back_builder().go_back().await.unwrap();
 });
 

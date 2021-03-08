@@ -1,4 +1,7 @@
-use crate::imp::{core::*, element_handle::ElementHandle as Impl, prelude::*};
+use crate::{
+    api::Frame,
+    imp::{core::*, element_handle::ElementHandle as Impl, prelude::*}
+};
 
 pub struct ElementHandle {
     inner: Weak<Impl>
@@ -39,4 +42,16 @@ impl ElementHandle {
     is_checked! {is_enabled}
     is_checked! {is_hidden}
     is_checked! {is_visible}
+
+    pub async fn owner_frame(&self) -> ArcResult<Option<Frame>> {
+        Ok(upgrade(&self.inner)?.owner_frame().await?.map(Frame::new))
+    }
+
+    pub async fn content_frame(&self) -> ArcResult<Option<Frame>> {
+        Ok(upgrade(&self.inner)?.content_frame().await?.map(Frame::new))
+    }
+
+    pub async fn get_attribute(&self, name: &str) -> ArcResult<Option<String>> {
+        upgrade(&self.inner)?.get_attribute(name).await
+    }
 }
