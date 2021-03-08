@@ -1,6 +1,7 @@
 pub use crate::api::frame::{
-    ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder, HoverBuilder, PressBuilder,
-    SetContentBuilder, TapBuilder, TypeBuilder, WaitForSelectorBuilder
+    CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder, HoverBuilder,
+    PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder, UncheckBuilder,
+    WaitForSelectorBuilder
 };
 use crate::{
     api::{
@@ -183,7 +184,6 @@ impl Page {
 
     // select_option
     // set_input_files
-    // type
 
     pub fn r#type<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         self.main_frame().type_builder(selector, text)
@@ -193,8 +193,13 @@ impl Page {
         self.main_frame().press_builder(selector, key)
     }
 
-    // check
-    // uncheck
+    pub fn check_builder<'a>(&mut self, selector: &'a str) -> CheckBuilder<'a> {
+        self.main_frame().check_builder(selector)
+    }
+
+    pub fn uncheck_builder<'a>(&mut self, selector: &'a str) -> UncheckBuilder<'a> {
+        self.main_frame().uncheck_builder(selector)
+    }
     // wait_for_timeout
     // wait_for_function
     // expect_navigation

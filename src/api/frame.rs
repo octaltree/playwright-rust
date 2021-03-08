@@ -4,8 +4,8 @@ use crate::{
     imp::{
         core::*,
         frame::{
-            ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs, SetContentArgs,
-            TapArgs, TypeArgs, WaitForSelectorArgs
+            CheckArgs, ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs,
+            SetContentArgs, TapArgs, TypeArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
@@ -142,6 +142,14 @@ impl Frame {
 
     pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
         SetContentBuilder::new(self.inner.clone(), html)
+    }
+
+    pub fn check_builder<'a>(&mut self, selector: &'a str) -> CheckBuilder<'a> {
+        CheckBuilder::new(self.inner.clone(), selector)
+    }
+
+    pub fn uncheck_builder<'a>(&mut self, selector: &'a str) -> UncheckBuilder<'a> {
+        UncheckBuilder::new(self.inner.clone(), selector)
     }
 }
 
@@ -345,3 +353,33 @@ impl<'a, 'b> FillBuilder<'a, 'b> {
         timeout, f64;
         no_wait_after, bool);
 }
+
+macro_rules! check_builder {
+    ($t: ident, $m: ident) => {
+        pub struct $t<'a> {
+            inner: Weak<Impl>,
+            args: CheckArgs<'a>
+        }
+
+        impl<'a> $t<'a> {
+            pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+                let args = CheckArgs::new(selector);
+                Self { inner, args }
+            }
+
+            pub async fn $m(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$m(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                timeout, f64;
+                force, bool;
+                no_wait_after, bool);
+        }
+    }
+}
+
+check_builder!(CheckBuilder, check);
+check_builder!(UncheckBuilder, uncheck);

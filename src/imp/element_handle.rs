@@ -126,6 +126,16 @@ impl ElementHandle {
         let _ = send_message!(self, "dblclick", args);
         Ok(())
     }
+
+    pub(crate) async fn check(&self, args: CheckArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "check", args);
+        Ok(())
+    }
+
+    pub(crate) async fn uncheck(&self, args: CheckArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "uncheck", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -160,6 +170,17 @@ pub(crate) struct ClickArgs {
     /// Is ignored if dblclick
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) click_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CheckArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -2,7 +2,7 @@ use crate::{
     api::Frame,
     imp::{
         core::*,
-        element_handle::{ClickArgs, ElementHandle as Impl, HoverArgs},
+        element_handle::{CheckArgs, ClickArgs, ElementHandle as Impl, HoverArgs},
         prelude::*,
         utils::{KeyboardModifier, MouseButton, Position}
     }
@@ -71,6 +71,12 @@ impl ElementHandle {
     pub async fn dblclick_builder(&mut self) -> DblClickBuilder {
         DblClickBuilder::new(self.inner.clone())
     }
+
+    pub async fn check_builder(&mut self) -> CheckBuilder { CheckBuilder::new(self.inner.clone()) }
+
+    pub async fn uncheck_builder(&mut self) -> UncheckBuilder {
+        UncheckBuilder::new(self.inner.clone())
+    }
 }
 
 pub struct HoverBuilder {
@@ -130,3 +136,33 @@ macro_rules! clicker {
 
 clicker!(ClickBuilder, click);
 clicker!(DblClickBuilder, dblclick);
+
+macro_rules! check_builder {
+    ($t: ident, $m: ident) => {
+        pub struct $t {
+            inner: Weak<Impl>,
+            args: CheckArgs
+        }
+
+        impl $t {
+            pub(crate) fn new(inner: Weak<Impl>) -> Self {
+                let args = CheckArgs::default();
+                Self { inner, args }
+            }
+
+            pub async fn $m(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$m(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                timeout, f64;
+                force, bool;
+                no_wait_after, bool);
+        }
+    }
+}
+
+check_builder!(CheckBuilder, check);
+check_builder!(UncheckBuilder, uncheck);

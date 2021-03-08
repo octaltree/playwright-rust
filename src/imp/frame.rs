@@ -223,6 +223,16 @@ impl Frame {
         let _ = send_message!(self, "setContent", args);
         Ok(())
     }
+
+    pub(crate) async fn check(&self, args: CheckArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "check", args);
+        Ok(())
+    }
+
+    pub(crate) async fn uncheck(&self, args: CheckArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "uncheck", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -459,4 +469,27 @@ struct SelectorTimeout<'a> {
 impl RemoteObject for Frame {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CheckArgs<'a> {
+    selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a> CheckArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            timeout: None,
+            force: None,
+            no_wait_after: None
+        }
+    }
 }
