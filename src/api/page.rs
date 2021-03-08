@@ -1,5 +1,5 @@
 pub use crate::{
-    api::frame::{Clicker, DblClicker, GotoBuilder},
+    api::frame::{Clicker, DblClicker, GotoBuilder, PressBuilder, TypeBuilder},
     imp::utils::DocumentLoadState
 };
 use crate::{
@@ -69,6 +69,14 @@ impl Page {
 
     pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
         self.main_frame().query_selector_all(selector).await
+    }
+
+    pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+        self.main_frame().r#type(selector, text)
+    }
+
+    pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+        self.main_frame().press(selector, key)
     }
 
     // fn accessibility(&self) -> Accessibility { unimplemented!() }
