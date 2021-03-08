@@ -4,8 +4,8 @@ use crate::{
     imp::{
         core::*,
         frame::{
-            ClickArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs, SetContentArgs, TypeArgs,
-            WaitForSelectorArgs
+            ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs, SetContentArgs,
+            TapArgs, TypeArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
@@ -37,6 +37,18 @@ impl Frame {
 
     pub fn dblclick_builder<'a>(&mut self, selector: &'a str) -> DblClickBuilder<'a> {
         DblClickBuilder::new(self.inner.clone(), selector)
+    }
+
+    pub fn tap_builder<'a>(&mut self, selector: &'a str) -> TapBuilder<'a> {
+        TapBuilder::new(self.inner.clone(), selector)
+    }
+
+    pub fn fill_builder<'a, 'b>(
+        &mut self,
+        selector: &'a str,
+        value: &'b str
+    ) -> FillBuilder<'a, 'b> {
+        FillBuilder::new(self.inner.clone(), selector, value)
     }
 
     pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
@@ -254,4 +266,51 @@ impl<'a> SetContentBuilder<'a> {
     optional_setter!(
         timeout, f64;
         wait_until, DocumentLoadState);
+}
+
+pub struct TapBuilder<'a> {
+    inner: Weak<Impl>,
+    args: TapArgs<'a>
+}
+
+impl<'a> TapBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+        let args = TapArgs::new(selector);
+        Self { inner, args }
+    }
+
+    pub async fn tap(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.tap(args).await?;
+        Ok(())
+    }
+
+    optional_setter!(
+        modifiers, Vec<KeyboardModifier>;
+        position, Position;
+        timeout, f64;
+        force, bool;
+        no_wait_after, bool);
+}
+
+pub struct FillBuilder<'a, 'b> {
+    inner: Weak<Impl>,
+    args: FillArgs<'a, 'b>
+}
+
+impl<'a, 'b> FillBuilder<'a, 'b> {
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str, value: &'b str) -> Self {
+        let args = FillArgs::new(selector, value);
+        Self { inner, args }
+    }
+
+    pub async fn fill(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.fill(args).await?;
+        Ok(())
+    }
+
+    optional_setter!(
+        timeout, f64;
+        no_wait_after, bool);
 }

@@ -61,6 +61,16 @@ impl Frame {
         Ok(())
     }
 
+    pub(crate) async fn tap(&self, args: TapArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "tap", args);
+        Ok(())
+    }
+
+    pub(crate) async fn fill(&self, args: FillArgs<'_, '_>) -> ArcResult<()> {
+        let _ = send_message!(self, "fill", args);
+        Ok(())
+    }
+
     pub(crate) async fn query_selector(
         &self,
         selector: &str
@@ -322,6 +332,57 @@ impl<'a> SetContentArgs<'a> {
             html,
             timeout: None,
             wait_until: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct TapArgs<'a> {
+    selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) position: Option<Position>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a> TapArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            modifiers: None,
+            position: None,
+            timeout: None,
+            force: None,
+            no_wait_after: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct FillArgs<'a, 'b> {
+    selector: &'a str,
+    value: &'b str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a, 'b> FillArgs<'a, 'b> {
+    pub(crate) fn new(selector: &'a str, value: &'b str) -> Self {
+        Self {
+            selector,
+            value,
+            timeout: None,
+            no_wait_after: None
         }
     }
 }

@@ -1,6 +1,6 @@
 pub use crate::api::frame::{
-    ClickBuilder, DblClickBuilder, GotoBuilder, HoverBuilder, PressBuilder, SetContentBuilder,
-    TypeBuilder, WaitForSelectorBuilder
+    ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder, HoverBuilder, PressBuilder,
+    SetContentBuilder, TapBuilder, TypeBuilder, WaitForSelectorBuilder
 };
 use crate::{
     api::{
@@ -111,7 +111,6 @@ impl Page {
     // add_script_tag
     // add_style_tag
     // url
-    // content
 
     pub async fn content<'a>(&mut self) -> ArcResult<String> { self.main_frame().content().await }
 
@@ -135,8 +134,18 @@ impl Page {
         self.main_frame().dblclick_builder(selector)
     }
 
-    // tap
-    // fill
+    pub fn tap_builder<'a>(&mut self, selector: &'a str) -> TapBuilder<'a> {
+        self.main_frame().tap_builder(selector)
+    }
+
+    pub fn fill_builder<'a, 'b>(
+        &mut self,
+        selector: &'a str,
+        value: &'b str
+    ) -> FillBuilder<'a, 'b> {
+        self.main_frame().fill_builder(selector, value)
+    }
+
     // focus
     // text_content
     // inner_text
