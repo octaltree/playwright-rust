@@ -7,7 +7,8 @@ pub(crate) struct Request {
     resource_type: String,
     method: String,
     is_navigation_request: bool,
-    frame: Weak<Frame>
+    frame: Weak<Frame>,
+    post_data: Option<String>
 }
 
 impl Request {
@@ -17,7 +18,8 @@ impl Request {
             resource_type,
             method,
             frame,
-            is_navigation_request
+            is_navigation_request,
+            post_data
         } = serde_json::from_value(channel.initializer.clone())?;
         let frame = find_object!(ctx, &frame.guid, Frame)?;
         Ok(Self {
@@ -26,7 +28,8 @@ impl Request {
             resource_type,
             method,
             frame,
-            is_navigation_request
+            is_navigation_request,
+            post_data
         })
     }
 
@@ -39,6 +42,16 @@ impl Request {
     pub(crate) fn is_navigation_request(&self) -> bool { self.is_navigation_request }
 
     pub(crate) fn frame(&self) -> Weak<Frame> { self.frame.clone() }
+
+    pub(crate) fn post_data(&self) -> Option<Vec<u8>> {
+        base64::decode(self.post_data.as_ref()?).ok()
+    }
+
+    pub(crate) fn post_data_as_string(&self) -> Option<String> {
+        let bytes = self.post_data()?;
+        let s = String::from_utf8(bytes).ok()?;
+        Some(s)
+    }
 }
 
 impl RemoteObject for Request {
@@ -53,5 +66,7 @@ struct Initializer {
     resource_type: String,
     method: String,
     frame: OnlyGuid,
-    is_navigation_request: bool
+    is_navigation_request: bool,
+    // base64
+    post_data: Option<String>
 }

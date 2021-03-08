@@ -26,4 +26,10 @@ impl Request {
         let inner = weak_and_then(&self.inner, |rc| rc.frame());
         Frame::new(inner)
     }
+
+    pub fn post_data(&self) -> Option<Vec<u8>> { self.inner.upgrade()?.post_data() }
+
+    pub fn post_post_as_string(&self) -> Option<String> {
+        self.inner.upgrade()?.post_data_as_string()
+    }
 }
