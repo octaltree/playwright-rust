@@ -1,9 +1,6 @@
-pub use crate::{
-    api::frame::{
-        Clicker, DblClicker, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder,
-        WaitForSelectorBuilder
-    },
-    imp::utils::DocumentLoadState
+pub use crate::api::frame::{
+    Clicker, DblClicker, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder,
+    WaitForSelectorBuilder
 };
 use crate::{
     api::{
@@ -16,7 +13,7 @@ use crate::{
         frame::Frame as FrameImpl,
         page::{Page as Impl, ReloadArgs},
         prelude::*,
-        utils::Viewport
+        utils::{DocumentLoadState, Viewport}
     },
     Error
 };

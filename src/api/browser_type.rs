@@ -1,13 +1,11 @@
-pub use crate::imp::{
-    browser_type::{RecordHar, RecordVideo},
-    utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
-};
+pub use crate::imp::browser_type::{RecordHar, RecordVideo};
 use crate::{
     api::{browser::Browser, browser_context::BrowserContext},
     imp::{
         browser_type::{BrowserType as Impl, LaunchArgs, LaunchPersistentContextArgs},
         core::*,
-        prelude::*
+        prelude::*,
+        utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
     },
     Error
 };

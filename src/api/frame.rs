@@ -209,8 +209,8 @@ pub struct HoverBuilder<'a> {
 }
 
 impl<'a> HoverBuilder<'a> {
-    pub(crate) fn new(inner: Weak<Impl>, url: &'a str) -> Self {
-        let args = HoverArgs::new(url);
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+        let args = HoverArgs::new(selector);
         Self { inner, args }
     }
 

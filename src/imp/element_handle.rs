@@ -1,4 +1,9 @@
-use crate::imp::{core::*, frame::Frame, prelude::*};
+use crate::imp::{
+    core::*,
+    frame::Frame,
+    prelude::*,
+    utils::{KeyboardModifier, MouseButton, Position}
+};
 
 #[derive(Debug)]
 pub(crate) struct ElementHandle {
@@ -118,11 +123,61 @@ impl ElementHandle {
         };
         Ok(Some(s.to_owned()))
     }
+
+    pub(crate) async fn hover(&self, args: HoverArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "hover", args);
+        Ok(())
+    }
+
+    pub(crate) async fn click(&self, args: ClickArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "click", args);
+        Ok(())
+    }
+
+    pub(crate) async fn dblclick(&self, args: ClickArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "dblclick", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
 struct QuerySelectorAllResponse {
     elements: Vec<OnlyGuid>
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct HoverArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) position: Option<Position>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ClickArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) position: Option<Position>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) delay: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) button: Option<MouseButton>,
+    /// Is ignored if dblclick
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) click_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
 }
 
 impl RemoteObject for ElementHandle {

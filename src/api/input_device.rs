@@ -1,8 +1,8 @@
-pub use crate::imp::utils::MouseButton;
 use crate::imp::{
     core::*,
     page::{MouseClickArgs, Page as PageImpl},
-    prelude::*
+    prelude::*,
+    utils::MouseButton
 };
 
 pub struct Keyboard {

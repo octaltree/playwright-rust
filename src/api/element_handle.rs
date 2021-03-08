@@ -1,6 +1,11 @@
 use crate::{
     api::Frame,
-    imp::{core::*, element_handle::ElementHandle as Impl, prelude::*}
+    imp::{
+        core::*,
+        element_handle::{ClickArgs, ElementHandle as Impl, HoverArgs},
+        prelude::*,
+        utils::{KeyboardModifier, MouseButton, Position}
+    }
 };
 
 pub struct ElementHandle {
@@ -58,4 +63,68 @@ impl ElementHandle {
     pub async fn text_content(&mut self) -> ArcResult<Option<String>> {
         upgrade(&self.inner)?.text_content().await
     }
+
+    pub async fn hover(&mut self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
+
+    pub async fn clicker(&mut self) -> Clicker { Clicker::new(self.inner.clone()) }
+
+    pub async fn dblclicker(&mut self) -> DblClicker { DblClicker::new(self.inner.clone()) }
 }
+
+pub struct HoverBuilder {
+    inner: Weak<Impl>,
+    args: HoverArgs
+}
+
+impl HoverBuilder {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = HoverArgs::default();
+        Self { inner, args }
+    }
+
+    pub async fn goto(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.hover(args).await
+    }
+
+    optional_setter!(
+        modifiers, Vec<KeyboardModifier>;
+        position, Position;
+        timeout, f64;
+        force, bool);
+}
+
+macro_rules! clicker {
+    ($t: ident, $f: ident) => {
+        pub struct $t {
+            inner: Weak<Impl>,
+            args: ClickArgs
+        }
+
+        impl $t {
+            pub(crate) fn new(inner: Weak<Impl>) -> Self {
+                let args = ClickArgs::default();
+                Self { inner, args }
+            }
+
+            pub async fn $f(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$f(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                modifiers, Vec<KeyboardModifier>;
+                position, Position;
+                delay, f64;
+                button, MouseButton;
+                click_count, i32;
+                timeout, f64;
+                force, bool;
+                no_wait_after, bool);
+        }
+    }
+}
+
+clicker!(Clicker, click);
+clicker!(DblClicker, dblclick);
