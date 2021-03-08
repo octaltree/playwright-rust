@@ -169,7 +169,7 @@ impl Page {
         self.mouse_click(args).await
     }
 
-    pub(crate) async fn accessibility_snapshot(&self, args: AccessibilitySnapshoptArgs) {}
+    // pub(crate) async fn accessibility_snapshot(&self, args: AccessibilitySnapshoptArgs) {}
 }
 
 #[derive(Serialize)]
