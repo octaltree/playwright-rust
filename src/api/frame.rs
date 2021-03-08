@@ -4,7 +4,8 @@ use crate::{
     imp::{
         core::*,
         frame::{
-            ClickArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs, TypeArgs, WaitForSelectorArgs
+            ClickArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs, SetContentArgs, TypeArgs,
+            WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
@@ -91,6 +92,10 @@ impl Frame {
     is_checked! {is_enabled}
     is_checked! {is_hidden}
     is_checked! {is_visible}
+
+    pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
+        SetContentBuilder::new(self.inner.clone(), html)
+    }
 }
 
 pub struct GotoBuilder<'a, 'b> {
@@ -224,4 +229,25 @@ impl<'a> HoverBuilder<'a> {
         position, Position;
         timeout, f64;
         force, bool);
+}
+
+pub struct SetContentBuilder<'a> {
+    inner: Weak<Impl>,
+    args: SetContentArgs<'a>
+}
+
+impl<'a> SetContentBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, html: &'a str) -> Self {
+        let args = SetContentArgs::new(html);
+        Self { inner, args }
+    }
+
+    pub async fn goto(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.set_content(args).await
+    }
+
+    optional_setter!(
+        timeout, f64;
+        wait_until, DocumentLoadState);
 }

@@ -144,6 +144,11 @@ impl Frame {
     is_checked!(is_enabled, "isEnabled");
     is_checked!(is_hidden, "isHidden");
     is_checked!(is_visible, "isVisible");
+
+    pub(crate) async fn set_content(&self, args: SetContentArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "setContent", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -294,6 +299,26 @@ impl<'a> HoverArgs<'a> {
             position: None,
             timeout: None,
             force: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SetContentArgs<'a> {
+    html: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) wait_until: Option<DocumentLoadState>
+}
+
+impl<'a> SetContentArgs<'a> {
+    pub(crate) fn new(html: &'a str) -> Self {
+        Self {
+            html,
+            timeout: None,
+            wait_until: None
         }
     }
 }

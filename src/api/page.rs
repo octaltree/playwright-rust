@@ -1,6 +1,6 @@
 pub use crate::api::frame::{
-    ClickBuilder, DblClickBuilder, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder,
-    WaitForSelectorBuilder
+    ClickBuilder, DblClickBuilder, GotoBuilder, HoverBuilder, PressBuilder, SetContentBuilder,
+    TypeBuilder, WaitForSelectorBuilder
 };
 use crate::{
     api::{
@@ -112,7 +112,10 @@ impl Page {
     // add_style_tag
     // url
     // content
-    // set_content
+
+    pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
+        self.main_frame().set_content_builder(html)
+    }
 
     pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.main_frame_weak(), url)
