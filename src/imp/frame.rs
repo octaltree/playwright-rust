@@ -112,6 +112,11 @@ impl Frame {
         let _ = send_message!(self, "press", args);
         Ok(())
     }
+
+    pub(crate) async fn hover(&self, args: HoverArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "hover", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -239,6 +244,32 @@ macro_rules! type_args {
 
 type_args! {TypeArgs, text}
 type_args! {PressArgs, key}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct HoverArgs<'a> {
+    selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) position: Option<Position>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) force: Option<bool>
+}
+
+impl<'a> HoverArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            modifiers: None,
+            position: None,
+            timeout: None,
+            force: None
+        }
+    }
+}
 
 impl RemoteObject for Frame {
     fn channel(&self) -> &ChannelOwner { &self.channel }

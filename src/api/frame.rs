@@ -1,14 +1,13 @@
-pub use crate::imp::{
-    frame::FrameState,
-    utils::{KeyboardModifier, MouseButton, Position}
-};
+pub use crate::imp::frame::FrameState;
 use crate::{
     api::{ElementHandle, Response},
     imp::{
         core::*,
-        frame::{ClickArgs, Frame as Impl, GotoArgs, PressArgs, TypeArgs, WaitForSelectorArgs},
+        frame::{
+            ClickArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs, TypeArgs, WaitForSelectorArgs
+        },
         prelude::*,
-        utils::DocumentLoadState
+        utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
     }
 };
 
@@ -58,12 +57,16 @@ impl Frame {
 
     pub async fn title(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.title().await }
 
-    pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+    pub fn type_builder<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         TypeBuilder::new(self.inner.clone(), selector, text)
     }
 
-    pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+    pub fn press_builder<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
         PressBuilder::new(self.inner.clone(), selector, key)
+    }
+
+    pub fn hover_builder<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
+        HoverBuilder::new(self.inner.clone(), selector)
     }
 }
 
@@ -176,3 +179,26 @@ macro_rules! type_builder {
 
 type_builder!(TypeBuilder, TypeArgs, text, r#type);
 type_builder!(PressBuilder, PressArgs, key, press);
+
+pub struct HoverBuilder<'a> {
+    inner: Weak<Impl>,
+    args: HoverArgs<'a>
+}
+
+impl<'a> HoverBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, url: &'a str) -> Self {
+        let args = HoverArgs::new(url);
+        Self { inner, args }
+    }
+
+    pub async fn goto(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.hover(args).await
+    }
+
+    optional_setter!(
+        modifiers, Vec<KeyboardModifier>;
+        position, Position;
+        timeout, f64;
+        force, bool);
+}

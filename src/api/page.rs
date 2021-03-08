@@ -1,5 +1,5 @@
 pub use crate::{
-    api::frame::{Clicker, DblClicker, GotoBuilder, PressBuilder, TypeBuilder},
+    api::frame::{Clicker, DblClicker, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder},
     imp::utils::DocumentLoadState
 };
 use crate::{
@@ -72,11 +72,15 @@ impl Page {
     }
 
     pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
-        self.main_frame().r#type(selector, text)
+        self.main_frame().type_builder(selector, text)
     }
 
     pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
-        self.main_frame().press(selector, key)
+        self.main_frame().press_builder(selector, key)
+    }
+
+    pub fn hover<'a, 'b>(&self, selector: &'a str) -> HoverBuilder<'a> {
+        self.main_frame().hover_builder(selector)
     }
 
     // fn accessibility(&self) -> Accessibility { unimplemented!() }
