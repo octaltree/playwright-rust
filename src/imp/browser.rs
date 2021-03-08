@@ -2,7 +2,6 @@ use crate::imp::{
     browser_context::BrowserContext,
     browser_type::{RecordHar, RecordVideo},
     core::*,
-    page::Page,
     prelude::*,
     utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, StorageState, Viewport}
 };

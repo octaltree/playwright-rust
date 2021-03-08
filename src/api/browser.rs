@@ -1,6 +1,6 @@
 pub use crate::imp::browser_type::{RecordHar, RecordVideo};
 use crate::{
-    api::{browser_context::BrowserContext, page::Page},
+    api::BrowserContext,
     imp::{
         self,
         browser::NewContextArgs,

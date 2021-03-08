@@ -1,5 +1,5 @@
 use crate::{
-    api::{browser::Browser, page::Page},
+    api::Page,
     imp::{
         browser_context::BrowserContext as Impl,
         core::*,

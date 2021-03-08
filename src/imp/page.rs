@@ -1,6 +1,6 @@
 use crate::imp::{
     core::*,
-    frame::{ClickArgs, Frame, GotoArgs},
+    frame::Frame,
     prelude::*,
     response::Response,
     utils::{DocumentLoadState, MouseButton, Viewport}

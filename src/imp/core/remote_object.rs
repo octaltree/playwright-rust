@@ -1,4 +1,4 @@
-use crate::imp::{self, core::*, impl_future::*, prelude::*};
+use crate::imp::{core::*, impl_future::*, prelude::*};
 use serde_json::value::Value;
 use std::{
     any::Any,
@@ -122,7 +122,7 @@ pub(crate) trait RemoteObject: Any + Debug {
 
 mod remote_enum {
     use super::*;
-    use imp::{
+    use crate::imp::{
         browser::Browser, browser_context::BrowserContext, browser_type::BrowserType,
         cdp_session::CdpSession, console_message::ConsoleMessage, dialog::Dialog,
         download::Download, element_handle::ElementHandle, frame::Frame, js_handle::JsHandle,
