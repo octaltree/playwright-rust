@@ -27,9 +27,15 @@ impl Request {
         Frame::new(inner)
     }
 
-    pub fn post_data(&self) -> Option<Vec<u8>> { self.inner.upgrade()?.post_data() }
+    pub fn post_data(&self) -> Result<Option<Vec<u8>>, Error> {
+        Ok(upgrade(&self.inner)?.post_data())
+    }
 
-    pub fn post_post_as_string(&self) -> Option<String> {
-        self.inner.upgrade()?.post_data_as_string()
+    pub fn post_post_as_string(&self) -> Result<Option<String>, Error> {
+        Ok(upgrade(&self.inner)?.post_data_as_string())
+    }
+
+    pub fn headers(&self) -> Result<HashMap<String, String>, Error> {
+        Ok(upgrade(&self.inner)?.headers().clone())
     }
 }

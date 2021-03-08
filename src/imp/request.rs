@@ -8,7 +8,8 @@ pub(crate) struct Request {
     method: String,
     is_navigation_request: bool,
     frame: Weak<Frame>,
-    post_data: Option<String>
+    post_data: Option<String>,
+    headers: HashMap<String, String>
 }
 
 impl Request {
@@ -19,8 +20,10 @@ impl Request {
             method,
             frame,
             is_navigation_request,
-            post_data
+            post_data,
+            headers
         } = serde_json::from_value(channel.initializer.clone())?;
+        let headers: HashMap<_, _> = headers.into_iter().map(Into::<(_, _)>::into).collect();
         let frame = find_object!(ctx, &frame.guid, Frame)?;
         Ok(Self {
             channel,
@@ -29,7 +32,8 @@ impl Request {
             method,
             frame,
             is_navigation_request,
-            post_data
+            post_data,
+            headers
         })
     }
 
@@ -52,6 +56,8 @@ impl Request {
         let s = String::from_utf8(bytes).ok()?;
         Some(s)
     }
+
+    pub(crate) fn headers(&self) -> &HashMap<String, String> { &self.headers }
 }
 
 impl RemoteObject for Request {
@@ -68,5 +74,16 @@ struct Initializer {
     frame: OnlyGuid,
     is_navigation_request: bool,
     // base64
-    post_data: Option<String>
+    post_data: Option<String>,
+    headers: Vec<Header>
+}
+
+#[derive(Debug, Deserialize)]
+struct Header {
+    name: String,
+    value: String
+}
+
+impl From<Header> for (String, String) {
+    fn from(Header { name, value }: Header) -> Self { (name, value) }
 }
