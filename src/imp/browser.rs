@@ -40,7 +40,7 @@ impl Browser {
         };
         let _responded_error = match *err {
             Error::ErrorResponded(ref e) => e,
-            _ => Err(err)?
+            _ => return Err(err)
         };
         // TODO: has been closed
         Ok(())

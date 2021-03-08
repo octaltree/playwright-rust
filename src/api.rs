@@ -4,7 +4,8 @@ macro_rules! optional_setter {
     ($($field:ident, $t: ty);*) => {
         $(
             paste::paste! {
-                pub fn [<$field>](mut self, x:$t ) -> Self {
+                #[allow(clippy::wrong_self_convention)]
+                pub fn [<$field>](mut self, x:$t) -> Self {
                     self.args.$field = Some(x);
                     self
                 }

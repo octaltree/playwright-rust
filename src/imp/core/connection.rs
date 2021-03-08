@@ -59,7 +59,7 @@ pub enum Error {
 }
 
 pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
-    as_only_guid(v).ok_or(Error::GuidNotFound(v.clone()))
+    as_only_guid(v).ok_or_else(|| Error::GuidNotFound(v.clone()))
 }
 
 impl Drop for Connection {
@@ -266,7 +266,7 @@ impl Context {
         }
         let (tx, rx) = broadcast::channel(100);
         self.evt_tx = Some(tx);
-        return rx;
+        rx
     }
 
     fn emit_event<E: Into<Arc<Event>>>(&self, e: E) {
