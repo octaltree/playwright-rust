@@ -22,7 +22,8 @@ pub struct Page {
     inner: Weak<Impl>,
     pub keyboard: Keyboard,
     pub touch_screen: TouchScreen,
-    pub mouse: Mouse
+    pub mouse: Mouse,
+    pub accessibility: Accessibility
 }
 
 impl Page {
@@ -31,7 +32,8 @@ impl Page {
             inner: inner.clone(),
             keyboard: Keyboard::new(inner.clone()),
             touch_screen: TouchScreen::new(inner.clone()),
-            mouse: Mouse::new(inner)
+            mouse: Mouse::new(inner.clone()),
+            accessibility: Accessibility::new(inner)
         }
     }
 

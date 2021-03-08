@@ -168,6 +168,8 @@ impl Page {
         };
         self.mouse_click(args).await
     }
+
+    pub(crate) async fn accessibility_snapshot(&self, args: AccessibilitySnapshoptArgs) {}
 }
 
 #[derive(Serialize)]
@@ -193,6 +195,13 @@ impl MouseClickArgs {
             click_count: None
         }
     }
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct AccessibilitySnapshoptArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    interesting_only: Option<bool> // root: Option<Arc<ElementHandle>>
 }
 
 impl BindingCall {
