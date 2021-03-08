@@ -24,6 +24,7 @@ runtime_test!(awesome, {
         .await
         .unwrap();
     let _ = p.main_frame().query_selector_all("a").await.unwrap();
+    let _ = p.main_frame().title().await.unwrap();
     p.go_back_builder().go_back().await.unwrap();
 });
 

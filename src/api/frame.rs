@@ -55,6 +55,8 @@ impl Frame {
     ) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
+
+    pub async fn title(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.title().await }
 }
 
 pub struct GotoBuilder<'a, 'b> {

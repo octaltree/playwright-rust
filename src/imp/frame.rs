@@ -93,6 +93,15 @@ impl Frame {
         let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(Some(e))
     }
+
+    pub(crate) async fn title(&self) -> ArcResult<String> {
+        let v = send_message!(self, "title", Map::new());
+        let s = first(&v)
+            .ok_or(Error::InvalidParams)?
+            .as_str()
+            .ok_or(Error::InvalidParams)?;
+        Ok(s.to_owned())
+    }
 }
 
 #[derive(Deserialize)]

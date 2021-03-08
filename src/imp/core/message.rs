@@ -123,14 +123,19 @@ impl Validator for ObjectType {
     type Err = std::convert::Infallible;
 }
 
-/// If {"<type>": {"guid": str}} then str
-pub(crate) fn as_only_guid(v: &Value) -> Option<&S<Guid>> {
-    // {"<type>": {"guid": str}}
+pub(crate) fn first(v: &Value) -> Option<&Value> {
     let m: &Map<String, Value> = v.as_object()?;
     if m.len() != 1 {
         return None;
     }
     let v: &Value = m.values().next()?;
+    Some(v)
+}
+
+/// If {"<type>": {"guid": str}} then str
+pub(crate) fn as_only_guid(v: &Value) -> Option<&S<Guid>> {
+    // {"<type>": {"guid": str}}
+    let v: &Value = first(v)?;
     // {"guid": str}
     let m: &Map<String, Value> = v.as_object()?;
     let v: &Value = m.get("guid")?;
