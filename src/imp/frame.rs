@@ -102,6 +102,16 @@ impl Frame {
             .ok_or(Error::InvalidParams)?;
         Ok(s.to_owned())
     }
+
+    pub(crate) async fn r#type(&self, args: TypeArgs<'_, '_>) -> ArcResult<()> {
+        let _ = send_message!(self, "type", args);
+        Ok(())
+    }
+
+    pub(crate) async fn press(&self, args: PressArgs<'_, '_>) -> ArcResult<()> {
+        let _ = send_message!(self, "press", args);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -200,6 +210,35 @@ pub enum FrameState {
     Hidden,
     Visible
 }
+
+macro_rules! type_args {
+    ($t:ident, $f:ident) => {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        pub(crate) struct $t<'a, 'b> {
+            selector: &'a str,
+            $f: &'b str,
+            pub(crate) delay: Option<f64>,
+            pub(crate) timeout: Option<f64>,
+            pub(crate) no_wait_after: Option<bool>
+        }
+
+        impl<'a, 'b> $t<'a, 'b> {
+            pub(crate) fn new(selector: &'a str, $f: &'b str) -> Self {
+                Self {
+                    selector,
+                    $f,
+                    delay: None,
+                    timeout: None,
+                    no_wait_after: None
+                }
+            }
+        }
+    };
+}
+
+type_args! {TypeArgs, text}
+type_args! {PressArgs, key}
 
 impl RemoteObject for Frame {
     fn channel(&self) -> &ChannelOwner { &self.channel }

@@ -6,7 +6,7 @@ use crate::{
     api::{ElementHandle, Response},
     imp::{
         core::*,
-        frame::{ClickArgs, Frame as Impl, GotoArgs, WaitForSelectorArgs},
+        frame::{ClickArgs, Frame as Impl, GotoArgs, PressArgs, TypeArgs, WaitForSelectorArgs},
         prelude::*,
         utils::DocumentLoadState
     }
@@ -57,6 +57,14 @@ impl Frame {
     }
 
     pub async fn title(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.title().await }
+
+    pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+        TypeBuilder::new(self.inner.clone(), selector, text)
+    }
+
+    pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+        PressBuilder::new(self.inner.clone(), selector, key)
+    }
 }
 
 pub struct GotoBuilder<'a, 'b> {
@@ -138,3 +146,33 @@ impl<'a> WaitForSelectorBuilder<'a> {
         timeout, f64;
         state, FrameState);
 }
+
+macro_rules! type_builder {
+    ($t: ident, $a: ident, $f: ident, $m: ident) => {
+        pub struct $t<'a, 'b> {
+            inner: Weak<Impl>,
+            args: $a<'a, 'b>
+        }
+
+        impl<'a, 'b> $t<'a, 'b> {
+            pub(crate) fn new(inner: Weak<Impl>, selector: &'a str, $f: &'b str) -> Self {
+                let args = $a::new(selector, $f);
+                Self { inner, args }
+            }
+
+            pub async fn $m(self) -> Result<(), Arc<Error>> {
+                let Self { inner, args } = self;
+                let _ = upgrade(&inner)?.$m(args).await?;
+                Ok(())
+            }
+
+            optional_setter!(
+                delay, f64;
+                timeout, f64;
+                no_wait_after, bool);
+        }
+    }
+}
+
+type_builder!(TypeBuilder, TypeArgs, text, r#type);
+type_builder!(PressBuilder, PressArgs, key, press);
