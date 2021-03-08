@@ -80,6 +80,19 @@ impl Frame {
         let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
     }
+
+    pub(crate) async fn wait_for_selector(
+        &self,
+        args: WaitForSelectorArgs<'_>
+    ) -> ArcResult<Option<Weak<ElementHandle>>> {
+        let v = send_message!(self, "WaitForSelector", args);
+        let guid = match as_only_guid(&v) {
+            Some(g) => g,
+            None => return Ok(None)
+        };
+        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        Ok(Some(e))
+    }
 }
 
 #[derive(Deserialize)]
@@ -148,6 +161,35 @@ impl<'a> ClickArgs<'a> {
             no_wait_after: None
         }
     }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct WaitForSelectorArgs<'a> {
+    selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) state: Option<FrameState>
+}
+
+impl<'a> WaitForSelectorArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            timeout: None,
+            state: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum FrameState {
+    Attached,
+    Detached,
+    Hidden,
+    Visible
 }
 
 impl RemoteObject for Frame {

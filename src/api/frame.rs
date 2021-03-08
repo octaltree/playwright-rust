@@ -1,9 +1,12 @@
-pub use crate::imp::utils::{KeyboardModifier, MouseButton, Position};
+pub use crate::imp::{
+    frame::FrameState,
+    utils::{KeyboardModifier, MouseButton, Position}
+};
 use crate::{
     api::{ElementHandle, Response},
     imp::{
         core::*,
-        frame::{ClickArgs, Frame as Impl, GotoArgs},
+        frame::{ClickArgs, Frame as Impl, GotoArgs, WaitForSelectorArgs},
         prelude::*,
         utils::DocumentLoadState
     }
@@ -44,6 +47,13 @@ impl Frame {
         Ok(ElementHandle::new(
             upgrade(&self.inner)?.frame_element().await?
         ))
+    }
+
+    pub fn wait_for_selector_builder<'a>(
+        &mut self,
+        selector: &'a str
+    ) -> WaitForSelectorBuilder<'a> {
+        WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
 }
 
@@ -104,3 +114,25 @@ macro_rules! clicker {
 
 clicker!(Clicker, click);
 clicker!(DblClicker, dblclick);
+
+pub struct WaitForSelectorBuilder<'a> {
+    inner: Weak<Impl>,
+    args: WaitForSelectorArgs<'a>
+}
+
+impl<'a> WaitForSelectorBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+        let args = WaitForSelectorArgs::new(selector);
+        Self { inner, args }
+    }
+
+    pub async fn wait_for_selector(self) -> Result<Option<ElementHandle>, Arc<Error>> {
+        let Self { inner, args } = self;
+        let e = upgrade(&inner)?.wait_for_selector(args).await?;
+        Ok(e.map(ElementHandle::new))
+    }
+
+    optional_setter!(
+        timeout, f64;
+        state, FrameState);
+}
