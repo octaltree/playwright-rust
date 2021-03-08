@@ -9,7 +9,8 @@ pub(crate) struct Request {
     is_navigation_request: bool,
     frame: Weak<Frame>,
     post_data: Option<String>,
-    headers: HashMap<String, String>
+    headers: HashMap<String, String>,
+    redirected_from: Option<Weak<Request>>
 }
 
 impl Request {
@@ -21,10 +22,17 @@ impl Request {
             frame,
             is_navigation_request,
             post_data,
-            headers
+            headers,
+            redirected_from
         } = serde_json::from_value(channel.initializer.clone())?;
         let headers: HashMap<_, _> = headers.into_iter().map(Into::<(_, _)>::into).collect();
         let frame = find_object!(ctx, &frame.guid, Frame)?;
+        let redirected_from =
+            match redirected_from.map(|OnlyGuid { guid }| find_object!(ctx, &guid, Request)) {
+                None => None,
+                Some(Ok(x)) => Some(x),
+                Some(Err(e)) => return Err(e)
+            };
         Ok(Self {
             channel,
             url,
@@ -33,7 +41,8 @@ impl Request {
             frame,
             is_navigation_request,
             post_data,
-            headers
+            headers,
+            redirected_from
         })
     }
 
@@ -58,6 +67,8 @@ impl Request {
     }
 
     pub(crate) fn headers(&self) -> &HashMap<String, String> { &self.headers }
+
+    pub(crate) fn redirected_from(&self) -> Option<Weak<Request>> { self.redirected_from.clone() }
 }
 
 impl RemoteObject for Request {
@@ -75,7 +86,8 @@ struct Initializer {
     is_navigation_request: bool,
     // base64
     post_data: Option<String>,
-    headers: Vec<Header>
+    headers: Vec<Header>,
+    redirected_from: Option<OnlyGuid>
 }
 
 #[derive(Debug, Deserialize)]

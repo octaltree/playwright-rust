@@ -38,4 +38,8 @@ impl Request {
     pub fn headers(&self) -> Result<HashMap<String, String>, Error> {
         Ok(upgrade(&self.inner)?.headers().clone())
     }
+
+    pub fn redirected_from(&self) -> Result<Option<Request>, Error> {
+        Ok(upgrade(&self.inner)?.redirected_from().map(Request::new))
+    }
 }
