@@ -43,15 +43,19 @@ impl ElementHandle {
     is_checked! {is_hidden}
     is_checked! {is_visible}
 
-    pub async fn owner_frame(&self) -> ArcResult<Option<Frame>> {
+    pub async fn owner_frame(&mut self) -> ArcResult<Option<Frame>> {
         Ok(upgrade(&self.inner)?.owner_frame().await?.map(Frame::new))
     }
 
-    pub async fn content_frame(&self) -> ArcResult<Option<Frame>> {
+    pub async fn content_frame(&mut self) -> ArcResult<Option<Frame>> {
         Ok(upgrade(&self.inner)?.content_frame().await?.map(Frame::new))
     }
 
-    pub async fn get_attribute(&self, name: &str) -> ArcResult<Option<String>> {
+    pub async fn get_attribute(&mut self, name: &str) -> ArcResult<Option<String>> {
         upgrade(&self.inner)?.get_attribute(name).await
+    }
+
+    pub async fn text_content(&mut self) -> ArcResult<Option<String>> {
+        upgrade(&self.inner)?.text_content().await
     }
 }

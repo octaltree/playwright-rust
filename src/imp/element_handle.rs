@@ -109,6 +109,15 @@ impl ElementHandle {
         };
         Ok(Some(s.to_owned()))
     }
+
+    pub(crate) async fn text_content(&self) -> ArcResult<Option<String>> {
+        let v = send_message!(self, "textContent", Map::new());
+        let s = match first(&v) {
+            Some(s) => s.as_str().ok_or(Error::InvalidParams)?,
+            None => return Ok(None)
+        };
+        Ok(Some(s.to_owned()))
+    }
 }
 
 #[derive(Deserialize)]
