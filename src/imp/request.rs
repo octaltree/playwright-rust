@@ -1,4 +1,4 @@
-use crate::imp::{core::*, frame::Frame, prelude::*};
+use crate::imp::{core::*, frame::Frame, prelude::*, response::Response};
 
 #[derive(Debug)]
 pub(crate) struct Request {
@@ -69,6 +69,16 @@ impl Request {
     pub(crate) fn headers(&self) -> &HashMap<String, String> { &self.headers }
 
     pub(crate) fn redirected_from(&self) -> Option<Weak<Request>> { self.redirected_from.clone() }
+
+    pub(crate) async fn response(&self) -> ArcResult<Option<Weak<Response>>> {
+        let v = send_message!(self, "response", Map::new());
+        let guid = match as_only_guid(&v) {
+            Some(g) => g,
+            None => return Ok(None)
+        };
+        let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+        Ok(Some(r))
+    }
 }
 
 impl RemoteObject for Request {

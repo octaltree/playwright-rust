@@ -1,5 +1,5 @@
 use crate::{
-    api::frame::Frame,
+    api::{Frame, Response},
     imp::{core::*, prelude::*, request::Request as Impl}
 };
 
@@ -41,5 +41,9 @@ impl Request {
 
     pub fn redirected_from(&self) -> Result<Option<Request>, Error> {
         Ok(upgrade(&self.inner)?.redirected_from().map(Request::new))
+    }
+
+    pub async fn response(&self) -> Result<Option<Response>, Arc<Error>> {
+        Ok(upgrade(&self.inner)?.response().await?.map(Response::new))
     }
 }
