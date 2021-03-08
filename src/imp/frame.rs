@@ -71,6 +71,67 @@ impl Frame {
         Ok(())
     }
 
+    pub(crate) async fn focus(&self, selector: &str, timeout: Option<f64>) -> ArcResult<()> {
+        let args = SelectorTimeout { selector, timeout };
+        let _ = send_message!(self, "focus", args);
+        Ok(())
+    }
+
+    pub(crate) async fn text_content(
+        &self,
+        selector: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<Option<String>> {
+        let args = SelectorTimeout { selector, timeout };
+        let v = send_message!(self, "textContent", args);
+        let s = maybe_only_str(&v)?;
+        Ok(s.map(Into::into))
+    }
+
+    pub(crate) async fn inner_text(
+        &self,
+        selector: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<String> {
+        let args = SelectorTimeout { selector, timeout };
+        let v = send_message!(self, "innerText", args);
+        let s = only_str(&v)?;
+        Ok(s.into())
+    }
+
+    pub(crate) async fn inner_html(
+        &self,
+        selector: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<String> {
+        let args = SelectorTimeout { selector, timeout };
+        let v = send_message!(self, "innerHtml", args);
+        let s = only_str(&v)?;
+        Ok(s.into())
+    }
+
+    pub(crate) async fn get_attribute(
+        &self,
+        selector: &str,
+        name: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<Option<String>> {
+        #[derive(Serialize)]
+        struct Args<'a, 'b> {
+            selector: &'a str,
+            name: &'b str,
+            timeout: Option<f64>
+        }
+        let args = Args {
+            selector,
+            name,
+            timeout
+        };
+        let v = send_message!(self, "getAttribute", args);
+        let s = maybe_only_str(&v)?;
+        Ok(s.map(Into::into))
+    }
+
     pub(crate) async fn query_selector(
         &self,
         selector: &str
@@ -385,6 +446,14 @@ impl<'a, 'b> FillArgs<'a, 'b> {
             no_wait_after: None
         }
     }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SelectorTimeout<'a> {
+    selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timeout: Option<f64>
 }
 
 impl RemoteObject for Frame {

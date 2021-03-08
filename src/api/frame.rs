@@ -51,6 +51,37 @@ impl Frame {
         FillBuilder::new(self.inner.clone(), selector, value)
     }
 
+    pub async fn focus(&self, selector: &str, timeout: Option<f64>) -> ArcResult<()> {
+        upgrade(&self.inner)?.focus(selector, timeout).await
+    }
+
+    pub async fn text_content(
+        &self,
+        selector: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<Option<String>> {
+        upgrade(&self.inner)?.text_content(selector, timeout).await
+    }
+
+    pub async fn inner_text(&self, selector: &str, timeout: Option<f64>) -> ArcResult<String> {
+        upgrade(&self.inner)?.inner_text(selector, timeout).await
+    }
+
+    pub async fn inner_html(&self, selector: &str, timeout: Option<f64>) -> ArcResult<String> {
+        upgrade(&self.inner)?.inner_html(selector, timeout).await
+    }
+
+    pub async fn get_attribute(
+        &self,
+        selector: &str,
+        name: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<Option<String>> {
+        upgrade(&self.inner)?
+            .get_attribute(selector, name, timeout)
+            .await
+    }
+
     pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
         Ok(upgrade(&self.inner)?
             .query_selector(selector)

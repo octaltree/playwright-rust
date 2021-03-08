@@ -146,11 +146,36 @@ impl Page {
         self.main_frame().fill_builder(selector, value)
     }
 
-    // focus
-    // text_content
-    // inner_text
-    // inner_html
-    // get_attribute
+    pub async fn focus(&self, selector: &str, timeout: Option<f64>) -> ArcResult<()> {
+        self.main_frame().focus(selector, timeout).await
+    }
+
+    pub async fn text_content(
+        &self,
+        selector: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<Option<String>> {
+        self.main_frame().text_content(selector, timeout).await
+    }
+
+    pub async fn inner_text(&self, selector: &str, timeout: Option<f64>) -> ArcResult<String> {
+        self.main_frame().inner_text(selector, timeout).await
+    }
+
+    pub async fn inner_html(&self, selector: &str, timeout: Option<f64>) -> ArcResult<String> {
+        self.main_frame().inner_html(selector, timeout).await
+    }
+
+    pub async fn get_attribute(
+        &self,
+        selector: &str,
+        name: &str,
+        timeout: Option<f64>
+    ) -> ArcResult<Option<String>> {
+        self.main_frame()
+            .get_attribute(selector, name, timeout)
+            .await
+    }
 
     pub fn hover<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
         self.main_frame().hover_builder(selector)
