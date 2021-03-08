@@ -1,6 +1,6 @@
 pub use crate::imp::utils::{KeyboardModifier, MouseButton, Position};
 use crate::{
-    api::response::Response,
+    api::{ElementHandle, Response},
     imp::{
         core::*,
         frame::{ClickArgs, Frame as Impl, GotoArgs},
@@ -26,6 +26,18 @@ impl Frame {
 
     pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
         DblClicker::new(self.inner.clone(), selector)
+    }
+
+    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
+        Ok(upgrade(&self.inner)?
+            .query_selector(selector)
+            .await?
+            .map(ElementHandle::new))
+    }
+
+    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
+        let es = upgrade(&self.inner)?.query_selector_all(selector).await?;
+        Ok(es.into_iter().map(ElementHandle::new).collect())
     }
 }
 

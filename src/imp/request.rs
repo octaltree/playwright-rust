@@ -6,7 +6,7 @@ pub(crate) struct Request {
     url: String,
     resource_type: String,
     method: String,
-    is_navigated_request: bool,
+    is_navigation_request: bool,
     frame: Weak<Frame>
 }
 
@@ -17,7 +17,7 @@ impl Request {
             resource_type,
             method,
             frame,
-            is_navigated_request
+            is_navigation_request
         } = serde_json::from_value(channel.initializer.clone())?;
         let frame = find_object!(ctx, &frame.guid, Frame)?;
         Ok(Self {
@@ -26,7 +26,7 @@ impl Request {
             resource_type,
             method,
             frame,
-            is_navigated_request
+            is_navigation_request
         })
     }
 
@@ -36,7 +36,7 @@ impl Request {
 
     pub(crate) fn method(&self) -> &str { &self.method }
 
-    pub(crate) fn is_navigated_request(&self) -> bool { self.is_navigated_request }
+    pub(crate) fn is_navigation_request(&self) -> bool { self.is_navigation_request }
 
     pub(crate) fn frame(&self) -> Weak<Frame> { self.frame.clone() }
 }
@@ -53,5 +53,5 @@ struct Initializer {
     resource_type: String,
     method: String,
     frame: OnlyGuid,
-    is_navigated_request: bool
+    is_navigation_request: bool
 }

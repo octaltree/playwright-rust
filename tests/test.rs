@@ -23,7 +23,7 @@ runtime_test!(awesome, {
         .goto()
         .await
         .unwrap();
-    p.clicker("a").click().await.unwrap();
+    let _ = p.main_frame().query_selector_all("a").await.unwrap();
     p.go_back_builder().go_back().await.unwrap();
 });
 

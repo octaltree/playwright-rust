@@ -18,8 +18,8 @@ impl Request {
 
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().into()) }
 
-    pub fn is_navigated_request(&self) -> Result<bool, Error> {
-        Ok(upgrade(&self.inner)?.is_navigated_request())
+    pub fn is_navigation_request(&self) -> Result<bool, Error> {
+        Ok(upgrade(&self.inner)?.is_navigation_request())
     }
 
     pub fn frame(&self) -> Frame {

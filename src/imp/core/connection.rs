@@ -61,6 +61,8 @@ pub enum Error {
     GuidNotFound(Value)
 }
 
+pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;
+
 pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
     as_only_guid(v).ok_or_else(|| Error::GuidNotFound(v.clone()))
 }

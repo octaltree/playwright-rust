@@ -63,6 +63,14 @@ impl Page {
         DblClicker::new(inner, selector)
     }
 
+    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
+        self.main_frame().query_selector(selector).await
+    }
+
+    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
+        self.main_frame().query_selector_all(selector).await
+    }
+
     // fn accessibility(&self) -> Accessibility { unimplemented!() }
 
     // fn context(&self) -> BrowserContext { unimplemented!() }
@@ -123,7 +131,7 @@ macro_rules! navigation {
                 Self { inner, args }
             }
 
-            pub async fn $f(self) -> Result<Option<Response>, Arc<Error>> {
+            pub async fn $f(self) -> ArcResult<Option<Response>> {
                 let Self { inner, args } = self;
                 let r = upgrade(&inner)?.$f(args).await?;
                 Ok(r.map(Response::new))
