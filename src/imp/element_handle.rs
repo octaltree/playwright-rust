@@ -61,19 +61,13 @@ impl ElementHandle {
 
     pub(crate) async fn inner_text(&self) -> ArcResult<String> {
         let v = send_message!(self, "innerText", Map::new());
-        let s = first(&v)
-            .ok_or(Error::InvalidParams)?
-            .as_str()
-            .ok_or(Error::InvalidParams)?;
+        let s = only_str(&v)?;
         Ok(s.to_owned())
     }
 
     pub(crate) async fn inner_html(&self) -> ArcResult<String> {
         let v = send_message!(self, "innerHtml", Map::new());
-        let s = first(&v)
-            .ok_or(Error::InvalidParams)?
-            .as_str()
-            .ok_or(Error::InvalidParams)?;
+        let s = only_str(&v)?;
         Ok(s.to_owned())
     }
 
@@ -108,20 +102,14 @@ impl ElementHandle {
         let mut args = HashMap::new();
         args.insert("name", name);
         let v = send_message!(self, "getAttribute", args);
-        let s = match first(&v) {
-            Some(s) => s.as_str().ok_or(Error::InvalidParams)?,
-            None => return Ok(None)
-        };
-        Ok(Some(s.to_owned()))
+        let s = maybe_only_str(&v)?;
+        Ok(s.map(ToOwned::to_owned))
     }
 
     pub(crate) async fn text_content(&self) -> ArcResult<Option<String>> {
         let v = send_message!(self, "textContent", Map::new());
-        let s = match first(&v) {
-            Some(s) => s.as_str().ok_or(Error::InvalidParams)?,
-            None => return Ok(None)
-        };
-        Ok(Some(s.to_owned()))
+        let s = maybe_only_str(&v)?;
+        Ok(s.map(ToOwned::to_owned))
     }
 
     pub(crate) async fn hover(&self, args: HoverArgs) -> ArcResult<()> {

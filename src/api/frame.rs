@@ -93,6 +93,10 @@ impl Frame {
     is_checked! {is_hidden}
     is_checked! {is_visible}
 
+    pub async fn content<'a>(&mut self) -> ArcResult<String> {
+        upgrade(&self.inner)?.content().await
+    }
+
     pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
         SetContentBuilder::new(self.inner.clone(), html)
     }

@@ -1,3 +1,4 @@
+use crate::imp::core::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::{map::Map, value::Value};
 use strong::*;
@@ -141,6 +142,26 @@ pub(crate) fn as_only_guid(v: &Value) -> Option<&S<Guid>> {
     let v: &Value = m.get("guid")?;
     let s: &str = v.as_str()?;
     S::validate(s).ok()
+}
+
+pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
+    as_only_guid(v).ok_or_else(|| Error::GuidNotFound(v.clone()))
+}
+
+pub(crate) fn only_str(v: &Value) -> Result<&str, Error> {
+    let s = first(&v)
+        .ok_or(Error::InvalidParams)?
+        .as_str()
+        .ok_or(Error::InvalidParams)?;
+    Ok(s)
+}
+
+pub(crate) fn maybe_only_str(v: &Value) -> Result<Option<&str>, Error> {
+    let s = match first(&v) {
+        Some(s) => s.as_str().ok_or(Error::InvalidParams)?,
+        None => return Ok(None)
+    };
+    Ok(Some(s))
 }
 
 // pub(crate) fn parse_value(v: &Value) -> Result<Value, ()> {

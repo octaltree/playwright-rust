@@ -113,6 +113,8 @@ impl Page {
     // url
     // content
 
+    pub async fn content<'a>(&mut self) -> ArcResult<String> { self.main_frame().content().await }
+
     pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
         self.main_frame().set_content_builder(html)
     }

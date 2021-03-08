@@ -116,10 +116,7 @@ impl Frame {
 
     pub(crate) async fn title(&self) -> ArcResult<String> {
         let v = send_message!(self, "title", Map::new());
-        let s = first(&v)
-            .ok_or(Error::InvalidParams)?
-            .as_str()
-            .ok_or(Error::InvalidParams)?;
+        let s = only_str(&v)?;
         Ok(s.to_owned())
     }
 
@@ -144,6 +141,12 @@ impl Frame {
     is_checked!(is_enabled, "isEnabled");
     is_checked!(is_hidden, "isHidden");
     is_checked!(is_visible, "isVisible");
+
+    pub(crate) async fn content(&self) -> ArcResult<String> {
+        let v = send_message!(self, "content", Map::new());
+        let s = only_str(&v)?;
+        Ok(s.into())
+    }
 
     pub(crate) async fn set_content(&self, args: SetContentArgs<'_>) -> ArcResult<()> {
         let _ = send_message!(self, "setContent", args);
