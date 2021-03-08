@@ -77,7 +77,7 @@ impl Page {
 macro_rules! is_checked {
     ($f: ident, $c: meta) => {
         #[$c]
-        pub async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+        pub async fn $f(&mut self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
             self.main_frame().$f(selector, timeout).await
         }
     };
@@ -141,7 +141,7 @@ impl Page {
     // inner_html
     // get_attribute
 
-    pub fn hover<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
+    pub fn hover<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
         self.main_frame().hover_builder(selector)
     }
 
@@ -149,11 +149,11 @@ impl Page {
     // set_input_files
     // type
 
-    pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+    pub fn r#type<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         self.main_frame().type_builder(selector, text)
     }
 
-    pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+    pub fn press<'a, 'b>(&mut self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
         self.main_frame().press_builder(selector, key)
     }
 

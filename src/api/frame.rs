@@ -17,7 +17,7 @@ pub struct Frame {
 
 macro_rules! is_checked {
     ($f: ident) => {
-        pub async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+        pub async fn $f(&mut self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
             upgrade(&self.inner)?.$f(selector, timeout).await
         }
     };
@@ -65,15 +65,23 @@ impl Frame {
 
     pub async fn title(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.title().await }
 
-    pub fn type_builder<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+    pub fn type_builder<'a, 'b>(
+        &mut self,
+        selector: &'a str,
+        text: &'b str
+    ) -> TypeBuilder<'a, 'b> {
         TypeBuilder::new(self.inner.clone(), selector, text)
     }
 
-    pub fn press_builder<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+    pub fn press_builder<'a, 'b>(
+        &mut self,
+        selector: &'a str,
+        key: &'b str
+    ) -> PressBuilder<'a, 'b> {
         PressBuilder::new(self.inner.clone(), selector, key)
     }
 
-    pub fn hover_builder<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
+    pub fn hover_builder<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
         HoverBuilder::new(self.inner.clone(), selector)
     }
 

@@ -4,6 +4,12 @@ pub struct ElementHandle {
     inner: Weak<Impl>
 }
 
+macro_rules! is_checked {
+    ($f: ident) => {
+        pub async fn $f(&mut self) -> ArcResult<bool> { upgrade(&self.inner)?.$f().await }
+    };
+}
+
 impl ElementHandle {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
@@ -18,4 +24,19 @@ impl ElementHandle {
         let es = upgrade(&self.inner)?.query_selector_all(selector).await?;
         Ok(es.into_iter().map(ElementHandle::new).collect())
     }
+
+    pub async fn inner_text(&mut self) -> ArcResult<String> {
+        upgrade(&self.inner)?.inner_text().await
+    }
+
+    pub async fn inner_html(&mut self) -> ArcResult<String> {
+        upgrade(&self.inner)?.inner_html().await
+    }
+
+    is_checked! {is_checked}
+    is_checked! {is_disabled}
+    is_checked! {is_editable}
+    is_checked! {is_enabled}
+    is_checked! {is_hidden}
+    is_checked! {is_visible}
 }
