@@ -1,5 +1,8 @@
 pub use crate::{
-    api::frame::{Clicker, DblClicker, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder},
+    api::frame::{
+        Clicker, DblClicker, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder,
+        WaitForSelectorBuilder
+    },
     imp::utils::DocumentLoadState
 };
 use crate::{
@@ -10,6 +13,7 @@ use crate::{
     },
     imp::{
         core::*,
+        frame::Frame as FrameImpl,
         page::{Page as Impl, ReloadArgs},
         prelude::*,
         utils::Viewport
@@ -37,63 +41,17 @@ impl Page {
         }
     }
 
-    pub fn main_frame(&self) -> Frame {
-        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
-        Frame::new(inner)
+    fn main_frame_weak(&self) -> Weak<FrameImpl> {
+        weak_and_then(&self.inner, |rc| rc.main_frame())
     }
 
-    pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
-        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
-        GotoBuilder::new(inner, url)
-    }
+    pub fn main_frame(&self) -> Frame { Frame::new(self.main_frame_weak()) }
 
     pub fn reload_builder(&mut self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
     pub fn go_back_builder(&mut self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
     pub fn go_forward_builder(&mut self) -> GoForwardBuilder {
         GoForwardBuilder::new(self.inner.clone())
     }
-
-    pub fn clicker<'a>(&mut self, selector: &'a str) -> Clicker<'a> {
-        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
-        Clicker::new(inner, selector)
-    }
-
-    pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
-        let inner = weak_and_then(&self.inner, |rc| rc.main_frame());
-        DblClicker::new(inner, selector)
-    }
-
-    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
-        self.main_frame().query_selector(selector).await
-    }
-
-    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
-        self.main_frame().query_selector_all(selector).await
-    }
-
-    pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
-        self.main_frame().type_builder(selector, text)
-    }
-
-    pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
-        self.main_frame().press_builder(selector, key)
-    }
-
-    pub fn hover<'a, 'b>(&self, selector: &'a str) -> HoverBuilder<'a> {
-        self.main_frame().hover_builder(selector)
-    }
-
-    // fn accessibility(&self) -> Accessibility { unimplemented!() }
-
-    // fn context(&self) -> BrowserContext { unimplemented!() }
-
-    // fn frames(&self) -> Vec<Frame> { unimplemented!() }
-
-    // fn url(&self) -> String { unimplemented!() }
-
-    // fn viewport_size(&self) -> Viewport { unimplemented!() }
-
-    // fn workers(&self) -> Vec<Worker> { unimplemented!() }
 
     ///// Video object associated with this page.
     // fn video(&self) -> Option<Video> { unimplemented!() }
@@ -103,20 +61,6 @@ impl Page {
 
     ///// Returns frame matching the specified criteria. Either `name` or `url` must be specified.
     // fn frame(&self) -> Option<Frame> { unimplemented!() }
-
-    // async fn set_default_navigation_timeout(&mut self, timeout: Duration) -> Result<(), Error> {
-    //    unimplemented!()
-    //}
-
-    // async fn set_default_timeout(&mut self, timeout: Duration) -> Result<(), Error> {
-    //    unimplemented!()
-    //}
-
-    // async fn query_selector(self, selector: &str) -> Option<ElementHandle> { unimplemented!() }
-
-    // async fn query_selector_all(self, selector: &str) -> Vec<ElementHandle> { unimplemented!() }
-
-    // async fn wait_for_selector(self) -> Option<ElementHandle> { unimplemented!() }
 
     ///// Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
     // async fn is_checked(self) -> Option<ElementHandle> { unimplemented!() }
@@ -128,6 +72,87 @@ impl Page {
     // async fn is_editable(self) -> Option<ElementHandle> { unimplemented!() }
 
     //// TODO
+}
+
+/// Shorthand of main_frame
+impl Page {
+    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
+        self.main_frame().query_selector(selector).await
+    }
+
+    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
+        self.main_frame().query_selector_all(selector).await
+    }
+
+    pub fn wait_for_selector_builder<'a>(
+        &mut self,
+        selector: &'a str
+    ) -> WaitForSelectorBuilder<'a> {
+        self.main_frame().wait_for_selector_builder(selector)
+    }
+
+    // is_checked
+    // is_disabled
+    // is_editable
+    // is_enabled
+    // is_hidden
+    // is_visible
+    // dispatch_event
+    // evaluate
+    // evaluate_handle
+    // eval_on_selector
+    // eval_on_selector_all
+    // add_script_tag
+    // add_style_tag
+    // url
+    // content
+    // set_content
+
+    pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
+        GotoBuilder::new(self.main_frame_weak(), url)
+    }
+
+    // wait_for_load_state
+
+    pub async fn title(&mut self) -> ArcResult<String> { self.main_frame().title().await }
+
+    pub fn clicker<'a>(&mut self, selector: &'a str) -> Clicker<'a> {
+        self.main_frame().clicker(selector)
+    }
+
+    pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
+        self.main_frame().dblclicker(selector)
+    }
+
+    // tap
+    // fill
+    // focus
+    // text_content
+    // inner_text
+    // inner_html
+    // get_attribute
+
+    pub fn hover<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
+        self.main_frame().hover_builder(selector)
+    }
+
+    // select_option
+    // set_input_files
+    // type
+
+    pub fn r#type<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+        self.main_frame().type_builder(selector, text)
+    }
+
+    pub fn press<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+        self.main_frame().press_builder(selector, key)
+    }
+
+    // check
+    // uncheck
+    // wait_for_timeout
+    // wait_for_function
+    // expect_navigation
 }
 
 macro_rules! navigation {
