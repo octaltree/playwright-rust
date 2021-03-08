@@ -66,9 +66,11 @@ impl ElementHandle {
 
     pub async fn hover(&mut self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
 
-    pub async fn clicker(&mut self) -> Clicker { Clicker::new(self.inner.clone()) }
+    pub async fn click_builder(&mut self) -> ClickBuilder { ClickBuilder::new(self.inner.clone()) }
 
-    pub async fn dblclicker(&mut self) -> DblClicker { DblClicker::new(self.inner.clone()) }
+    pub async fn dblclick_builder(&mut self) -> DblClickBuilder {
+        DblClickBuilder::new(self.inner.clone())
+    }
 }
 
 pub struct HoverBuilder {
@@ -126,5 +128,5 @@ macro_rules! clicker {
     }
 }
 
-clicker!(Clicker, click);
-clicker!(DblClicker, dblclick);
+clicker!(ClickBuilder, click);
+clicker!(DblClickBuilder, dblclick);

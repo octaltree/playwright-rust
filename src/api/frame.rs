@@ -30,12 +30,12 @@ impl Frame {
         GotoBuilder::new(self.inner.clone(), url)
     }
 
-    pub fn clicker<'a>(&mut self, selector: &'a str) -> Clicker<'a> {
-        Clicker::new(self.inner.clone(), selector)
+    pub fn click_builder<'a>(&mut self, selector: &'a str) -> ClickBuilder<'a> {
+        ClickBuilder::new(self.inner.clone(), selector)
     }
 
-    pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
-        DblClicker::new(self.inner.clone(), selector)
+    pub fn dblclick_builder<'a>(&mut self, selector: &'a str) -> DblClickBuilder<'a> {
+        DblClickBuilder::new(self.inner.clone(), selector)
     }
 
     pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
@@ -148,8 +148,8 @@ macro_rules! clicker {
     }
 }
 
-clicker!(Clicker, click);
-clicker!(DblClicker, dblclick);
+clicker!(ClickBuilder, click);
+clicker!(DblClickBuilder, dblclick);
 
 pub struct WaitForSelectorBuilder<'a> {
     inner: Weak<Impl>,

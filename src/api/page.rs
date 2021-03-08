@@ -1,5 +1,5 @@
 pub use crate::api::frame::{
-    Clicker, DblClicker, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder,
+    ClickBuilder, DblClickBuilder, GotoBuilder, HoverBuilder, PressBuilder, TypeBuilder,
     WaitForSelectorBuilder
 };
 use crate::{
@@ -122,12 +122,12 @@ impl Page {
 
     pub async fn title(&mut self) -> ArcResult<String> { self.main_frame().title().await }
 
-    pub fn clicker<'a>(&mut self, selector: &'a str) -> Clicker<'a> {
-        self.main_frame().clicker(selector)
+    pub fn click_builder<'a>(&mut self, selector: &'a str) -> ClickBuilder<'a> {
+        self.main_frame().click_builder(selector)
     }
 
-    pub fn dblclicker<'a>(&mut self, selector: &'a str) -> DblClicker<'a> {
-        self.main_frame().dblclicker(selector)
+    pub fn dblclick_builder<'a>(&mut self, selector: &'a str) -> DblClickBuilder<'a> {
+        self.main_frame().dblclick_builder(selector)
     }
 
     // tap
