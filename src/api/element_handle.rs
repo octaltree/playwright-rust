@@ -3,11 +3,11 @@ use crate::{
     imp::{
         core::*,
         element_handle::{
-            CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, PressArgs, TapArgs,
-            TypeArgs
+            CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, PressArgs,
+            ScreenshotArgs, TapArgs, TypeArgs
         },
         prelude::*,
-        utils::{FloatRect, KeyboardModifier, MouseButton, Position}
+        utils::{FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
     }
 };
 
@@ -107,6 +107,10 @@ impl ElementHandle {
 
     pub async fn bounding_box(&self) -> ArcResult<Option<FloatRect>> {
         upgrade(&self.inner)?.bounding_box().await
+    }
+
+    pub async fn screenshot_builder(&self) -> ScreenshotBuilder {
+        ScreenshotBuilder::new(self.inner.clone())
     }
 }
 
@@ -274,3 +278,36 @@ macro_rules! type_builder {
 
 type_builder!(TypeBuilder, TypeArgs, text, r#type);
 type_builder!(PressBuilder, PressArgs, key, press);
+
+pub struct ScreenshotBuilder {
+    inner: Weak<Impl>,
+    args: ScreenshotArgs
+}
+
+impl ScreenshotBuilder {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = ScreenshotArgs::default();
+        Self { inner, args }
+    }
+
+    pub async fn screenshot(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.screenshot(args).await?;
+        Ok(())
+    }
+
+    pub fn r#type(mut self, x: ScreenshotType) -> Self {
+        self.args.r#type = Some(x);
+        self
+    }
+
+    optional_setter!(
+        timeout, f64;
+        quality, i32;
+        omit_background, bool);
+
+    pub fn clear_type(mut self) -> Self {
+        self.args.r#type = None;
+        self
+    }
+}

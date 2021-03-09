@@ -2,7 +2,7 @@ use crate::imp::{
     core::*,
     frame::Frame,
     prelude::*,
-    utils::{FloatRect, KeyboardModifier, MouseButton, Position}
+    utils::{FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
 };
 
 #[derive(Debug)]
@@ -194,6 +194,13 @@ impl ElementHandle {
         let f: FloatRect = serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
         Ok(Some(f))
     }
+
+    pub(crate) async fn screenshot(&self, args: ScreenshotArgs) -> ArcResult<Vec<u8>> {
+        let v = send_message!(self, "screenshot", args);
+        let b64 = only_str(&&v)?;
+        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        Ok(bytes)
+    }
 }
 
 #[derive(Serialize, Default)]
@@ -303,6 +310,30 @@ macro_rules! type_args {
 
 type_args! {TypeArgs, text}
 type_args! {PressArgs, key}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ScreenshotArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) r#type: Option<ScreenshotType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) quality: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) omit_background: Option<bool>
+}
+
+impl Default for ScreenshotArgs {
+    fn default() -> Self {
+        Self {
+            timeout: None,
+            r#type: None,
+            quality: None,
+            omit_background: None
+        }
+    }
+}
 
 impl RemoteObject for ElementHandle {
     fn channel(&self) -> &ChannelOwner { &self.channel }

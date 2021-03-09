@@ -130,3 +130,10 @@ pub struct FloatRect {
     width: f64,
     height: f64
 }
+
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum ScreenshotType {
+    Jpeg,
+    Png
+}
