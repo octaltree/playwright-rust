@@ -59,7 +59,27 @@ impl Page {
     ///// Returns frame matching the specified criteria. Either `name` or `url` must be specified.
     // fn frame(&self) -> Option<Frame> { unimplemented!() }
 
-    //// TODO
+    pub async fn bring_to_front(&mut self) -> ArcResult<()> {
+        upgrade(&self.inner)?.bring_to_front().await
+    }
+
+    pub async fn add_init_script(&mut self, source: &str) -> ArcResult<()> {
+        upgrade(&self.inner)?.add_init_script(source).await
+    }
+
+    pub fn pdf_builder(&mut self) -> PdfBuilder<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
+        PdfBuilder::new(self.inner.clone())
+    }
+
+    /// All temporary pages will be closed when the connection is terminated, but
+    /// it needs to be called explicitly to close it at any given time.
+    pub async fn close(&mut self, run_before_unload: Option<bool>) -> ArcResult<()> {
+        let inner = match self.inner.upgrade() {
+            None => return Ok(()),
+            Some(inner) => inner
+        };
+        inner.close(run_before_unload).await
+    }
 }
 
 macro_rules! is_checked {
@@ -215,18 +235,6 @@ impl Page {
 
     // wait_for_function
     // expect_navigation
-
-    pub async fn bring_to_front(&self) -> ArcResult<()> {
-        upgrade(&self.inner)?.bring_to_front().await
-    }
-
-    pub async fn add_init_script(&self, source: &str) -> ArcResult<()> {
-        upgrade(&self.inner)?.add_init_script(source).await
-    }
-
-    pub fn pdf_builder(&self) -> PdfBuilder<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
-        PdfBuilder::new(self.inner.clone())
-    }
 }
 
 macro_rules! navigation {

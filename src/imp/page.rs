@@ -192,6 +192,17 @@ impl Page {
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
         Ok(bytes)
     }
+
+    pub(crate) async fn close(&self, run_before_unload: Option<bool>) -> Result<(), Arc<Error>> {
+        #[derive(Serialize)]
+        struct Args {
+            #[serde(skip_serializing_if = "Option::is_none")]
+            run_before_unload: Option<bool>
+        }
+        let args = Args { run_before_unload };
+        let _ = send_message!(self, "close", args);
+        Ok(())
+    }
 }
 
 #[derive(Serialize)]
