@@ -23,6 +23,8 @@ impl Route {
         let _ = send_message!(self, "abort", args);
         Ok(())
     }
+
+    // pub(crate) async fn fulfill(&self, args: FullfillArgs) -> ArcResult<()> { unimplemented!() }
 }
 
 impl RemoteObject for Route {
@@ -35,3 +37,28 @@ impl RemoteObject for Route {
 struct Initializer {
     request: OnlyGuid
 }
+
+//#[derive(Serialize)]
+//#[serde(rename_all = "camelCase")]
+// pub(crate) struct FullfillArgs<'a, 'b> {
+//    body: &'a str,
+//    is_base64: bool,
+//    #[serde(skip_serializing_if = "Option::is_none")]
+//    pub(crate) status: Option<i32>,
+//    #[serde(skip_serializing_if = "Option::is_none")]
+//    pub(crate) headers: Option<HashMap<String, String>>,
+//    #[serde(skip_serializing_if = "Option::is_none")]
+//    pub(crate) content_type: Option<&'b str>
+//}
+
+// impl<'a, 'b> FullfillArgs<'a, 'b> {
+//    pub(crate) fn new(body: &'a str, is_base64: bool) -> Self {
+//        Self {
+//            body,
+//            is_base64,
+//            status: None,
+//            headers: None,
+//            content_type: None
+//        }
+//    }
+//}
