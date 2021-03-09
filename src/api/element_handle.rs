@@ -67,33 +67,31 @@ impl ElementHandle {
         upgrade(&self.inner)?.text_content().await
     }
 
-    pub async fn hover(&mut self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
+    pub fn hover_builder(&mut self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
 
-    pub async fn click_builder(&mut self) -> ClickBuilder { ClickBuilder::new(self.inner.clone()) }
+    pub fn click_builder(&mut self) -> ClickBuilder { ClickBuilder::new(self.inner.clone()) }
 
-    pub async fn dblclick_builder(&mut self) -> DblClickBuilder {
+    pub fn dblclick_builder(&mut self) -> DblClickBuilder {
         DblClickBuilder::new(self.inner.clone())
     }
 
-    pub async fn check_builder(&mut self) -> CheckBuilder { CheckBuilder::new(self.inner.clone()) }
+    pub fn check_builder(&mut self) -> CheckBuilder { CheckBuilder::new(self.inner.clone()) }
 
-    pub async fn uncheck_builder(&mut self) -> UncheckBuilder {
-        UncheckBuilder::new(self.inner.clone())
-    }
+    pub fn uncheck_builder(&mut self) -> UncheckBuilder { UncheckBuilder::new(self.inner.clone()) }
 
-    pub async fn tap(&mut self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
+    pub fn tap_builder(&mut self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
 
-    pub async fn fill<'a>(&mut self, value: &'a str) -> FillBuilder<'a> {
+    pub fn fill_builder<'a>(&mut self, value: &'a str) -> FillBuilder<'a> {
         FillBuilder::new(self.inner.clone(), value)
     }
 
     pub async fn focus(&mut self) -> ArcResult<()> { upgrade(&self.inner)?.focus().await }
 
-    pub async fn type_builder<'a>(&mut self, text: &'a str) -> TypeBuilder<'a> {
+    pub fn type_builder<'a>(&mut self, text: &'a str) -> TypeBuilder<'a> {
         TypeBuilder::new(self.inner.clone(), text)
     }
 
-    pub async fn press_builder<'a>(&mut self, key: &'a str) -> PressBuilder<'a> {
+    pub fn press_builder<'a>(&mut self, key: &'a str) -> PressBuilder<'a> {
         PressBuilder::new(self.inner.clone(), key)
     }
 }

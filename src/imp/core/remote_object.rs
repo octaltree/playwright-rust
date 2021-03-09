@@ -1,13 +1,6 @@
 use crate::imp::{core::*, impl_future::*, prelude::*};
 use serde_json::value::Value;
-use std::{
-    any::Any,
-    fmt::{self, Debug},
-    future::Future,
-    pin::Pin,
-    sync::TryLockError,
-    task::Waker
-};
+use std::{any::Any, fmt::Debug, future::Future, pin::Pin, sync::TryLockError, task::Waker};
 
 pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, Error> {
     w.upgrade().ok_or(Error::ObjectNotFound)

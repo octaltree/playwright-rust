@@ -73,7 +73,7 @@ impl Connection {
             .args(&["run-driver"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            //.stderr(Stdio::null())
+            .stderr(Stdio::null())
             .spawn()?;
         // TODO: env "NODE_OPTIONS"
         let stdin = child.stdin.take().unwrap();
