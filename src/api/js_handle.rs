@@ -14,7 +14,7 @@ impl JsHandle {
             .map(JsHandle::new)
     }
 
-    pub async fn get_properties(&mut self, name: &str) -> ArcResult<HashMap<String, JsHandle>> {
+    pub async fn get_properties(&mut self) -> ArcResult<HashMap<String, JsHandle>> {
         let m = upgrade(&self.inner)?.get_properties().await?;
         Ok(m.into_iter().map(|(k, v)| (k, JsHandle::new(v))).collect())
     }

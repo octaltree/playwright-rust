@@ -18,7 +18,6 @@ use crate::{
     },
     Error
 };
-use std::time::Duration;
 
 pub struct Page {
     inner: Weak<Impl>,
