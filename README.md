@@ -9,17 +9,32 @@ playwright = "0.1.0"
 ```
 
 ## Usage
+```rust
+use playwright::Playwright;
+
+let playwright = Playwright::initialize().await.unwrap(); // if drop all resources are disposed
+playwright.prepare().unwrap(); // install browsers
+let mut chromium = playwright.chromium();
+let mut browser = chromium.launcher().headless(true).launch().await.unwrap();
+let mut context = browser.context_builder().build().await.unwrap();
+let mut page = context.new_page().await.unwrap();
+page.goto_builder("https://example.com/")
+    .goto()
+    .await
+    .unwrap();
+page.click_builder("a").click().await.unwrap();
+```
+
 It's still under development and has limited functions. Please have a look at tests and docs.rs.
 Welcome contributions.
-
-
-## Playwright Driver
-Playwright is designed as a server-client. All playwright client dependent on the driver: zip of core js library and Node.js.
-Application uses this library will be bundled the driver into rust binary at build time. There is an overhead of unzipping on the first run.
 
 ## Incompatibility
 Functions do not have default arguments in rust.
 Functions with two or more optional arguments are now passed with the builder pattern.
+
+## Playwright Driver
+Playwright is designed as a server-client. All playwright client dependent on the driver: zip of core js library and Node.js.
+Application uses this library will be bundled the driver into rust binary at build time. There is an overhead of unzipping on the first run.
 
 ## Browser automation in rust
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
