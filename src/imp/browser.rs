@@ -69,7 +69,7 @@ struct Initializer {
     version: String
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     sdk_language: &'static str,
@@ -126,37 +126,6 @@ pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) storage_state: Option<StorageState>
-}
-
-impl Default for NewContextArgs<'_, '_, '_, '_, '_, '_, '_> {
-    fn default() -> Self {
-        Self {
-            sdk_language: "rust",
-            proxy: None,
-            viewport: None,
-            no_default_viewport: None,
-            ignore_http_errors: None,
-            js_enabled: None,
-            bypass_csp: None,
-            user_agent: None,
-            locale: None,
-            timezone_id: None,
-            geolocation: None,
-            permissions: None,
-            extra_http_headers: None,
-            offline: None,
-            http_credentials: None,
-            device_scale_factor: None,
-            is_mobile: None,
-            has_touch: None,
-            color_scheme: None,
-            accept_downloads: None,
-            chromium_sandbox: None,
-            record_video: None,
-            record_har: None,
-            storage_state: None
-        }
-    }
 }
 
 #[cfg(test)]

@@ -4,7 +4,8 @@ use crate::imp::{
     prelude::*,
     response::Response,
     utils::{
-        DocumentLoadState, FloatRect, Length, MouseButton, PdfMargins, ScreenshotType, Viewport
+        ColorScheme, DocumentLoadState, FloatRect, Length, MouseButton, PdfMargins, ScreenshotType,
+        Viewport
     }
 };
 
@@ -212,7 +213,25 @@ impl Page {
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
         Ok(bytes)
     }
+
+    pub(crate) async fn emulate_media(&self, args: EmulateMediaArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "emulateMedia", args);
+        Ok(())
+    }
+
+    pub(crate) async fn opener(&self) -> ArcResult<Option<Weak<Page>>> {
+        let v = send_message!(self, "opener", Map::new());
+        let guid = match as_only_guid(&v) {
+            Some(g) => g,
+            None => return Ok(None)
+        };
+        let p = find_object!(self.context()?.lock().unwrap(), &guid, Page)?;
+        Ok(Some(p))
+    }
 }
+
+// mutable
+impl Page {}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -307,7 +326,7 @@ pub(crate) struct PdfArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
     pub(crate) margin: Option<PdfMargins<'g, 'h, 'i, 'j>>
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ScreenshotArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -324,15 +343,18 @@ pub(crate) struct ScreenshotArgs {
     pub(crate) clip: Option<FloatRect>
 }
 
-impl Default for ScreenshotArgs {
-    fn default() -> Self {
-        Self {
-            timeout: None,
-            r#type: None,
-            quality: None,
-            omit_background: None,
-            full_page: None,
-            clip: None
-        }
-    }
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct EmulateMediaArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) media: Option<Media>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) color_scheme: Option<ColorScheme>
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Media {
+    Print,
+    Screen
 }

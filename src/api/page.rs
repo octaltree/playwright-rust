@@ -1,7 +1,10 @@
-pub use crate::api::frame::{
-    AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder,
-    HoverBuilder, PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder, UncheckBuilder,
-    WaitForSelectorBuilder
+pub use crate::{
+    api::frame::{
+        AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder,
+        HoverBuilder, PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder, UncheckBuilder,
+        WaitForSelectorBuilder
+    },
+    imp::page::Media
 };
 use crate::{
     api::{
@@ -12,9 +15,11 @@ use crate::{
     imp::{
         core::*,
         frame::Frame as FrameImpl,
-        page::{Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
+        page::{EmulateMediaArgs, Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
         prelude::*,
-        utils::{DocumentLoadState, FloatRect, Length, PdfMargins, ScreenshotType, Viewport}
+        utils::{
+            ColorScheme, DocumentLoadState, FloatRect, Length, PdfMargins, ScreenshotType, Viewport
+        }
     },
     Error
 };
@@ -83,6 +88,14 @@ impl Page {
 
     pub fn screenshot_builder(&mut self) -> ScreenshotBuilder {
         ScreenshotBuilder::new(self.inner.clone())
+    }
+
+    pub fn emulate_media(&mut self) -> EmulateMediaBuilder {
+        EmulateMediaBuilder::new(self.inner.clone())
+    }
+
+    pub async fn opener(&mut self) -> ArcResult<Option<Page>> {
+        Ok(upgrade(&self.inner)?.opener().await?.map(Page::new))
     }
 }
 
@@ -335,4 +348,25 @@ impl ScreenshotBuilder {
         self.args.r#type = None;
         self
     }
+}
+
+pub struct EmulateMediaBuilder {
+    inner: Weak<Impl>,
+    args: EmulateMediaArgs
+}
+
+impl EmulateMediaBuilder {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = EmulateMediaArgs::default();
+        Self { inner, args }
+    }
+
+    pub async fn emulate_media(self) -> ArcResult<()> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.emulate_media(args).await
+    }
+
+    optional_setter!(
+        media, Media;
+        color_scheme, ColorScheme);
 }

@@ -340,7 +340,7 @@ macro_rules! type_args {
 type_args! {TypeArgs, text}
 type_args! {PressArgs, key}
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ScreenshotArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -351,17 +351,6 @@ pub(crate) struct ScreenshotArgs {
     pub(crate) quality: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) omit_background: Option<bool>
-}
-
-impl Default for ScreenshotArgs {
-    fn default() -> Self {
-        Self {
-            timeout: None,
-            r#type: None,
-            quality: None,
-            omit_background: None
-        }
-    }
 }
 
 #[derive(Serialize)]
