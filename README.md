@@ -23,7 +23,7 @@ Functions with two or more optional arguments are now passed with the builder pa
 
 ## Browser automation in rust
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
-  * or my fork [octaltree/rust-headless-chrome](https://github.com/octaltree/rust-headless-chrome) suports set_cookies
+  * or [my fork](https://github.com/octaltree/rust-headless-chrome) supports set_cookies
 - [saresend/selenium-rs](https://github.com/saresend/selenium-rs)
 - [https://crates.io/crates/webdrive](https://crates.io/crates/webdrive)
 
