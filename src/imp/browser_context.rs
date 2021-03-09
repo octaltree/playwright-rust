@@ -111,6 +111,13 @@ impl BrowserContext {
         Ok(())
     }
 
+    pub(crate) async fn add_init_script(&self, script: &str) -> ArcResult<()> {
+        let mut args = HashMap::new();
+        args.insert("script", script);
+        let _ = send_message!(self, "addInitScript", args);
+        Ok(())
+    }
+
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:

@@ -24,7 +24,6 @@ pub(crate) mod prelude {
 
     #[cfg(feature = "rt-async-std")]
     pub use async_std::{task::sleep, task::spawn};
-    pub use std::time::Duration;
     #[cfg(feature = "rt-actix")]
     pub use tokio::{task::spawn, time::sleep};
     #[cfg(feature = "rt-tokio")]

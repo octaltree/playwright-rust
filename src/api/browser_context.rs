@@ -8,7 +8,6 @@ use crate::{
     },
     Error
 };
-use std::time::Duration;
 
 pub struct BrowserContext {
     inner: Weak<Impl>
@@ -64,21 +63,23 @@ impl BrowserContext {
             .await
     }
 
-    pub async fn clear_permissions(&self) -> ArcResult<()> {
+    pub async fn clear_permissions(&mut self) -> ArcResult<()> {
         upgrade(&self.inner)?.clear_permissions().await
     }
 
-    pub async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
+    pub async fn set_geolocation(&mut self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
         upgrade(&self.inner)?.set_geolocation(geolocation).await
     }
 
-    pub async fn set_offline(&self, offline: bool) -> ArcResult<()> {
+    pub async fn set_offline(&mut self, offline: bool) -> ArcResult<()> {
         upgrade(&self.inner)?.set_offline(offline).await
     }
 
-    // async fn set_extra_http_headers(&mut self) -> Result<(), Error> { unimplemented!() }
+    pub async fn add_init_script(&mut self, script: &str) -> ArcResult<()> {
+        upgrade(&self.inner)?.add_init_script(script).await
+    }
 
-    // async fn add_init_script(&mut self) -> Result<(), Error> { unimplemented!() }
+    // async fn set_extra_http_headers(&mut self) -> Result<(), Error> { unimplemented!() }
 
     // async fn expose_binding(&mut self) -> Result<(), Error> { unimplemented!() }
 
@@ -90,6 +91,14 @@ impl BrowserContext {
 
     // async fn expect_event(&mut self) -> Result<(), Error> { unimplemented!() }
 
+    // async fn wait_for_event(&mut self) -> Result<StorageState, Error> { unimplemented!() }
+
+    // async fn expect_page(&mut self) -> Result<StorageState, Error> { unimplemented!() }
+
+    pub async fn storage_state(&mut self) -> ArcResult<StorageState> {
+        upgrade(&self.inner)?.storage_state().await
+    }
+
     /// All temporary browsers will be closed when the connection is terminated, but
     /// it needs to be called explicitly to close it at any given time.
     pub async fn close(&mut self) -> ArcResult<()> {
@@ -99,12 +108,4 @@ impl BrowserContext {
         };
         inner.close().await
     }
-
-    pub async fn storage_state(&mut self) -> ArcResult<StorageState> {
-        upgrade(&self.inner)?.storage_state().await
-    }
-
-    // async fn wait_for_event(&mut self) -> Result<StorageState, Error> { unimplemented!() }
-
-    // async fn expect_page(&mut self) -> Result<StorageState, Error> { unimplemented!() }
 }
