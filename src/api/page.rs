@@ -1,6 +1,6 @@
 pub use crate::api::frame::{
-    CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder, HoverBuilder,
-    PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder, UncheckBuilder,
+    AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder,
+    HoverBuilder, PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder, UncheckBuilder,
     WaitForSelectorBuilder
 };
 use crate::{
@@ -101,7 +101,22 @@ impl Page {
     // eval_on_selector
     // eval_on_selector_all
     // add_script_tag
-    // add_style_tag
+
+    pub fn add_script_tag_builder<'a>(
+        &mut self,
+        content: &'a str
+    ) -> AddScriptTagBuilder<'a, '_, '_> {
+        AddScriptTagBuilder::new(self.main_frame_weak(), content)
+    }
+
+    pub async fn add_style_tag(
+        &mut self,
+        content: &str,
+        url: Option<&str>
+    ) -> ArcResult<ElementHandle> {
+        self.main_frame().add_style_tag(content, url).await
+    }
+
     // url
 
     pub async fn content<'a>(&mut self) -> ArcResult<String> { self.main_frame().content().await }
@@ -191,7 +206,11 @@ impl Page {
     pub fn uncheck_builder<'a>(&mut self, selector: &'a str) -> UncheckBuilder<'a> {
         self.main_frame().uncheck_builder(selector)
     }
-    // wait_for_timeout
+
+    pub async fn wait_for_timeout(&self, timeout: f64) {
+        sleep(std::time::Duration::from_millis(timeout as u64)).await
+    }
+
     // wait_for_function
     // expect_navigation
 }

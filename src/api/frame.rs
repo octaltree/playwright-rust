@@ -4,8 +4,8 @@ use crate::{
     imp::{
         core::*,
         frame::{
-            CheckArgs, ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs, PressArgs,
-            SetContentArgs, TapArgs, TypeArgs, WaitForSelectorArgs
+            AddScriptTagArgs, CheckArgs, ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs,
+            PressArgs, SetContentArgs, TapArgs, TypeArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
@@ -150,6 +150,28 @@ impl Frame {
 
     pub fn uncheck_builder<'a>(&mut self, selector: &'a str) -> UncheckBuilder<'a> {
         UncheckBuilder::new(self.inner.clone(), selector)
+    }
+
+    pub async fn wait_for_timeout(&self, timeout: f64) {
+        sleep(std::time::Duration::from_millis(timeout as u64)).await
+    }
+
+    pub async fn add_style_tag(
+        &mut self,
+        content: &str,
+        url: Option<&str>
+    ) -> ArcResult<ElementHandle> {
+        upgrade(&self.inner)?
+            .add_style_tag(content, url)
+            .await
+            .map(ElementHandle::new)
+    }
+
+    pub fn add_script_tag_builder<'a>(
+        &mut self,
+        content: &'a str
+    ) -> AddScriptTagBuilder<'a, '_, '_> {
+        AddScriptTagBuilder::new(self.inner.clone(), content)
     }
 }
 
@@ -383,3 +405,35 @@ macro_rules! check_builder {
 
 check_builder!(CheckBuilder, check);
 check_builder!(UncheckBuilder, uncheck);
+
+pub struct AddScriptTagBuilder<'a, 'b, 'c> {
+    inner: Weak<Impl>,
+    args: AddScriptTagArgs<'a, 'b, 'c>
+}
+
+impl<'a, 'b, 'c> AddScriptTagBuilder<'a, 'b, 'c> {
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+        let args = AddScriptTagArgs::new(selector);
+        Self { inner, args }
+    }
+
+    pub async fn add_script_tag(self) -> Result<ElementHandle, Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?
+            .add_script_tag(args)
+            .await
+            .map(ElementHandle::new)
+    }
+
+    pub fn r#type(mut self, x: &'c str) -> Self {
+        self.args.r#type = Some(x);
+        self
+    }
+
+    optional_setter!(url, &'b str);
+
+    pub fn clear_type(mut self) -> Self {
+        self.args.r#type = None;
+        self
+    }
+}

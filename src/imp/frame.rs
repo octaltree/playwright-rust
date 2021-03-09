@@ -233,6 +233,32 @@ impl Frame {
         let _ = send_message!(self, "uncheck", args);
         Ok(())
     }
+
+    pub(crate) async fn add_script_tag(
+        &self,
+        args: AddScriptTagArgs<'_, '_, '_>
+    ) -> ArcResult<Weak<ElementHandle>> {
+        let v = send_message!(self, "addScriptTag", args);
+        let guid = only_guid(&v)?;
+        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        Ok(e)
+    }
+
+    pub(crate) async fn add_style_tag(
+        &self,
+        content: &str,
+        url: Option<&str>
+    ) -> ArcResult<Weak<ElementHandle>> {
+        let mut args = HashMap::new();
+        args.insert("content", content);
+        if let Some(url) = url {
+            args.insert("url", url);
+        }
+        let v = send_message!(self, "addStyleTag", args);
+        let guid = only_guid(&v)?;
+        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        Ok(e)
+    }
 }
 
 #[derive(Deserialize)]
@@ -490,6 +516,26 @@ impl<'a> CheckArgs<'a> {
             timeout: None,
             force: None,
             no_wait_after: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct AddScriptTagArgs<'a, 'b, 'c> {
+    content: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) url: Option<&'b str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) r#type: Option<&'c str>
+}
+
+impl<'a, 'b, 'c> AddScriptTagArgs<'a, 'b, 'c> {
+    pub(crate) fn new(content: &'a str) -> Self {
+        Self {
+            content,
+            url: None,
+            r#type: None
         }
     }
 }
