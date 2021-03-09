@@ -154,8 +154,9 @@ impl Frame {
         let mut args = HashMap::new();
         args.insert("selector", selector);
         let v = send_message!(self, "querySelectorAll", args);
-        let QuerySelectorAllResponse { elements } =
-            serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
+        let first = first(&v).ok_or(Error::InvalidParams)?;
+        let elements: Vec<OnlyGuid> =
+            serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         let es = elements
             .into_iter()
             .map(|OnlyGuid { guid }| {
@@ -259,11 +260,6 @@ impl Frame {
         let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
     }
-}
-
-#[derive(Deserialize)]
-struct QuerySelectorAllResponse {
-    elements: Vec<OnlyGuid>
 }
 
 #[derive(Serialize)]

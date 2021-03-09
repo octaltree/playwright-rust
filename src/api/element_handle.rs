@@ -7,7 +7,7 @@ use crate::{
             TypeArgs
         },
         prelude::*,
-        utils::{KeyboardModifier, MouseButton, Position}
+        utils::{FloatRect, KeyboardModifier, MouseButton, Position}
     }
 };
 
@@ -93,6 +93,20 @@ impl ElementHandle {
 
     pub fn press_builder<'a>(&mut self, key: &'a str) -> PressBuilder<'a> {
         PressBuilder::new(self.inner.clone(), key)
+    }
+
+    pub async fn scroll_into_view_if_needed(&self, timeout: Option<f64>) -> ArcResult<()> {
+        upgrade(&self.inner)?
+            .scroll_into_view_if_needed(timeout)
+            .await
+    }
+
+    pub async fn select_text(&self, timeout: Option<f64>) -> ArcResult<()> {
+        upgrade(&self.inner)?.select_text(timeout).await
+    }
+
+    pub async fn bounding_box(&self) -> ArcResult<Option<FloatRect>> {
+        upgrade(&self.inner)?.bounding_box().await
     }
 }
 

@@ -2,7 +2,7 @@ use crate::imp::{
     core::*,
     frame::Frame,
     prelude::*,
-    utils::{KeyboardModifier, MouseButton, Position}
+    utils::{FloatRect, KeyboardModifier, MouseButton, Position}
 };
 
 #[derive(Debug)]
@@ -48,8 +48,9 @@ impl ElementHandle {
         let mut args = HashMap::new();
         args.insert("selector", selector);
         let v = send_message!(self, "querySelectorAll", args);
-        let QuerySelectorAllResponse { elements } =
-            serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
+        let first = first(&v).ok_or(Error::InvalidParams)?;
+        let elements: Vec<OnlyGuid> =
+            serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         let es = elements
             .into_iter()
             .map(|OnlyGuid { guid }| {
@@ -161,11 +162,38 @@ impl ElementHandle {
         let _ = send_message!(self, "press", args);
         Ok(())
     }
-}
 
-#[derive(Deserialize)]
-struct QuerySelectorAllResponse {
-    elements: Vec<OnlyGuid>
+    pub(crate) async fn scroll_into_view_if_needed(&self, timeout: Option<f64>) -> ArcResult<()> {
+        #[derive(Serialize)]
+        struct Args {
+            #[serde(skip_serializing_if = "Option::is_none")]
+            timeout: Option<f64>
+        }
+        let args = Args { timeout };
+        let _ = send_message!(self, "scrollIntoViewIfNeeded", args);
+        Ok(())
+    }
+
+    pub(crate) async fn select_text(&self, timeout: Option<f64>) -> ArcResult<()> {
+        #[derive(Serialize)]
+        struct Args {
+            #[serde(skip_serializing_if = "Option::is_none")]
+            timeout: Option<f64>
+        }
+        let args = Args { timeout };
+        let _ = send_message!(self, "selectText", args);
+        Ok(())
+    }
+
+    pub(crate) async fn bounding_box(&self) -> ArcResult<Option<FloatRect>> {
+        let v = send_message!(self, "boundingBox", Map::new());
+        let v = match first(&v) {
+            None => return Ok(None),
+            Some(v) => v
+        };
+        let f: FloatRect = serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
+        Ok(Some(f))
+    }
 }
 
 #[derive(Serialize, Default)]

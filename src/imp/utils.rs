@@ -122,3 +122,11 @@ pub struct Position {
 impl From<(f64, f64)> for Position {
     fn from((x, y): (f64, f64)) -> Self { Self { x, y } }
 }
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
+pub struct FloatRect {
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64
+}

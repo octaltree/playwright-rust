@@ -29,8 +29,9 @@ impl JsHandle {
 
     pub(crate) async fn get_properties(&self) -> ArcResult<HashMap<String, Weak<JsHandle>>> {
         let v = send_message!(self, "getPropertyList", Map::new());
-        let GetPropertiesResponse { properties } =
-            serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
+        let first = first(&v).ok_or(Error::InvalidParams)?;
+        let properties: Vec<Property> =
+            serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         let ps = properties
             .into_iter()
             .map(
@@ -45,6 +46,11 @@ impl JsHandle {
             .collect::<Result<HashMap<_, _>, Error>>()?;
         Ok(ps)
     }
+
+    pub(crate) async fn dispose(&self) -> ArcResult<()> {
+        let _ = send_message!(self, "dispose", Map::new());
+        Ok(())
+    }
 }
 
 impl RemoteObject for JsHandle {
@@ -56,11 +62,6 @@ impl RemoteObject for JsHandle {
 #[serde(rename_all = "camelCase")]
 struct Initializer {
     preview: String
-}
-
-#[derive(Deserialize)]
-struct GetPropertiesResponse {
-    properties: Vec<Property>
 }
 
 #[derive(Deserialize)]

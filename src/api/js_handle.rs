@@ -18,4 +18,6 @@ impl JsHandle {
         let m = upgrade(&self.inner)?.get_properties().await?;
         Ok(m.into_iter().map(|(k, v)| (k, JsHandle::new(v))).collect())
     }
+
+    pub async fn dispose(&mut self) -> ArcResult<()> { upgrade(&self.inner)?.dispose().await }
 }
