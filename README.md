@@ -40,7 +40,7 @@ Application uses this library will be bundled the driver into rust binary at bui
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
   * or [my fork](https://github.com/octaltree/rust-headless-chrome) supports set_cookies
 - [saresend/selenium-rs](https://github.com/saresend/selenium-rs)
-- [https://crates.io/crates/webdrive](https://crates.io/crates/webdrive)
+- [https://crates.io/crates/webdriver](https://crates.io/crates/webdriver)
 
 ## Other languages
 - [microsoft/playwright](https://github.com/microsoft/playwright)
