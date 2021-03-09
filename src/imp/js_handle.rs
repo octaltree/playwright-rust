@@ -17,6 +17,34 @@ impl JsHandle {
         let var = Mutex::new(Var { preview });
         Ok(Self { channel, var })
     }
+
+    pub(crate) async fn get_property(&self, name: &str) -> ArcResult<Weak<JsHandle>> {
+        let mut args = HashMap::new();
+        args.insert("name", name);
+        let v = send_message!(self, "getProperty", args);
+        let guid = only_guid(&v)?;
+        let j = find_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        Ok(j)
+    }
+
+    pub(crate) async fn get_properties(&self) -> ArcResult<HashMap<String, Weak<JsHandle>>> {
+        let v = send_message!(self, "getPropertyList", Map::new());
+        let GetPropertiesResponse { properties } =
+            serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
+        let ps = properties
+            .into_iter()
+            .map(
+                |Property {
+                     name,
+                     value: OnlyGuid { guid }
+                 }| {
+                    find_object!(self.context()?.lock().unwrap(), &guid, JsHandle)
+                        .map(|o| (name, o))
+                }
+            )
+            .collect::<Result<HashMap<_, _>, Error>>()?;
+        Ok(ps)
+    }
 }
 
 impl RemoteObject for JsHandle {
@@ -28,4 +56,15 @@ impl RemoteObject for JsHandle {
 #[serde(rename_all = "camelCase")]
 struct Initializer {
     preview: String
+}
+
+#[derive(Deserialize)]
+struct GetPropertiesResponse {
+    properties: Vec<Property>
+}
+
+#[derive(Deserialize)]
+struct Property {
+    name: String,
+    value: OnlyGuid
 }
