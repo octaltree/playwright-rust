@@ -4,7 +4,7 @@ use crate::{
         browser_context::BrowserContext as Impl,
         core::*,
         prelude::*,
-        utils::{Cookie, StorageState}
+        utils::{Cookie, Geolocation, StorageState}
     },
     Error
 };
@@ -42,21 +42,41 @@ impl BrowserContext {
     //    unimplemented!()
     //}
 
-    // async fn cookies(&mut self) -> Result<Vec<Cookie>, Error> { unimplemented!() }
+    pub async fn cookies(&mut self, urls: &[String]) -> ArcResult<Vec<Cookie>> {
+        upgrade(&self.inner)?.cookies(urls).await
+    }
 
-    // async fn add_cookies(&mut self, cs: &[Cookie]) -> Result<(), Error> { unimplemented!() }
+    pub async fn add_cookies(&mut self, cookies: &[Cookie]) -> ArcResult<()> {
+        upgrade(&self.inner)?.add_cookies(cookies).await
+    }
 
-    // async fn clear_cookies(&mut self) -> Result<(), Error> { unimplemented!() }
+    pub async fn clear_cookies(&mut self) -> ArcResult<()> {
+        upgrade(&self.inner)?.clear_cookies().await
+    }
 
-    // async fn grant_permission(&mut self) -> Result<(), Error> { unimplemented!() }
+    pub async fn grant_permission(
+        &mut self,
+        permissions: &[String],
+        origin: Option<&str>
+    ) -> ArcResult<()> {
+        upgrade(&self.inner)?
+            .grant_permission(permissions, origin)
+            .await
+    }
 
-    // async fn clear_permission(&mut self) -> Result<(), Error> { unimplemented!() }
+    pub async fn clear_permissions(&self) -> ArcResult<()> {
+        upgrade(&self.inner)?.clear_permissions().await
+    }
 
-    // async fn set_geolocation(&mut self) -> Result<(), Error> { unimplemented!() }
+    pub async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
+        upgrade(&self.inner)?.set_geolocation(geolocation).await
+    }
+
+    pub async fn set_offline(&self, offline: bool) -> ArcResult<()> {
+        upgrade(&self.inner)?.set_offline(offline).await
+    }
 
     // async fn set_extra_http_headers(&mut self) -> Result<(), Error> { unimplemented!() }
-
-    // async fn set_offline(&mut self, offline: bool) -> Result<(), Error> { unimplemented!() }
 
     // async fn add_init_script(&mut self) -> Result<(), Error> { unimplemented!() }
 

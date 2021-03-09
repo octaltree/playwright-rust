@@ -9,8 +9,11 @@ pub struct Viewport {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ProxySettings {
     pub server: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub bypass: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub username: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>
 }
 
@@ -18,6 +21,7 @@ pub struct ProxySettings {
 pub struct Geolocation {
     pub latitude: f64,
     pub longitude: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub accuracy: Option<f64>
 }
 

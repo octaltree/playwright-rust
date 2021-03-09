@@ -1,4 +1,9 @@
-use crate::imp::{core::*, page::Page, prelude::*, utils::StorageState};
+use crate::imp::{
+    core::*,
+    page::Page,
+    prelude::*,
+    utils::{Cookie, Geolocation, StorageState}
+};
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
@@ -38,12 +43,77 @@ impl BrowserContext {
         Ok(s)
     }
 
+    pub(crate) async fn clear_cookies(&self) -> ArcResult<()> {
+        let _ = send_message!(self, "clearCookies", Map::new());
+        Ok(())
+    }
+
+    pub(crate) async fn cookies(&self, urls: &[String]) -> ArcResult<Vec<Cookie>> {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            urls: &'a [String]
+        }
+        let args = Args { urls };
+        let v = send_message!(self, "cookies", args);
+        let cookies = first(&v).ok_or(Error::InvalidParams)?;
+        let cs: Vec<Cookie> = serde_json::from_value((*cookies).clone()).map_err(Error::Serde)?;
+        Ok(cs)
+    }
+
+    pub(crate) async fn add_cookies(&self, cookies: &[Cookie]) -> ArcResult<()> {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            cookies: &'a [Cookie]
+        }
+        let args = Args { cookies };
+        let _ = send_message!(self, "cookies", args);
+        Ok(())
+    }
+
+    pub(crate) async fn grant_permission(
+        &self,
+        permissions: &[String],
+        origin: Option<&str>
+    ) -> ArcResult<()> {
+        #[derive(Serialize)]
+        struct Args<'a, 'b> {
+            permissions: &'a [String],
+            #[serde(skip_serializing_if = "Option::is_none")]
+            origin: Option<&'b str>
+        }
+        let args = Args {
+            permissions,
+            origin
+        };
+        let _ = send_message!(self, "grantPermissions", args);
+        Ok(())
+    }
+
+    pub(crate) async fn clear_permissions(&self) -> ArcResult<()> {
+        let _ = send_message!(self, "clearPermissions", Map::new());
+        Ok(())
+    }
+
+    pub(crate) async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            geolocation: Option<&'a Geolocation>
+        }
+        let args = Args { geolocation };
+        let _ = send_message!(self, "setGeolocation", args);
+        Ok(())
+    }
+
+    pub(crate) async fn set_offline(&self, offline: bool) -> ArcResult<()> {
+        let mut args = Map::new();
+        args.insert("offline".into(), offline.into());
+        let _ = send_message!(self, "setOffline", args);
+        Ok(())
+    }
+
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:
-    // TODO: async def cookies(self, urls: Union[str, List[str]] = None) -> List[Cookie]:
-    // TODO: async def add_cookies(self, cookies: List[Cookie]) -> None:
-    // TODO: async def clear_cookies(self) -> None:
     // TODO: async def grant_permissions(
     // TODO: async def clear_permissions(self) -> None:
     // TODO: async def set_geolocation(self, geolocation: Geolocation = None) -> None:
@@ -56,7 +126,6 @@ impl BrowserContext {
     // TODO: async def unroute(
     // TODO: def expect_event(
     // TODO: async def close(self) -> None:
-    // TODO: async def storage_state(self, path: Union[str, Path] = None) -> StorageState:
     // TODO: async def wait_for_event(
     // TODO: def expect_page(
 }
@@ -86,5 +155,6 @@ mod tests {
         let c = b.new_context(NewContextArgs::default()).await.unwrap();
         let c = c.upgrade().unwrap();
         c.storage_state().await.unwrap();
+        c.cookies(&[]).await.unwrap();
     });
 }
