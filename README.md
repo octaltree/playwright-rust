@@ -1,6 +1,6 @@
 # 🎭 [Playwright](https://playwright.dev) for Rust
 
-Playwright is a rust library to automate Chromium, Firefox and WebKit built on top of Node.js library.
+Playwright is a rust library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) built on top of Node.js library.
 
 ## Installation
 ```
@@ -9,11 +9,12 @@ playwright = "0.1.0"
 ```
 
 ## Usage
-WIP
+It's still under development and has limited functions. Please have a look at tests and docs.rs.
+Welcome contributions.
 
 
 ## Playwright Driver
-Playwright is designed as a server-client. All playwright client dependent on driver: zip of core js library and node.
+Playwright is designed as a server-client. All playwright client dependent on the driver: zip of core js library and Node.js.
 Application uses this library will be bundled the driver into rust binary at build time. There is an overhead of unzipping on the first run.
 
 ## Incompatibility
@@ -22,7 +23,7 @@ Functions with two or more optional arguments are now passed with the builder pa
 
 ## Browser automation in rust
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
-  * or my fork suuports set_cookies [octaltree/rust-headless-chrome](https://github.com/octaltree/rust-headless-chrome)
+  * or my fork [octaltree/rust-headless-chrome](https://github.com/octaltree/rust-headless-chrome) suports set_cookies
 - [saresend/selenium-rs](https://github.com/saresend/selenium-rs)
 - [https://crates.io/crates/webdrive](https://crates.io/crates/webdrive)
 
