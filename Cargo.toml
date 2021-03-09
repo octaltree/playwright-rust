@@ -1,12 +1,14 @@
 [package]
 name = "playwright"
-version = "0.1.0"
-license = "MIT"
+version = "0.0.0"
 authors = ["octaltree <octaltree@gmail.com>"]
 edition = "2018"
-build = "src/build.rs"
+license = "MIT"
+documentation = "https://docs.rs/playwright/"
+repository = "https://github.com/octaltree/playwright"
 categories = ["web-programming"]
-keywords = ["browser", "automation", "testing"]
+keywords = ["web", "browser", "automation", "testing"]
+build = "src/build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
