@@ -70,7 +70,15 @@ impl BrowserContext {
 
     // async fn expect_event(&mut self) -> Result<(), Error> { unimplemented!() }
 
-    // async fn close(&mut self) -> Result<(), Error> { unimplemented!() }
+    /// All temporary browsers will be closed when the connection is terminated, but
+    /// it needs to be called explicitly to close it at any given time.
+    pub async fn close(&mut self) -> ArcResult<()> {
+        let inner = match self.inner.upgrade() {
+            None => return Ok(()),
+            Some(inner) => inner
+        };
+        inner.close().await
+    }
 
     // async fn storage_state(&mut self) -> Result<StorageState, Error> { unimplemented!() }
 

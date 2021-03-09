@@ -40,8 +40,11 @@ impl Browser {
 
     /// All temporary browsers will be closed when the connection is terminated, but
     /// it needs to be called explicitly to close it at any given time.
-    pub async fn close(&mut self) -> Result<(), Arc<Error>> {
-        let inner = upgrade(&self.inner)?;
+    pub async fn close(&self) -> Result<(), Arc<Error>> {
+        let inner = match self.inner.upgrade() {
+            None => return Ok(()),
+            Some(inner) => inner
+        };
         inner.close().await
     }
 }

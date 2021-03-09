@@ -17,18 +17,13 @@ runtime_test!(awesome, {
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
-    let _response: Option<Response> = p
-        .main_frame()
-        .goto_builder("https://example.com/")
-        .goto()
-        .await
-        .unwrap();
-    // let _ = p.main_frame().query_selector_all("a").await.unwrap();
-    // let _ = p.main_frame().title().await.unwrap();
-    let mut a = p.query_selector("a").await.unwrap().unwrap();
-    let v = a.get_attribute("href").await.unwrap();
-    dbg!(v);
-    p.go_back_builder().go_back().await.unwrap();
+    let _response: Option<Response> = p.goto_builder("https://example.com/").goto().await.unwrap();
+    //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
+    //// let _ = p.main_frame().title().await.unwrap();
+    // let mut a = p.query_selector("a").await.unwrap().unwrap();
+    // let v = a.get_attribute("href").await.unwrap();
+    // dbg!(v);
+    // p.go_back_builder().go_back().await.unwrap();
 });
 
 async fn launch(t: &mut BrowserType) -> Browser {

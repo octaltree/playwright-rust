@@ -27,6 +27,11 @@ impl BrowserContext {
         Ok(p)
     }
 
+    pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
+        let _ = send_message!(self, "close", Map::new());
+        Ok(())
+    }
+
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:

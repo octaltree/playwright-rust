@@ -29,19 +29,7 @@ impl Browser {
     pub(crate) fn version(&self) -> &str { &self.version }
 
     pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
-        async fn catch(this: &Browser) -> Result<Arc<Value>, Arc<Error>> {
-            Ok(send_message!(this, "close", Map::new()))
-        }
-        let result = catch(self).await;
-        let err = match result {
-            Ok(_) => return Ok(()),
-            Err(e) => e
-        };
-        let _responded_error = match *err {
-            Error::ErrorResponded(ref e) => e,
-            _ => return Err(err)
-        };
-        // TODO: has been closed
+        let _ = send_message!(self, "close", Map::new());
         Ok(())
     }
 
