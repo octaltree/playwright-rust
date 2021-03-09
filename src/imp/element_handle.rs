@@ -218,9 +218,9 @@ impl ElementHandle {
         Ok(())
     }
 
-    pub(crate) async fn wait_for_selector<'a>(
+    pub(crate) async fn wait_for_selector(
         &self,
-        args: WaitForSelectorArgs<'a>
+        args: WaitForSelectorArgs<'_>
     ) -> ArcResult<Option<Weak<ElementHandle>>> {
         let v = send_message!(self, "waitForSelector", args);
         let guid = match as_only_guid(&v) {
