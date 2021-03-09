@@ -182,18 +182,22 @@ impl Page {
             .await
     }
 
-    pub fn hover<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
+    pub fn hover_builder<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
         self.main_frame().hover_builder(selector)
     }
 
     // select_option
     // set_input_files
 
-    pub fn r#type<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+    pub fn type_builer<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         self.main_frame().type_builder(selector, text)
     }
 
-    pub fn press<'a, 'b>(&mut self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
+    pub fn press_builder<'a, 'b>(
+        &mut self,
+        selector: &'a str,
+        key: &'b str
+    ) -> PressBuilder<'a, 'b> {
         self.main_frame().press_builder(selector, key)
     }
 
