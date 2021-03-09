@@ -158,3 +158,26 @@ pub struct Header {
 impl From<Header> for (String, String) {
     fn from(Header { name, value }: Header) -> Self { (name, value) }
 }
+
+#[derive(Debug, Serialize, PartialEq, Clone)]
+#[serde(untagged)]
+pub enum Length<'a> {
+    Value(f64),
+    WithUnit(&'a str)
+}
+
+impl<'a> From<f64> for Length<'a> {
+    fn from(x: f64) -> Self { Self::Value(x) }
+}
+
+impl<'a> From<&'a str> for Length<'a> {
+    fn from(x: &'a str) -> Self { Self::WithUnit(x) }
+}
+
+#[derive(Debug, Serialize, PartialEq, Clone)]
+pub struct PdfMargins<'a, 'b, 'c, 'd> {
+    top: Option<Length<'a>>,
+    right: Option<Length<'b>>,
+    bottom: Option<Length<'c>>,
+    left: Option<Length<'d>>
+}

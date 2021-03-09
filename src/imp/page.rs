@@ -3,7 +3,7 @@ use crate::imp::{
     frame::Frame,
     prelude::*,
     response::Response,
-    utils::{DocumentLoadState, MouseButton, Viewport}
+    utils::{DocumentLoadState, Length, MouseButton, PdfMargins, Viewport}
 };
 
 #[derive(Debug)]
@@ -182,6 +182,16 @@ impl Page {
         let _ = send_message!(self, "addInitScript", args);
         Ok(())
     }
+
+    pub(crate) async fn pdf(
+        &self,
+        args: PdfArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
+    ) -> ArcResult<Vec<u8>> {
+        let v = send_message!(self, "pdf", args);
+        let b64 = only_str(&v)?;
+        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        Ok(bytes)
+    }
 }
 
 #[derive(Serialize)]
@@ -245,4 +255,34 @@ pub(crate) struct ReloadArgs {
     pub(crate) timeout: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) wait_until: Option<DocumentLoadState>
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PdfArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) scale: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) display_header_footer: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) header_template: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) footer_template: Option<&'b str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) print_background: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) landscape: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) page_ranges: Option<&'c str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) format: Option<&'d str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) width: Option<Length<'e>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) height: Option<Length<'f>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "preferCSSPageSize")]
+    pub(crate) prefer_css_page_size: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) margin: Option<PdfMargins<'g, 'h, 'i, 'j>>
 }

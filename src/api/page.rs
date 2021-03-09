@@ -12,9 +12,9 @@ use crate::{
     imp::{
         core::*,
         frame::Frame as FrameImpl,
-        page::{Page as Impl, ReloadArgs},
+        page::{Page as Impl, PdfArgs, ReloadArgs},
         prelude::*,
-        utils::{DocumentLoadState, Viewport}
+        utils::{DocumentLoadState, Length, PdfMargins, Viewport}
     },
     Error
 };
@@ -219,6 +219,10 @@ impl Page {
     pub async fn add_init_script(&self, source: &str) -> ArcResult<()> {
         upgrade(&self.inner)?.add_init_script(source).await
     }
+
+    pub fn pdf_builder(&self) -> PdfBuilder<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
+        PdfBuilder::new(self.inner.clone())
+    }
 }
 
 macro_rules! navigation {
@@ -250,3 +254,35 @@ macro_rules! navigation {
 navigation!(ReloadBuilder, reload);
 navigation!(GoBackBuilder, go_back);
 navigation!(GoForwardBuilder, go_forward);
+
+pub struct PdfBuilder<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
+    inner: Weak<Impl>,
+    args: PdfArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j>
+}
+
+impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> PdfBuilder<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = PdfArgs::default();
+        Self { inner, args }
+    }
+
+    pub async fn pdf(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.pdf(args).await?;
+        Ok(())
+    }
+
+    optional_setter!(
+        scale, f64;
+        display_header_footer, bool;
+        header_template, &'a str;
+        footer_template, &'b str;
+        print_background, bool;
+        landscape, bool;
+        page_ranges, &'c str;
+        format, &'d str;
+        width, Length<'e>;
+        height, Length<'f>;
+        prefer_css_page_size, bool;
+        margin, PdfMargins<'g,'h,'i,'j>);
+}
