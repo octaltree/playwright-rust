@@ -137,3 +137,14 @@ pub enum ScreenshotType {
     Jpeg,
     Png
 }
+
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum ElementState {
+    Disabled,
+    Editable,
+    Enabled,
+    Hidden,
+    Stable,
+    Visible
+}

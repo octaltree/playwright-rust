@@ -2,7 +2,7 @@ use crate::imp::{
     core::*,
     frame::Frame,
     prelude::*,
-    utils::{FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
+    utils::{ElementState, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
 };
 
 #[derive(Debug)]
@@ -201,6 +201,35 @@ impl ElementHandle {
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
         Ok(bytes)
     }
+
+    pub(crate) async fn wait_for_element_state(
+        &self,
+        state: ElementState,
+        timeout: Option<f64>
+    ) -> ArcResult<()> {
+        #[derive(Serialize)]
+        struct Args {
+            state: ElementState,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            timeout: Option<f64>
+        }
+        let args = Args { state, timeout };
+        let _ = send_message!(self, "waitForElementState", args);
+        Ok(())
+    }
+
+    pub(crate) async fn wait_for_selector<'a>(
+        &self,
+        args: WaitForSelectorArgs<'a>
+    ) -> ArcResult<Option<Weak<ElementHandle>>> {
+        let v = send_message!(self, "waitForSelector", args);
+        let guid = match as_only_guid(&v) {
+            Some(g) => g,
+            None => return Ok(None)
+        };
+        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        Ok(Some(e))
+    }
 }
 
 #[derive(Serialize, Default)]
@@ -331,6 +360,26 @@ impl Default for ScreenshotArgs {
             r#type: None,
             quality: None,
             omit_background: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct WaitForSelectorArgs<'a> {
+    selector: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) state: Option<ElementState>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>
+}
+
+impl<'a> WaitForSelectorArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            state: None,
+            timeout: None
         }
     }
 }

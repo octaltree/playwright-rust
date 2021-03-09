@@ -4,10 +4,10 @@ use crate::{
         core::*,
         element_handle::{
             CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, PressArgs,
-            ScreenshotArgs, TapArgs, TypeArgs
+            ScreenshotArgs, TapArgs, TypeArgs, WaitForSelectorArgs
         },
         prelude::*,
-        utils::{FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
+        utils::{ElementState, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
     }
 };
 
@@ -111,6 +111,20 @@ impl ElementHandle {
 
     pub async fn screenshot_builder(&self) -> ScreenshotBuilder {
         ScreenshotBuilder::new(self.inner.clone())
+    }
+
+    pub async fn wait_for_element_state(
+        &self,
+        state: ElementState,
+        timeout: Option<f64>
+    ) -> ArcResult<()> {
+        upgrade(&self.inner)?
+            .wait_for_element_state(state, timeout)
+            .await
+    }
+
+    pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
+        WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
 }
 
@@ -310,4 +324,26 @@ impl ScreenshotBuilder {
         self.args.r#type = None;
         self
     }
+}
+
+pub struct WaitForSelectorBuilder<'a> {
+    inner: Weak<Impl>,
+    args: WaitForSelectorArgs<'a>
+}
+
+impl<'a> WaitForSelectorBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+        let args = WaitForSelectorArgs::new(selector);
+        Self { inner, args }
+    }
+
+    pub async fn wait_for_selector(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        let _ = upgrade(&inner)?.wait_for_selector(args).await?;
+        Ok(())
+    }
+
+    optional_setter!(
+        state, ElementState;
+        timeout, f64);
 }
