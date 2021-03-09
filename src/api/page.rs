@@ -12,9 +12,9 @@ use crate::{
     imp::{
         core::*,
         frame::Frame as FrameImpl,
-        page::{Page as Impl, PdfArgs, ReloadArgs},
+        page::{Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
         prelude::*,
-        utils::{DocumentLoadState, Length, PdfMargins, Viewport}
+        utils::{DocumentLoadState, FloatRect, Length, PdfMargins, ScreenshotType, Viewport}
     },
     Error
 };
@@ -79,6 +79,10 @@ impl Page {
             Some(inner) => inner
         };
         inner.close(run_before_unload).await
+    }
+
+    pub fn screenshot_builder(&mut self) -> ScreenshotBuilder {
+        ScreenshotBuilder::new(self.inner.clone())
     }
 }
 
@@ -297,4 +301,38 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> PdfBuilder<'a, 'b, 'c, 'd, 'e, 'f, 
         height, Length<'f>;
         prefer_css_page_size, bool;
         margin, PdfMargins<'g,'h,'i,'j>);
+}
+
+pub struct ScreenshotBuilder {
+    inner: Weak<Impl>,
+    args: ScreenshotArgs
+}
+
+impl ScreenshotBuilder {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = ScreenshotArgs::default();
+        Self { inner, args }
+    }
+
+    pub async fn screenshot(self) -> ArcResult<Vec<u8>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.screenshot(args).await
+    }
+
+    pub fn r#type(mut self, x: ScreenshotType) -> Self {
+        self.args.r#type = Some(x);
+        self
+    }
+
+    optional_setter!(
+        timeout, f64;
+        quality, i32;
+        omit_background, bool;
+        full_page, bool;
+        clip, FloatRect);
+
+    pub fn clear_type(mut self) -> Self {
+        self.args.r#type = None;
+        self
+    }
 }

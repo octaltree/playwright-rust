@@ -3,7 +3,9 @@ use crate::imp::{
     frame::Frame,
     prelude::*,
     response::Response,
-    utils::{DocumentLoadState, Length, MouseButton, PdfMargins, Viewport}
+    utils::{
+        DocumentLoadState, FloatRect, Length, MouseButton, PdfMargins, ScreenshotType, Viewport
+    }
 };
 
 #[derive(Debug)]
@@ -203,6 +205,13 @@ impl Page {
         let _ = send_message!(self, "close", args);
         Ok(())
     }
+
+    pub(crate) async fn screenshot(&self, args: ScreenshotArgs) -> ArcResult<Vec<u8>> {
+        let v = send_message!(self, "screenshot", args);
+        let b64 = only_str(&v)?;
+        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        Ok(bytes)
+    }
 }
 
 #[derive(Serialize)]
@@ -296,4 +305,34 @@ pub(crate) struct PdfArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
     pub(crate) prefer_css_page_size: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) margin: Option<PdfMargins<'g, 'h, 'i, 'j>>
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ScreenshotArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) r#type: Option<ScreenshotType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) quality: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) omit_background: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) full_page: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) clip: Option<FloatRect>
+}
+
+impl Default for ScreenshotArgs {
+    fn default() -> Self {
+        Self {
+            timeout: None,
+            r#type: None,
+            quality: None,
+            omit_background: None,
+            full_page: None,
+            clip: None
+        }
+    }
 }
