@@ -28,7 +28,6 @@ pub mod accessibility;
 pub mod browser;
 pub mod browser_context;
 pub mod browser_type;
-pub mod cdp_session;
 pub mod console_message;
 pub mod dialog;
 pub mod download;
@@ -52,7 +51,6 @@ pub use accessibility::Accessibility;
 pub use browser::Browser;
 pub use browser_context::BrowserContext;
 pub use browser_type::BrowserType;
-pub use cdp_session::CdpSession;
 pub use console_message::ConsoleMessage;
 pub use dialog::Dialog;
 pub use download::Download;
@@ -73,18 +71,11 @@ pub use worker::Worker;
 
 // BindingCall
 // ChromiumBrowserContext
-// Cookie
 // FilePayload
 // FloatRect
-// Geolocation
-// HttpCredentials
 // PdfMargins
-// Position
-// ProxySettings
 // ResourceTiming
 // SourceLocation
-// StorageState
-// ViewportSize
 
 // Android
 // AndroidDevice

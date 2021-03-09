@@ -117,9 +117,9 @@ mod remote_enum {
     use super::*;
     use crate::imp::{
         browser::Browser, browser_context::BrowserContext, browser_type::BrowserType,
-        cdp_session::CdpSession, console_message::ConsoleMessage, dialog::Dialog,
-        download::Download, element_handle::ElementHandle, frame::Frame, js_handle::JsHandle,
-        page::Page, playwright::Playwright, request::Request, response::Response, route::Route,
+        console_message::ConsoleMessage, dialog::Dialog, download::Download,
+        element_handle::ElementHandle, frame::Frame, js_handle::JsHandle, page::Page,
+        playwright::Playwright, request::Request, response::Response, route::Route,
         selectors::Selectors, websocket::WebSocket, worker::Worker
     };
 
@@ -143,7 +143,6 @@ mod remote_enum {
                 Dialog($p<Dialog>),
                 Download($p<Download>),
                 ConsoleMessage($p<ConsoleMessage>),
-                CdpSession($p<CdpSession>),
                 JsHandle($p<JsHandle>),
                 ElementHandle($p<ElementHandle>),
                 Playwright($p<Playwright>)
@@ -183,7 +182,6 @@ mod remote_enum {
                 Dialog,
                 Download,
                 ConsoleMessage,
-                CdpSession,
                 JsHandle,
                 ElementHandle,
                 Playwright
@@ -213,7 +211,6 @@ mod remote_enum {
                 "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
                 "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
                 "ConsoleMessage" => RemoteArc::ConsoleMessage(Arc::new(ConsoleMessage::new(c))),
-                "CdpSession" => RemoteArc::CdpSession(Arc::new(CdpSession::new(c))),
                 "JsHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(ctx, c)?)),
                 "ElementHandle" => RemoteArc::ElementHandle(Arc::new(ElementHandle::new(c))),
                 _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))

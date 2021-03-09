@@ -78,7 +78,6 @@ pub(crate) mod utils;
 
 pub(crate) mod browser;
 pub(crate) mod browser_context;
-pub(crate) mod cdp_session;
 pub(crate) mod console_message;
 pub(crate) mod dialog;
 pub(crate) mod download;
@@ -95,9 +94,6 @@ pub(crate) mod worker;
 //_accessibility.py
 //_api_structures.py
 //_api_types.py
-//_async_base.py
-//_chromium_browser_context.py
-//_connection.py
 //_element_handle.py
 //_event_context_manager.py
 //_file_chooser.py
@@ -108,3 +104,4 @@ pub(crate) mod worker;
 //_sync_base.py
 //_video.py
 //_wait_helper.py
+// ChromiumBrowserContext CdpSession
