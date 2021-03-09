@@ -80,7 +80,9 @@ impl BrowserContext {
         inner.close().await
     }
 
-    // async fn storage_state(&mut self) -> Result<StorageState, Error> { unimplemented!() }
+    pub async fn storage_state(&mut self) -> ArcResult<StorageState> {
+        upgrade(&self.inner)?.storage_state().await
+    }
 
     // async fn wait_for_event(&mut self) -> Result<StorageState, Error> { unimplemented!() }
 

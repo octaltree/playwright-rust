@@ -1,4 +1,4 @@
-use crate::imp::{core::*, page::Page, prelude::*};
+use crate::imp::{core::*, page::Page, prelude::*, utils::StorageState};
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
@@ -32,6 +32,12 @@ impl BrowserContext {
         Ok(())
     }
 
+    pub(crate) async fn storage_state(&self) -> ArcResult<StorageState> {
+        let v = send_message!(self, "storageState", Map::new());
+        let s = serde_json::from_value((*v).clone()).map_err(Error::Serde)?;
+        Ok(s)
+    }
+
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:
@@ -63,3 +69,22 @@ impl RemoteObject for BrowserContext {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Initializer {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::imp::{browser::*, browser_type::*, core::*, playwright::Playwright};
+
+    crate::runtime_test!(storage_state, {
+        let driver = Driver::install().unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
+        let p = p.upgrade().unwrap();
+        let chromium = p.chromium().upgrade().unwrap();
+        let b = chromium.launch(LaunchArgs::default()).await.unwrap();
+        let b = b.upgrade().unwrap();
+        let c = b.new_context(NewContextArgs::default()).await.unwrap();
+        let c = c.upgrade().unwrap();
+        c.storage_state().await.unwrap();
+    });
+}
