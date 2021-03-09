@@ -170,6 +170,18 @@ impl Page {
     }
 
     // pub(crate) async fn accessibility_snapshot(&self, args: AccessibilitySnapshoptArgs) {}
+
+    pub(crate) async fn bring_to_front(&self) -> ArcResult<()> {
+        let _ = send_message!(self, "bringToFront", Map::new());
+        Ok(())
+    }
+
+    pub(crate) async fn add_init_script(&self, source: &str) -> ArcResult<()> {
+        let mut args = HashMap::new();
+        args.insert("source", source);
+        let _ = send_message!(self, "addInitScript", args);
+        Ok(())
+    }
 }
 
 #[derive(Serialize)]

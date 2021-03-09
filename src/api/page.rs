@@ -99,7 +99,6 @@ impl Page {
     // evaluate_handle
     // eval_on_selector
     // eval_on_selector_all
-    // add_script_tag
 
     pub fn add_script_tag_builder<'a>(
         &mut self,
@@ -212,6 +211,14 @@ impl Page {
 
     // wait_for_function
     // expect_navigation
+
+    pub async fn bring_to_front(&self) -> ArcResult<()> {
+        upgrade(&self.inner)?.bring_to_front().await
+    }
+
+    pub async fn add_init_script(&self, source: &str) -> ArcResult<()> {
+        upgrade(&self.inner)?.add_init_script(source).await
+    }
 }
 
 macro_rules! navigation {
