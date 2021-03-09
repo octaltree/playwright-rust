@@ -81,6 +81,13 @@ impl Request {
     }
 }
 
+// mutable
+impl Request {
+    // TODO: redirected_to
+    // TODO: failure
+    // TODO: timing
+}
+
 impl RemoteObject for Request {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }

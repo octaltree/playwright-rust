@@ -58,7 +58,11 @@ pub enum Error {
     #[error("Value is not Object")]
     NotObject,
     #[error("guid not found in {0:?}")]
-    GuidNotFound(Value)
+    GuidNotFound(Value),
+    #[error(transparent)]
+    InvalidBase64(#[from] base64::DecodeError),
+    #[error(transparent)]
+    InvalidUtf8(#[from] std::string::FromUtf8Error)
 }
 
 pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;

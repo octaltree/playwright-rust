@@ -121,12 +121,7 @@ impl BrowserContext {
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:
-    // TODO: async def grant_permissions(
-    // TODO: async def clear_permissions(self) -> None:
-    // TODO: async def set_geolocation(self, geolocation: Geolocation = None) -> None:
     // TODO: async def set_extra_http_headers(self, headers: Dict[str, str]) -> None:
-    // TODO: async def set_offline(self, offline: bool) -> None:
-    // TODO: async def add_init_script(
     // TODO: async def expose_binding(
     // TODO: async def expose_function(self, name: str, callback: Callable) -> None:
     // TODO: async def route(self, url: URLMatch, handler: RouteHandler) -> None:
@@ -136,6 +131,9 @@ impl BrowserContext {
     // TODO: async def wait_for_event(
     // TODO: def expect_page(
 }
+
+// Use mutable Variable
+impl BrowserContext {}
 
 impl RemoteObject for BrowserContext {
     fn channel(&self) -> &ChannelOwner { &self.channel }
