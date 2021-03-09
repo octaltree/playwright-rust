@@ -1,4 +1,4 @@
-use crate::imp::{core::*, frame::Frame, prelude::*, response::Response};
+use crate::imp::{core::*, frame::Frame, prelude::*, response::Response, utils::Header};
 
 #[derive(Debug)]
 pub(crate) struct Request {
@@ -105,14 +105,4 @@ struct Initializer {
     post_data: Option<String>,
     headers: Vec<Header>,
     redirected_from: Option<OnlyGuid>
-}
-
-#[derive(Debug, Deserialize)]
-struct Header {
-    name: String,
-    value: String
-}
-
-impl From<Header> for (String, String) {
-    fn from(Header { name, value }: Header) -> Self { (name, value) }
 }

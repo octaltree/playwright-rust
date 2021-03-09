@@ -148,3 +148,13 @@ pub enum ElementState {
     Stable,
     Visible
 }
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct Header {
+    name: String,
+    value: String
+}
+
+impl From<Header> for (String, String) {
+    fn from(Header { name, value }: Header) -> Self { (name, value) }
+}
