@@ -77,38 +77,6 @@ impl ChannelOwner {
         let children = &mut self.children.lock().unwrap();
         children.push(c);
     }
-
-    pub(crate) fn dispose(&self) {
-        let ctx = &mut match self.ctx.upgrade() {
-            None => return,
-            Some(ctx) => ctx
-        };
-        let ctx = &mut ctx.lock().unwrap();
-        let children = self.children();
-        if children.is_empty() {
-            ctx.remove_object(&self.guid);
-            return;
-        }
-        let mut stack: Vec<RemoteWeak> = children;
-        while !stack.is_empty() {
-            let last = stack.last().unwrap();
-            let last = match last.upgrade() {
-                None => {
-                    stack.pop();
-                    continue;
-                }
-                Some(x) => x
-            };
-            let mut children = last.channel().children();
-            if children.is_empty() {
-                ctx.remove_object(&last.channel().guid);
-                stack.pop();
-                continue;
-            }
-            stack.append(&mut children);
-        }
-        ctx.remove_object(&self.guid);
-    }
 }
 
 #[derive(Debug)]

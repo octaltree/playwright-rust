@@ -198,9 +198,7 @@ impl Context {
                     return Ok(());
                 }
                 if Method::is_dispose(&msg.method) {
-                    if let Some(o) = self.objects.get(&msg.guid) {
-                        o.channel().dispose();
-                    }
+                    self.dispose(&msg.guid);
                     return Ok(());
                 }
                 let target = self.objects.get(&msg.guid).ok_or(Error::ObjectNotFound)?;
@@ -208,6 +206,22 @@ impl Context {
             }
         }
         Ok(())
+    }
+
+    fn dispose(&mut self, i: &S<Guid>) {
+        let a = match self.objects.get(i) {
+            None => return,
+            Some(a) => a
+        };
+        let cs = a.channel().children();
+        for c in cs {
+            let c = match c.upgrade() {
+                None => continue,
+                Some(c) => c
+            };
+            self.dispose(&c.channel().guid);
+        }
+        self.remove_object(i);
     }
 
     fn respond_wait(

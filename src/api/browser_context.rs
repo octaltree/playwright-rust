@@ -109,7 +109,7 @@ impl BrowserContext {
     }
 
     /// All temporary browsers will be closed when the connection is terminated, but
-    /// it needs to be called explicitly to close it at any given time.
+    /// this struct has no Drop. it needs to be called explicitly to close it at any given time.
     pub async fn close(&mut self) -> ArcResult<()> {
         let inner = match self.inner.upgrade() {
             None => return Ok(()),
