@@ -151,12 +151,16 @@ pub enum ElementState {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Header {
-    name: String,
-    value: String
+    pub name: String,
+    pub value: String
 }
 
 impl From<Header> for (String, String) {
     fn from(Header { name, value }: Header) -> Self { (name, value) }
+}
+
+impl From<(String, String)> for Header {
+    fn from((k, v): (String, String)) -> Self { Self { name: k, value: v } }
 }
 
 #[derive(Debug, Serialize, PartialEq, Clone)]

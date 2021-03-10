@@ -4,8 +4,8 @@ use crate::imp::{
     prelude::*,
     response::Response,
     utils::{
-        ColorScheme, DocumentLoadState, FloatRect, Length, MouseButton, PdfMargins, ScreenshotType,
-        Viewport
+        ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
+        ScreenshotType, Viewport
     }
 };
 
@@ -227,6 +227,21 @@ impl Page {
         };
         let p = find_object!(self.context()?.lock().unwrap(), &guid, Page)?;
         Ok(Some(p))
+    }
+
+    pub(crate) async fn set_extra_http_headers<T>(&self, headers: T) -> ArcResult<()>
+    where
+        T: IntoIterator<Item = (String, String)>
+    {
+        #[derive(Serialize)]
+        struct Args {
+            headers: Vec<Header>
+        }
+        let args = Args {
+            headers: headers.into_iter().map(Header::from).collect()
+        };
+        let _ = send_message!(self, "setExtraHTTPHeaders", args);
+        Ok(())
     }
 }
 

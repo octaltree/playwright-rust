@@ -79,7 +79,12 @@ impl BrowserContext {
         upgrade(&self.inner)?.add_init_script(script).await
     }
 
-    // async fn set_extra_http_headers(&mut self) -> Result<(), Error> { unimplemented!() }
+    pub async fn set_extra_http_headers<T>(&mut self, headers: T) -> ArcResult<()>
+    where
+        T: IntoIterator<Item = (String, String)>
+    {
+        upgrade(&self.inner)?.set_extra_http_headers(headers).await
+    }
 
     // async fn expose_binding(&mut self) -> Result<(), Error> { unimplemented!() }
 

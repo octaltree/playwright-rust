@@ -2,7 +2,7 @@ use crate::imp::{
     core::*,
     page::Page,
     prelude::*,
-    utils::{Cookie, Geolocation, StorageState}
+    utils::{Cookie, Geolocation, Header, StorageState}
 };
 
 #[derive(Debug)]
@@ -118,10 +118,24 @@ impl BrowserContext {
         Ok(())
     }
 
+    pub(crate) async fn set_extra_http_headers<T>(&self, headers: T) -> ArcResult<()>
+    where
+        T: IntoIterator<Item = (String, String)>
+    {
+        #[derive(Serialize)]
+        struct Args {
+            headers: Vec<Header>
+        }
+        let args = Args {
+            headers: headers.into_iter().map(Header::from).collect()
+        };
+        let _ = send_message!(self, "setExtraHTTPHeaders", args);
+        Ok(())
+    }
+
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
     // TODO: def browser(self) -> Optional["Browser"]:
-    // TODO: async def set_extra_http_headers(self, headers: Dict[str, str]) -> None:
     // TODO: async def expose_binding(
     // TODO: async def expose_function(self, name: str, callback: Callable) -> None:
     // TODO: async def route(self, url: URLMatch, handler: RouteHandler) -> None:

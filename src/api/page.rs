@@ -97,6 +97,13 @@ impl Page {
     pub async fn opener(&mut self) -> ArcResult<Option<Page>> {
         Ok(upgrade(&self.inner)?.opener().await?.map(Page::new))
     }
+
+    pub async fn set_extra_http_headers<T>(&mut self, headers: T) -> ArcResult<()>
+    where
+        T: IntoIterator<Item = (String, String)>
+    {
+        upgrade(&self.inner)?.set_extra_http_headers(headers).await
+    }
 }
 
 macro_rules! is_checked {
