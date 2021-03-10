@@ -201,8 +201,8 @@ impl Context {
                     self.objects.remove(&msg.guid);
                     return Ok(());
                 }
-                let target = self.find_object(&msg.guid);
-                // TODO: object.channel.Emit(method, c.replaceGuidsWithChannels(msg.Params))
+                let target = self.objects.get(&msg.guid).ok_or(Error::ObjectNotFound)?;
+                target.handle_event(self, &msg.method, &msg.params);
             }
         }
         Ok(())

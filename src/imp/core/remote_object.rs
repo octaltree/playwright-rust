@@ -111,6 +111,8 @@ pub(crate) trait RemoteObject: Debug {
 
     fn guid(&self) -> &S<Guid> { &self.channel().guid }
     fn context(&self) -> Result<Arc<Mutex<Context>>, Error> { upgrade(&self.channel().ctx) }
+
+    fn handle_event(&self, _ctx: &Context, _method: &S<Method>, _params: &Map<String, Value>) {}
 }
 
 mod remote_enum {
@@ -154,10 +156,9 @@ mod remote_enum {
 
     remote_enum! {RemoteWeak, Weak}
 
-    impl RemoteArc {
-        pub(crate) fn downgrade(&self) -> RemoteWeak {
-            macro_rules! downgrade {
-            ($($t:ident),*) => {
+    macro_rules! downgrade {
+        ($($t:ident),*) => {
+            pub(crate) fn downgrade(&self) -> RemoteWeak {
                 match self {
                     $(
                         Self::$t(x) => RemoteWeak::$t(Arc::downgrade(x))
@@ -165,27 +166,48 @@ mod remote_enum {
                 }
             }
         }
-            downgrade!(
-                Dummy,
-                Root,
-                BrowserType,
-                Selectors,
-                Browser,
-                BrowserContext,
-                Page,
-                Frame,
-                Response,
-                Request,
-                Route,
-                WebSocket,
-                Worker,
-                Dialog,
-                Download,
-                ConsoleMessage,
-                JsHandle,
-                ElementHandle,
-                Playwright
-            )
+    }
+
+    macro_rules! handle_event {
+        ($($t:ident),*) => {
+            pub(crate) fn handle_event(&self, ctx: &Context, method: &S<Method>, params: &Map<String, Value>)  {
+                match self {
+                    $(
+                        Self::$t(x) => x.handle_event(ctx, method, params)
+                    ),*
+                }
+            }
+        }
+    }
+
+    macro_rules! methods {
+        ($($t:ident),*) => {
+            downgrade!{$($t),*}
+            handle_event!{$($t),*}
+        }
+    }
+
+    impl RemoteArc {
+        methods! {
+            Dummy,
+            Root,
+            BrowserType,
+            Selectors,
+            Browser,
+            BrowserContext,
+            Page,
+            Frame,
+            Response,
+            Request,
+            Route,
+            WebSocket,
+            Worker,
+            Dialog,
+            Download,
+            ConsoleMessage,
+            JsHandle,
+            ElementHandle,
+            Playwright
         }
 
         pub(crate) fn try_new(
