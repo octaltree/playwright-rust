@@ -24,6 +24,10 @@ macro_rules! is_checked {
 impl ElementHandle {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
+    pub(crate) fn guid(&self) -> Result<Str<Guid>, Error> {
+        Ok(upgrade(&self.inner)?.guid().to_owned())
+    }
+
     pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
         Ok(upgrade(&self.inner)?
             .query_selector(selector)

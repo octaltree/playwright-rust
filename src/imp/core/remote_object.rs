@@ -1,6 +1,6 @@
 use crate::imp::{core::*, impl_future::*, prelude::*};
 use serde_json::value::Value;
-use std::{any::Any, fmt::Debug, future::Future, pin::Pin, sync::TryLockError, task::Waker};
+use std::{fmt::Debug, future::Future, pin::Pin, sync::TryLockError, task::Waker};
 
 pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, Error> {
     w.upgrade().ok_or(Error::ObjectNotFound)
@@ -105,7 +105,7 @@ impl RemoteObject for RootObject {
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }
 
-pub(crate) trait RemoteObject: Any + Debug {
+pub(crate) trait RemoteObject: Debug {
     fn channel(&self) -> &ChannelOwner;
     fn channel_mut(&mut self) -> &mut ChannelOwner;
 

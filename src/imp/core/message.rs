@@ -84,7 +84,7 @@ pub struct ErrorMessage {
     pub(crate) stack: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct OnlyGuid {
     pub(crate) guid: Str<Guid>
 }

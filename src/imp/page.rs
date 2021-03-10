@@ -172,7 +172,19 @@ impl Page {
         self.mouse_click(args).await
     }
 
-    // pub(crate) async fn accessibility_snapshot(&self, args: AccessibilitySnapshoptArgs) {}
+    pub(crate) async fn accessibility_snapshot(
+        &self,
+        args: AccessibilitySnapshoptArgs
+    ) -> ArcResult<Option<AccessibilitySnapshoptResponse>> {
+        let v = send_message!(self, "accessibilitySnapshot", args);
+        let first = match first(&v) {
+            None => return Ok(None),
+            Some(x) => x
+        };
+        let res: AccessibilitySnapshoptResponse =
+            serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
+        Ok(Some(res))
+    }
 
     pub(crate) async fn bring_to_front(&self) -> ArcResult<()> {
         let _ = send_message!(self, "bringToFront", Map::new());
@@ -277,7 +289,19 @@ impl MouseClickArgs {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AccessibilitySnapshoptArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
-    interesting_only: Option<bool> // root: Option<Arc<ElementHandle>>
+    pub(crate) interesting_only: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) root: Option<OnlyGuid>
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessibilitySnapshoptResponse {
+    pub value_number: Option<f64>,
+    pub value_string: Option<String>,
+    pub checked: Option<String>, // "checked" / "unchecked"
+    pub pressed: Option<String>, // "pressed" / "released"
+    pub children: Vec<AccessibilitySnapshoptResponse>
 }
 
 impl BindingCall {
