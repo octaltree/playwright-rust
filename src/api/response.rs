@@ -1,6 +1,6 @@
 use crate::{
-    api::Request,
-    imp::{core::*, prelude::*, response::Response as Impl}
+    api::{Frame, Request},
+    imp::{core::*, prelude::*, response::Response as Impl, utils::Header}
 };
 
 pub struct Response {
@@ -30,4 +30,11 @@ impl Response {
     pub async fn body(&mut self) -> ArcResult<Vec<u8>> { upgrade(&self.inner)?.body().await }
 
     pub async fn text(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.text().await }
+
+    pub async fn headers(&mut self) -> ArcResult<Vec<Header>> {
+        upgrade(&self.inner)?.headers().await
+    }
+
+    // [`Response::request`]'s  [`Request::frame`]
+    pub fn frame(&self) -> Frame { self.request().frame() }
 }

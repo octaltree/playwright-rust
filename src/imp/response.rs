@@ -1,4 +1,4 @@
-use crate::imp::{core::*, prelude::*, request::Request};
+use crate::imp::{core::*, prelude::*, request::Request, utils::Header};
 
 #[derive(Debug)]
 pub(crate) struct Response {
@@ -52,7 +52,14 @@ impl Response {
 
     pub(crate) fn request(&self) -> Weak<Request> { self.request.clone() }
 
-    // TODO: headers
+    pub(crate) async fn headers(&self) -> ArcResult<Vec<Header>> {
+        let v = send_message!(self, "body", Map::new());
+        let first = first(&v).ok_or(Error::InvalidParams)?;
+        let headers: Vec<Header> =
+            serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
+        Ok(headers)
+    }
+
     // TODO: frame as shothand of request.frame
 }
 
