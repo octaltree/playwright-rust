@@ -18,7 +18,6 @@ pub(crate) struct Context {
     objects: HashMap<Str<Guid>, RemoteArc>,
     ctx: Wm<Context>,
     id: i32,
-    #[allow(clippy::type_complexity)]
     callbacks: HashMap<i32, WaitPlaces<WaitMessageResult>>,
     writer: Writer
 }
@@ -68,7 +67,10 @@ pub enum Error {
 pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;
 
 impl Drop for Connection {
-    fn drop(&mut self) { self.should_stop.store(true, Ordering::Relaxed); }
+    fn drop(&mut self) {
+        self.notify_closed();
+        self.should_stop.store(true, Ordering::Relaxed);
+    }
 }
 
 impl Connection {
@@ -119,6 +121,7 @@ impl Connection {
                         Err(TryLockError::WouldBlock) => continue,
                         Err(e) => Err(e).unwrap()
                     };
+                    // TODO: notify all callbacks if readder closed
                     match reader.try_read() {
                         Ok(Some(x)) => x,
                         Ok(None) => continue,
@@ -153,6 +156,13 @@ impl Connection {
     }
 
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
+
+    fn notify_closed(&mut self) {
+        let ctx = self.ctx.lock().unwrap();
+        for p in ctx.callbacks.iter().map(|(k, v)| v) {
+            Context::respond_wait(p, Err(Arc::new(Error::ReceiverClosed)));
+        }
+    }
 }
 
 impl Context {
@@ -179,23 +189,8 @@ impl Context {
     fn dispatch(&mut self, msg: Res) -> Result<(), Error> {
         match msg {
             Res::Result(msg) => {
-                let WaitPlaces { value, waker } =
-                    self.callbacks.get(&msg.id).ok_or(Error::CallbackNotFound)?;
-                let place = match value.upgrade() {
-                    Some(p) => p,
-                    None => return Ok(())
-                };
-                let waker = match waker.upgrade() {
-                    Some(x) => x,
-                    None => return Ok(())
-                };
-                *place.lock().unwrap() = Some(Ok(msg.body.map(Arc::new).map_err(Arc::new)));
-                let waker: &Option<Waker> = &waker.lock().unwrap();
-                let waker = match waker {
-                    Some(x) => x.clone(),
-                    None => return Ok(())
-                };
-                waker.wake();
+                let p = self.callbacks.get(&msg.id).ok_or(Error::CallbackNotFound)?;
+                Self::respond_wait(p, Ok(msg.body.map(Arc::new).map_err(Arc::new)));
                 return Ok(());
             }
             Res::Initial(msg) => {
@@ -213,6 +208,27 @@ impl Context {
             }
         }
         Ok(())
+    }
+
+    fn respond_wait(
+        WaitPlaces { value, waker }: &WaitPlaces<WaitMessageResult>,
+        result: WaitMessageResult
+    ) {
+        let place = match value.upgrade() {
+            Some(p) => p,
+            None => return
+        };
+        let waker = match waker.upgrade() {
+            Some(x) => x,
+            None => return
+        };
+        *place.lock().unwrap() = Some(result);
+        let waker: &Option<Waker> = &waker.lock().unwrap();
+        let waker = match waker {
+            Some(x) => x.clone(),
+            None => return
+        };
+        waker.wake();
     }
 
     fn create_remote_object(
