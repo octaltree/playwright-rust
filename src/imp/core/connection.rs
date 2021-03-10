@@ -145,7 +145,8 @@ impl Connection {
                         Ok(x) => x,
                         Err(e) => Err(e).unwrap()
                     };
-                    ctx.dispatch(response).unwrap()
+                    ctx.dispatch(response).unwrap();
+                    log::debug!("{:?}", ctx.objects.keys());
                 }
             }
             log::trace!("Done");
@@ -197,8 +198,9 @@ impl Context {
                     return Ok(());
                 }
                 if Method::is_dispose(&msg.method) {
-                    // TODO: dispose children and notify parent
-                    self.objects.remove(&msg.guid);
+                    if let Some(o) = self.objects.get(&msg.guid) {
+                        o.channel().dispose();
+                    }
                     return Ok(());
                 }
                 let target = self.objects.get(&msg.guid).ok_or(Error::ObjectNotFound)?;
@@ -248,6 +250,7 @@ impl Context {
             initializer
         );
         let r = RemoteArc::try_new(&typ, &self, c)?;
+        parent.channel().push_child(r.downgrade());
         self.objects.insert(guid, r);
         Ok(())
     }
@@ -255,6 +258,8 @@ impl Context {
     pub(in crate::imp) fn find_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
         self.objects.get(k).map(|r| r.downgrade())
     }
+
+    pub(in crate::imp) fn remove_object(&mut self, k: &S<Guid>) { self.objects.remove(k); }
 
     pub(in crate::imp::core) fn send_message(&mut self, r: RequestBody) -> Result<(), Error> {
         self.id += 1;

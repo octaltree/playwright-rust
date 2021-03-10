@@ -10,12 +10,15 @@ runtime_test!(hello, {
     let mut chromium = playwright.chromium();
     let mut browser = chromium.launcher().headless(true).launch().await.unwrap();
     let mut context = browser.context_builder().build().await.unwrap();
-    let mut page = context.new_page().await.unwrap();
-    page.goto_builder("https://example.com/")
-        .goto()
-        .await
-        .unwrap();
-    page.click_builder("a").click().await.unwrap();
+    {
+        let mut page = context.new_page().await.unwrap();
+        page.goto_builder("https://example.com/")
+            .goto()
+            .await
+            .unwrap();
+        page.click_builder("a").click().await.unwrap();
+    }
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 });
 
 runtime_test!(awesome, {

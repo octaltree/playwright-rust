@@ -17,13 +17,14 @@ where
     f(rc)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct ChannelOwner {
     pub(crate) ctx: Weak<Mutex<Context>>,
     pub(crate) parent: Option<RemoteWeak>,
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
-    pub(crate) initializer: Value
+    pub(crate) initializer: Value,
+    children: Mutex<Vec<RemoteWeak>>
 }
 
 impl ChannelOwner {
@@ -39,7 +40,8 @@ impl ChannelOwner {
             parent: Some(parent),
             typ,
             guid,
-            initializer
+            initializer,
+            children: Mutex::new(Vec::new())
         }
     }
 
@@ -49,7 +51,8 @@ impl ChannelOwner {
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),
-            initializer: Value::default()
+            initializer: Value::default(),
+            children: Mutex::default()
         }
     }
 
@@ -66,6 +69,45 @@ impl ChannelOwner {
         let ctx = upgrade(&self.ctx)?;
         ctx.lock().unwrap().send_message(r)?;
         Ok(wait)
+    }
+
+    pub(crate) fn children(&self) -> Vec<RemoteWeak> { self.children.lock().unwrap().to_vec() }
+
+    pub(crate) fn push_child(&self, c: RemoteWeak) {
+        let children = &mut self.children.lock().unwrap();
+        children.push(c);
+    }
+
+    pub(crate) fn dispose(&self) {
+        let ctx = &mut match self.ctx.upgrade() {
+            None => return,
+            Some(ctx) => ctx
+        };
+        let ctx = &mut ctx.lock().unwrap();
+        let children = self.children();
+        if children.is_empty() {
+            ctx.remove_object(&self.guid);
+            return;
+        }
+        let mut stack: Vec<RemoteWeak> = children;
+        while !stack.is_empty() {
+            let last = stack.last().unwrap();
+            let last = match last.upgrade() {
+                None => {
+                    stack.pop();
+                    continue;
+                }
+                Some(x) => x
+            };
+            let mut children = last.channel().children();
+            if children.is_empty() {
+                ctx.remove_object(&last.channel().guid);
+                stack.pop();
+                continue;
+            }
+            stack.append(&mut children);
+        }
+        ctx.remove_object(&self.guid);
     }
 }
 
@@ -180,10 +222,59 @@ mod remote_enum {
         }
     }
 
+    macro_rules! channel {
+        ($($t:ident),*) => {
+            pub(crate) fn channel(&self) -> &ChannelOwner {
+                match self {
+                    $(
+                        Self::$t(x) => x.channel()
+                    ),*
+                }
+            }
+        }
+    }
+
     macro_rules! methods {
         ($($t:ident),*) => {
             downgrade!{$($t),*}
             handle_event!{$($t),*}
+            channel!{$($t),*}
+        }
+    }
+
+    macro_rules! upgrade {
+        ($($t:ident),*) => {
+            pub(crate) fn upgrade(&self) -> Option<RemoteArc> {
+                match self {
+                    $(
+                        Self::$t(x) => x.upgrade().map(RemoteArc::$t)
+                    ),*
+                }
+            }
+        }
+    }
+
+    impl RemoteWeak {
+        upgrade! {
+            Dummy,
+            Root,
+            BrowserType,
+            Selectors,
+            Browser,
+            BrowserContext,
+            Page,
+            Frame,
+            Response,
+            Request,
+            Route,
+            WebSocket,
+            Worker,
+            Dialog,
+            Download,
+            ConsoleMessage,
+            JsHandle,
+            ElementHandle,
+            Playwright
         }
     }
 
