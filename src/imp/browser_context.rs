@@ -1,4 +1,5 @@
 use crate::imp::{
+    browser::Browser,
     core::*,
     page::Page,
     prelude::*,
@@ -13,7 +14,8 @@ pub(crate) struct BrowserContext {
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
-    pages: Vec<Weak<Page>>
+    pages: Vec<Weak<Page>>,
+    browser: Option<Weak<Browser>>
 }
 
 impl BrowserContext {
@@ -22,8 +24,6 @@ impl BrowserContext {
         let var = Mutex::new(Variable::default());
         Ok(Self { channel, var })
     }
-
-    pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
 
     pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
         let res = send_message!(self, "newPage", Map::new());
@@ -146,8 +146,16 @@ impl BrowserContext {
     // TODO: def expect_page(
 }
 
-// Use mutable Variable
-impl BrowserContext {}
+// mutable
+impl BrowserContext {
+    // TODO: set on created
+    pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
+
+    // TODO: set on created
+    pub(crate) fn browser(&self) -> Option<Weak<Browser>> {
+        self.var.lock().unwrap().browser.clone()
+    }
+}
 
 impl RemoteObject for BrowserContext {
     fn channel(&self) -> &ChannelOwner { &self.channel }

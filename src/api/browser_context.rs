@@ -1,5 +1,5 @@
 use crate::{
-    api::Page,
+    api::{Browser, Page},
     imp::{
         browser_context::BrowserContext as Impl,
         core::*,
@@ -23,6 +23,10 @@ impl BrowserContext {
             .cloned()
             .map(Page::new)
             .collect())
+    }
+
+    pub fn browser(&self) -> Result<Option<Browser>, Error> {
+        Ok(upgrade(&self.inner)?.browser().map(Browser::new))
     }
 
     pub async fn new_page(&mut self) -> Result<Page, Arc<Error>> {
