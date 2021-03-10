@@ -40,8 +40,6 @@ pub enum Error {
     ReceiverClosed,
     #[error("Invalid message")]
     InvalidParams,
-    #[error("Parent object not found")]
-    ParentNotFound,
     #[error("Object not found")]
     ObjectNotFound,
     #[error(transparent)]
@@ -199,10 +197,11 @@ impl Context {
                     return Ok(());
                 }
                 if Method::is_dispose(&msg.method) {
-                    self.objects.remove(&msg.guid);
                     // TODO: dispose children and notify parent
+                    self.objects.remove(&msg.guid);
                     return Ok(());
                 }
+                let target = self.objects.get(&msg.guid);
                 // TODO: object.channel.Emit(method, c.replaceGuidsWithChannels(msg.Params))
             }
         }
@@ -240,7 +239,7 @@ impl Context {
             guid,
             initializer
         } = serde_json::from_value(params.into())?;
-        let parent = self.objects.get(parent).ok_or(Error::ParentNotFound)?;
+        let parent = self.objects.get(parent).ok_or(Error::ObjectNotFound)?;
         let c = ChannelOwner::new(
             self.ctx.clone(),
             parent.downgrade(),
