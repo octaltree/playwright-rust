@@ -1,4 +1,4 @@
-use crate::imp::{core::*, prelude::*, request::Request};
+use crate::imp::{core::*, prelude::*, request::Request, utils::Header};
 
 #[derive(Debug)]
 pub(crate) struct Route {
@@ -24,7 +24,15 @@ impl Route {
         Ok(())
     }
 
-    // pub(crate) async fn fulfill(&self, args: FullfillArgs) -> ArcResult<()> { unimplemented!() }
+    pub(crate) async fn fulfill(&self, args: FulfillArgs<'_, '_>) -> ArcResult<()> {
+        let _ = send_message!(self, "fulfill", args);
+        Ok(())
+    }
+
+    pub(crate) async fn r#continue(&self, args: ContinueArgs<'_, '_, '_>) -> ArcResult<()> {
+        let _ = send_message!(self, "fulfill", args);
+        Ok(())
+    }
 }
 
 impl RemoteObject for Route {
@@ -38,27 +46,40 @@ struct Initializer {
     request: OnlyGuid
 }
 
-//#[derive(Serialize)]
-//#[serde(rename_all = "camelCase")]
-// pub(crate) struct FullfillArgs<'a, 'b> {
-//    body: &'a str,
-//    is_base64: bool,
-//    #[serde(skip_serializing_if = "Option::is_none")]
-//    pub(crate) status: Option<i32>,
-//    #[serde(skip_serializing_if = "Option::is_none")]
-//    pub(crate) headers: Option<HashMap<String, String>>,
-//    #[serde(skip_serializing_if = "Option::is_none")]
-//    pub(crate) content_type: Option<&'b str>
-//}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct FulfillArgs<'a, 'b> {
+    body: &'a str,
+    is_base64: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) status: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) headers: Option<Vec<Header>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) content_type: Option<&'b str>
+}
 
-// impl<'a, 'b> FullfillArgs<'a, 'b> {
-//    pub(crate) fn new(body: &'a str, is_base64: bool) -> Self {
-//        Self {
-//            body,
-//            is_base64,
-//            status: None,
-//            headers: None,
-//            content_type: None
-//        }
-//    }
-//}
+impl<'a, 'b> FulfillArgs<'a, 'b> {
+    pub(crate) fn new(body: &'a str, is_base64: bool) -> Self {
+        Self {
+            body,
+            is_base64,
+            status: None,
+            headers: None,
+            content_type: None
+        }
+    }
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ContinueArgs<'a, 'b, 'c> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) url: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) method: Option<&'b str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) headers: Option<Vec<Header>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) post_data: Option<&'c str>
+}
