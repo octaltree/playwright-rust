@@ -32,7 +32,7 @@ macro_rules! navigation {
                 Some(g) => g,
                 None => return Ok(None)
             };
-            let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+            let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
             Ok(Some(r))
         }
     };
@@ -68,7 +68,7 @@ impl Page {
             main_frame: OnlyGuid { guid },
             viewport
         } = serde_json::from_value(channel.initializer.clone())?;
-        let main_frame = find_object!(ctx, &guid, Frame)?;
+        let main_frame = get_object!(ctx, &guid, Frame)?;
         Ok(Self {
             channel,
             viewport,
@@ -237,7 +237,7 @@ impl Page {
             Some(g) => g,
             None => return Ok(None)
         };
-        let p = find_object!(self.context()?.lock().unwrap(), &guid, Page)?;
+        let p = get_object!(self.context()?.lock().unwrap(), &guid, Page)?;
         Ok(Some(p))
     }
 

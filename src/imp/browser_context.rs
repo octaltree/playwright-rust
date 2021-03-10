@@ -28,7 +28,7 @@ impl BrowserContext {
     pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
         let res = send_message!(self, "newPage", Map::new());
         let guid = only_guid(&res)?;
-        let p = find_object!(self.context()?.lock().unwrap(), &guid, Page)?;
+        let p = get_object!(self.context()?.lock().unwrap(), &guid, Page)?;
         Ok(p)
     }
 

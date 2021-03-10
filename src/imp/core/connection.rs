@@ -201,7 +201,7 @@ impl Context {
                     self.objects.remove(&msg.guid);
                     return Ok(());
                 }
-                let target = self.objects.get(&msg.guid);
+                let target = self.find_object(&msg.guid);
                 // TODO: object.channel.Emit(method, c.replaceGuidsWithChannels(msg.Params))
             }
         }
@@ -252,7 +252,7 @@ impl Context {
         Ok(())
     }
 
-    pub(in crate::imp) fn get_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
+    pub(in crate::imp) fn find_object(&self, k: &S<Guid>) -> Option<RemoteWeak> {
         self.objects.get(k).map(|r| r.downgrade())
     }
 

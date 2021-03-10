@@ -39,7 +39,7 @@ impl Browser {
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "newContext", args);
         let guid = only_guid(&res)?;
-        let c = find_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+        let c = get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         self.contexts.lock().unwrap().push(c.clone());
         // TODO
         // context._browser = self

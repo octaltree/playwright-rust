@@ -17,7 +17,7 @@ impl Response {
             status_text,
             request
         } = serde_json::from_value(channel.initializer.clone())?;
-        let request = find_object!(ctx, &request.guid, Request)?;
+        let request = get_object!(ctx, &request.guid, Request)?;
         Ok(Self {
             channel,
             url,

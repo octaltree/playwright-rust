@@ -37,7 +37,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -54,7 +54,7 @@ impl ElementHandle {
         let es = elements
             .into_iter()
             .map(|OnlyGuid { guid }| {
-                find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
+                get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
             })
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
@@ -85,7 +85,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let f = find_object!(self.context()?.lock().unwrap(), &guid, Frame)?;
+        let f = get_object!(self.context()?.lock().unwrap(), &guid, Frame)?;
         Ok(Some(f))
     }
 
@@ -95,7 +95,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let f = find_object!(self.context()?.lock().unwrap(), &guid, Frame)?;
+        let f = get_object!(self.context()?.lock().unwrap(), &guid, Frame)?;
         Ok(Some(f))
     }
 
@@ -227,7 +227,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(Some(e))
     }
 }

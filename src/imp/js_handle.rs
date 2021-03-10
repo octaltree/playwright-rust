@@ -23,7 +23,7 @@ impl JsHandle {
         args.insert("name", name);
         let v = send_message!(self, "getProperty", args);
         let guid = only_guid(&v)?;
-        let j = find_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        let j = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
         Ok(j)
     }
 
@@ -39,8 +39,7 @@ impl JsHandle {
                      name,
                      value: OnlyGuid { guid }
                  }| {
-                    find_object!(self.context()?.lock().unwrap(), &guid, JsHandle)
-                        .map(|o| (name, o))
+                    get_object!(self.context()?.lock().unwrap(), &guid, JsHandle).map(|o| (name, o))
                 }
             )
             .collect::<Result<HashMap<_, _>, Error>>()?;

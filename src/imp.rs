@@ -33,9 +33,9 @@ pub(crate) mod prelude {
 mod macros {
     #[doc(hidden)]
     #[macro_export]
-    macro_rules! find_object {
+    macro_rules! get_object {
         ($c:expr, $guid:expr, $t:ident) => {
-            match $c.get_object($guid) {
+            match $c.find_object($guid) {
                 Some(RemoteWeak::$t(x)) => Ok(x),
                 _ => Err(Error::ObjectNotFound)
             }

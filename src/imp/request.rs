@@ -26,9 +26,9 @@ impl Request {
             redirected_from
         } = serde_json::from_value(channel.initializer.clone())?;
         let headers: HashMap<_, _> = headers.into_iter().map(Into::<(_, _)>::into).collect();
-        let frame = find_object!(ctx, &frame.guid, Frame)?;
+        let frame = get_object!(ctx, &frame.guid, Frame)?;
         let redirected_from =
-            match redirected_from.map(|OnlyGuid { guid }| find_object!(ctx, &guid, Request)) {
+            match redirected_from.map(|OnlyGuid { guid }| get_object!(ctx, &guid, Request)) {
                 None => None,
                 Some(Ok(x)) => Some(x),
                 Some(Err(e)) => return Err(e)
@@ -76,7 +76,7 @@ impl Request {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+        let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
         Ok(Some(r))
     }
 }

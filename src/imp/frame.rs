@@ -47,7 +47,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = find_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+        let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
         Ok(Some(r))
     }
 
@@ -143,7 +143,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -160,7 +160,7 @@ impl Frame {
         let es = elements
             .into_iter()
             .map(|OnlyGuid { guid }| {
-                find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
+                get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
             })
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
@@ -169,7 +169,7 @@ impl Frame {
     pub(crate) async fn frame_element(&self) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "frameElement", Map::new());
         let guid = only_guid(&v)?;
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -182,7 +182,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -241,7 +241,7 @@ impl Frame {
     ) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "addScriptTag", args);
         let guid = only_guid(&v)?;
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -257,7 +257,7 @@ impl Frame {
         }
         let v = send_message!(self, "addStyleTag", args);
         let guid = only_guid(&v)?;
-        let e = find_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
     }
 }

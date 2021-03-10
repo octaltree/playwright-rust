@@ -9,7 +9,7 @@ pub(crate) struct Route {
 impl Route {
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { request } = serde_json::from_value(channel.initializer.clone())?;
-        let request = find_object!(ctx, &request.guid, Request)?;
+        let request = get_object!(ctx, &request.guid, Request)?;
         Ok(Self { channel, request })
     }
 

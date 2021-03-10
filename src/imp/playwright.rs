@@ -18,10 +18,10 @@ pub(crate) struct Playwright {
 impl Playwright {
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let i: Initializer = serde_json::from_value(channel.initializer.clone())?;
-        let chromium = find_object!(ctx, &i.chromium.guid, BrowserType)?;
-        let firefox = find_object!(ctx, &i.firefox.guid, BrowserType)?;
-        let webkit = find_object!(ctx, &i.webkit.guid, BrowserType)?;
-        let selectors = find_object!(ctx, &i.selectors.guid, Selectors)?;
+        let chromium = get_object!(ctx, &i.chromium.guid, BrowserType)?;
+        let firefox = get_object!(ctx, &i.firefox.guid, BrowserType)?;
+        let webkit = get_object!(ctx, &i.webkit.guid, BrowserType)?;
+        let selectors = get_object!(ctx, &i.selectors.guid, Selectors)?;
         let devices = i.device_descriptors;
         Ok(Self {
             channel,
@@ -82,7 +82,7 @@ impl Future for WaitInitialObject {
             }
             Err(e) => Err(e).unwrap()
         };
-        match find_object!(c, i, Playwright) {
+        match get_object!(c, i, Playwright) {
             Ok(p) => Poll::Ready(Ok(p)),
             Err(_) => {
                 cx.waker().wake_by_ref();
