@@ -1,5 +1,5 @@
 use playwright::{
-    api::{Browser, BrowserContext, BrowserType, Geolocation, Response},
+    api::{Browser, BrowserContext, BrowserType, Response},
     *
 };
 

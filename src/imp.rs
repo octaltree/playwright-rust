@@ -2,7 +2,6 @@ pub(crate) mod impl_future {
     pub use std::{future::Future, pin::Pin, task};
 }
 pub(crate) mod prelude {
-    pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
     pub use serde::{Deserialize, Serialize};
     pub use serde_json::{
         map::Map,
