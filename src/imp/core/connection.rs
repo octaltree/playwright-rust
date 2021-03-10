@@ -121,7 +121,6 @@ impl Connection {
                         Err(TryLockError::WouldBlock) => continue,
                         Err(e) => Err(e).unwrap()
                     };
-                    // TODO: notify all callbacks if readder closed
                     match reader.try_read() {
                         Ok(Some(x)) => x,
                         Ok(None) => continue,
