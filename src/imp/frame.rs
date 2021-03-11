@@ -260,6 +260,41 @@ impl Frame {
         let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
     }
+
+    pub(crate) async fn evaluate<U>(&self, expression: &str) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        self.evaluate_with_arg::<(), U>(expression, None).await
+    }
+
+    pub(crate) async fn evaluate_with_arg<T, U>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            expression: &'a str,
+            arg: Argument
+        }
+        // serialize pw json
+        let mut value = Map::new();
+        value.insert("v".into(), "undefined".into());
+        let mut arg = Argument {
+            value,
+            handles: Vec::new()
+        };
+        let args = Args { expression, arg };
+        let v = send_message!(self, "evaluateExpression", args);
+        // deserialize pw json
+        dbg!(v);
+        unimplemented!()
+    }
 }
 
 #[derive(Serialize)]
@@ -534,4 +569,28 @@ impl<'a, 'b, 'c> AddScriptTagArgs<'a, 'b, 'c> {
             r#type: None
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::imp::{browser::*, browser_type::*, playwright::Playwright};
+
+    crate::runtime_test!(evaluate, {
+        let driver = Driver::install().unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
+        let p = p.upgrade().unwrap();
+        let chromium = p.chromium().upgrade().unwrap();
+        let b = chromium.launch(LaunchArgs::default()).await.unwrap();
+        let b = b.upgrade().unwrap();
+        let c = b.new_context(NewContextArgs::default()).await.unwrap();
+        let c = c.upgrade().unwrap();
+        let p = c.new_page().await.unwrap();
+        let p = p.upgrade().unwrap();
+        let f = p.main_frame().upgrade().unwrap();
+        f.evaluate::<()>("function(){ return location.href; }")
+            .await
+            .unwrap();
+    });
 }

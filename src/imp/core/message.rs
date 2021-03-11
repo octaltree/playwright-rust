@@ -168,6 +168,12 @@ pub(crate) fn maybe_only_str(v: &Value) -> Result<Option<&str>, Error> {
     Ok(Some(s))
 }
 
+#[derive(Debug, Serialize)]
+pub(crate) struct Argument {
+    pub(crate) value: Map<String, Value>,
+    pub(crate) handles: Vec<OnlyGuid>
+}
+
 // pub(crate) fn parse_value(v: &Value) -> Result<Value, ()> {
 //    if let Value::Object(v) = v {
 //        if v.contains_key("v") {
