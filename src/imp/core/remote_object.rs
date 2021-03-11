@@ -122,7 +122,14 @@ pub(crate) trait RemoteObject: Debug {
     fn guid(&self) -> &S<Guid> { &self.channel().guid }
     fn context(&self) -> Result<Arc<Mutex<Context>>, Error> { upgrade(&self.channel().ctx) }
 
-    fn handle_event(&self, _ctx: &Context, _method: &S<Method>, _params: &Map<String, Value>) {}
+    fn handle_event(
+        &self,
+        _ctx: &Context,
+        _method: &S<Method>,
+        _params: &Map<String, Value>
+    ) -> Result<(), Error> {
+        Ok(())
+    }
 }
 
 mod remote_enum {
@@ -180,7 +187,7 @@ mod remote_enum {
 
     macro_rules! handle_event {
         ($($t:ident),*) => {
-            pub(crate) fn handle_event(&self, ctx: &Context, method: &S<Method>, params: &Map<String, Value>)  {
+            pub(crate) fn handle_event(&self, ctx: &Context, method: &S<Method>, params: &Map<String, Value>) -> Result<(), Error> {
                 match self {
                     $(
                         Self::$t(x) => x.handle_event(ctx, method, params)

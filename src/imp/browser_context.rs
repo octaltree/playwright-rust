@@ -160,6 +160,15 @@ impl BrowserContext {
 impl RemoteObject for BrowserContext {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+
+    fn handle_event(
+        &self,
+        ctx: &Context,
+        method: &S<Method>,
+        params: &Map<String, Value>
+    ) -> Result<(), Error> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize)]

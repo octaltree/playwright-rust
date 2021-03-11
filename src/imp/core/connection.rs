@@ -108,58 +108,63 @@ impl Connection {
             let c = c2;
             let r = r2;
             let s = s2;
-            loop {
-                let response = {
-                    let r = match r.upgrade() {
-                        Some(x) => x,
-                        None => break
+            let status = (|| -> Result<(), Error> {
+                loop {
+                    let response = {
+                        let r = match r.upgrade() {
+                            Some(x) => x,
+                            None => break
+                        };
+                        let mut reader = match r.try_lock() {
+                            Ok(x) => x,
+                            Err(TryLockError::WouldBlock) => continue,
+                            Err(e) => Err(e).unwrap()
+                        };
+                        match reader.try_read()? {
+                            Some(x) => x,
+                            None => continue
+                        }
                     };
-                    let mut reader = match r.try_lock() {
-                        Ok(x) => x,
-                        Err(TryLockError::WouldBlock) => continue,
-                        Err(e) => Err(e).unwrap()
-                    };
-                    match reader.try_read() {
-                        Ok(Some(x)) => x,
-                        Ok(None) => continue,
-                        Err(e) => Err(e).unwrap()
+                    {
+                        let s = match s.upgrade() {
+                            Some(x) => x,
+                            None => break
+                        };
+                        let should_stop = s.load(Ordering::Relaxed);
+                        if should_stop {
+                            break;
+                        }
                     }
-                };
-                {
-                    let s = match s.upgrade() {
-                        Some(x) => x,
-                        None => break
-                    };
-                    let should_stop = s.load(Ordering::Relaxed);
-                    if should_stop {
-                        break;
+                    // dispatch
+                    {
+                        let c = match c.upgrade() {
+                            Some(x) => x,
+                            None => break
+                        };
+                        let mut ctx = c.lock().unwrap();
+                        ctx.dispatch(response)?;
+                        log::debug!("{:?}", ctx.objects.keys());
                     }
                 }
-                // dispatch
-                {
-                    let c = match c.upgrade() {
-                        Some(x) => x,
-                        None => break
-                    };
-                    let mut ctx = match c.lock() {
-                        Ok(x) => x,
-                        Err(e) => Err(e).unwrap()
-                    };
-                    ctx.dispatch(response).unwrap();
-                    log::debug!("{:?}", ctx.objects.keys());
+                Ok(())
+            })();
+            if status.is_ok() {
+                log::trace!("Done");
+            } else {
+                log::trace!("Failed");
+                if let Some(c) = c.upgrade() {
+                    let mut ctx = c.lock().unwrap();
+                    ctx.notify_closed();
                 }
             }
-            log::trace!("Done");
         });
     }
 
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
 
     fn notify_closed(&mut self) {
-        let ctx = self.ctx.lock().unwrap();
-        for p in ctx.callbacks.iter().map(|(k, v)| v) {
-            Context::respond_wait(p, Err(Arc::new(Error::ReceiverClosed)));
-        }
+        let ctx = &mut self.ctx.lock().unwrap();
+        ctx.notify_closed();
     }
 }
 
@@ -184,6 +189,13 @@ impl Context {
         am
     }
 
+    fn notify_closed(&mut self) {
+        for p in self.callbacks.iter().map(|(k, v)| v) {
+            Context::respond_wait(p, Err(Arc::new(Error::ReceiverClosed)));
+        }
+        self.objects = HashMap::new();
+    }
+
     fn dispatch(&mut self, msg: Res) -> Result<(), Error> {
         match msg {
             Res::Result(msg) => {
@@ -202,7 +214,7 @@ impl Context {
                     return Ok(());
                 }
                 let target = self.objects.get(&msg.guid).ok_or(Error::ObjectNotFound)?;
-                target.handle_event(self, &msg.method, &msg.params);
+                target.handle_event(self, &msg.method, &msg.params)?;
             }
         }
         Ok(())
