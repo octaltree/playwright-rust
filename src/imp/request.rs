@@ -83,9 +83,9 @@ impl Request {
 
 // mutable
 impl Request {
-    // TODO: redirected_to
-    // TODO: failure
-    // TODO: timing
+    // redirected_to
+    // failure
+    // timing
 }
 
 impl RemoteObject for Request {

@@ -190,7 +190,7 @@ impl Context {
     }
 
     fn notify_closed(&mut self) {
-        for p in self.callbacks.iter().map(|(k, v)| v) {
+        for p in self.callbacks.iter().map(|(_, v)| v) {
             Context::respond_wait(p, Err(Arc::new(Error::ReceiverClosed)));
         }
         self.objects = HashMap::new();
@@ -326,7 +326,7 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
-    use crate::imp::{core::*, prelude::*};
+    use crate::imp::core::*;
 
     crate::runtime_test!(start, {
         let driver = Driver::install().unwrap();

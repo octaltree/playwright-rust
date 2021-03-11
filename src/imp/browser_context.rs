@@ -141,24 +141,40 @@ impl BrowserContext {
         Ok(())
     }
 
-    // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
-    // TODO: def set_default_timeout(self, timeout: float) -> None:
-    // TODO: async def expose_binding(
-    // TODO: async def expose_function(self, name: str, callback: Callable) -> None:
-    // TODO: async def route(self, url: URLMatch, handler: RouteHandler) -> None:
-    // TODO: async def unroute(
-    // TODO: def expect_event(
-    // TODO: async def close(self) -> None:
-    // TODO: async def wait_for_event(
-    // TODO: def expect_page(
+    // def set_default_navigation_timeout(self, timeout: float) -> None:
+    // def set_default_timeout(self, timeout: float) -> None:
+    // async def expose_binding(
+    // async def expose_function(self, name: str, callback: Callable) -> None:
+    // async def route(self, url: URLMatch, handler: RouteHandler) -> None:
+    // async def unroute(
+    // def expect_event(
+    // async def close(self) -> None:
+    // async def wait_for_event(
+    // def expect_page(
 
     pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.browser.clone() }
 }
 
 // mutable
 impl BrowserContext {
-    // TODO: set on created
     pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
+
+    pub(super) fn push_page(&self, p: Weak<Page>) { self.var.lock().unwrap().pages.push(p); }
+
+    pub(super) fn remove_page(&self, p: &Weak<Page>) {
+        let pages = &mut self.var.lock().unwrap().pages;
+        let i = match pages
+            .iter()
+            .zip(0usize..)
+            .find(|(v, _)| v.ptr_eq(p))
+            .map(|(_, i)| i)
+        {
+            None => return,
+            Some(i) => i
+        };
+        pages.remove(i);
+    }
+
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let browser = match self.browser().and_then(|b| b.upgrade()) {
             None => return Ok(()),
@@ -182,16 +198,12 @@ impl RemoteObject for BrowserContext {
     ) -> Result<(), Error> {
         match method.as_str() {
             "page" => {
-                // TODO: emit event
                 let first = first_object(params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 let p = get_object!(ctx, &guid, Page)?;
-                self.var.lock().unwrap().pages.push(p);
+                self.push_page(p);
             }
-            "route" => {}
-            "bindingCall" => {}
             "close" => {
-                // TODO: emit event
                 self.on_close(ctx)?;
             }
             _ => {}
@@ -207,7 +219,7 @@ struct Initializer {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::imp::{browser::*, browser_type::*, core::*, playwright::Playwright};
+    use crate::imp::{browser::*, browser_type::*, playwright::Playwright};
 
     crate::runtime_test!(storage_state, {
         let driver = Driver::install().unwrap();

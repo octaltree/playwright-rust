@@ -59,8 +59,6 @@ impl Response {
             serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         Ok(headers)
     }
-
-    // TODO: frame as shothand of request.frame
 }
 
 impl RemoteObject for Response {

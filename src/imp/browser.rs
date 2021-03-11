@@ -36,7 +36,7 @@ impl Browser {
         Ok(())
     }
 
-    // TODO: Responds newtype `OwnerPage` of `SinglePageBrowserContext`.
+    // Responds newtype `OwnerPage` of `SinglePageBrowserContext`.
     // There are different behavior in BrowserContext::new_page
     // pub(crate) async fn new_page(
     //    &self,
@@ -82,7 +82,7 @@ impl Browser {
 
     fn register_new_context(&self, c: Weak<BrowserContext>) -> Result<(), Arc<Error>> {
         self.push_context(c);
-        // TODO
+        // TODO: options
         // let this = get_object!(self.context()?.lock().unwrap(), &self.guid(), Browser)?;
         // let bc = upgrade(&c)?;
         // bc._options = params
@@ -100,9 +100,7 @@ impl RemoteObject for Browser {
         method: &S<Method>,
         params: &Map<String, Value>
     ) -> Result<(), Error> {
-        if method == S::validate("close").unwrap() {
-            // TODO: emit event
-        }
+        if method == S::validate("close").unwrap() {}
         Ok(())
     }
 }
@@ -175,7 +173,7 @@ pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::imp::{browser_type::*, core::*, playwright::Playwright};
+    use crate::imp::{browser_type::*, playwright::Playwright};
 
     crate::runtime_test!(new_context, {
         let driver = Driver::install().unwrap();

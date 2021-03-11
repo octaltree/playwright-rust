@@ -31,7 +31,6 @@ runtime_test!(awesome, {
     //// let _ = p.main_frame().title().await.unwrap();
     let mut a = p.query_selector("a").await.unwrap().unwrap();
     let _href = a.get_attribute("href").await.unwrap();
-    b.close().await;
     // dbg!(v);
     // p.go_back_builder().go_back().await.unwrap();
 });

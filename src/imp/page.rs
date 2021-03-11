@@ -267,7 +267,37 @@ impl Page {
 }
 
 // mutable
-impl Page {}
+impl Page {
+    fn on_close(&self, ctx: &Context) -> Result<(), Error> {
+        let bc = match self.browser_context().upgrade() {
+            None => return Ok(()),
+            Some(b) => b
+        };
+        let this = get_object!(ctx, &self.guid(), Page)?;
+        bc.remove_page(&this);
+        Ok(())
+    }
+}
+
+impl RemoteObject for Page {
+    fn channel(&self) -> &ChannelOwner { &self.channel }
+    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+
+    fn handle_event(
+        &self,
+        ctx: &Context,
+        method: &S<Method>,
+        params: &Map<String, Value>
+    ) -> Result<(), Error> {
+        match method.as_str() {
+            "close" => {
+                self.on_close(ctx)?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -315,11 +345,6 @@ pub struct AccessibilitySnapshoptResponse {
 
 impl BindingCall {
     pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
-}
-
-impl RemoteObject for Page {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }
 
 impl RemoteObject for BindingCall {
