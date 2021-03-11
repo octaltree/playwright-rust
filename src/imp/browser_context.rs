@@ -9,20 +9,28 @@ use crate::imp::{
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
     channel: ChannelOwner,
+    browser: Option<Weak<Browser>>,
     var: Mutex<Variable>
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
-    pages: Vec<Weak<Page>>,
-    browser: Option<Weak<Browser>>
+    pages: Vec<Weak<Page>>
 }
 
 impl BrowserContext {
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
+        let browser = match &channel.parent {
+            Some(RemoteWeak::Browser(b)) => Some(b.clone()),
+            _ => None
+        };
         let var = Mutex::new(Variable::default());
-        Ok(Self { channel, var })
+        Ok(Self {
+            channel,
+            var,
+            browser
+        })
     }
 
     pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
@@ -135,7 +143,6 @@ impl BrowserContext {
 
     // TODO: def set_default_navigation_timeout(self, timeout: float) -> None:
     // TODO: def set_default_timeout(self, timeout: float) -> None:
-    // TODO: def browser(self) -> Optional["Browser"]:
     // TODO: async def expose_binding(
     // TODO: async def expose_function(self, name: str, callback: Callable) -> None:
     // TODO: async def route(self, url: URLMatch, handler: RouteHandler) -> None:
@@ -144,28 +151,16 @@ impl BrowserContext {
     // TODO: async def close(self) -> None:
     // TODO: async def wait_for_event(
     // TODO: def expect_page(
+
+    pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.browser.clone() }
 }
 
 // mutable
 impl BrowserContext {
     // TODO: set on created
     pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
-
-    // TODO: set on created
-    pub(crate) fn browser(&self) -> Option<Weak<Browser>> {
-        self.var.lock().unwrap().browser.clone()
-    }
-
-    pub(super) fn set_browser(&self, b: Weak<Browser>) {
-        self.var.lock().unwrap().browser = Some(b);
-    }
-
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
-        let b = match self.browser() {
-            None => return Ok(()),
-            Some(b) => b
-        };
-        let browser = match b.upgrade() {
+        let browser = match self.browser().and_then(|b| b.upgrade()) {
             None => return Ok(()),
             Some(b) => b
         };

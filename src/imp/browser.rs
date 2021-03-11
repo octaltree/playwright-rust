@@ -81,12 +81,11 @@ impl Browser {
     }
 
     fn register_new_context(&self, c: Weak<BrowserContext>) -> Result<(), Arc<Error>> {
-        let this = get_object!(self.context()?.lock().unwrap(), &self.guid(), Browser)?;
-        let bc = upgrade(&c)?;
-        bc.set_browser(this);
         self.push_context(c);
         // TODO
-        // context._options = params
+        // let this = get_object!(self.context()?.lock().unwrap(), &self.guid(), Browser)?;
+        // let bc = upgrade(&c)?;
+        // bc._options = params
         Ok(())
     }
 }
