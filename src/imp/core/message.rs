@@ -126,6 +126,10 @@ impl Validator for ObjectType {
 
 pub(crate) fn first(v: &Value) -> Option<&Value> {
     let m: &Map<String, Value> = v.as_object()?;
+    first_object(m)
+}
+
+pub(crate) fn first_object(m: &Map<String, Value>) -> Option<&Value> {
     if m.len() != 1 {
         return None;
     }

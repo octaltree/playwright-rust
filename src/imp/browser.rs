@@ -10,7 +10,12 @@ use crate::imp::{
 pub(crate) struct Browser {
     channel: ChannelOwner,
     version: String,
-    contexts: Mutex<Vec<Weak<BrowserContext>>>
+    var: Mutex<Variable>
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct Variable {
+    contexts: Vec<Weak<BrowserContext>>
 }
 
 impl Browser {
@@ -19,32 +24,16 @@ impl Browser {
         Ok(Self {
             channel,
             version,
-            contexts: Mutex::new(Vec::new())
+            var: Mutex::new(Variable {
+                contexts: Vec::new()
+            })
         })
-    }
-
-    pub(crate) fn contexts(&self) -> Vec<Weak<BrowserContext>> {
-        self.contexts.lock().unwrap().to_owned()
     }
     pub(crate) fn version(&self) -> &str { &self.version }
 
     pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
         let _ = send_message!(self, "close", Map::new());
         Ok(())
-    }
-
-    pub(crate) async fn new_context(
-        &self,
-        args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>
-    ) -> Result<Weak<BrowserContext>, Arc<Error>> {
-        let res = send_message!(self, "newContext", args);
-        let guid = only_guid(&res)?;
-        let c = get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
-        self.contexts.lock().unwrap().push(c.clone());
-        // TODO
-        // context._browser = self
-        // context._options = params
-        Ok(c)
     }
 
     // TODO: Responds newtype `OwnerPage` of `SinglePageBrowserContext`.
@@ -58,9 +47,65 @@ impl Browser {
     //}
 }
 
+// mutable
+impl Browser {
+    pub(crate) fn contexts(&self) -> Vec<Weak<BrowserContext>> {
+        self.var.lock().unwrap().contexts.to_owned()
+    }
+
+    fn push_context(&self, c: Weak<BrowserContext>) { self.var.lock().unwrap().contexts.push(c); }
+
+    pub(super) fn remove_context(&self, c: &Weak<BrowserContext>) {
+        let contexts = &mut self.var.lock().unwrap().contexts;
+        let i = match contexts
+            .iter()
+            .zip(0usize..)
+            .find(|(v, _)| v.ptr_eq(c))
+            .map(|(_, i)| i)
+        {
+            None => return,
+            Some(i) => i
+        };
+        contexts.remove(i);
+    }
+
+    pub(crate) async fn new_context(
+        &self,
+        args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>
+    ) -> Result<Weak<BrowserContext>, Arc<Error>> {
+        let res = send_message!(self, "newContext", args);
+        let guid = only_guid(&res)?;
+        let c = get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+        self.register_new_context(c.clone())?;
+        Ok(c)
+    }
+
+    fn register_new_context(&self, c: Weak<BrowserContext>) -> Result<(), Arc<Error>> {
+        let this = get_object!(self.context()?.lock().unwrap(), &self.guid(), Browser)?;
+        let bc = upgrade(&c)?;
+        bc.set_browser(this);
+        self.push_context(c);
+        // TODO
+        // context._options = params
+        Ok(())
+    }
+}
+
 impl RemoteObject for Browser {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+
+    fn handle_event(
+        &self,
+        ctx: &Context,
+        method: &S<Method>,
+        params: &Map<String, Value>
+    ) -> Result<(), Error> {
+        if method == S::validate("close").unwrap() {
+            // TODO: emit event
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize)]

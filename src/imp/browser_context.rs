@@ -155,6 +155,24 @@ impl BrowserContext {
     pub(crate) fn browser(&self) -> Option<Weak<Browser>> {
         self.var.lock().unwrap().browser.clone()
     }
+
+    pub(super) fn set_browser(&self, b: Weak<Browser>) {
+        self.var.lock().unwrap().browser = Some(b);
+    }
+
+    fn on_close(&self, ctx: &Context) -> Result<(), Error> {
+        let b = match self.browser() {
+            None => return Ok(()),
+            Some(b) => b
+        };
+        let browser = match b.upgrade() {
+            None => return Ok(()),
+            Some(b) => b
+        };
+        let this = get_object!(ctx, &self.guid(), BrowserContext)?;
+        browser.remove_context(&this);
+        Ok(())
+    }
 }
 
 impl RemoteObject for BrowserContext {
@@ -167,6 +185,22 @@ impl RemoteObject for BrowserContext {
         method: &S<Method>,
         params: &Map<String, Value>
     ) -> Result<(), Error> {
+        match method.as_str() {
+            "page" => {
+                // TODO: emit event
+                let first = first_object(params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let p = get_object!(ctx, &guid, Page)?;
+                self.var.lock().unwrap().pages.push(p);
+            }
+            "route" => {}
+            "bindingCall" => {}
+            "close" => {
+                // TODO: emit event
+                self.on_close(ctx)?;
+            }
+            _ => {}
+        }
         Ok(())
     }
 }
