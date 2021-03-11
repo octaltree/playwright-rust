@@ -1,4 +1,5 @@
 use crate::imp::{
+    browser_context::BrowserContext,
     core::*,
     frame::Frame,
     prelude::*,
@@ -13,7 +14,8 @@ use crate::imp::{
 pub(crate) struct Page {
     channel: ChannelOwner,
     viewport: Option<Viewport>,
-    main_frame: Weak<Frame>
+    main_frame: Weak<Frame>,
+    browser_context: Weak<BrowserContext>
 }
 
 #[derive(Debug)]
@@ -68,13 +70,20 @@ impl Page {
             main_frame: OnlyGuid { guid },
             viewport
         } = serde_json::from_value(channel.initializer.clone())?;
+        let browser_context = match &channel.parent {
+            Some(RemoteWeak::BrowserContext(c)) => c.clone(),
+            _ => return Err(Error::InvalidParams)
+        };
         let main_frame = get_object!(ctx, &guid, Frame)?;
         Ok(Self {
             channel,
             viewport,
-            main_frame
+            main_frame,
+            browser_context
         })
     }
+
+    pub(crate) fn browser_context(&self) -> Weak<BrowserContext> { self.browser_context.clone() }
 
     pub(crate) fn main_frame(&self) -> Weak<Frame> { self.main_frame.clone() }
 

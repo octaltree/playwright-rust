@@ -8,9 +8,8 @@ pub use crate::{
 };
 use crate::{
     api::{
-        accessibility::Accessibility, browser_context::BrowserContext,
-        element_handle::ElementHandle, frame::Frame, input_device::*, response::Response,
-        video::Video, worker::Worker, Keyboard, TouchScreen
+        input_device::*, Accessibility, BrowserContext, ElementHandle, Frame, Keyboard, Response,
+        TouchScreen, Video, Worker
     },
     imp::{
         core::*,
@@ -41,6 +40,10 @@ impl Page {
             mouse: Mouse::new(inner.clone()),
             accessibility: Accessibility::new(inner)
         }
+    }
+
+    pub fn context(&self) -> BrowserContext {
+        BrowserContext::new(weak_and_then(&self.inner, |rc| rc.browser_context()))
     }
 
     fn main_frame_weak(&self) -> Weak<FrameImpl> {
