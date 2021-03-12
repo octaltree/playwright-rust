@@ -570,27 +570,3 @@ impl<'a, 'b, 'c> AddScriptTagArgs<'a, 'b, 'c> {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::imp::{browser::*, browser_type::*, playwright::Playwright};
-
-    crate::runtime_test!(evaluate, {
-        let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
-        let p = Playwright::wait_initial_object(&conn).await.unwrap();
-        let p = p.upgrade().unwrap();
-        let chromium = p.chromium().upgrade().unwrap();
-        let b = chromium.launch(LaunchArgs::default()).await.unwrap();
-        let b = b.upgrade().unwrap();
-        let c = b.new_context(NewContextArgs::default()).await.unwrap();
-        let c = c.upgrade().unwrap();
-        let p = c.new_page().await.unwrap();
-        let p = p.upgrade().unwrap();
-        let f = p.main_frame().upgrade().unwrap();
-        f.evaluate::<()>("function(){ return location.href; }")
-            .await
-            .unwrap();
-    });
-}
