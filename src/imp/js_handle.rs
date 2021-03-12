@@ -69,11 +69,14 @@ struct Property {
     value: OnlyGuid
 }
 
-mod ser {
-    use crate::imp::prelude::*;
+pub(crate) mod ser {
+    use crate::imp::{
+        core::{Guid, OnlyGuid},
+        prelude::*
+    };
     use itertools::Itertools;
     use serde::ser;
-    use std::mem;
+    use std::{cell::RefCell, mem, rc::Rc};
 
     #[derive(Debug, thiserror::Error)]
     pub(crate) enum Error {
@@ -82,7 +85,11 @@ mod ser {
         #[error("Couldn't construct map from odd number of values")]
         OddMap,
         #[error("Key must be string")]
-        InvalidKey
+        InvalidKey,
+        #[error("Not supported")]
+        NotSupported,
+        #[error("Failed to serialize JsHandle")]
+        JsHandle
     }
 
     impl serde::ser::Error for Error {
@@ -96,9 +103,12 @@ mod ser {
 
     #[derive(Clone, Default)]
     pub(crate) struct Serializer {
+        handles: Rc<RefCell<Vec<OnlyGuid>>>,
+
         seq: Vec<Seq>,
         t: Vec<TupleVariant>,
-        o: Vec<Object>,
+        om: Vec<ObjectM>,
+        os: Vec<ObjectS>,
         s: Vec<StructVariant>
     }
 
@@ -118,8 +128,8 @@ mod ser {
         type SerializeTuple = &'a mut Seq;
         type SerializeTupleStruct = &'a mut Seq;
         type SerializeTupleVariant = &'a mut TupleVariant;
-        type SerializeMap = &'a mut Object;
-        type SerializeStruct = Self::SerializeMap;
+        type SerializeMap = &'a mut ObjectM;
+        type SerializeStruct = &'a mut ObjectS;
         type SerializeStructVariant = &'a mut StructVariant;
 
         fn serialize_bool(self, v: bool) -> Result<Self::Ok, Self::Error> {
@@ -192,8 +202,8 @@ mod ser {
             Ok(m.into())
         }
 
-        fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
-            unimplemented!();
+        fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok, Self::Error> {
+            Err(Error::NotSupported)
         }
 
         fn serialize_none(self) -> Result<Self::Ok, Self::Error> { self.serialize_unit() }
@@ -278,16 +288,17 @@ mod ser {
         }
 
         fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
-            self.o.push(Object::new(self.clone()));
-            Ok(self.o.last_mut().unwrap())
+            self.om.push(ObjectM::new(self.clone()));
+            Ok(self.om.last_mut().unwrap())
         }
 
         fn serialize_struct(
             self,
-            _name: &'static str,
+            name: &'static str,
             len: usize
         ) -> Result<Self::SerializeStruct, Self::Error> {
-            self.serialize_map(Some(len))
+            self.os.push(ObjectS::new(self.clone(), name));
+            Ok(self.os.last_mut().unwrap())
         }
 
         fn serialize_struct_variant(
@@ -426,23 +437,40 @@ mod ser {
     }
 
     #[derive(Clone)]
-    pub(crate) struct Object {
-        values: Vec<Value>,
+    pub(crate) struct ObjectS {
+        name: &'static str,
         map: Map<String, Value>,
+        prime: Serializer,
+        guid: Option<Str<Guid>>
+    }
+
+    #[derive(Clone)]
+    pub(crate) struct ObjectM {
+        values: Vec<Value>,
         prime: Serializer
     }
 
-    impl Object {
-        fn new(prime: Serializer) -> Self {
+    impl ObjectS {
+        fn new(prime: Serializer, name: &'static str) -> Self {
             Self {
+                name,
                 prime,
-                values: Vec::new(),
-                map: Map::new()
+                map: Map::new(),
+                guid: None
             }
         }
     }
 
-    impl<'a> ser::SerializeStruct for &'a mut Object {
+    impl ObjectM {
+        fn new(prime: Serializer) -> Self {
+            Self {
+                prime,
+                values: Vec::new()
+            }
+        }
+    }
+
+    impl<'a> ser::SerializeStruct for &'a mut ObjectS {
         type Ok = Value;
         type Error = Error;
 
@@ -450,21 +478,33 @@ mod ser {
         where
             T: ?Sized + Serialize
         {
-            self.map
-                .insert(key.into(), value.serialize(&mut self.prime)?);
+            let v = value.serialize(&mut self.prime)?;
+            if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" && key == "guid" {
+                let g = match v {
+                    Value::String(s) => Str::validate(s).unwrap(),
+                    _ => return Err(Error::JsHandle)
+                };
+                self.guid = Some(g);
+                return Ok(());
+            }
+            self.map.insert(key.into(), v);
             Ok(())
         }
 
         fn end(self) -> Result<Self::Ok, Self::Error> {
-            let mut o = Map::new();
-            let mut m = Map::new();
-            mem::swap(&mut self.map, &mut m);
-            o.insert("o".into(), m.into());
-            Ok(o.into())
+            if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" {
+                unimplemented!()
+            } else {
+                let mut o = Map::new();
+                let mut m = Map::new();
+                mem::swap(&mut self.map, &mut m);
+                o.insert("o".into(), m.into());
+                Ok(o.into())
+            }
         }
     }
 
-    impl<'a> ser::SerializeMap for &'a mut Object {
+    impl<'a> ser::SerializeMap for &'a mut ObjectM {
         type Ok = Value;
         type Error = Error;
 
@@ -590,20 +630,20 @@ mod ser {
             let v: Value = serde_json::from_str(expected).unwrap();
             assert_eq!(to_value(&u).unwrap(), v);
 
-            let n = E::Newtype(1);
+            let u = E::Newtype(1);
             let expected = r#"{"o":{"Newtype":{"n":1}}}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
-            assert_eq!(to_value(&n).unwrap(), v);
+            assert_eq!(to_value(&u).unwrap(), v);
 
-            let t = E::Tuple(1, 2);
+            let u = E::Tuple(1, 2);
             let expected = r#"{"o":{"Tuple":{"a":[{"n":1},{"n":2}]}}}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
-            assert_eq!(to_value(&t).unwrap(), v);
+            assert_eq!(to_value(&u).unwrap(), v);
 
-            let s = E::Struct { a: 1 };
+            let u = E::Struct { a: 1 };
             let expected = r#"{"o":{"Struct":{"o":{"a":{"n":1}}}}}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
-            assert_eq!(to_value(&s).unwrap(), v);
+            assert_eq!(to_value(&u).unwrap(), v);
         }
     }
 }

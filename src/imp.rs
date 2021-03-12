@@ -8,7 +8,6 @@ pub(crate) mod prelude {
         value::{to_value, Value}
     };
     pub use std::{
-        cell::RefCell,
         collections::HashMap,
         convert::{TryFrom, TryInto},
         future::Future,
