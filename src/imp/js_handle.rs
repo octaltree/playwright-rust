@@ -89,7 +89,9 @@ pub(crate) mod ser {
         #[error("Not supported")]
         NotSupported,
         #[error("Failed to serialize JsHandle")]
-        JsHandle
+        JsHandle,
+        #[error(transparent)]
+        Serde(#[from] serde_json::error::Error)
     }
 
     impl serde::ser::Error for Error {
@@ -117,7 +119,18 @@ pub(crate) mod ser {
         T: Serialize
     {
         let mut serializer = Serializer::default();
-        x.serialize(&mut serializer)
+        let value = x.serialize(&mut serializer)?;
+        let mut m = Map::new();
+        m.insert("value".into(), value);
+        m.insert(
+            "handles".into(),
+            serde_json::to_value(serializer.handles())?
+        );
+        Ok(m.into())
+    }
+
+    impl Serializer {
+        fn handles(self) -> Vec<OnlyGuid> { self.handles.take() }
     }
 
     impl<'a> ser::Serializer for &'a mut Serializer {
@@ -493,7 +506,13 @@ pub(crate) mod ser {
 
         fn end(self) -> Result<Self::Ok, Self::Error> {
             if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" {
-                unimplemented!()
+                let handles = &mut self.prime.handles.borrow_mut();
+                let guid = self.guid.take().ok_or(Error::JsHandle)?;
+                handles.push(OnlyGuid { guid });
+                let idx = handles.len() - 1;
+                let mut m = Map::new();
+                m.insert("h".into(), idx.into());
+                Ok(m.into())
             } else {
                 let mut o = Map::new();
                 let mut m = Map::new();
@@ -610,7 +629,9 @@ pub(crate) mod ser {
                 int: 1,
                 seq: vec!["a", "b"]
             };
-            let expected = r#"{"o":{"int":{"n":1},"seq":{"a": [{"s":"a"},{"s":"b"}]}}}"#;
+            let expected = r#"{
+                "value":{"o":{"int":{"n":1},"seq":{"a": [{"s":"a"},{"s":"b"}]}}},
+                "handles":[]}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
             assert_eq!(to_value(&test).unwrap(), v);
         }
@@ -626,22 +647,22 @@ pub(crate) mod ser {
             }
 
             let u = E::Unit;
-            let expected = r#"{"s":"Unit"}"#;
+            let expected = r#"{"value":{"s":"Unit"}, "handles":[]}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
             assert_eq!(to_value(&u).unwrap(), v);
 
             let u = E::Newtype(1);
-            let expected = r#"{"o":{"Newtype":{"n":1}}}"#;
+            let expected = r#"{"value":{"o":{"Newtype":{"n":1}}}, "handles":[]}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
             assert_eq!(to_value(&u).unwrap(), v);
 
             let u = E::Tuple(1, 2);
-            let expected = r#"{"o":{"Tuple":{"a":[{"n":1},{"n":2}]}}}"#;
+            let expected = r#"{"value": {"o":{"Tuple":{"a":[{"n":1},{"n":2}]}}}, "handles":[]}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
             assert_eq!(to_value(&u).unwrap(), v);
 
             let u = E::Struct { a: 1 };
-            let expected = r#"{"o":{"Struct":{"o":{"a":{"n":1}}}}}"#;
+            let expected = r#"{"value":{"o":{"Struct":{"o":{"a":{"n":1}}}}},"handles":[]}"#;
             let v: Value = serde_json::from_str(expected).unwrap();
             assert_eq!(to_value(&u).unwrap(), v);
         }
