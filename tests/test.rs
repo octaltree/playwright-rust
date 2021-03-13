@@ -26,11 +26,21 @@ runtime_test!(awesome, {
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
-    let _response: Option<Response> = p.goto_builder("https://example.com/").goto().await.unwrap();
+    // let _response: Option<Response> = p.goto_builder("https://example.com/").goto().await.unwrap();
+    let h = p
+        .main_frame()
+        .eval_handle("() => location.href")
+        .await
+        .unwrap();
+    let _ = p
+        .main_frame()
+        .evaluate_handle("([s]) => s + location.href", Some(vec![h]))
+        .await
+        .unwrap();
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
-    let mut a = p.query_selector("a").await.unwrap().unwrap();
-    let _href = a.get_attribute("href").await.unwrap();
+    // let mut a = p.query_selector("a").await.unwrap().unwrap();
+    // let _href = a.get_attribute("href").await.unwrap();
     // dbg!(v);
     // p.go_back_builder().go_back().await.unwrap();
 });

@@ -1,6 +1,6 @@
 pub use crate::imp::frame::FrameState;
 use crate::{
-    api::{ElementHandle, Response},
+    api::{ElementHandle, JsHandle, Response},
     imp::{
         core::*,
         frame::{
@@ -172,6 +172,23 @@ impl Frame {
         content: &'a str
     ) -> AddScriptTagBuilder<'a, '_, '_> {
         AddScriptTagBuilder::new(self.inner.clone(), content)
+    }
+
+    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
+        upgrade(&self.inner)?
+            .eval_handle(expression)
+            .await
+            .map(JsHandle::new)
+    }
+
+    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
+    where
+        T: Serialize
+    {
+        upgrade(&self.inner)?
+            .evaluate_handle(expression, arg)
+            .await
+            .map(JsHandle::new)
     }
 }
 

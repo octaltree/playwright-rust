@@ -410,7 +410,14 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
         let v = value.serialize(&mut self.prime)?;
         if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" && key == "guid" {
             let g = match v {
-                Value::String(s) => Str::validate(s).unwrap(),
+                Value::Object(m) => {
+                    let (_, v) = m.into_iter().next().ok_or(Error::JsHandle)?;
+                    let s = match v {
+                        Value::String(s) => s,
+                        _ => return Err(Error::JsHandle)
+                    };
+                    Str::validate(s).unwrap()
+                }
                 _ => return Err(Error::JsHandle)
             };
             self.guid = Some(g);
