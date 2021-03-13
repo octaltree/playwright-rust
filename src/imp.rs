@@ -57,7 +57,6 @@ mod macros {
 
 pub(crate) mod core {
     mod connection;
-    mod de;
     mod driver;
     mod message;
     mod remote_object;

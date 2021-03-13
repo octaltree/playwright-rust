@@ -1,3 +1,6 @@
+pub(crate) mod de;
+pub(crate) mod ser;
+
 use crate::imp::core::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::{map::Map, value::Value};

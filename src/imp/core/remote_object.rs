@@ -299,7 +299,7 @@ mod remote_enum {
                 "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
                 "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
                 "ConsoleMessage" => RemoteArc::ConsoleMessage(Arc::new(ConsoleMessage::new(c))),
-                "JsHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(ctx, c)?)),
+                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(ctx, c)?)),
                 "ElementHandle" => RemoteArc::ElementHandle(Arc::new(ElementHandle::new(c))),
                 _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
             };
