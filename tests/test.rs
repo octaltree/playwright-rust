@@ -26,7 +26,7 @@ runtime_test!(awesome, {
     let mut b = launch(&mut bt).await;
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
-    // let _response: Option<Response> = p.goto_builder("https://example.com/").goto().await.unwrap();
+    let _response: Option<Response> = p.goto_builder("https://example.com/").goto().await.unwrap();
     let h = p
         .main_frame()
         .eval_handle("() => location.href")

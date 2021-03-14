@@ -452,7 +452,6 @@ impl<'a, 'de> Object<'a, 'de> {
     }
 }
 
-// TODO: HashMap<i32, _>
 impl<'de, 'a> de::MapAccess<'de> for Object<'a, 'de> {
     type Error = Error;
 
@@ -506,8 +505,12 @@ impl<'de, 'a> de::MapAccess<'de> for ObjectArr<'a, 'de> {
         } else {
             return Ok(None);
         };
-        self.prime.stack.push(data);
-        Ok(Some(seed.deserialize(&mut *self.prime)?))
+        let s = data.as_str().ok_or(Error::TypeMismatch)?;
+        let mut d = KeyDeserializer {
+            prime: &mut *self.prime,
+            s
+        };
+        Ok(Some(seed.deserialize(&mut d)?))
     }
 
     fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value, Self::Error>
@@ -520,6 +523,94 @@ impl<'de, 'a> de::MapAccess<'de> for ObjectArr<'a, 'de> {
             .ok_or(Error::Blank)?;
         self.prime.stack.push(data);
         seed.deserialize(&mut *self.prime)
+    }
+}
+
+struct KeyDeserializer<'a, 'de: 'a> {
+    prime: &'a mut Deserializer<'de>,
+    s: &'de str
+}
+
+macro_rules! key_int {
+    ($t:ty, $base:ty) => {
+        paste::paste! {
+            fn [<deserialize_$t>]<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+            where
+                V: Visitor<'de>
+            {
+                let i: $t = serde_json::from_str(self.s)?;
+                visitor.[<visit_$t>](i)
+            }
+        }
+    };
+}
+
+impl<'de, 'a> de::Deserializer<'de> for &'a mut KeyDeserializer<'a, 'de> {
+    type Error = Error;
+
+    fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>
+    {
+        visitor.visit_str(self.s)
+    }
+
+    forward_to_deserialize_any! {
+        bool f32 f64 char str string unit unit_struct seq tuple tuple_struct map
+        struct identifier ignored_any
+    }
+
+    key_int! {i8, i64}
+    key_int! {i16, i64}
+    key_int! {i32, i64}
+    key_int! {i64, i64}
+    key_int! {u8, u64}
+    key_int! {u16, u64}
+    key_int! {u32, u64}
+    key_int! {u64, u64}
+
+    fn deserialize_bytes<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>
+    {
+        Err(Error::NotSupported("deserialize_bytes"))
+    }
+
+    fn deserialize_byte_buf<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>
+    {
+        Err(Error::NotSupported("deserialize_byte_buf"))
+    }
+
+    fn deserialize_option<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>
+    {
+        visitor.visit_some(self)
+    }
+
+    fn deserialize_newtype_struct<V>(
+        self,
+        _name: &'static str,
+        visitor: V
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>
+    {
+        visitor.visit_newtype_struct(self)
+    }
+
+    fn deserialize_enum<V>(
+        self,
+        name: &'static str,
+        variants: &'static [&'static str],
+        visitor: V
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>
+    {
+        self.prime.deserialize_enum(name, variants, visitor)
     }
 }
 
@@ -612,23 +703,32 @@ mod tests {
             b: Option<i32>,
             c: Option<String>,
             d: f64,
-            e: Vec<Value> // m: HashMap<i32, String>
+            e: Vec<Value>,
+            mi: HashMap<i32, String>,
+            ms: HashMap<String, String>
         }
         let v = serde_json::from_str(
             r#"{ "o": [
             { "k": "a", "v": { "n": 3 } },
             {"k":"c","v":{"s":"sdf"}},
             {"k":"d","v":{"v":"Infinity"}},
-            {"k": "e", "v": {"a": [{"n": 2.0}, {"b": false}]}}
+            {"k": "e", "v": {"a": [{"n": 2.0}, {"b": false}]}},
+            {"k": "ms", "v": {"o": [{"k": "2", "v": "as"}]}},
+            {"k": "mi", "v": {"o": [{"k": "2", "v": "as"}]}}
             ] }"#
         )
         .unwrap();
         let de: Test = from_value(&v).unwrap();
-        // let m = {
-        //    let mut m = HashMap::new();
-        //    m.insert(2, "as".into());
-        //    m
-        //};
+        let mi = {
+            let mut m = HashMap::new();
+            m.insert(2, "as".into());
+            m
+        };
+        let ms = {
+            let mut m = HashMap::new();
+            m.insert("2".into(), "as".into());
+            m
+        };
         assert_eq!(
             de,
             Test {
@@ -636,7 +736,9 @@ mod tests {
                 b: None,
                 c: Some("sdf".into()),
                 d: f64::INFINITY,
-                e: vec![Value::from(2.0f64), Value::from(false)]
+                e: vec![Value::from(2.0f64), Value::from(false)],
+                mi,
+                ms
             }
         );
         let v = serde_json::from_str(r#"{"v": "null"}"#).unwrap();
