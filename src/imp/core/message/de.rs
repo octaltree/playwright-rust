@@ -43,14 +43,6 @@ impl<'de> Deserializer<'de> {
     fn pop(&mut self) -> Result<&'de Value, Error> { self.stack.pop().ok_or(Error::Blank) }
 }
 
-pub(crate) fn from_str<T>(s: &str) -> Result<T, Error>
-where
-    T: de::DeserializeOwned
-{
-    let v: Value = serde_json::from_str(s)?;
-    from_value(&v)
-}
-
 pub(crate) fn from_value<T>(v: &Value) -> Result<T, Error>
 where
     T: de::DeserializeOwned
@@ -88,6 +80,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>
     {
+        log::trace!("any");
         let v = *self.stack.last().ok_or(Error::Blank)?;
         match v {
             Value::Null => return self.deserialize_unit(visitor),
@@ -99,6 +92,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             Value::String(_) => return self.deserialize_str(visitor),
             Value::Array(_) => return self.deserialize_seq(visitor),
             Value::Object(m) => {
+                log::trace!("object");
                 if let Some(v) = m.get("v") {
                     return match v.as_str() {
                         Some("Infinity") | Some("-Infinity") | Some("-0") | Some("NaN") => {
@@ -122,7 +116,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                         Value::Number(x) if x.is_u64() => self.deserialize_u64(visitor),
                         Value::Number(x) if x.is_i64() => self.deserialize_i64(visitor),
                         Value::Number(x) if x.is_f64() => self.deserialize_f64(visitor),
-                        _ => Err(Error::TypeMismatch)
+                        _ => {
+                            log::error!("{:?}", n);
+                            Err(Error::TypeMismatch)
+                        }
                     };
                 } else if let Some(_s) = m.get("s") {
                     return self.deserialize_str(visitor);
@@ -200,7 +197,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         let f2 = v.as_f64().ok_or(Error::TypeMismatch);
         let f3 = v
             .as_object()
-            .and_then(|m| m.get("s"))
+            .and_then(|m| m.get("v"))
             .and_then(|v| v.as_str())
             .and_then(|s| match s {
                 "Infinity" => Some(f64::INFINITY),
@@ -335,27 +332,27 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         self.deserialize_seq(visitor)
     }
 
-    // TODO: {k:v} datetime
+    // TODO: datetime
     fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>
     {
+        log::trace!("{:?}", &self.stack);
         let v = self.pop()?;
         let m = v.as_object().ok_or(Error::TypeMismatch)?;
         let o1 = m
             .get("o")
-            .and_then(|v| v.as_object())
+            .and_then(|v| v.as_array())
             .ok_or(Error::TypeMismatch);
-        let o = if m.contains_key("v") || m.contains_key("a") || m.contains_key("d") {
+        if m.contains_key("v") || m.contains_key("a") || m.contains_key("d") {
             return Err(Error::TypeMismatch);
         } else if m.contains_key("o") {
-            o1?
+            visitor.visit_map(ObjectArr::new(&mut self, o1?))
         } else if m.contains_key("n") || m.contains_key("s") || m.contains_key("b") {
             return Err(Error::TypeMismatch);
         } else {
-            m
-        };
-        visitor.visit_map(Object::new(&mut self, o))
+            visitor.visit_map(Object::new(&mut self, m))
+        }
     }
 
     fn deserialize_struct<V>(
@@ -379,6 +376,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>
     {
+        log::trace!("enum");
         let v = self.pop()?;
         match v {
             Value::String(s) => visitor.visit_enum(s.as_str().into_deserializer()),
@@ -409,6 +407,7 @@ struct Array<'a, 'de: 'a> {
 
 impl<'a, 'de> Array<'a, 'de> {
     fn new(prime: &'a mut Deserializer<'de>, arr: &'de [Value]) -> Self {
+        log::trace!("{:?}", arr);
         Array {
             prime,
             data: arr.into_iter()
@@ -428,6 +427,7 @@ impl<'de, 'a> de::SeqAccess<'de> for Array<'a, 'de> {
             None => return Ok(None)
         };
         self.prime.stack.push(data);
+        log::trace!("data");
         seed.deserialize(&mut *self.prime).map(Some)
     }
 }
@@ -459,6 +459,7 @@ impl<'de, 'a> de::MapAccess<'de> for Object<'a, 'de> {
             Some(x) => x,
             None => return Ok(None)
         };
+        log::trace!("key");
         let mut d = serde_json::Deserializer::from_str(data);
         Ok(Some(seed.deserialize(&mut d)?))
     }
@@ -473,6 +474,53 @@ impl<'de, 'a> de::MapAccess<'de> for Object<'a, 'de> {
     }
 }
 
+struct ObjectArr<'a, 'de: 'a> {
+    prime: &'a mut Deserializer<'de>,
+    arr: &'de [Value],
+    idx: usize
+}
+
+impl<'a, 'de> ObjectArr<'a, 'de> {
+    fn new(prime: &'a mut Deserializer<'de>, arr: &'de [Value]) -> Self {
+        Self { prime, arr, idx: 0 }
+    }
+}
+
+impl<'de, 'a> de::MapAccess<'de> for ObjectArr<'a, 'de> {
+    type Error = Error;
+
+    fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>, Self::Error>
+    where
+        K: de::DeserializeSeed<'de>
+    {
+        let data = if self.idx < self.arr.len() {
+            self.idx += 1;
+            self.arr[self.idx - 1]
+                .as_object()
+                .and_then(|m| m.get("k"))
+                .ok_or(Error::Blank)?
+        } else {
+            return Ok(None);
+        };
+        log::trace!("key {:?}", &data);
+        self.prime.stack.push(data);
+        Ok(Some(seed.deserialize(&mut *self.prime)?))
+    }
+
+    fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value, Self::Error>
+    where
+        V: de::DeserializeSeed<'de>
+    {
+        let data = self.arr[self.idx - 1]
+            .as_object()
+            .and_then(|m| m.get("v"))
+            .ok_or(Error::Blank)?;
+        log::trace!("value {:?}", &data);
+        self.prime.stack.push(data);
+        seed.deserialize(&mut *self.prime)
+    }
+}
+
 struct Enum<'a, 'de: 'a> {
     prime: &'a mut Deserializer<'de>,
     map: &'de Map<String, Value>
@@ -480,6 +528,7 @@ struct Enum<'a, 'de: 'a> {
 
 impl<'a, 'de> Enum<'a, 'de> {
     fn new(prime: &'a mut Deserializer<'de>, map: &'de Map<String, Value>) -> Self {
+        log::trace!("enum {:?}", map);
         Enum { prime, map }
     }
 }
@@ -493,6 +542,7 @@ impl<'de, 'a> de::EnumAccess<'de> for Enum<'a, 'de> {
         V: de::DeserializeSeed<'de>
     {
         let s = self.map.keys().next().ok_or(Error::Blank)?;
+        log::trace!("asdf");
         let mut d = serde_json::Deserializer::from_str(s);
         let v = seed.deserialize(&mut d)?;
         self.prime.stack.push(self.map.get(s).unwrap());
@@ -531,4 +581,57 @@ impl<'de, 'a> de::VariantAccess<'de> for Enum<'a, 'de> {
     {
         de::Deserializer::deserialize_map(self.prime, visitor)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn r#struct() {
+        env_logger::builder().is_test(true).try_init().ok();
+        #[derive(Debug, Deserialize, PartialEq)]
+        struct Test {
+            a: i32,
+            b: Option<i32>,
+            c: Option<String>,
+            d: f64,
+            e: Vec<Value>
+        }
+        let v = serde_json::from_str(
+            r#"{ "o": [
+            { "k": "a", "v": { "n": 3 } },
+            {"k":"c","v":{"s":"sdf"}},
+            {"k":"d","v":{"v":"Infinity"}},
+            {"k": "e", "v": {"a": [{"n": 2.0}, {"b": false}]}}
+            ] }"#
+        )
+        .unwrap();
+        let de: Test = from_value(&v).unwrap();
+        assert_eq!(
+            de,
+            Test {
+                a: 3,
+                b: None,
+                c: Some("sdf".into()),
+                d: f64::INFINITY,
+                e: vec![Value::from(2.0f64), Value::from(false)]
+            }
+        );
+        let v = serde_json::from_str(r#"{"v": "null"}"#).unwrap();
+        let de: Option<String> = from_value(&v).unwrap();
+        assert_eq!(de, None);
+    }
+
+    //#[test]
+    // fn r#enum() {
+    //    env_logger::builder().is_test(true).try_init().ok();
+    //    #[derive(Debug, Deserialize, PartialEq)]
+    //    enum Enum {
+    //        A
+    //    }
+    //    let v = serde_json::from_str(r#"{"s": "a"}"#).unwrap();
+    //    let de: Enum = from_value(&v).unwrap();
+    //    assert_eq!(de, Enum::A);
+    //}
 }
