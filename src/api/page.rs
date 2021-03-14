@@ -1,8 +1,11 @@
 pub use crate::{
-    api::frame::{
-        AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder, GotoBuilder,
-        HoverBuilder, PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder, UncheckBuilder,
-        WaitForSelectorBuilder
+    api::{
+        frame::{
+            AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder,
+            GotoBuilder, HoverBuilder, PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder,
+            UncheckBuilder, WaitForSelectorBuilder
+        },
+        JsHandle
     },
     imp::page::Media
 };
@@ -142,6 +145,32 @@ impl Page {
     is_checked! {is_hidden, doc = ""}
     is_checked! {is_visible, doc =""}
     // dispatch_event
+
+    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
+        self.main_frame().eval_handle(expression).await
+    }
+
+    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
+    where
+        T: Serialize
+    {
+        self.main_frame().evaluate_handle(expression, arg).await
+    }
+
+    pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        self.main_frame().eval(expression).await
+    }
+
+    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        self.main_frame().evaluate(expression, arg).await
+    }
     // evaluate
     // evaluate_handle
     // eval_on_selector

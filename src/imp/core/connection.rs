@@ -61,7 +61,9 @@ pub enum Error {
     #[error(transparent)]
     InvalidUtf8(#[from] std::string::FromUtf8Error),
     #[error(transparent)]
-    SerializationPwJson(#[from] ser::Error)
+    SerializationPwJson(#[from] ser::Error),
+    #[error(transparent)]
+    DeserializationPwJson(#[from] de::Error)
 }
 
 pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;

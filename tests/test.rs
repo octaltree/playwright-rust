@@ -32,11 +32,12 @@ runtime_test!(awesome, {
         .eval_handle("() => location.href")
         .await
         .unwrap();
-    let _ = p
+    let s: String = p
         .main_frame()
-        .evaluate_handle("([s]) => s + location.href", Some(vec![h]))
+        .evaluate("([s]) => s + location.href", Some(vec![h]))
         .await
         .unwrap();
+    assert_eq!(s, "https://example.com/https://example.com/");
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
     // let mut a = p.query_selector("a").await.unwrap().unwrap();

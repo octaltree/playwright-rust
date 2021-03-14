@@ -282,9 +282,8 @@ impl Frame {
         let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpression", args);
-        // deserialize pw json
-        dbg!(v);
-        unimplemented!()
+        let first = first(&v).ok_or(Error::ObjectNotFound)?;
+        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
     }
 
     pub(crate) async fn eval_handle(&self, expression: &str) -> ArcResult<Weak<JsHandle>> {

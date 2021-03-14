@@ -190,6 +190,21 @@ impl Frame {
             .await
             .map(JsHandle::new)
     }
+
+    pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?.eval(expression).await
+    }
+
+    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?.evaluate(expression, arg).await
+    }
 }
 
 pub struct GotoBuilder<'a, 'b> {
