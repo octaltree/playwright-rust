@@ -224,7 +224,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     fn serialize_struct(
         self,
         name: &'static str,
-        len: usize
+        _len: usize
     ) -> Result<Self::SerializeStruct, Self::Error> {
         self.os.push(ObjectS::new(self.clone(), name));
         Ok(self.os.last_mut().unwrap())
@@ -483,7 +483,7 @@ impl<'a> ser::SerializeMap for &'a mut ObjectM {
                     Value::String(s) => s,
                     _ => return Err(Error::InvalidKey)
                 };
-                inner.insert(key.into(), v);
+                inner.insert(key, v);
                 Ok(())
             })?;
         let mut m = Map::new();
