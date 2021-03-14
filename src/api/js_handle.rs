@@ -7,6 +7,10 @@ pub struct JsHandle {
 impl JsHandle {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
+    pub(crate) fn guid(&self) -> Result<Str<Guid>, Error> {
+        Ok(upgrade(&self.inner)?.guid().to_owned())
+    }
+
     pub async fn get_property(&mut self, name: &str) -> ArcResult<JsHandle> {
         upgrade(&self.inner)?
             .get_property(name)
@@ -20,4 +24,21 @@ impl JsHandle {
     }
 
     pub async fn dispose(&mut self) -> ArcResult<()> { upgrade(&self.inner)?.dispose().await }
+}
+
+mod ser {
+    use super::*;
+    use serde::{ser, ser::SerializeStruct};
+
+    impl Serialize for JsHandle {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer
+        {
+            let mut s = serializer.serialize_struct("4a9c3811-6f00-49e5-8a81-939f932d9061", 1)?;
+            let guid = &self.guid().map_err(<S::Error as ser::Error>::custom)?;
+            s.serialize_field("guid", &guid)?;
+            s.end()
+        }
+    }
 }

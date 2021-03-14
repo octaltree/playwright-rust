@@ -1,6 +1,7 @@
 use crate::imp::{
     core::*,
     element_handle::ElementHandle,
+    js_handle::JsHandle,
     prelude::*,
     response::Response,
     utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
@@ -259,6 +260,55 @@ impl Frame {
         let guid = only_guid(&v)?;
         let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(e)
+    }
+
+    pub(crate) async fn eval<U>(&self, expression: &str) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        self.evaluate::<(), U>(expression, None).await
+    }
+
+    pub(crate) async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            expression: &'a str,
+            arg: Value
+        }
+        let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
+        let args = Args { expression, arg };
+        let v = send_message!(self, "evaluateExpression", args);
+        let first = first(&v).ok_or(Error::ObjectNotFound)?;
+        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+    }
+
+    pub(crate) async fn eval_handle(&self, expression: &str) -> ArcResult<Weak<JsHandle>> {
+        self.evaluate_handle::<()>(expression, None).await
+    }
+
+    pub(crate) async fn evaluate_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<Weak<JsHandle>>
+    where
+        T: Serialize
+    {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            expression: &'a str,
+            arg: Value
+        }
+        let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
+        let args = Args { expression, arg };
+        let v = send_message!(self, "evaluateExpressionHandle", args);
+        let guid = only_guid(&v)?;
+        let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        Ok(h)
     }
 }
 
@@ -534,4 +584,33 @@ impl<'a, 'b, 'c> AddScriptTagArgs<'a, 'b, 'c> {
             r#type: None
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::imp::{
+        browser::{Browser, *},
+        browser_context::BrowserContext,
+        browser_type::*,
+        page::Page,
+        playwright::Playwright
+    };
+
+    crate::runtime_test!(eval_handle, {
+        let driver = Driver::install().unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
+        let p: Arc<Playwright> = p.upgrade().unwrap();
+        let chromium: Arc<BrowserType> = p.chromium().upgrade().unwrap();
+        let b: Weak<Browser> = chromium.launch(LaunchArgs::default()).await.unwrap();
+        let b: Arc<Browser> = b.upgrade().unwrap();
+        let c: Weak<BrowserContext> = b.new_context(NewContextArgs::default()).await.unwrap();
+        let c: Arc<BrowserContext> = c.upgrade().unwrap();
+        let p: Weak<Page> = c.new_page().await.unwrap();
+        let p: Arc<Page> = p.upgrade().unwrap();
+        let f: Weak<Frame> = p.main_frame();
+        let f: Arc<Frame> = f.upgrade().unwrap();
+        let h: Weak<JsHandle> = f.eval_handle("() => location.href").await.unwrap();
+    });
 }

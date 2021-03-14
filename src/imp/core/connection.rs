@@ -59,7 +59,11 @@ pub enum Error {
     #[error(transparent)]
     InvalidBase64(#[from] base64::DecodeError),
     #[error(transparent)]
-    InvalidUtf8(#[from] std::string::FromUtf8Error)
+    InvalidUtf8(#[from] std::string::FromUtf8Error),
+    #[error(transparent)]
+    SerializationPwJson(#[from] ser::Error),
+    #[error(transparent)]
+    DeserializationPwJson(#[from] de::Error)
 }
 
 pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;
