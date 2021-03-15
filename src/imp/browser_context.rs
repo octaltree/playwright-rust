@@ -32,8 +32,8 @@ impl BrowserContext {
         let var = Mutex::new(Variable::default());
         Ok(Self {
             channel,
-            var,
-            browser
+            browser,
+            var
         })
     }
 

@@ -7,8 +7,8 @@ pub(crate) struct Request {
     resource_type: String,
     method: String,
     is_navigation_request: bool,
-    frame: Weak<Frame>,
     post_data: Option<String>,
+    frame: Weak<Frame>,
     headers: HashMap<String, String>,
     redirected_from: Option<Weak<Request>>
 }
@@ -38,9 +38,9 @@ impl Request {
             url,
             resource_type,
             method,
-            frame,
             is_navigation_request,
             post_data,
+            frame,
             headers,
             redirected_from
         })

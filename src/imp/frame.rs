@@ -679,17 +679,20 @@ mod tests {
     crate::runtime_test!(eval_handle, {
         let driver = Driver::install().unwrap();
         let conn = Connection::run(&driver.executable()).unwrap();
-        let p = Playwright::wait_initial_object(&conn).await.unwrap();
-        let p: Arc<Playwright> = p.upgrade().unwrap();
-        let chromium: Arc<BrowserType> = p.chromium().upgrade().unwrap();
-        let b: Weak<Browser> = chromium.launch(LaunchArgs::default()).await.unwrap();
-        let b: Arc<Browser> = b.upgrade().unwrap();
-        let c: Weak<BrowserContext> = b.new_context(NewContextArgs::default()).await.unwrap();
-        let c: Arc<BrowserContext> = c.upgrade().unwrap();
-        let p: Weak<Page> = c.new_page().await.unwrap();
-        let p: Arc<Page> = p.upgrade().unwrap();
-        let f: Weak<Frame> = p.main_frame();
-        let f: Arc<Frame> = f.upgrade().unwrap();
-        let h: Weak<JsHandle> = f.eval_handle("() => location.href").await.unwrap();
+        let pw = Playwright::wait_initial_object(&conn).await.unwrap();
+        let pw: Arc<Playwright> = pw.upgrade().unwrap();
+        let chromium: Arc<BrowserType> = pw.chromium().upgrade().unwrap();
+        let browser: Weak<Browser> = chromium.launch(LaunchArgs::default()).await.unwrap();
+        let browser: Arc<Browser> = browser.upgrade().unwrap();
+        let browser_context: Weak<BrowserContext> = browser
+            .new_context(NewContextArgs::default())
+            .await
+            .unwrap();
+        let browser_context: Arc<BrowserContext> = browser_context.upgrade().unwrap();
+        let page: Weak<Page> = browser_context.new_page().await.unwrap();
+        let page: Arc<Page> = page.upgrade().unwrap();
+        let frame: Weak<Frame> = page.main_frame();
+        let frame: Arc<Frame> = frame.upgrade().unwrap();
+        let _handle: Weak<JsHandle> = frame.eval_handle("() => location.href").await.unwrap();
     });
 }

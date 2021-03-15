@@ -34,8 +34,7 @@ pub(crate) struct Deserializer<'de> {
 
 impl<'de> Deserializer<'de> {
     fn new(v: &'de Value) -> Self {
-        let mut stack = Vec::new();
-        stack.push(v);
+        let stack = vec![v];
         Self { stack }
     }
 
@@ -82,17 +81,17 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         log::trace!("any {:?}", self.stack);
         let v = *self.stack.last().ok_or(Error::Blank)?;
         match v {
-            Value::Null => return self.deserialize_unit(visitor),
-            Value::Bool(_) => return self.deserialize_bool(visitor),
-            Value::Number(x) if x.is_u64() => return self.deserialize_u64(visitor),
-            Value::Number(x) if x.is_i64() => return self.deserialize_i64(visitor),
-            Value::Number(x) if x.is_f64() => return self.deserialize_f64(visitor),
+            Value::Null => self.deserialize_unit(visitor),
+            Value::Bool(_) => self.deserialize_bool(visitor),
+            Value::Number(x) if x.is_u64() => self.deserialize_u64(visitor),
+            Value::Number(x) if x.is_i64() => self.deserialize_i64(visitor),
+            Value::Number(x) if x.is_f64() => self.deserialize_f64(visitor),
             Value::Number(_) => unreachable!(),
-            Value::String(_) => return self.deserialize_str(visitor),
-            Value::Array(_) => return self.deserialize_seq(visitor),
+            Value::String(_) => self.deserialize_str(visitor),
+            Value::Array(_) => self.deserialize_seq(visitor),
             Value::Object(m) => {
                 if let Some(v) = m.get("v") {
-                    return match v.as_str() {
+                    match v.as_str() {
                         Some("Infinity") | Some("-Infinity") | Some("-0") | Some("NaN") => {
                             self.deserialize_f64(visitor)
                         }
@@ -102,13 +101,13 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                             self.stack.push(v);
                             self.deserialize_any(visitor)
                         }
-                    };
+                    }
                 } else if let Some(_a) = m.get("a") {
-                    return self.deserialize_seq(visitor);
+                    self.deserialize_seq(visitor)
                 } else if let Some(_o) = m.get("o") {
-                    return self.deserialize_map(visitor);
+                    self.deserialize_map(visitor)
                 } else if let Some(n) = m.get("n") {
-                    return match n {
+                    match n {
                         Value::Number(x) if x.is_u64() => self.deserialize_u64(visitor),
                         Value::Number(x) if x.is_i64() => self.deserialize_i64(visitor),
                         Value::Number(x) if x.is_f64() => self.deserialize_f64(visitor),
@@ -116,13 +115,13 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                             log::error!("{:?}", n);
                             Err(Error::TypeMismatch)
                         }
-                    };
+                    }
                 } else if let Some(_s) = m.get("s") {
-                    return self.deserialize_str(visitor);
+                    self.deserialize_str(visitor)
                 } else if let Some(_b) = m.get("b") {
-                    return self.deserialize_bool(visitor);
+                    self.deserialize_bool(visitor)
                 } else {
-                    return self.deserialize_map(visitor);
+                    self.deserialize_map(visitor)
                 }
             }
         }
@@ -342,13 +341,13 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             .and_then(|v| v.as_array())
             .ok_or(Error::TypeMismatch);
         if m.contains_key("v") || m.contains_key("a") {
-            return Err(Error::TypeMismatch);
+            Err(Error::TypeMismatch)
         } else if m.contains_key("d") {
             visitor.visit_map(Object::new(&mut self, m))
         } else if m.contains_key("o") {
             visitor.visit_map(ObjectArr::new(&mut self, o1?))
         } else if m.contains_key("n") || m.contains_key("s") || m.contains_key("b") {
-            return Err(Error::TypeMismatch);
+            Err(Error::TypeMismatch)
         } else {
             visitor.visit_map(Object::new(&mut self, m))
         }
@@ -414,7 +413,7 @@ impl<'a, 'de> Array<'a, 'de> {
     fn new(prime: &'a mut Deserializer<'de>, arr: &'de [Value]) -> Self {
         Array {
             prime,
-            data: arr.into_iter()
+            data: arr.iter()
         }
     }
 }

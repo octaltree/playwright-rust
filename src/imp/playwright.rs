@@ -25,11 +25,11 @@ impl Playwright {
         let devices = i.device_descriptors;
         Ok(Self {
             channel,
-            devices,
             chromium,
             firefox,
             webkit,
-            selectors
+            selectors,
+            devices
         })
     }
 

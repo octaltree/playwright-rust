@@ -47,6 +47,7 @@ pub mod worker;
 
 pub use crate::imp::{core::DateTime, utils::*};
 
+pub use self::playwright::Playwright;
 pub use accessibility::Accessibility;
 pub use browser::Browser;
 pub use browser_context::BrowserContext;
@@ -60,7 +61,6 @@ pub use frame::Frame;
 pub use input_device::{Keyboard, Mouse, TouchScreen};
 pub use js_handle::JsHandle;
 pub use page::Page;
-pub use playwright::Playwright;
 pub use request::Request;
 pub use response::Response;
 pub use route::Route;
