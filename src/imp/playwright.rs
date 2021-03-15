@@ -3,7 +3,7 @@ use crate::imp::{
     utils::Viewport
 };
 use serde::Deserialize;
-use std::sync::TryLockError;
+use std::{sync::TryLockError, time::Instant};
 
 #[derive(Debug)]
 pub(crate) struct Playwright {
@@ -44,7 +44,7 @@ impl Playwright {
     pub(crate) fn selectors(&self) -> Weak<Selectors> { self.selectors.clone() }
 
     pub(crate) fn wait_initial_object(conn: &Connection) -> WaitInitialObject {
-        WaitInitialObject(conn.context())
+        WaitInitialObject::new(conn.context())
     }
 }
 
@@ -64,30 +64,44 @@ struct Initializer {
     device_descriptors: Vec<DeviceDescriptor>
 }
 
-pub(crate) struct WaitInitialObject(Wm<Context>);
+pub(crate) struct WaitInitialObject {
+    ctx: Wm<Context>,
+    started: Instant
+}
+
+impl WaitInitialObject {
+    fn new(ctx: Wm<Context>) -> Self {
+        Self {
+            ctx,
+            started: Instant::now()
+        }
+    }
+}
 
 impl Future for WaitInitialObject {
     type Output = Result<Weak<Playwright>, Error>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
         let i: &S<Guid> = S::validate("Playwright").unwrap();
-        // TODO: timeout
         let this = self.get_mut();
-        let rc = upgrade(&this.0)?;
+        macro_rules! pending {
+            () => {{
+                cx.waker().wake_by_ref();
+                if this.started.elapsed().as_secs() > 10 {
+                    return Poll::Ready(Err(Error::Timeout));
+                }
+                return Poll::Pending;
+            }};
+        }
+        let rc = upgrade(&this.ctx)?;
         let c = match rc.try_lock() {
             Ok(x) => x,
-            Err(TryLockError::WouldBlock) => {
-                cx.waker().wake_by_ref();
-                return Poll::Pending;
-            }
+            Err(TryLockError::WouldBlock) => pending!(),
             Err(e) => Err(e).unwrap()
         };
         match get_object!(c, i, Playwright) {
             Ok(p) => Poll::Ready(Ok(p)),
-            Err(_) => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
+            Err(_) => pending!()
         }
     }
 }
