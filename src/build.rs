@@ -15,11 +15,16 @@ fn main() {
     println!("cargo:rerun-if-changed=src/build.rs");
 }
 
+#[cfg(not(feature = "only-for-docs-rs"))]
 fn download(url: &str, dest: &Path) {
     let mut resp = reqwest::blocking::get(url).unwrap();
     let mut dest = File::create(dest).unwrap();
     resp.copy_to(&mut dest).unwrap();
 }
+
+// No network access
+#[cfg(feature = "only-for-docs-rs")]
+fn download(_url: &str, dest: &Path) { File::create(dest).unwrap(); }
 
 fn url(platform: PlaywrightPlatform) -> String {
     format!(

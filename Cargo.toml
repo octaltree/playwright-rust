@@ -40,3 +40,7 @@ default = ["chrono", "rt-tokio"]
 rt-tokio = []
 rt-actix = ["actix-rt"]
 rt-async-std = ["async-std"]
+only-for-docs-rs = []
+
+[package.metadata.docs.rs]
+features = ["only-for-docs-rs"]
