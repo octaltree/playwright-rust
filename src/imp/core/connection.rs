@@ -63,7 +63,9 @@ pub enum Error {
     #[error(transparent)]
     SerializationPwJson(#[from] ser::Error),
     #[error(transparent)]
-    DeserializationPwJson(#[from] de::Error)
+    DeserializationPwJson(#[from] de::Error),
+    #[error(transparent)]
+    Arc(#[from] Arc<Error>)
 }
 
 pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;

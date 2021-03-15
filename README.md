@@ -14,21 +14,33 @@ playwright = "0.0.1"
 ```rust
 use playwright::Playwright;
 
-let playwright = Playwright::initialize().await.unwrap(); // if drop all resources are disposed
-playwright.prepare().unwrap(); // install browsers
-let mut chromium = playwright.chromium();
-let mut browser = chromium.launcher().headless(true).launch().await.unwrap();
-let mut context = browser.context_builder().build().await.unwrap();
-let mut page = context.new_page().await.unwrap();
-page.goto_builder("https://example.com/")
-    .goto()
-    .await
-    .unwrap();
-page.click_builder("a").click().await.unwrap();
+#[tokio::main]
+async fn main() -> Result<(), playwright::Error> {
+    env_logger::init();
+    let mut playwright = Playwright::initialize().await?; // if drop all resources are disposed
+    playwright.prepare()?; // install browsers
+    let mut chromium = playwright.chromium();
+    let mut browser = chromium.launcher().headless(true).launch().await?;
+    let mut context = browser.context_builder().build().await?;
+    let mut page = context.new_page().await?;
+    page.goto_builder("https://example.com/").goto().await?;
+
+    // Exec in browser and Deserialize with serde
+    let s: String = page.eval("() => location.href").await?;
+    assert_eq!(s, "https://example.com/");
+    page.click_builder("a").click().await?;
+    Ok(())
+}
 ```
 
 It's still under development and has limited functions. Please have a look at tests and docs.rs.
 Welcome contributions.
+
+## Async runtimes
+* [tokio](https://crates.io/crates/tokio)
+* [actix-rt](https://crates.io/crates/actix-rt)
+* [async-std](https://crates.io/crates/async-std)
+These runtimes have passed tests. You can disable tokio, the default feature, and then choose another.
 
 ## Incompatibility
 Functions do not have default arguments in rust.
