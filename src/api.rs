@@ -45,7 +45,7 @@ pub mod video;
 pub mod websocket;
 pub mod worker;
 
-pub use crate::imp::utils::*;
+pub use crate::imp::{core::DateTime, utils::*};
 
 pub use accessibility::Accessibility;
 pub use browser::Browser;

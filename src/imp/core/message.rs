@@ -177,6 +177,45 @@ pub(crate) struct Argument {
     pub(crate) handles: Vec<OnlyGuid>
 }
 
+#[derive(Debug)]
+pub struct DateTime {
+    d: String
+}
+
+mod datetime {
+    use super::*;
+    #[cfg(feature = "chrono")]
+    use chrono::Utc;
+    use serde::{ser, ser::SerializeStruct};
+    use std::convert::TryFrom;
+
+    #[cfg(feature = "chrono")]
+    impl From<chrono::DateTime<Utc>> for DateTime {
+        fn from(c: chrono::DateTime<Utc>) -> DateTime { Self { d: c.to_rfc3339() } }
+    }
+
+    #[cfg(feature = "chrono")]
+    impl TryFrom<DateTime> for chrono::DateTime<Utc> {
+        type Error = chrono::format::ParseError;
+
+        fn try_from(d: DateTime) -> Result<chrono::DateTime<Utc>, Self::Error> {
+            let f = chrono::DateTime::parse_from_rfc3339(&d.d)?;
+            Ok(f.with_timezone(&chrono::Utc))
+        }
+    }
+
+    impl ser::Serialize for DateTime {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer
+        {
+            let mut s = serializer.serialize_struct("e7ee19d3-64cb-4286-8762-6dd8ab78eb89", 1)?;
+            s.serialize_field("d", &self.d)?;
+            s.end()
+        }
+    }
+}
+
 // pub(crate) fn parse_value(v: &Value) -> Result<Value, ()> {
 //    if let Value::Object(v) = v {
 //        if v.contains_key("v") {

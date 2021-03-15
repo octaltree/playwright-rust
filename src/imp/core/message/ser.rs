@@ -18,6 +18,8 @@ pub enum Error {
     NotSupported,
     #[error("Failed to serialize JsHandle")]
     JsHandle,
+    #[error("Failed to serialize DateTime")]
+    DateTime,
     #[error(transparent)]
     Serde(#[from] serde_json::error::Error)
 }
@@ -370,7 +372,8 @@ pub(crate) struct ObjectS {
     name: &'static str,
     map: Map<String, Value>,
     prime: Serializer,
-    guid: Option<Str<Guid>>
+    guid: Option<Str<Guid>>,
+    d: Option<String>
 }
 
 #[derive(Clone)]
@@ -385,7 +388,8 @@ impl ObjectS {
             name,
             prime,
             map: Map::new(),
-            guid: None
+            guid: None,
+            d: None
         }
     }
 }
@@ -423,6 +427,20 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
             self.guid = Some(g);
             return Ok(());
         }
+        if self.name == "e7ee19d3-64cb-4286-8762-6dd8ab78eb89" && key == "d" {
+            let d = match v {
+                Value::Object(m) => {
+                    let (_, v) = m.into_iter().next().ok_or(Error::DateTime)?;
+                    match v {
+                        Value::String(s) => s,
+                        _ => return Err(Error::DateTime)
+                    }
+                }
+                _ => return Err(Error::JsHandle)
+            };
+            self.d = Some(d);
+            return Ok(());
+        }
         self.map.insert(key.into(), v);
         Ok(())
     }
@@ -435,6 +453,11 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
             let idx = handles.len() - 1;
             let mut m = Map::new();
             m.insert("h".into(), idx.into());
+            Ok(m.into())
+        } else if self.name == "e7ee19d3-64cb-4286-8762-6dd8ab78eb89" {
+            let d = self.d.take().ok_or(Error::DateTime)?;
+            let mut m = Map::new();
+            m.insert("d".into(), d.into());
             Ok(m.into())
         } else {
             let mut o = Map::new();

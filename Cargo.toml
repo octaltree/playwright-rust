@@ -31,11 +31,12 @@ env_logger = "0.8.3"
 paste = "1.0.4"
 base64 = "0.13.0"
 itertools = "0.10.0"
+chrono = { version = "0.4.19", optional = true, features = ["serde"] }
 
 [dev-dependencies]
 
 [features]
-default = ["rt-tokio"]
+default = ["chrono", "rt-tokio"]
 rt-tokio = []
 rt-actix = ["actix-rt"]
 rt-async-std = ["async-std"]

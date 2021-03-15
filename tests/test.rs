@@ -1,5 +1,5 @@
 use playwright::{
-    api::{Browser, BrowserContext, BrowserType, Response},
+    api::{Browser, BrowserContext, BrowserType, DateTime, Response},
     *
 };
 
@@ -27,17 +27,17 @@ runtime_test!(awesome, {
     let mut c = new_context(&mut b).await;
     let mut p = c.new_page().await.unwrap();
     let _response: Option<Response> = p.goto_builder("https://example.com/").goto().await.unwrap();
-    let h = p
-        .main_frame()
-        .eval_handle("() => location.href")
-        .await
-        .unwrap();
+    let h = p.eval_handle("() => location.href").await.unwrap();
     let s: String = p
-        .main_frame()
         .evaluate("([s]) => s + location.href", Some(vec![h]))
         .await
         .unwrap();
     assert_eq!(s, "https://example.com/https://example.com/");
+    let s: String = p
+        .evaluate("d => '' + d", Some(DateTime::from(chrono::Utc::now())))
+        .await
+        .unwrap();
+    println!("{}", s);
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
     // let mut a = p.query_selector("a").await.unwrap().unwrap();
