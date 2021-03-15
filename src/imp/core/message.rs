@@ -177,7 +177,7 @@ pub(crate) struct Argument {
     pub(crate) handles: Vec<OnlyGuid>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct DateTime {
     d: String
 }

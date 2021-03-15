@@ -33,11 +33,11 @@ runtime_test!(awesome, {
         .await
         .unwrap();
     assert_eq!(s, "https://example.com/https://example.com/");
-    let s: String = p
-        .evaluate("d => '' + d", Some(DateTime::from(chrono::Utc::now())))
+    let s: DateTime = p
+        .evaluate("d => d", Some(DateTime::from(chrono::Utc::now())))
         .await
         .unwrap();
-    println!("{}", s);
+    println!("{:?}", s);
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
     // let mut a = p.query_selector("a").await.unwrap().unwrap();

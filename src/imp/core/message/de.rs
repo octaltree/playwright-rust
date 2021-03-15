@@ -29,7 +29,6 @@ impl de::Error for Error {
 }
 
 pub(crate) struct Deserializer<'de> {
-    input: &'de Value,
     stack: Vec<&'de Value>
 }
 
@@ -37,7 +36,7 @@ impl<'de> Deserializer<'de> {
     fn new(v: &'de Value) -> Self {
         let mut stack = Vec::new();
         stack.push(v);
-        Self { input: v, stack }
+        Self { stack }
     }
 
     fn pop(&mut self) -> Result<&'de Value, Error> { self.stack.pop().ok_or(Error::Blank) }
@@ -106,8 +105,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     };
                 } else if let Some(_a) = m.get("a") {
                     return self.deserialize_seq(visitor);
-                } else if let Some(_d) = m.get("d") {
-                    unimplemented!()
                 } else if let Some(_o) = m.get("o") {
                     return self.deserialize_map(visitor);
                 } else if let Some(n) = m.get("n") {
@@ -344,8 +341,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             .get("o")
             .and_then(|v| v.as_array())
             .ok_or(Error::TypeMismatch);
-        if m.contains_key("v") || m.contains_key("a") || m.contains_key("d") {
+        if m.contains_key("v") || m.contains_key("a") {
             return Err(Error::TypeMismatch);
+        } else if m.contains_key("d") {
+            visitor.visit_map(Object::new(&mut self, m))
         } else if m.contains_key("o") {
             visitor.visit_map(ObjectArr::new(&mut self, o1?))
         } else if m.contains_key("n") || m.contains_key("s") || m.contains_key("b") {
@@ -459,11 +458,14 @@ impl<'de, 'a> de::MapAccess<'de> for Object<'a, 'de> {
     where
         K: de::DeserializeSeed<'de>
     {
-        let data = match self.keys.next() {
+        let s = match self.keys.next() {
             Some(x) => x,
             None => return Ok(None)
         };
-        let mut d = serde_json::Deserializer::from_str(data);
+        let mut d = KeyDeserializer {
+            prime: &mut *self.prime,
+            s
+        };
         Ok(Some(seed.deserialize(&mut d)?))
     }
 
