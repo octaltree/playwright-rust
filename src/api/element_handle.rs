@@ -130,6 +130,15 @@ impl ElementHandle {
     pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
+
+    pub async fn dispatch_event<T>(&self, r#type: &str, event_init: Option<T>) -> ArcResult<()>
+    where
+        T: Serialize
+    {
+        upgrade(&self.inner)?
+            .dispatch_event(r#type, event_init)
+            .await
+    }
 }
 
 pub struct HoverBuilder {

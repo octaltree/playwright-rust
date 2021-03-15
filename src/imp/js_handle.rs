@@ -50,6 +50,15 @@ impl JsHandle {
         let _ = send_message!(self, "dispose", Map::new());
         Ok(())
     }
+
+    pub(crate) async fn json_value<U>(&self) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        let v = send_message!(self, "jsonValue", Map::new());
+        let first = first(&v).ok_or(Error::ObjectNotFound)?;
+        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+    }
 }
 
 impl RemoteObject for JsHandle {

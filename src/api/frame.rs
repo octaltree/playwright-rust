@@ -174,14 +174,18 @@ impl Frame {
         AddScriptTagBuilder::new(self.inner.clone(), content)
     }
 
-    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
+    pub async fn eval_handle(&mut self, expression: &str) -> ArcResult<JsHandle> {
         upgrade(&self.inner)?
             .eval_handle(expression)
             .await
             .map(JsHandle::new)
     }
 
-    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
+    pub async fn evaluate_handle<T>(
+        &mut self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
@@ -191,19 +195,63 @@ impl Frame {
             .map(JsHandle::new)
     }
 
-    pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>
+    pub async fn eval<U>(&mut self, expression: &str) -> ArcResult<U>
     where
         U: DeserializeOwned
     {
         upgrade(&self.inner)?.eval(expression).await
     }
 
-    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    pub async fn evaluate<T, U>(&mut self, expression: &str, arg: Option<T>) -> ArcResult<U>
     where
         T: Serialize,
         U: DeserializeOwned
     {
         upgrade(&self.inner)?.evaluate(expression, arg).await
+    }
+
+    pub async fn eval_on_selector<T, U>(
+        &mut self,
+        selector: &str,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?
+            .eval_on_selector(selector, expression, arg)
+            .await
+    }
+
+    pub async fn eval_on_selector_all<T, U>(
+        &mut self,
+        selector: &str,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?
+            .eval_on_selector_all(selector, expression, arg)
+            .await
+    }
+
+    pub async fn dispatch_event<T>(
+        &self,
+        selector: &str,
+        r#type: &str,
+        event_init: Option<T>
+    ) -> ArcResult<()>
+    where
+        T: Serialize
+    {
+        upgrade(&self.inner)?
+            .dispatch_event(selector, r#type, event_init)
+            .await
     }
 }
 

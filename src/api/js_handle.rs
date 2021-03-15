@@ -24,6 +24,13 @@ impl JsHandle {
     }
 
     pub async fn dispose(&mut self) -> ArcResult<()> { upgrade(&self.inner)?.dispose().await }
+
+    pub async fn json_value<U>(&mut self) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?.json_value().await
+    }
 }
 
 mod ser {

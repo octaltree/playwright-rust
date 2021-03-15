@@ -230,6 +230,25 @@ impl ElementHandle {
         let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
         Ok(Some(e))
     }
+
+    pub(crate) async fn dispatch_event<T>(
+        &self,
+        r#type: &str,
+        event_init: Option<T>
+    ) -> ArcResult<()>
+    where
+        T: Serialize
+    {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            r#type: &'a str,
+            event_init: Value
+        }
+        let event_init = ser::to_value(&event_init).map_err(Error::SerializationPwJson)?;
+        let args = Args { r#type, event_init };
+        let _ = send_message!(self, "dispatchEvent", args);
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Default)]

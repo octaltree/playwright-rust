@@ -144,7 +144,20 @@ impl Page {
     is_checked! {is_enabled, doc = ""}
     is_checked! {is_hidden, doc = ""}
     is_checked! {is_visible, doc =""}
-    // dispatch_event
+
+    pub async fn dispatch_event<T>(
+        &self,
+        selector: &str,
+        r#type: &str,
+        event_init: Option<T>
+    ) -> ArcResult<()>
+    where
+        T: Serialize
+    {
+        self.main_frame()
+            .dispatch_event(selector, r#type, event_init)
+            .await
+    }
 
     pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
         self.main_frame().eval_handle(expression).await
@@ -171,10 +184,36 @@ impl Page {
     {
         self.main_frame().evaluate(expression, arg).await
     }
-    // evaluate
-    // evaluate_handle
-    // eval_on_selector
-    // eval_on_selector_all
+
+    pub async fn eval_on_selector<T, U>(
+        &mut self,
+        selector: &str,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        self.main_frame()
+            .eval_on_selector(selector, expression, arg)
+            .await
+    }
+
+    pub async fn eval_on_selector_all<T, U>(
+        &mut self,
+        selector: &str,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        self.main_frame()
+            .eval_on_selector_all(selector, expression, arg)
+            .await
+    }
 
     pub fn add_script_tag_builder<'a>(
         &mut self,

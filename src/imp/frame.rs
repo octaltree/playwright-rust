@@ -310,6 +310,85 @@ impl Frame {
         let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
         Ok(h)
     }
+
+    pub(crate) async fn eval_on_selector<T, U>(
+        &self,
+        selector: &str,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        #[derive(Serialize)]
+        struct Args<'a, 'b> {
+            selector: &'a str,
+            expression: &'b str,
+            arg: Value
+        }
+        let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
+        let args = Args {
+            selector,
+            expression,
+            arg
+        };
+        let v = send_message!(self, "evalOnSelector", args);
+        let first = first(&v).ok_or(Error::ObjectNotFound)?;
+        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+    }
+
+    pub(crate) async fn eval_on_selector_all<T, U>(
+        &self,
+        selector: &str,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        #[derive(Serialize)]
+        struct Args<'a, 'b> {
+            selector: &'a str,
+            expression: &'b str,
+            arg: Value
+        }
+        let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
+        let args = Args {
+            selector,
+            expression,
+            arg
+        };
+        let v = send_message!(self, "evalOnSelectorAll", args);
+        let first = first(&v).ok_or(Error::ObjectNotFound)?;
+        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+    }
+
+    pub(crate) async fn dispatch_event<T>(
+        &self,
+        selector: &str,
+        r#type: &str,
+        event_init: Option<T>
+    ) -> ArcResult<()>
+    where
+        T: Serialize
+    {
+        #[derive(Serialize)]
+        struct Args<'a, 'b> {
+            selector: &'a str,
+            r#type: &'b str,
+            event_init: Value
+        }
+        let event_init = ser::to_value(&event_init).map_err(Error::SerializationPwJson)?;
+        let args = Args {
+            selector,
+            r#type,
+            event_init
+        };
+        let _ = send_message!(self, "dispatchEvent", args);
+        Ok(())
+    }
 }
 
 #[derive(Serialize)]
