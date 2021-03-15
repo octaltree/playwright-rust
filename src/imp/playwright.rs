@@ -88,7 +88,7 @@ impl Future for WaitInitialObject {
             () => {{
                 cx.waker().wake_by_ref();
                 if this.started.elapsed().as_secs() > 10 {
-                    return Poll::Ready(Err(Error::Timeout));
+                    return Poll::Ready(Err(Error::InitializationError));
                 }
                 return Poll::Pending;
             }};

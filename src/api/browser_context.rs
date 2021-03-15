@@ -37,13 +37,15 @@ impl BrowserContext {
     ///// Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
     // fn browser(&self) -> Option<Browser> { unimplemented!() }
 
-    // async fn set_default_navigation_timeout(&mut self, timeout: Duration) -> Result<(), Error> {
-    //    unimplemented!()
-    //}
+    pub async fn set_default_navigation_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+        upgrade(&self.inner)?
+            .set_default_navigation_timeout(timeout)
+            .await
+    }
 
-    // async fn set_default_timeout(&mut self, timeout: Duration) -> Result<(), Error> {
-    //    unimplemented!()
-    //}
+    pub async fn set_default_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+        upgrade(&self.inner)?.set_default_timeout(timeout).await
+    }
 
     pub async fn cookies(&mut self, urls: &[String]) -> ArcResult<Vec<Cookie>> {
         upgrade(&self.inner)?.cookies(urls).await

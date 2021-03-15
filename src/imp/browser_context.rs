@@ -15,10 +15,14 @@ pub(crate) struct BrowserContext {
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
-    pages: Vec<Weak<Page>>
+    pages: Vec<Weak<Page>>,
+    timeout: Option<f64>,
+    navigation_timeout: Option<f64>
 }
 
 impl BrowserContext {
+    const DEFAULT_TIMEOUT: f64 = 30000.;
+
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
         let browser = match &channel.parent {
@@ -141,8 +145,6 @@ impl BrowserContext {
         Ok(())
     }
 
-    // def set_default_navigation_timeout(self, timeout: float) -> None:
-    // def set_default_timeout(self, timeout: float) -> None:
     // async def expose_binding(
     // async def expose_function(self, name: str, callback: Callable) -> None:
     // async def route(self, url: URLMatch, handler: RouteHandler) -> None:
@@ -173,6 +175,38 @@ impl BrowserContext {
             Some(i) => i
         };
         pages.remove(i);
+    }
+
+    pub(crate) fn default_timeout(&self) -> f64 {
+        self.var
+            .lock()
+            .unwrap()
+            .timeout
+            .unwrap_or(Self::DEFAULT_TIMEOUT)
+    }
+
+    pub(crate) fn default_navigation_timeout(&self) -> f64 {
+        self.var
+            .lock()
+            .unwrap()
+            .navigation_timeout
+            .unwrap_or(Self::DEFAULT_TIMEOUT)
+    }
+
+    pub(crate) async fn set_default_timeout(&self, timeout: f64) -> ArcResult<()> {
+        let mut args = Map::new();
+        args.insert("timeout".into(), timeout.into());
+        let _ = send_message!(self, "setDefaultTimeoutNoReply", args);
+        self.var.lock().unwrap().timeout = Some(timeout);
+        Ok(())
+    }
+
+    pub(crate) async fn set_default_navigation_timeout(&self, timeout: f64) -> ArcResult<()> {
+        let mut args = Map::new();
+        args.insert("timeout".into(), timeout.into());
+        let _ = send_message!(self, "setDefaultNavigationTimeoutNoReply", args);
+        self.var.lock().unwrap().navigation_timeout = Some(timeout);
+        Ok(())
     }
 
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
@@ -233,5 +267,6 @@ mod tests {
         let c = c.upgrade().unwrap();
         c.storage_state().await.unwrap();
         c.cookies(&[]).await.unwrap();
+        c.set_default_timeout(30000.).await.unwrap();
     });
 }
