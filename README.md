@@ -1,8 +1,6 @@
 # 🎭 [Playwright](https://playwright.dev) for Rust
 
-[![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/strong) ![MIT](https://img.shields.io/crates/l/strong) ![](https://github.com/octaltree/playwright-rust/workflows/Test/badge.svg)
-
-## [API reference](https://docs.rs/playwright/)
+[![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/strong) [![docs.rs](https://docs.rs/playwright/badge.svg)](https://docs.rs/playwright/) ![MIT](https://img.shields.io/crates/l/strong) ![](https://github.com/octaltree/playwright-rust/workflows/Test/badge.svg)
 
 Playwright is a rust library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) built on top of Node.js library.
 
@@ -35,7 +33,7 @@ async fn main() -> Result<(), playwright::Error> {
 }
 ```
 
-It's still under development and has limited functions. Please have a look at tests and docs.rs.
+It's still under development and has limited functions. Please have a look at tests and [docs.rs](https://docs.rs/playwright/).
 Welcome contributions.
 
 ## Async runtimes
