@@ -32,7 +32,7 @@ impl Playwright {
     }
 
     /// Runs $ playwright install
-    pub fn prepare(&self) -> io::Result<()> {
+    pub fn prepare(&mut self) -> io::Result<()> {
         Command::new(self.driver.executable())
             .args(&["install"])
             .status()?;
