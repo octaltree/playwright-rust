@@ -1,5 +1,7 @@
 # 🎭 [Playwright](https://playwright.dev) for Rust
 
+[![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/strong) ![MIT](https://img.shields.io/crates/l/strong) ![](https://github.com/octaltree/playwright-rust/workflows/Test/badge.svg)
+
 Playwright is a rust library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) built on top of Node.js library.
 
 ## Installation
