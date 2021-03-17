@@ -121,6 +121,7 @@ impl Frame {
         struct Args<'a, 'b> {
             selector: &'a str,
             name: &'b str,
+            #[serde(skip_serializing_if = "Option::is_none")]
             timeout: Option<f64>
         }
         let args = Args {

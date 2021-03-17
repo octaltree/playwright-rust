@@ -249,6 +249,19 @@ impl ElementHandle {
         let _ = send_message!(self, "dispatchEvent", args);
         Ok(())
     }
+
+    pub(crate) async fn select_option(&self, args: SelectOptionArgs) -> ArcResult<Vec<String>> {
+        let v = send_message!(self, "selectOption", args);
+        let first = first(&v).ok_or(Error::InvalidParams)?;
+        let ss = first
+            .as_array()
+            .ok_or(Error::InvalidParams)?
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(ToOwned::to_owned)
+            .collect();
+        Ok(ss)
+    }
 }
 
 #[derive(Serialize, Default)]
@@ -338,8 +351,11 @@ macro_rules! type_args {
         #[serde(rename_all = "camelCase")]
         pub(crate) struct $t<'a> {
             $f: &'a str,
+            #[serde(skip_serializing_if = "Option::is_none")]
             pub(crate) delay: Option<f64>,
+            #[serde(skip_serializing_if = "Option::is_none")]
             pub(crate) timeout: Option<f64>,
+            #[serde(skip_serializing_if = "Option::is_none")]
             pub(crate) no_wait_after: Option<bool>
         }
 
@@ -395,4 +411,14 @@ impl<'a> WaitForSelectorArgs<'a> {
 impl RemoteObject for ElementHandle {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+}
+
+// TODO
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SelectOptionArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
 }

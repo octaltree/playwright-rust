@@ -109,6 +109,7 @@ impl BrowserContext {
     pub(crate) async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
         #[derive(Serialize)]
         struct Args<'a> {
+            #[serde(skip_serializing_if = "Option::is_none")]
             geolocation: Option<&'a Geolocation>
         }
         let args = Args { geolocation };

@@ -16,9 +16,8 @@ use playwright::Playwright;
 
 #[tokio::main]
 async fn main() -> Result<(), playwright::Error> {
-    env_logger::init();
-    let mut playwright = Playwright::initialize().await?; // if drop all resources are disposed
-    playwright.prepare()?; // install browsers
+    let mut playwright = Playwright::initialize().await?;
+    playwright.prepare()?; // Install browsers
     let mut chromium = playwright.chromium();
     let mut browser = chromium.launcher().headless(true).launch().await?;
     let mut context = browser.context_builder().build().await?;
