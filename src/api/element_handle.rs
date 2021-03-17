@@ -3,8 +3,8 @@ use crate::{
     imp::{
         core::*,
         element_handle::{
-            CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, PressArgs,
-            ScreenshotArgs, TapArgs, TypeArgs, WaitForSelectorArgs
+            CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, Opt, PressArgs,
+            ScreenshotArgs, SelectOptionArgs, TapArgs, TypeArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{ElementState, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
@@ -99,26 +99,26 @@ impl ElementHandle {
         PressBuilder::new(self.inner.clone(), key)
     }
 
-    pub async fn scroll_into_view_if_needed(&self, timeout: Option<f64>) -> ArcResult<()> {
+    pub async fn scroll_into_view_if_needed(&mut self, timeout: Option<f64>) -> ArcResult<()> {
         upgrade(&self.inner)?
             .scroll_into_view_if_needed(timeout)
             .await
     }
 
-    pub async fn select_text(&self, timeout: Option<f64>) -> ArcResult<()> {
+    pub async fn select_text(&mut self, timeout: Option<f64>) -> ArcResult<()> {
         upgrade(&self.inner)?.select_text(timeout).await
     }
 
-    pub async fn bounding_box(&self) -> ArcResult<Option<FloatRect>> {
+    pub async fn bounding_box(&mut self) -> ArcResult<Option<FloatRect>> {
         upgrade(&self.inner)?.bounding_box().await
     }
 
-    pub async fn screenshot_builder(&self) -> ScreenshotBuilder {
+    pub async fn screenshot_builder(&mut self) -> ScreenshotBuilder {
         ScreenshotBuilder::new(self.inner.clone())
     }
 
     pub async fn wait_for_element_state(
-        &self,
+        &mut self,
         state: ElementState,
         timeout: Option<f64>
     ) -> ArcResult<()> {
@@ -127,17 +127,24 @@ impl ElementHandle {
             .await
     }
 
-    pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
+    pub fn wait_for_selector_builder<'a>(
+        &mut self,
+        selector: &'a str
+    ) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
 
-    pub async fn dispatch_event<T>(&self, r#type: &str, event_init: Option<T>) -> ArcResult<()>
+    pub async fn dispatch_event<T>(&mut self, r#type: &str, event_init: Option<T>) -> ArcResult<()>
     where
         T: Serialize
     {
         upgrade(&self.inner)?
             .dispatch_event(r#type, event_init)
             .await
+    }
+
+    pub async fn select_option_builder(&mut self) -> SelectOptionBuilder {
+        SelectOptionBuilder::new(self.inner.clone())
     }
 }
 
@@ -359,4 +366,92 @@ impl<'a> WaitForSelectorBuilder<'a> {
     optional_setter!(
         state, ElementState;
         timeout, f64);
+}
+
+pub struct SelectOptionBuilder {
+    inner: Weak<Impl>,
+    args: SelectOptionArgs,
+    err: Option<Error>
+}
+
+impl SelectOptionBuilder {
+    pub(crate) fn new(inner: Weak<Impl>) -> Self {
+        let args = SelectOptionArgs::default();
+        Self {
+            inner,
+            args,
+            err: None
+        }
+    }
+
+    pub async fn select_option(self) -> Result<Vec<String>, Arc<Error>> {
+        let Self { inner, args, err } = self;
+        if let Some(e) = err {
+            Err(e)?
+        }
+        upgrade(&inner)?.select_option(args).await
+    }
+
+    pub fn add_element(mut self, x: &ElementHandle) -> Self {
+        let guid = match x.guid() {
+            Ok(i) => i,
+            Err(e) => {
+                if self.err.is_none() {
+                    self.err = Some(e);
+                }
+                return self;
+            }
+        };
+        let x = OnlyGuid { guid };
+        if let Some(e) = &mut self.args.elements {
+            e.push(x);
+        } else {
+            self.args.elements = Some(vec![x]);
+        }
+        self
+    }
+
+    pub fn add_value(mut self, x: String) -> Self {
+        let x = Opt::Value(x);
+        if let Some(o) = &mut self.args.options {
+            o.push(x);
+        } else {
+            self.args.options = Some(vec![x]);
+        }
+        self
+    }
+
+    pub fn add_index(mut self, x: usize) -> Self {
+        let x = Opt::Index(x);
+        if let Some(o) = &mut self.args.options {
+            o.push(x);
+        } else {
+            self.args.options = Some(vec![x]);
+        }
+        self
+    }
+
+    pub fn add_label(mut self, x: String) -> Self {
+        let x = Opt::Label(x);
+        if let Some(o) = &mut self.args.options {
+            o.push(x);
+        } else {
+            self.args.options = Some(vec![x]);
+        }
+        self
+    }
+
+    optional_setter!(
+        no_wait_after, bool;
+        timeout, f64);
+
+    pub fn clear_elements(mut self) -> Self {
+        self.args.elements = None;
+        self
+    }
+
+    pub fn clear_options(mut self) -> Self {
+        self.args.options = None;
+        self
+    }
 }

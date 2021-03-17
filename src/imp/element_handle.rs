@@ -413,12 +413,23 @@ impl RemoteObject for ElementHandle {
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }
 
-// TODO
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SelectOptionArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) options: Option<Vec<Opt>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) elements: Option<Vec<OnlyGuid>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
+}
+
+#[derive(Serialize)]
+pub(crate) enum Opt {
+    Value(String),
+    Index(usize),
+    Label(String)
 }
