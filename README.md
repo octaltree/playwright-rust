@@ -62,3 +62,5 @@ Application uses this library will be bundled the driver into rust binary at bui
 - [microsoft/playwright-java](https://github.com/microsoft/playwright-java)
 - [mxschmitt/playwright-go](https://github.com/mxschmitt/playwright-go)
 - [YusukeIwaki/playwright-ruby-client](https://github.com/YusukeIwaki/playwright-ruby-client)
+- [teodesian/playwright-perl](https://github.com/teodesian/playwright-perl)
+- [luka-dev/playwright-php](https://github.com/luka-dev/playwright-php)
