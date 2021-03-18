@@ -143,7 +143,7 @@ impl ElementHandle {
             .await
     }
 
-    pub async fn select_option_builder(&mut self) -> SelectOptionBuilder {
+    pub fn select_option_builder(&mut self) -> SelectOptionBuilder {
         SelectOptionBuilder::new(self.inner.clone())
     }
 }

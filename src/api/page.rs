@@ -2,8 +2,8 @@ pub use crate::{
     api::{
         frame::{
             AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder,
-            GotoBuilder, HoverBuilder, PressBuilder, SetContentBuilder, TapBuilder, TypeBuilder,
-            UncheckBuilder, WaitForSelectorBuilder
+            GotoBuilder, HoverBuilder, PressBuilder, SelectOptionBuilder, SetContentBuilder,
+            TapBuilder, TypeBuilder, UncheckBuilder, WaitForSelectorBuilder
         },
         JsHandle
     },
@@ -301,7 +301,9 @@ impl Page {
         self.main_frame().hover_builder(selector)
     }
 
-    // select_option
+    pub fn select_option_builder<'a>(&mut self, selector: &'a str) -> SelectOptionBuilder<'a> {
+        self.main_frame().select_option_builder(selector)
+    }
     // set_input_files
 
     pub fn type_builer<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {

@@ -1,3 +1,4 @@
+pub(crate) use crate::imp::element_handle::Opt;
 use crate::imp::{
     core::*,
     element_handle::ElementHandle,
@@ -390,7 +391,23 @@ impl Frame {
         let _ = send_message!(self, "dispatchEvent", args);
         Ok(())
     }
+
+    pub(crate) async fn select_option(&self, args: SelectOptionArgs<'_>) -> ArcResult<Vec<String>> {
+        let v = send_message!(self, "selectOption", args);
+        let first = first(&v).ok_or(Error::InvalidParams)?;
+        let ss = first
+            .as_array()
+            .ok_or(Error::InvalidParams)?
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(ToOwned::to_owned)
+            .collect();
+        Ok(ss)
+    }
 }
+
+// mutable
+impl Frame {}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -662,6 +679,34 @@ impl<'a, 'b, 'c> AddScriptTagArgs<'a, 'b, 'c> {
             content,
             url: None,
             r#type: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SelectOptionArgs<'a> {
+    selector: &'a str,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) options: Option<Vec<Opt>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) elements: Option<Vec<OnlyGuid>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a> SelectOptionArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            options: None,
+            elements: None,
+            timeout: None,
+            no_wait_after: None
         }
     }
 }

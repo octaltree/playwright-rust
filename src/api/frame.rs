@@ -5,7 +5,8 @@ use crate::{
         core::*,
         frame::{
             AddScriptTagArgs, CheckArgs, ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs,
-            PressArgs, SetContentArgs, TapArgs, TypeArgs, WaitForSelectorArgs
+            Opt, PressArgs, SelectOptionArgs, SetContentArgs, TapArgs, TypeArgs,
+            WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
@@ -252,6 +253,10 @@ impl Frame {
         upgrade(&self.inner)?
             .dispatch_event(selector, r#type, event_init)
             .await
+    }
+
+    pub fn select_option_builder<'a>(&mut self, selector: &'a str) -> SelectOptionBuilder<'a> {
+        SelectOptionBuilder::new(self.inner.clone(), selector)
     }
 }
 
@@ -514,6 +519,94 @@ impl<'a, 'b, 'c> AddScriptTagBuilder<'a, 'b, 'c> {
 
     pub fn clear_type(mut self) -> Self {
         self.args.r#type = None;
+        self
+    }
+}
+
+pub struct SelectOptionBuilder<'a> {
+    inner: Weak<Impl>,
+    args: SelectOptionArgs<'a>,
+    err: Option<Error>
+}
+
+impl<'a> SelectOptionBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, selector: &'a str) -> Self {
+        let args = SelectOptionArgs::new(selector);
+        Self {
+            inner,
+            args,
+            err: None
+        }
+    }
+
+    pub async fn select_option(self) -> Result<Vec<String>, Arc<Error>> {
+        let Self { inner, args, err } = self;
+        if let Some(e) = err {
+            Err(e)?
+        }
+        upgrade(&inner)?.select_option(args).await
+    }
+
+    pub fn add_element(mut self, x: &ElementHandle) -> Self {
+        let guid = match x.guid() {
+            Ok(i) => i,
+            Err(e) => {
+                if self.err.is_none() {
+                    self.err = Some(e);
+                }
+                return self;
+            }
+        };
+        let x = OnlyGuid { guid };
+        if let Some(e) = &mut self.args.elements {
+            e.push(x);
+        } else {
+            self.args.elements = Some(vec![x]);
+        }
+        self
+    }
+
+    pub fn add_value(mut self, x: String) -> Self {
+        let x = Opt::Value(x);
+        if let Some(o) = &mut self.args.options {
+            o.push(x);
+        } else {
+            self.args.options = Some(vec![x]);
+        }
+        self
+    }
+
+    pub fn add_index(mut self, x: usize) -> Self {
+        let x = Opt::Index(x);
+        if let Some(o) = &mut self.args.options {
+            o.push(x);
+        } else {
+            self.args.options = Some(vec![x]);
+        }
+        self
+    }
+
+    pub fn add_label(mut self, x: String) -> Self {
+        let x = Opt::Label(x);
+        if let Some(o) = &mut self.args.options {
+            o.push(x);
+        } else {
+            self.args.options = Some(vec![x]);
+        }
+        self
+    }
+
+    optional_setter!(
+        no_wait_after, bool;
+        timeout, f64);
+
+    pub fn clear_elements(mut self) -> Self {
+        self.args.elements = None;
+        self
+    }
+
+    pub fn clear_options(mut self) -> Self {
+        self.args.options = None;
         self
     }
 }
