@@ -387,7 +387,7 @@ impl SelectOptionBuilder {
     pub async fn select_option(self) -> Result<Vec<String>, Arc<Error>> {
         let Self { inner, args, err } = self;
         if let Some(e) = err {
-            Err(e)?
+            return Err(e.into());
         }
         upgrade(&inner)?.select_option(args).await
     }
