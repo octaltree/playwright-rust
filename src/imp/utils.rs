@@ -185,3 +185,17 @@ pub struct PdfMargins<'a, 'b, 'c, 'd> {
     bottom: Option<Length<'c>>,
     left: Option<Length<'d>>
 }
+
+#[derive(Debug, Serialize, PartialEq)]
+pub struct File {
+    name: String,
+    mime: String,
+    buffer: String
+}
+
+impl File {
+    pub fn new(name: String, mime: String, body: &[u8]) -> Self {
+        let buffer = base64::encode(body);
+        Self { name, mime, buffer }
+    }
+}

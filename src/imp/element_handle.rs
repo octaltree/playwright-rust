@@ -2,7 +2,9 @@ use crate::imp::{
     core::*,
     frame::Frame,
     prelude::*,
-    utils::{ElementState, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
+    utils::{
+        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType
+    }
 };
 
 #[derive(Debug)]
@@ -262,6 +264,11 @@ impl ElementHandle {
             .collect();
         Ok(ss)
     }
+
+    pub(crate) async fn set_input_files(&self, args: SetInputFilesArgs) -> ArcResult<()> {
+        let _ = send_message!(self, "setInputFiles", args);
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Default)]
@@ -432,4 +439,14 @@ pub(crate) enum Opt {
     Value(String),
     Index(usize),
     Label(String)
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SetInputFilesArgs {
+    pub(crate) files: Vec<File>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
 }

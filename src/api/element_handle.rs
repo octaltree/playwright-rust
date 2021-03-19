@@ -4,10 +4,13 @@ use crate::{
         core::*,
         element_handle::{
             CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, Opt, PressArgs,
-            ScreenshotArgs, SelectOptionArgs, TapArgs, TypeArgs, WaitForSelectorArgs
+            ScreenshotArgs, SelectOptionArgs, SetInputFilesArgs, TapArgs, TypeArgs,
+            WaitForSelectorArgs
         },
         prelude::*,
-        utils::{ElementState, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType}
+        utils::{
+            ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType
+        }
     }
 };
 
@@ -145,6 +148,10 @@ impl ElementHandle {
 
     pub fn select_option_builder(&mut self) -> SelectOptionBuilder {
         SelectOptionBuilder::new(self.inner.clone())
+    }
+
+    pub fn set_input_files_builder(&mut self, file: File) -> SetInputFilesBuilder {
+        SetInputFilesBuilder::new(self.inner.clone(), file)
     }
 }
 
@@ -452,6 +459,38 @@ impl SelectOptionBuilder {
 
     pub fn clear_options(mut self) -> Self {
         self.args.options = None;
+        self
+    }
+}
+
+pub struct SetInputFilesBuilder {
+    inner: Weak<Impl>,
+    args: SetInputFilesArgs
+}
+
+impl SetInputFilesBuilder {
+    pub(crate) fn new(inner: Weak<Impl>, file: File) -> Self {
+        let mut args = SetInputFilesArgs::default();
+        args.files.push(file);
+        Self { inner, args }
+    }
+
+    pub async fn set_input_files(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.set_input_files(args).await
+    }
+
+    pub fn add_file(mut self, x: File) -> Self {
+        self.args.files.push(x);
+        self
+    }
+
+    optional_setter!(
+        no_wait_after, bool;
+        timeout, f64);
+
+    pub fn clear_files(mut self) -> Self {
+        self.args.files = vec![];
         self
     }
 }
