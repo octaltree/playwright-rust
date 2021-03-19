@@ -470,8 +470,10 @@ pub struct SetInputFilesBuilder {
 
 impl SetInputFilesBuilder {
     pub(crate) fn new(inner: Weak<Impl>, file: File) -> Self {
-        let mut args = SetInputFilesArgs::default();
-        args.files.push(file);
+        let args = SetInputFilesArgs {
+            files: vec![file],
+            ..SetInputFilesArgs::default()
+        };
         Self { inner, args }
     }
 

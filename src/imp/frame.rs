@@ -5,7 +5,7 @@ use crate::imp::{
     js_handle::JsHandle,
     prelude::*,
     response::Response,
-    utils::{DocumentLoadState, KeyboardModifier, MouseButton, Position}
+    utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
 };
 
 #[derive(Debug)]
@@ -404,6 +404,11 @@ impl Frame {
             .collect();
         Ok(ss)
     }
+
+    pub(crate) async fn set_input_files(&self, args: SetInputFilesArgs<'_>) -> ArcResult<()> {
+        let _ = send_message!(self, "setInputFiles", args);
+        Ok(())
+    }
 }
 
 // mutable
@@ -705,6 +710,29 @@ impl<'a> SelectOptionArgs<'a> {
             selector,
             options: None,
             elements: None,
+            timeout: None,
+            no_wait_after: None
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SetInputFilesArgs<'a> {
+    selector: &'a str,
+
+    pub(crate) files: Vec<File>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) no_wait_after: Option<bool>
+}
+
+impl<'a> SetInputFilesArgs<'a> {
+    pub(crate) fn new(selector: &'a str) -> Self {
+        Self {
+            selector,
+            files: Vec::new(),
             timeout: None,
             no_wait_after: None
         }

@@ -3,7 +3,7 @@ pub use crate::{
         frame::{
             AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder,
             GotoBuilder, HoverBuilder, PressBuilder, SelectOptionBuilder, SetContentBuilder,
-            TapBuilder, TypeBuilder, UncheckBuilder, WaitForSelectorBuilder
+            SetInputFilesBuilder, TapBuilder, TypeBuilder, UncheckBuilder, WaitForSelectorBuilder
         },
         JsHandle
     },
@@ -20,7 +20,8 @@ use crate::{
         page::{EmulateMediaArgs, Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
         prelude::*,
         utils::{
-            ColorScheme, DocumentLoadState, FloatRect, Length, PdfMargins, ScreenshotType, Viewport
+            ColorScheme, DocumentLoadState, File, FloatRect, Length, PdfMargins, ScreenshotType,
+            Viewport
         }
     },
     Error
@@ -304,7 +305,14 @@ impl Page {
     pub fn select_option_builder<'a>(&mut self, selector: &'a str) -> SelectOptionBuilder<'a> {
         self.main_frame().select_option_builder(selector)
     }
-    // set_input_files
+
+    pub fn set_input_files_builder<'a>(
+        &mut self,
+        selector: &'a str,
+        file: File
+    ) -> SetInputFilesBuilder<'a> {
+        self.main_frame().set_input_files_builder(selector, file)
+    }
 
     pub fn type_builer<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         self.main_frame().type_builder(selector, text)
