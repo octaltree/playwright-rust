@@ -29,7 +29,7 @@ impl BrowserType {
 
     pub(crate) async fn launch(
         &self,
-        args: LaunchArgs<'_, '_, '_>
+        args: LaunchArgs<'_, '_, '_, '_>
     ) -> Result<Weak<Browser>, Arc<Error>> {
         let res = send_message!(self, "launch", args);
         let guid = only_guid(&res)?;
@@ -39,7 +39,7 @@ impl BrowserType {
 
     pub(crate) async fn launch_persistent_context(
         &self,
-        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
+        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "launchPersistentContext", args);
         let guid = only_guid(&res)?;
@@ -50,7 +50,7 @@ impl BrowserType {
 
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct LaunchArgs<'a, 'b, 'c> {
+pub(crate) struct LaunchArgs<'a, 'b, 'c, 'd> {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "executablePath")]
     pub(crate) executable: Option<&'a Path>,
@@ -86,7 +86,9 @@ pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) chromium_sandbox: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) firefox_user_prefs: Option<Map<String, Value>>
+    pub(crate) firefox_user_prefs: Option<Map<String, Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) channel: Option<&'d str>
 }
 
 impl RemoteObject for BrowserType {
@@ -105,7 +107,7 @@ struct Initializer {
 // launch args | context args | {user_data_dir: }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
+pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l> {
     user_data_dir: &'a Path,
     sdk_language: &'static str,
 
@@ -187,7 +189,9 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) record_video: Option<RecordVideo<'j>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) record_har: Option<RecordHar<'k>>
+    pub(crate) record_har: Option<RecordHar<'k>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) channel: Option<&'l str>
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -206,7 +210,7 @@ pub struct RecordHar<'a> {
     omit_content: Option<bool>
 }
 
-impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
+impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
     pub(crate) fn new(user_data_dir: &'a Path) -> Self {
         let sdk_language = "rust";
         Self {
@@ -245,7 +249,8 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             accept_downloads: None,
             chromium_sandbox: None,
             record_video: None,
-            record_har: None
+            record_har: None,
+            channel: None
         }
     }
 }

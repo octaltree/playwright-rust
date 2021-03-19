@@ -7,7 +7,7 @@ license = "MIT"
 documentation = "https://docs.rs/playwright/"
 repository = "https://github.com/octaltree/playwright"
 categories = ["web-programming"]
-keywords = ["web", "browser", "automation", "testing"]
+keywords = ["testing", "headless", "web", "browser", "automation"]
 edition = "2018"
 build = "src/build.rs"
 
