@@ -15,7 +15,10 @@ pub(crate) struct Frame {
 }
 
 #[derive(Debug)]
-struct Variable {}
+struct Variable {
+    url: String,
+    name: String
+}
 
 macro_rules! is_checked {
     ($f: ident, $m: literal) => {
@@ -38,9 +41,10 @@ macro_rules! is_checked {
 }
 
 impl Frame {
-    pub(crate) fn new(channel: ChannelOwner) -> Self {
-        let var = Mutex::new(Variable {});
-        Self { channel, var }
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
+        let Initializer { name, url } = serde_json::from_value(channel.initializer.clone())?;
+        let var = Mutex::new(Variable { url, name });
+        Ok(Self { channel, var })
     }
 
     pub(crate) async fn goto(&self, args: GotoArgs<'_, '_>) -> ArcResult<Option<Weak<Response>>> {
@@ -412,7 +416,45 @@ impl Frame {
 }
 
 // mutable
-impl Frame {}
+impl Frame {
+    pub(crate) fn url(&self) -> String { self.var.lock().unwrap().url.clone() }
+
+    pub(crate) fn name(&self) -> String { self.var.lock().unwrap().name.clone() }
+
+    fn on_navigated(&self, params: &Map<String, Value>) -> Result<(), Error> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct New {
+            name: String,
+            url: String
+        }
+        let New { name, url } = serde_json::from_value(params.clone().into())?;
+        let var = &mut self.var.lock().unwrap();
+        var.name = name;
+        var.url = url;
+        Ok(())
+    }
+}
+
+impl RemoteObject for Frame {
+    fn channel(&self) -> &ChannelOwner { &self.channel }
+    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+
+    fn handle_event(
+        &self,
+        ctx: &Context,
+        method: &S<Method>,
+        params: &Map<String, Value>
+    ) -> Result<(), Error> {
+        match method.as_str() {
+            "navigated" => {
+                self.on_navigated(params)?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -640,11 +682,6 @@ struct SelectorTimeout<'a> {
     timeout: Option<f64>
 }
 
-impl RemoteObject for Frame {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
-}
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CheckArgs<'a> {
@@ -737,6 +774,13 @@ impl<'a> SetInputFilesArgs<'a> {
             no_wait_after: None
         }
     }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Initializer {
+    name: String,
+    url: String
 }
 
 #[cfg(test)]

@@ -28,6 +28,10 @@ macro_rules! is_checked {
 impl Frame {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
+    pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url()) }
+
+    pub fn name(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.name()) }
+
     pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.inner.clone(), url)
     }

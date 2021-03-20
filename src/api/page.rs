@@ -249,7 +249,7 @@ impl Page {
         self.main_frame().add_style_tag(content, url).await
     }
 
-    // url
+    pub fn url(&self) -> Result<String, Error> { self.main_frame().url() }
 
     pub async fn content<'a>(&mut self) -> ArcResult<String> { self.main_frame().content().await }
 
