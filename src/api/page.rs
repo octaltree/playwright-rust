@@ -80,6 +80,14 @@ impl Page {
         upgrade(&self.inner)?.set_default_timeout(timeout).await
     }
 
+    pub fn viewport_size(&self) -> Result<Option<Viewport>, Error> {
+        Ok(upgrade(&self.inner)?.viewport_size())
+    }
+
+    pub async fn set_viewport_size(&self, viewport_size: Viewport) -> ArcResult<()> {
+        upgrade(&self.inner)?.set_viewport_size(viewport_size).await
+    }
+
     ///// Video object associated with this page.
     // fn video(&self) -> Option<Video> { unimplemented!() }
 

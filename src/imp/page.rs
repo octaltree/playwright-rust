@@ -13,7 +13,6 @@ use crate::imp::{
 #[derive(Debug)]
 pub(crate) struct Page {
     channel: ChannelOwner,
-    viewport: Option<Viewport>,
     main_frame: Weak<Frame>,
     browser_context: Weak<BrowserContext>,
     var: Mutex<Variable>
@@ -21,6 +20,7 @@ pub(crate) struct Page {
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
+    viewport: Option<Viewport>,
     frames: Vec<Weak<Frame>>,
     timeout: Option<f64>,
     navigation_timeout: Option<f64>
@@ -87,11 +87,11 @@ impl Page {
         let main_frame = get_object!(ctx, &guid, Frame)?;
         let var = Mutex::new(Variable {
             frames: vec![main_frame.clone()],
+            viewport,
             ..Variable::default()
         });
         Ok(Self {
             channel,
-            viewport,
             main_frame,
             browser_context,
             var
@@ -283,6 +283,23 @@ impl Page {
 
 // mutable
 impl Page {
+    pub(crate) fn viewport_size(&self) -> Option<Viewport> {
+        self.var.lock().unwrap().viewport.clone()
+    }
+
+    pub(crate) async fn set_viewport_size(&self, viewport_size: Viewport) -> ArcResult<()> {
+        #[derive(Debug, Serialize)]
+        struct Args {
+            viewport_size: Viewport
+        }
+        let args = Args {
+            viewport_size: viewport_size.clone()
+        };
+        let _ = send_message!(self, "setViewportSize", args);
+        self.var.lock().unwrap().viewport = Some(viewport_size);
+        Ok(())
+    }
+
     pub(crate) fn frames(&self) -> Vec<Weak<Frame>> { self.var.lock().unwrap().frames.clone() }
 
     pub(crate) fn default_timeout(&self) -> f64 {
