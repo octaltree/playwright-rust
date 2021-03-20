@@ -7,14 +7,9 @@ use std::{
         TryLockError
     }
 };
-use tokio::sync::broadcast;
-
-#[derive(Debug)]
-pub struct Event {}
 
 #[derive(Debug)]
 pub(crate) struct Context {
-    evt_tx: Option<broadcast::Sender<Arc<Event>>>,
     objects: HashMap<Str<Guid>, RemoteArc>,
     ctx: Wm<Context>,
     id: i32,
@@ -183,7 +178,6 @@ impl Context {
             d
         };
         let ctx = Context {
-            evt_tx: None,
             objects,
             ctx: Weak::new(),
             id: 0,
@@ -320,23 +314,6 @@ impl Context {
         self.writer.send(&req)?;
         Ok(())
     }
-
-    fn subscribe_event(&mut self) -> broadcast::Receiver<Arc<Event>> {
-        if let Some(tx) = &self.evt_tx {
-            return tx.subscribe();
-        }
-        let (tx, rx) = broadcast::channel(100);
-        self.evt_tx = Some(tx);
-        rx
-    }
-
-    fn emit_event<E: Into<Arc<Event>>>(&self, e: E) {
-        let tx = match &self.evt_tx {
-            None => return,
-            Some(tx) => tx
-        };
-        tx.send(e.into()).ok();
-    }
 }
 
 #[cfg(test)]
@@ -347,14 +324,5 @@ mod tests {
         let driver = Driver::install().unwrap();
         let conn = Connection::try_new(&driver.executable()).unwrap();
         Connection::start(&conn);
-    });
-
-    crate::runtime_test!(tokio_event, {
-        let driver = Driver::install().unwrap();
-        let conn = Connection::try_new(&driver.executable()).unwrap();
-        Connection::start(&conn);
-        let mut rx = conn.ctx.lock().unwrap().subscribe_event();
-        conn.ctx.lock().unwrap().emit_event(Event {});
-        rx.recv().await.unwrap();
     });
 }

@@ -1,7 +1,7 @@
 use crate::{
     api::{Browser, Page},
     imp::{
-        browser_context::BrowserContext as Impl,
+        browser_context::{BrowserContext as Impl, Event},
         core::*,
         prelude::*,
         utils::{Cookie, Geolocation, StorageState}
@@ -104,6 +104,10 @@ impl BrowserContext {
 
     // async fn expect_page(&mut self) -> Result<StorageState, Error> { unimplemented!() }
 
+    pub fn subscribe_event(&self) -> Result<broadcast::Receiver<Event>, Error> {
+        Ok(upgrade(&self.inner)?.subscribe_event())
+    }
+
     pub async fn storage_state(&mut self) -> ArcResult<StorageState> {
         upgrade(&self.inner)?.storage_state().await
     }
@@ -118,3 +122,9 @@ impl BrowserContext {
         inner.close().await
     }
 }
+
+// impl EventEmitter for BrowserContext {
+//    type Event = Event;
+//    fn tx(&self) -> &Option<broadcast::Sender<Event>> { panic!("No use") }
+//    fn set_tx(&mut self, _tx: broadcast::Sender<Event>) { panic!("No use") }
+//}

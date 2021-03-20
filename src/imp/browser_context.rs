@@ -8,6 +8,8 @@ use crate::imp::{
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
+    tx: broadcast::Sender<Event>,
+    rx: broadcast::Receiver<Event>,
     channel: ChannelOwner,
     browser: Option<Weak<Browser>>,
     var: Mutex<Variable>
@@ -20,6 +22,12 @@ pub(crate) struct Variable {
     navigation_timeout: Option<f64>
 }
 
+#[derive(Debug, Clone)]
+pub enum Event {
+    Close,
+    Page
+}
+
 impl BrowserContext {
     const DEFAULT_TIMEOUT: f64 = 30000.;
 
@@ -30,7 +38,10 @@ impl BrowserContext {
             _ => None
         };
         let var = Mutex::new(Variable::default());
+        let (tx, rx) = broadcast::channel(16);
         Ok(Self {
+            tx,
+            rx,
             channel,
             browser,
             var
@@ -245,6 +256,11 @@ impl RemoteObject for BrowserContext {
         }
         Ok(())
     }
+}
+
+impl EventEmitter for BrowserContext {
+    type Event = Event;
+    fn tx(&self) -> &broadcast::Sender<Self::Event> { &self.tx }
 }
 
 #[derive(Debug, Deserialize)]

@@ -13,7 +13,7 @@ pub(crate) mod prelude {
         future::Future,
         path::{Path, PathBuf},
         pin::Pin,
-        sync::{Arc, Mutex, Weak},
+        sync::{Arc, Mutex, MutexGuard, Weak},
         task::{Poll, Waker}
     };
     pub use strong::*;
@@ -58,11 +58,13 @@ mod macros {
 pub(crate) mod core {
     mod connection;
     mod driver;
+    mod event_emitter;
     mod message;
     mod remote_object;
     mod transport;
     pub use connection::*;
     pub use driver::*;
+    pub use event_emitter::*;
     pub use message::*;
     pub(crate) use remote_object::*;
     pub use transport::*;
