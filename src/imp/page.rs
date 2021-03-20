@@ -98,8 +98,8 @@ impl Page {
         })
     }
 
-    pub(crate) fn hook_created(&self, p: Weak<Page>) -> Result<(), Error> {
-        upgrade(&self.main_frame)?.set_page(p);
+    pub(crate) fn hook_created(&self, this: Weak<Page>) -> Result<(), Error> {
+        upgrade(&self.main_frame)?.set_page(this);
         Ok(())
     }
 

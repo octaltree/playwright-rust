@@ -12,6 +12,7 @@ use crate::imp::{
 #[derive(Debug)]
 pub(crate) struct Frame {
     channel: ChannelOwner,
+    parent_frame: Option<Weak<Frame>>,
     var: Mutex<Variable>
 }
 
@@ -19,7 +20,8 @@ pub(crate) struct Frame {
 struct Variable {
     url: String,
     name: String,
-    page: Option<Weak<Page>>
+    page: Option<Weak<Page>>,
+    child_frames: Vec<Weak<Frame>>
 }
 
 macro_rules! is_checked {
@@ -43,14 +45,36 @@ macro_rules! is_checked {
 }
 
 impl Frame {
-    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
-        let Initializer { name, url } = serde_json::from_value(channel.initializer.clone())?;
+    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
+        let Initializer {
+            name,
+            url,
+            parent_frame
+        } = serde_json::from_value(channel.initializer.clone())?;
+        let parent_frame =
+            match parent_frame.map(|OnlyGuid { guid }| get_object!(ctx, &guid, Frame)) {
+                Some(Err(e)) => return Err(e),
+                Some(Ok(x)) => Some(x),
+                None => None
+            };
         let var = Mutex::new(Variable {
             url,
             name,
-            page: None
+            page: None,
+            child_frames: Vec::new()
         });
-        Ok(Self { channel, var })
+        Ok(Self {
+            channel,
+            parent_frame,
+            var
+        })
+    }
+
+    pub(crate) fn hook_created(&self, this: Weak<Frame>) -> Result<(), Error> {
+        if let Some(parent) = &self.parent_frame {
+            upgrade(parent)?.add_child_frames(this);
+        }
+        Ok(())
     }
 
     pub(crate) async fn goto(&self, args: GotoArgs<'_, '_>) -> ArcResult<Option<Weak<Response>>> {
@@ -431,6 +455,16 @@ impl Frame {
 
     pub(crate) fn set_page(&self, page: Weak<Page>) { self.var.lock().unwrap().page = Some(page); }
 
+    pub(crate) fn parent_frame(&self) -> Option<Weak<Frame>> { self.parent_frame.clone() }
+
+    pub(crate) fn child_frames(&self) -> Vec<Weak<Frame>> {
+        self.var.lock().unwrap().child_frames.clone()
+    }
+
+    pub(crate) fn add_child_frames(&self, child: Weak<Frame>) {
+        self.var.lock().unwrap().child_frames.push(child);
+    }
+
     fn on_navigated(&self, params: &Map<String, Value>) -> Result<(), Error> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -790,7 +824,8 @@ impl<'a> SetInputFilesArgs<'a> {
 #[serde(rename_all = "camelCase")]
 struct Initializer {
     name: String,
-    url: String
+    url: String,
+    parent_frame: Option<OnlyGuid>
 }
 
 #[cfg(test)]

@@ -32,7 +32,21 @@ impl Frame {
 
     pub fn name(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.name()) }
 
-    pub fn page(&self) -> Option<Page> { upgrade(&self.inner).ok()?.page().map(Page::new) }
+    pub fn page(&self) -> Result<Option<Page>, Error> {
+        Ok(upgrade(&self.inner)?.page().map(Page::new))
+    }
+
+    pub fn parent_frame(&self) -> Result<Option<Frame>, Error> {
+        Ok(upgrade(&self.inner)?.parent_frame().map(Frame::new))
+    }
+
+    pub fn child_frames(&self) -> Result<Vec<Frame>, Error> {
+        Ok(upgrade(&self.inner)?
+            .child_frames()
+            .into_iter()
+            .map(Frame::new)
+            .collect())
+    }
 
     pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.inner.clone(), url)

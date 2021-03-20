@@ -290,7 +290,7 @@ mod remote_enum {
                     RemoteArc::BrowserContext(Arc::new(BrowserContext::try_new(c)?))
                 }
                 "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
-                "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(c)?)),
+                "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(ctx, c)?)),
                 "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
                 "Request" => RemoteArc::Request(Arc::new(Request::try_new(ctx, c)?)),
                 "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),

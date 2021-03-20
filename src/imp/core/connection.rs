@@ -284,8 +284,14 @@ impl Context {
         let r = RemoteArc::try_new(&typ, &self, c)?;
         parent.channel().push_child(r.downgrade());
         self.objects.insert(guid, r.clone());
-        if let RemoteArc::Page(p) = r.clone() {
-            p.hook_created(Arc::downgrade(&p))?;
+        match r {
+            RemoteArc::Page(p) => {
+                p.hook_created(Arc::downgrade(&p))?;
+            }
+            RemoteArc::Frame(f) => {
+                f.hook_created(Arc::downgrade(&f))?;
+            }
+            _ => ()
         }
         Ok(())
     }
