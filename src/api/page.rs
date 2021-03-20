@@ -62,6 +62,16 @@ impl Page {
         GoForwardBuilder::new(self.inner.clone())
     }
 
+    pub async fn set_default_navigation_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+        upgrade(&self.inner)?
+            .set_default_navigation_timeout(timeout)
+            .await
+    }
+
+    pub async fn set_default_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+        upgrade(&self.inner)?.set_default_timeout(timeout).await
+    }
+
     ///// Video object associated with this page.
     // fn video(&self) -> Option<Video> { unimplemented!() }
 

@@ -15,7 +15,14 @@ pub(crate) struct Page {
     channel: ChannelOwner,
     viewport: Option<Viewport>,
     main_frame: Weak<Frame>,
-    browser_context: Weak<BrowserContext>
+    browser_context: Weak<BrowserContext>,
+    var: Mutex<Variable>
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct Variable {
+    timeout: Option<f64>,
+    navigation_timeout: Option<f64>
 }
 
 #[derive(Debug)]
@@ -65,6 +72,8 @@ macro_rules! mouse_down {
 }
 
 impl Page {
+    const DEFAULT_TIMEOUT: f64 = 30000.;
+
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {
             main_frame: OnlyGuid { guid },
@@ -75,11 +84,13 @@ impl Page {
             _ => return Err(Error::InvalidParams)
         };
         let main_frame = get_object!(ctx, &guid, Frame)?;
+        let var = Mutex::new(Variable::default());
         Ok(Self {
             channel,
             viewport,
             main_frame,
-            browser_context
+            browser_context,
+            var
         })
     }
 
@@ -268,6 +279,44 @@ impl Page {
 
 // mutable
 impl Page {
+    pub(crate) fn default_timeout(&self) -> f64 {
+        let this = self.var.lock().unwrap().timeout;
+        let parent = || {
+            self.browser_context
+                .upgrade()
+                .map(|c| c.default_timeout())
+                .unwrap_or(Self::DEFAULT_TIMEOUT)
+        };
+        this.unwrap_or_else(parent)
+    }
+
+    pub(crate) fn default_navigation_timeout(&self) -> f64 {
+        let this = self.var.lock().unwrap().navigation_timeout;
+        let parent = || {
+            self.browser_context
+                .upgrade()
+                .map(|c| c.default_navigation_timeout())
+                .unwrap_or(Self::DEFAULT_TIMEOUT)
+        };
+        this.unwrap_or_else(parent)
+    }
+
+    pub(crate) async fn set_default_timeout(&self, timeout: f64) -> ArcResult<()> {
+        let mut args = Map::new();
+        args.insert("timeout".into(), timeout.into());
+        let _ = send_message!(self, "setDefaultTimeoutNoReply", args);
+        self.var.lock().unwrap().timeout = Some(timeout);
+        Ok(())
+    }
+
+    pub(crate) async fn set_default_navigation_timeout(&self, timeout: f64) -> ArcResult<()> {
+        let mut args = Map::new();
+        args.insert("timeout".into(), timeout.into());
+        let _ = send_message!(self, "setDefaultNavigationTimeoutNoReply", args);
+        self.var.lock().unwrap().navigation_timeout = Some(timeout);
+        Ok(())
+    }
+
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let bc = match self.browser_context().upgrade() {
             None => return Ok(()),

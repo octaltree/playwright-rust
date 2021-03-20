@@ -25,6 +25,7 @@ impl BrowserContext {
             .collect())
     }
 
+    ///// Returns the browser instance of the context. If it was launched as a persistent context None gets returned.
     pub fn browser(&self) -> Result<Option<Browser>, Error> {
         Ok(upgrade(&self.inner)?.browser().map(Browser::new))
     }
@@ -33,9 +34,6 @@ impl BrowserContext {
         let inner = upgrade(&self.inner)?;
         Ok(Page::new(inner.new_page().await?))
     }
-
-    ///// Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
-    // fn browser(&self) -> Option<Browser> { unimplemented!() }
 
     pub async fn set_default_navigation_timeout(&mut self, timeout: f64) -> ArcResult<()> {
         upgrade(&self.inner)?
