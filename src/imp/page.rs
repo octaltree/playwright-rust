@@ -98,6 +98,11 @@ impl Page {
         })
     }
 
+    pub(crate) fn hook_created(&self, p: Weak<Page>) -> Result<(), Error> {
+        upgrade(&self.main_frame)?.set_page(p);
+        Ok(())
+    }
+
     pub(crate) fn browser_context(&self) -> Weak<BrowserContext> { self.browser_context.clone() }
 
     pub(crate) fn main_frame(&self) -> Weak<Frame> { self.main_frame.clone() }
@@ -351,8 +356,9 @@ impl Page {
     }
 
     fn on_frame_attached(&self, ctx: &Context, guid: Str<Guid>) -> Result<(), Error> {
-        // TODO: add page to frame
+        let this = get_object!(ctx, self.guid(), Page)?;
         let f = get_object!(ctx, &guid, Frame)?;
+        upgrade(&f)?.set_page(this);
         self.var.lock().unwrap().frames.push(f);
         // event
         Ok(())

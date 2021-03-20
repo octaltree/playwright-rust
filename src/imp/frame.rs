@@ -3,6 +3,7 @@ use crate::imp::{
     core::*,
     element_handle::ElementHandle,
     js_handle::JsHandle,
+    page::Page,
     prelude::*,
     response::Response,
     utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
@@ -17,7 +18,8 @@ pub(crate) struct Frame {
 #[derive(Debug)]
 struct Variable {
     url: String,
-    name: String
+    name: String,
+    page: Option<Weak<Page>>
 }
 
 macro_rules! is_checked {
@@ -43,7 +45,11 @@ macro_rules! is_checked {
 impl Frame {
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { name, url } = serde_json::from_value(channel.initializer.clone())?;
-        let var = Mutex::new(Variable { url, name });
+        let var = Mutex::new(Variable {
+            url,
+            name,
+            page: None
+        });
         Ok(Self { channel, var })
     }
 
@@ -420,6 +426,10 @@ impl Frame {
     pub(crate) fn url(&self) -> String { self.var.lock().unwrap().url.clone() }
 
     pub(crate) fn name(&self) -> String { self.var.lock().unwrap().name.clone() }
+
+    pub(crate) fn page(&self) -> Option<Weak<Page>> { self.var.lock().unwrap().page.clone() }
+
+    pub(crate) fn set_page(&self, page: Weak<Page>) { self.var.lock().unwrap().page = Some(page); }
 
     fn on_navigated(&self, params: &Map<String, Value>) -> Result<(), Error> {
         #[derive(Deserialize)]

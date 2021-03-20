@@ -1,6 +1,6 @@
 pub use crate::imp::frame::FrameState;
 use crate::{
-    api::{ElementHandle, JsHandle, Response},
+    api::{ElementHandle, JsHandle, Page, Response},
     imp::{
         core::*,
         frame::{
@@ -31,6 +31,8 @@ impl Frame {
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url()) }
 
     pub fn name(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.name()) }
+
+    pub fn page(&self) -> Option<Page> { upgrade(&self.inner).ok()?.page().map(Page::new) }
 
     pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.inner.clone(), url)
