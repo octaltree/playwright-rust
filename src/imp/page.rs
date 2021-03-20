@@ -21,6 +21,7 @@ pub(crate) struct Page {
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
+    frames: Vec<Weak<Frame>>,
     timeout: Option<f64>,
     navigation_timeout: Option<f64>
 }
@@ -84,7 +85,10 @@ impl Page {
             _ => return Err(Error::InvalidParams)
         };
         let main_frame = get_object!(ctx, &guid, Frame)?;
-        let var = Mutex::new(Variable::default());
+        let var = Mutex::new(Variable {
+            frames: vec![main_frame.clone()],
+            ..Variable::default()
+        });
         Ok(Self {
             channel,
             viewport,
@@ -279,6 +283,8 @@ impl Page {
 
 // mutable
 impl Page {
+    pub(crate) fn frames(&self) -> Vec<Weak<Frame>> { self.var.lock().unwrap().frames.clone() }
+
     pub(crate) fn default_timeout(&self) -> f64 {
         let this = self.var.lock().unwrap().timeout;
         let parent = || {
@@ -326,6 +332,24 @@ impl Page {
         bc.remove_page(&this);
         Ok(())
     }
+
+    fn on_frame_attached(&self, ctx: &Context, guid: Str<Guid>) -> Result<(), Error> {
+        // TODO: add page to frame
+        let f = get_object!(ctx, &guid, Frame)?;
+        self.var.lock().unwrap().frames.push(f);
+        // event
+        Ok(())
+    }
+
+    fn on_frame_detached(&self, ctx: &Context, guid: Str<Guid>) -> Result<(), Error> {
+        let frames = &mut self.var.lock().unwrap().frames;
+        *frames = frames
+            .iter()
+            .filter(|w| w.upgrade().map(|a| a.guid() != guid).unwrap_or(false))
+            .cloned()
+            .collect();
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -341,6 +365,16 @@ impl RemoteObject for Page {
         match method.as_str() {
             "close" => {
                 self.on_close(ctx)?;
+            }
+            "frameAttached" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                self.on_frame_attached(ctx, guid)?;
+            }
+            "frameDetached" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                self.on_frame_detached(ctx, guid)?;
             }
             _ => {}
         }

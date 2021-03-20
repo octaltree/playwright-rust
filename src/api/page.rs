@@ -56,6 +56,14 @@ impl Page {
 
     pub fn main_frame(&self) -> Frame { Frame::new(self.main_frame_weak()) }
 
+    pub fn frames(&self) -> Result<Vec<Frame>, Error> {
+        Ok(upgrade(&self.inner)?
+            .frames()
+            .into_iter()
+            .map(Frame::new)
+            .collect())
+    }
+
     pub fn reload_builder(&mut self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
     pub fn go_back_builder(&mut self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
     pub fn go_forward_builder(&mut self) -> GoForwardBuilder {
