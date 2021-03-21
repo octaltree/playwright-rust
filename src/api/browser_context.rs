@@ -123,6 +123,8 @@ impl BrowserContext {
         };
         inner.close().await
     }
+
+    pub async fn pause(&self) -> ArcResult<()> { upgrade(&self.inner)?.pause().await }
 }
 
 pub enum Event {

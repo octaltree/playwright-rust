@@ -167,6 +167,11 @@ impl BrowserContext {
     }
 
     pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.browser.clone() }
+
+    pub(crate) async fn pause(&self) -> ArcResult<()> {
+        let _ = send_message!(self, "pause", Map::new());
+        Ok(())
+    }
 }
 
 // mutable
