@@ -7,7 +7,7 @@ Playwright is a rust library to automate [Chromium](https://www.chromium.org/Hom
 ## Installation
 ```
 [dependencies]
-playwright = "0.0.3"
+playwright = "0.0.4"
 ```
 
 ## Usage
@@ -31,9 +31,6 @@ async fn main() -> Result<(), playwright::Error> {
     Ok(())
 }
 ```
-
-It's still under development and has limited functions. Please have a look at tests and [docs.rs](https://docs.rs/playwright/).
-Welcome contributions.
 
 ## Async runtimes
 * [tokio](https://crates.io/crates/tokio)
