@@ -20,7 +20,7 @@ pub struct ElementHandle {
 
 macro_rules! is_checked {
     ($f: ident) => {
-        pub async fn $f(&mut self) -> ArcResult<bool> { upgrade(&self.inner)?.$f().await }
+        pub async fn $f(&self) -> ArcResult<bool> { upgrade(&self.inner)?.$f().await }
     };
 }
 
@@ -31,25 +31,21 @@ impl ElementHandle {
         Ok(upgrade(&self.inner)?.guid().to_owned())
     }
 
-    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
+    pub async fn query_selector(&self, selector: &str) -> ArcResult<Option<ElementHandle>> {
         Ok(upgrade(&self.inner)?
             .query_selector(selector)
             .await?
             .map(ElementHandle::new))
     }
 
-    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
+    pub async fn query_selector_all(&self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
         let es = upgrade(&self.inner)?.query_selector_all(selector).await?;
         Ok(es.into_iter().map(ElementHandle::new).collect())
     }
 
-    pub async fn inner_text(&mut self) -> ArcResult<String> {
-        upgrade(&self.inner)?.inner_text().await
-    }
+    pub async fn inner_text(&self) -> ArcResult<String> { upgrade(&self.inner)?.inner_text().await }
 
-    pub async fn inner_html(&mut self) -> ArcResult<String> {
-        upgrade(&self.inner)?.inner_html().await
-    }
+    pub async fn inner_html(&self) -> ArcResult<String> { upgrade(&self.inner)?.inner_html().await }
 
     is_checked! {is_checked}
     is_checked! {is_disabled}
@@ -58,70 +54,68 @@ impl ElementHandle {
     is_checked! {is_hidden}
     is_checked! {is_visible}
 
-    pub async fn owner_frame(&mut self) -> ArcResult<Option<Frame>> {
+    pub async fn owner_frame(&self) -> ArcResult<Option<Frame>> {
         Ok(upgrade(&self.inner)?.owner_frame().await?.map(Frame::new))
     }
 
-    pub async fn content_frame(&mut self) -> ArcResult<Option<Frame>> {
+    pub async fn content_frame(&self) -> ArcResult<Option<Frame>> {
         Ok(upgrade(&self.inner)?.content_frame().await?.map(Frame::new))
     }
 
-    pub async fn get_attribute(&mut self, name: &str) -> ArcResult<Option<String>> {
+    pub async fn get_attribute(&self, name: &str) -> ArcResult<Option<String>> {
         upgrade(&self.inner)?.get_attribute(name).await
     }
 
-    pub async fn text_content(&mut self) -> ArcResult<Option<String>> {
+    pub async fn text_content(&self) -> ArcResult<Option<String>> {
         upgrade(&self.inner)?.text_content().await
     }
 
-    pub fn hover_builder(&mut self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
+    pub fn hover_builder(&self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
 
-    pub fn click_builder(&mut self) -> ClickBuilder { ClickBuilder::new(self.inner.clone()) }
+    pub fn click_builder(&self) -> ClickBuilder { ClickBuilder::new(self.inner.clone()) }
 
-    pub fn dblclick_builder(&mut self) -> DblClickBuilder {
-        DblClickBuilder::new(self.inner.clone())
-    }
+    pub fn dblclick_builder(&self) -> DblClickBuilder { DblClickBuilder::new(self.inner.clone()) }
 
-    pub fn check_builder(&mut self) -> CheckBuilder { CheckBuilder::new(self.inner.clone()) }
+    pub fn check_builder(&self) -> CheckBuilder { CheckBuilder::new(self.inner.clone()) }
 
-    pub fn uncheck_builder(&mut self) -> UncheckBuilder { UncheckBuilder::new(self.inner.clone()) }
+    pub fn uncheck_builder(&self) -> UncheckBuilder { UncheckBuilder::new(self.inner.clone()) }
 
-    pub fn tap_builder(&mut self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
+    pub fn tap_builder(&self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
 
-    pub fn fill_builder<'a>(&mut self, value: &'a str) -> FillBuilder<'a> {
+    pub fn fill_builder<'a>(&self, value: &'a str) -> FillBuilder<'a> {
         FillBuilder::new(self.inner.clone(), value)
     }
 
-    pub async fn focus(&mut self) -> ArcResult<()> { upgrade(&self.inner)?.focus().await }
+    pub async fn focus(&self) -> ArcResult<()> { upgrade(&self.inner)?.focus().await }
 
-    pub fn type_builder<'a>(&mut self, text: &'a str) -> TypeBuilder<'a> {
+    pub fn type_builder<'a>(&self, text: &'a str) -> TypeBuilder<'a> {
         TypeBuilder::new(self.inner.clone(), text)
     }
 
-    pub fn press_builder<'a>(&mut self, key: &'a str) -> PressBuilder<'a> {
+    pub fn press_builder<'a>(&self, key: &'a str) -> PressBuilder<'a> {
         PressBuilder::new(self.inner.clone(), key)
     }
 
-    pub async fn scroll_into_view_if_needed(&mut self, timeout: Option<f64>) -> ArcResult<()> {
+    pub async fn scroll_into_view_if_needed(&self, timeout: Option<f64>) -> ArcResult<()> {
         upgrade(&self.inner)?
             .scroll_into_view_if_needed(timeout)
             .await
     }
 
-    pub async fn select_text(&mut self, timeout: Option<f64>) -> ArcResult<()> {
+    pub async fn select_text(&self, timeout: Option<f64>) -> ArcResult<()> {
         upgrade(&self.inner)?.select_text(timeout).await
     }
 
-    pub async fn bounding_box(&mut self) -> ArcResult<Option<FloatRect>> {
+    pub async fn bounding_box(&self) -> ArcResult<Option<FloatRect>> {
         upgrade(&self.inner)?.bounding_box().await
     }
 
-    pub async fn screenshot_builder(&mut self) -> ScreenshotBuilder {
+    pub async fn screenshot_builder(&self) -> ScreenshotBuilder {
         ScreenshotBuilder::new(self.inner.clone())
     }
 
     pub async fn wait_for_element_state(
-        &mut self,
+        &self,
         state: ElementState,
         timeout: Option<f64>
     ) -> ArcResult<()> {
@@ -130,14 +124,11 @@ impl ElementHandle {
             .await
     }
 
-    pub fn wait_for_selector_builder<'a>(
-        &mut self,
-        selector: &'a str
-    ) -> WaitForSelectorBuilder<'a> {
+    pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
 
-    pub async fn dispatch_event<T>(&mut self, r#type: &str, event_init: Option<T>) -> ArcResult<()>
+    pub async fn dispatch_event<T>(&self, r#type: &str, event_init: Option<T>) -> ArcResult<()>
     where
         T: Serialize
     {
@@ -146,11 +137,11 @@ impl ElementHandle {
             .await
     }
 
-    pub fn select_option_builder(&mut self) -> SelectOptionBuilder {
+    pub fn select_option_builder(&self) -> SelectOptionBuilder {
         SelectOptionBuilder::new(self.inner.clone())
     }
 
-    pub fn set_input_files_builder(&mut self, file: File) -> SetInputFilesBuilder {
+    pub fn set_input_files_builder(&self, file: File) -> SetInputFilesBuilder {
         SetInputFilesBuilder::new(self.inner.clone(), file)
     }
 }

@@ -64,19 +64,19 @@ impl Page {
             .collect())
     }
 
-    pub fn reload_builder(&mut self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
-    pub fn go_back_builder(&mut self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
-    pub fn go_forward_builder(&mut self) -> GoForwardBuilder {
+    pub fn reload_builder(&self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
+    pub fn go_back_builder(&self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
+    pub fn go_forward_builder(&self) -> GoForwardBuilder {
         GoForwardBuilder::new(self.inner.clone())
     }
 
-    pub async fn set_default_navigation_timeout(&mut self, timeout: u32) -> ArcResult<()> {
+    pub async fn set_default_navigation_timeout(&self, timeout: u32) -> ArcResult<()> {
         upgrade(&self.inner)?
             .set_default_navigation_timeout(timeout)
             .await
     }
 
-    pub async fn set_default_timeout(&mut self, timeout: u32) -> ArcResult<()> {
+    pub async fn set_default_timeout(&self, timeout: u32) -> ArcResult<()> {
         upgrade(&self.inner)?.set_default_timeout(timeout).await
     }
 
@@ -92,26 +92,26 @@ impl Page {
     // fn video(&self) -> Option<Video> { unimplemented!() }
 
     ///// Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
-    // async fn opener(&mut self) -> Option<Page> { unimplemented!() }
+    // async fn opener(& self) -> Option<Page> { unimplemented!() }
 
     ///// Returns frame matching the specified criteria. Either `name` or `url` must be specified.
     // fn frame(&self) -> Option<Frame> { unimplemented!() }
 
-    pub async fn bring_to_front(&mut self) -> ArcResult<()> {
+    pub async fn bring_to_front(&self) -> ArcResult<()> {
         upgrade(&self.inner)?.bring_to_front().await
     }
 
-    pub async fn add_init_script(&mut self, source: &str) -> ArcResult<()> {
+    pub async fn add_init_script(&self, source: &str) -> ArcResult<()> {
         upgrade(&self.inner)?.add_init_script(source).await
     }
 
-    pub fn pdf_builder(&mut self) -> PdfBuilder<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
+    pub fn pdf_builder(&self) -> PdfBuilder<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
         PdfBuilder::new(self.inner.clone())
     }
 
     /// All temporary pages will be closed when the connection is terminated, but
     /// it needs to be called explicitly to close it at any given time.
-    pub async fn close(&mut self, run_before_unload: Option<bool>) -> ArcResult<()> {
+    pub async fn close(&self, run_before_unload: Option<bool>) -> ArcResult<()> {
         let inner = match self.inner.upgrade() {
             None => return Ok(()),
             Some(inner) => inner
@@ -119,19 +119,19 @@ impl Page {
         inner.close(run_before_unload).await
     }
 
-    pub fn screenshot_builder(&mut self) -> ScreenshotBuilder {
+    pub fn screenshot_builder(&self) -> ScreenshotBuilder {
         ScreenshotBuilder::new(self.inner.clone())
     }
 
-    pub fn emulate_media(&mut self) -> EmulateMediaBuilder {
+    pub fn emulate_media(&self) -> EmulateMediaBuilder {
         EmulateMediaBuilder::new(self.inner.clone())
     }
 
-    pub async fn opener(&mut self) -> ArcResult<Option<Page>> {
+    pub async fn opener(&self) -> ArcResult<Option<Page>> {
         Ok(upgrade(&self.inner)?.opener().await?.map(Page::new))
     }
 
-    pub async fn set_extra_http_headers<T>(&mut self, headers: T) -> ArcResult<()>
+    pub async fn set_extra_http_headers<T>(&self, headers: T) -> ArcResult<()>
     where
         T: IntoIterator<Item = (String, String)>
     {
@@ -142,7 +142,7 @@ impl Page {
 macro_rules! is_checked {
     ($f: ident, $c: meta) => {
         #[$c]
-        pub async fn $f(&mut self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+        pub async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
             self.main_frame().$f(selector, timeout).await
         }
     };
@@ -150,18 +150,15 @@ macro_rules! is_checked {
 
 /// Shorthand of main_frame
 impl Page {
-    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
+    pub async fn query_selector(&self, selector: &str) -> ArcResult<Option<ElementHandle>> {
         self.main_frame().query_selector(selector).await
     }
 
-    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
+    pub async fn query_selector_all(&self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
         self.main_frame().query_selector_all(selector).await
     }
 
-    pub fn wait_for_selector_builder<'a>(
-        &mut self,
-        selector: &'a str
-    ) -> WaitForSelectorBuilder<'a> {
+    pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
         self.main_frame().wait_for_selector_builder(selector)
     }
 
@@ -213,7 +210,7 @@ impl Page {
     }
 
     pub async fn eval_on_selector<T, U>(
-        &mut self,
+        &self,
         selector: &str,
         expression: &str,
         arg: Option<T>
@@ -228,7 +225,7 @@ impl Page {
     }
 
     pub async fn eval_on_selector_all<T, U>(
-        &mut self,
+        &self,
         selector: &str,
         expression: &str,
         arg: Option<T>
@@ -242,15 +239,12 @@ impl Page {
             .await
     }
 
-    pub fn add_script_tag_builder<'a>(
-        &mut self,
-        content: &'a str
-    ) -> AddScriptTagBuilder<'a, '_, '_> {
+    pub fn add_script_tag_builder<'a>(&self, content: &'a str) -> AddScriptTagBuilder<'a, '_, '_> {
         AddScriptTagBuilder::new(self.main_frame_weak(), content)
     }
 
     pub async fn add_style_tag(
-        &mut self,
+        &self,
         content: &str,
         url: Option<&str>
     ) -> ArcResult<ElementHandle> {
@@ -259,37 +253,33 @@ impl Page {
 
     pub fn url(&self) -> Result<String, Error> { self.main_frame().url() }
 
-    pub async fn content<'a>(&mut self) -> ArcResult<String> { self.main_frame().content().await }
+    pub async fn content<'a>(&self) -> ArcResult<String> { self.main_frame().content().await }
 
-    pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
+    pub fn set_content_builder<'a>(&self, html: &'a str) -> SetContentBuilder<'a> {
         self.main_frame().set_content_builder(html)
     }
 
-    pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
+    pub fn goto_builder<'a>(&self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.main_frame_weak(), url)
     }
 
     // wait_for_load_state
 
-    pub async fn title(&mut self) -> ArcResult<String> { self.main_frame().title().await }
+    pub async fn title(&self) -> ArcResult<String> { self.main_frame().title().await }
 
-    pub fn click_builder<'a>(&mut self, selector: &'a str) -> ClickBuilder<'a> {
+    pub fn click_builder<'a>(&self, selector: &'a str) -> ClickBuilder<'a> {
         self.main_frame().click_builder(selector)
     }
 
-    pub fn dblclick_builder<'a>(&mut self, selector: &'a str) -> DblClickBuilder<'a> {
+    pub fn dblclick_builder<'a>(&self, selector: &'a str) -> DblClickBuilder<'a> {
         self.main_frame().dblclick_builder(selector)
     }
 
-    pub fn tap_builder<'a>(&mut self, selector: &'a str) -> TapBuilder<'a> {
+    pub fn tap_builder<'a>(&self, selector: &'a str) -> TapBuilder<'a> {
         self.main_frame().tap_builder(selector)
     }
 
-    pub fn fill_builder<'a, 'b>(
-        &mut self,
-        selector: &'a str,
-        value: &'b str
-    ) -> FillBuilder<'a, 'b> {
+    pub fn fill_builder<'a, 'b>(&self, selector: &'a str, value: &'b str) -> FillBuilder<'a, 'b> {
         self.main_frame().fill_builder(selector, value)
     }
 
@@ -324,39 +314,35 @@ impl Page {
             .await
     }
 
-    pub fn hover_builder<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
+    pub fn hover_builder<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
         self.main_frame().hover_builder(selector)
     }
 
-    pub fn select_option_builder<'a>(&mut self, selector: &'a str) -> SelectOptionBuilder<'a> {
+    pub fn select_option_builder<'a>(&self, selector: &'a str) -> SelectOptionBuilder<'a> {
         self.main_frame().select_option_builder(selector)
     }
 
     pub fn set_input_files_builder<'a>(
-        &mut self,
+        &self,
         selector: &'a str,
         file: File
     ) -> SetInputFilesBuilder<'a> {
         self.main_frame().set_input_files_builder(selector, file)
     }
 
-    pub fn type_builer<'a, 'b>(&mut self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+    pub fn type_builer<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         self.main_frame().type_builder(selector, text)
     }
 
-    pub fn press_builder<'a, 'b>(
-        &mut self,
-        selector: &'a str,
-        key: &'b str
-    ) -> PressBuilder<'a, 'b> {
+    pub fn press_builder<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
         self.main_frame().press_builder(selector, key)
     }
 
-    pub fn check_builder<'a>(&mut self, selector: &'a str) -> CheckBuilder<'a> {
+    pub fn check_builder<'a>(&self, selector: &'a str) -> CheckBuilder<'a> {
         self.main_frame().check_builder(selector)
     }
 
-    pub fn uncheck_builder<'a>(&mut self, selector: &'a str) -> UncheckBuilder<'a> {
+    pub fn uncheck_builder<'a>(&self, selector: &'a str) -> UncheckBuilder<'a> {
         self.main_frame().uncheck_builder(selector)
     }
 

@@ -1,11 +1,14 @@
 use playwright::{
-    api::{browser_context, Browser, BrowserContext, BrowserType, DateTime, Page, Response},
+    api::{
+        browser_context, Browser, BrowserContext, BrowserType, DateTime, KeyboardModifier, Page,
+        Response
+    },
     *
 };
 
 runtime_test!(awesome, {
     env_logger::builder().is_test(true).try_init().ok();
-    let (_playwright, _browser, mut _context, mut page) = init().await;
+    let (_playwright, _browser, context, page) = init().await;
     let _response: Option<Response> = page
         .goto_builder("https://example.com/")
         .goto()
@@ -22,10 +25,16 @@ runtime_test!(awesome, {
         .await
         .unwrap();
     println!("{:?}", s);
-    let a = _context.expect_event(browser_context::EventType::Close);
-    let b = _context.close();
-    let (closed, _) = tokio::join!(a, b);
-    closed.unwrap();
+    let (next_page, _) = tokio::join!(
+        context.expect_event(browser_context::EventType::Page),
+        page.click_builder("a")
+            .modifiers(vec![KeyboardModifier::Control])
+            .click()
+    );
+    let _next_page = match next_page.unwrap() {
+        browser_context::Event::Page(p) => p,
+        _ => unreachable!()
+    };
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
     // let mut a = p.query_selector("a").await.unwrap().unwrap();
@@ -36,17 +45,15 @@ runtime_test!(awesome, {
 
 async fn init() -> (Playwright, Browser, BrowserContext, Page) {
     let pw = Playwright::initialize().await.unwrap();
-    let mut b = launch(&mut pw.chromium()).await;
-    let mut c = new_context(&mut b).await;
+    let b = launch(&pw.chromium()).await;
+    let c = new_context(&b).await;
     let p = c.new_page().await.unwrap();
     (pw, b, c, p)
 }
 
-async fn launch(t: &mut BrowserType) -> Browser {
-    t.launcher().headless(true).launch().await.unwrap()
-}
+async fn launch(t: &BrowserType) -> Browser { t.launcher().headless(false).launch().await.unwrap() }
 
-async fn new_context(b: &mut Browser) -> BrowserContext {
+async fn new_context(b: &Browser) -> BrowserContext {
     let a = "asdf".to_string();
     b.context_builder().user_agent(&a).build().await.unwrap()
 }

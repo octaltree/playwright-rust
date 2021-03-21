@@ -72,11 +72,11 @@ impl Mouse {
         inner.mouse_up(button, click_count).await
     }
 
-    pub fn click_builder(&mut self, x: f64, y: f64) -> ClickBuilder {
+    pub fn click_builder(&self, x: f64, y: f64) -> ClickBuilder {
         ClickBuilder::new(self.inner.clone(), x, y)
     }
 
-    pub fn dblclick_builder(&mut self, x: f64, y: f64) -> DblClickBuilder {
+    pub fn dblclick_builder(&self, x: f64, y: f64) -> DblClickBuilder {
         DblClickBuilder::new(self.inner.clone(), x, y)
     }
 }

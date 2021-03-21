@@ -29,11 +29,11 @@ impl BrowserType {
     }
 
     /// launch [`Browser`]
-    pub fn launcher(&mut self) -> Launcher<'_, '_, '_, '_> { Launcher::new(self.inner.clone()) }
+    pub fn launcher(&self) -> Launcher<'_, '_, '_, '_> { Launcher::new(self.inner.clone()) }
 
     /// launch_persistent_context [`BrowserContext`]
     pub fn persistent_context_launcher<'a>(
-        &mut self,
+        &self,
         user_data_dir: &'a Path
     ) -> PersistentContextLauncher<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
         PersistentContextLauncher::new(self.inner.clone(), user_data_dir)

@@ -9,7 +9,7 @@ impl Selectors {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
     pub async fn register(
-        &mut self,
+        &self,
         name: &str,
         script: &str,
         content_script: bool

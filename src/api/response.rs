@@ -23,17 +23,15 @@ impl Response {
         Request::new(inner)
     }
 
-    pub async fn finished(&mut self) -> ArcResult<Option<String>> {
+    pub async fn finished(&self) -> ArcResult<Option<String>> {
         upgrade(&self.inner)?.finished().await
     }
 
-    pub async fn body(&mut self) -> ArcResult<Vec<u8>> { upgrade(&self.inner)?.body().await }
+    pub async fn body(&self) -> ArcResult<Vec<u8>> { upgrade(&self.inner)?.body().await }
 
-    pub async fn text(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.text().await }
+    pub async fn text(&self) -> ArcResult<String> { upgrade(&self.inner)?.text().await }
 
-    pub async fn headers(&mut self) -> ArcResult<Vec<Header>> {
-        upgrade(&self.inner)?.headers().await
-    }
+    pub async fn headers(&self) -> ArcResult<Vec<Header>> { upgrade(&self.inner)?.headers().await }
 
     // [`Response::request`]'s  [`Request::frame`]
     pub fn frame(&self) -> Frame { self.request().frame() }

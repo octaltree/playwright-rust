@@ -34,7 +34,7 @@ impl Browser {
     pub fn exists(&self) -> bool { self.inner.upgrade().is_some() }
 
     /// new_context [`BrowserContext`]
-    pub fn context_builder(&mut self) -> ContextBuilder<'_, '_, '_, '_, '_, '_, '_> {
+    pub fn context_builder(&self) -> ContextBuilder<'_, '_, '_, '_, '_, '_, '_> {
         ContextBuilder::new(self.inner.clone())
     }
 

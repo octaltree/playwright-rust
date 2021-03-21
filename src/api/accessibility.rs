@@ -15,7 +15,7 @@ pub struct Accessibility {
 impl Accessibility {
     pub(crate) fn new(inner: Weak<PageImpl>) -> Self { Self { inner } }
 
-    pub async fn snapshot_builder(&mut self) -> SnapshotBuilder {
+    pub async fn snapshot_builder(&self) -> SnapshotBuilder {
         SnapshotBuilder::new(self.inner.clone())
     }
 }

@@ -19,7 +19,7 @@ pub struct Frame {
 
 macro_rules! is_checked {
     ($f: ident) => {
-        pub async fn $f(&mut self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+        pub async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
             upgrade(&self.inner)?.$f(selector, timeout).await
         }
     };
@@ -48,27 +48,23 @@ impl Frame {
             .collect())
     }
 
-    pub fn goto_builder<'a>(&mut self, url: &'a str) -> GotoBuilder<'a, '_> {
+    pub fn goto_builder<'a>(&self, url: &'a str) -> GotoBuilder<'a, '_> {
         GotoBuilder::new(self.inner.clone(), url)
     }
 
-    pub fn click_builder<'a>(&mut self, selector: &'a str) -> ClickBuilder<'a> {
+    pub fn click_builder<'a>(&self, selector: &'a str) -> ClickBuilder<'a> {
         ClickBuilder::new(self.inner.clone(), selector)
     }
 
-    pub fn dblclick_builder<'a>(&mut self, selector: &'a str) -> DblClickBuilder<'a> {
+    pub fn dblclick_builder<'a>(&self, selector: &'a str) -> DblClickBuilder<'a> {
         DblClickBuilder::new(self.inner.clone(), selector)
     }
 
-    pub fn tap_builder<'a>(&mut self, selector: &'a str) -> TapBuilder<'a> {
+    pub fn tap_builder<'a>(&self, selector: &'a str) -> TapBuilder<'a> {
         TapBuilder::new(self.inner.clone(), selector)
     }
 
-    pub fn fill_builder<'a, 'b>(
-        &mut self,
-        selector: &'a str,
-        value: &'b str
-    ) -> FillBuilder<'a, 'b> {
+    pub fn fill_builder<'a, 'b>(&self, selector: &'a str, value: &'b str) -> FillBuilder<'a, 'b> {
         FillBuilder::new(self.inner.clone(), selector, value)
     }
 
@@ -103,50 +99,39 @@ impl Frame {
             .await
     }
 
-    pub async fn query_selector(&mut self, selector: &str) -> ArcResult<Option<ElementHandle>> {
+    pub async fn query_selector(&self, selector: &str) -> ArcResult<Option<ElementHandle>> {
         Ok(upgrade(&self.inner)?
             .query_selector(selector)
             .await?
             .map(ElementHandle::new))
     }
 
-    pub async fn query_selector_all(&mut self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
+    pub async fn query_selector_all(&self, selector: &str) -> ArcResult<Vec<ElementHandle>> {
         let es = upgrade(&self.inner)?.query_selector_all(selector).await?;
         Ok(es.into_iter().map(ElementHandle::new).collect())
     }
 
-    pub async fn frame_element(&mut self) -> ArcResult<ElementHandle> {
+    pub async fn frame_element(&self) -> ArcResult<ElementHandle> {
         Ok(ElementHandle::new(
             upgrade(&self.inner)?.frame_element().await?
         ))
     }
 
-    pub fn wait_for_selector_builder<'a>(
-        &mut self,
-        selector: &'a str
-    ) -> WaitForSelectorBuilder<'a> {
+    pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
 
-    pub async fn title(&mut self) -> ArcResult<String> { upgrade(&self.inner)?.title().await }
+    pub async fn title(&self) -> ArcResult<String> { upgrade(&self.inner)?.title().await }
 
-    pub fn type_builder<'a, 'b>(
-        &mut self,
-        selector: &'a str,
-        text: &'b str
-    ) -> TypeBuilder<'a, 'b> {
+    pub fn type_builder<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         TypeBuilder::new(self.inner.clone(), selector, text)
     }
 
-    pub fn press_builder<'a, 'b>(
-        &mut self,
-        selector: &'a str,
-        key: &'b str
-    ) -> PressBuilder<'a, 'b> {
+    pub fn press_builder<'a, 'b>(&self, selector: &'a str, key: &'b str) -> PressBuilder<'a, 'b> {
         PressBuilder::new(self.inner.clone(), selector, key)
     }
 
-    pub fn hover_builder<'a>(&mut self, selector: &'a str) -> HoverBuilder<'a> {
+    pub fn hover_builder<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
         HoverBuilder::new(self.inner.clone(), selector)
     }
 
@@ -157,19 +142,17 @@ impl Frame {
     is_checked! {is_hidden}
     is_checked! {is_visible}
 
-    pub async fn content<'a>(&mut self) -> ArcResult<String> {
-        upgrade(&self.inner)?.content().await
-    }
+    pub async fn content<'a>(&self) -> ArcResult<String> { upgrade(&self.inner)?.content().await }
 
-    pub fn set_content_builder<'a>(&mut self, html: &'a str) -> SetContentBuilder<'a> {
+    pub fn set_content_builder<'a>(&self, html: &'a str) -> SetContentBuilder<'a> {
         SetContentBuilder::new(self.inner.clone(), html)
     }
 
-    pub fn check_builder<'a>(&mut self, selector: &'a str) -> CheckBuilder<'a> {
+    pub fn check_builder<'a>(&self, selector: &'a str) -> CheckBuilder<'a> {
         CheckBuilder::new(self.inner.clone(), selector)
     }
 
-    pub fn uncheck_builder<'a>(&mut self, selector: &'a str) -> UncheckBuilder<'a> {
+    pub fn uncheck_builder<'a>(&self, selector: &'a str) -> UncheckBuilder<'a> {
         UncheckBuilder::new(self.inner.clone(), selector)
     }
 
@@ -178,7 +161,7 @@ impl Frame {
     }
 
     pub async fn add_style_tag(
-        &mut self,
+        &self,
         content: &str,
         url: Option<&str>
     ) -> ArcResult<ElementHandle> {
@@ -188,25 +171,18 @@ impl Frame {
             .map(ElementHandle::new)
     }
 
-    pub fn add_script_tag_builder<'a>(
-        &mut self,
-        content: &'a str
-    ) -> AddScriptTagBuilder<'a, '_, '_> {
+    pub fn add_script_tag_builder<'a>(&self, content: &'a str) -> AddScriptTagBuilder<'a, '_, '_> {
         AddScriptTagBuilder::new(self.inner.clone(), content)
     }
 
-    pub async fn eval_handle(&mut self, expression: &str) -> ArcResult<JsHandle> {
+    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
         upgrade(&self.inner)?
             .eval_handle(expression)
             .await
             .map(JsHandle::new)
     }
 
-    pub async fn evaluate_handle<T>(
-        &mut self,
-        expression: &str,
-        arg: Option<T>
-    ) -> ArcResult<JsHandle>
+    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
@@ -216,14 +192,14 @@ impl Frame {
             .map(JsHandle::new)
     }
 
-    pub async fn eval<U>(&mut self, expression: &str) -> ArcResult<U>
+    pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>
     where
         U: DeserializeOwned
     {
         upgrade(&self.inner)?.eval(expression).await
     }
 
-    pub async fn evaluate<T, U>(&mut self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
     where
         T: Serialize,
         U: DeserializeOwned
@@ -232,7 +208,7 @@ impl Frame {
     }
 
     pub async fn eval_on_selector<T, U>(
-        &mut self,
+        &self,
         selector: &str,
         expression: &str,
         arg: Option<T>
@@ -247,7 +223,7 @@ impl Frame {
     }
 
     pub async fn eval_on_selector_all<T, U>(
-        &mut self,
+        &self,
         selector: &str,
         expression: &str,
         arg: Option<T>
@@ -275,12 +251,12 @@ impl Frame {
             .await
     }
 
-    pub fn select_option_builder<'a>(&mut self, selector: &'a str) -> SelectOptionBuilder<'a> {
+    pub fn select_option_builder<'a>(&self, selector: &'a str) -> SelectOptionBuilder<'a> {
         SelectOptionBuilder::new(self.inner.clone(), selector)
     }
 
     pub fn set_input_files_builder<'a>(
-        &mut self,
+        &self,
         selector: &'a str,
         file: File
     ) -> SetInputFilesBuilder<'a> {
