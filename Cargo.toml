@@ -23,7 +23,7 @@ serde_json = "1.0.63"
 zip = "0.5.10"
 thiserror = "1.0.24"
 strong = { version = "0.3.3", features = ["serde", "shorthand"] }
-tokio = { version = "1.2.0", features = ["sync", "rt-multi-thread"] }
+tokio = { version = "1.2.0", features = ["sync", "rt-multi-thread", "macros"] }
 actix-rt = { version = "2.0.2", optional = true }
 async-std = { version = "1.9.0", features = ["attributes"], optional = true }
 dirs = "3.0.1"

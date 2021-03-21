@@ -1,7 +1,8 @@
+pub use crate::imp::browser_context::EventType;
 use crate::{
     api::{Browser, Page},
     imp::{
-        browser_context::{BrowserContext as Impl, Event},
+        browser_context::{BrowserContext as Impl, Evt},
         core::*,
         prelude::*,
         utils::{Cookie, Geolocation, StorageState}
@@ -30,35 +31,35 @@ impl BrowserContext {
         Ok(upgrade(&self.inner)?.browser().map(Browser::new))
     }
 
-    pub async fn new_page(&mut self) -> Result<Page, Arc<Error>> {
+    pub async fn new_page(&self) -> Result<Page, Arc<Error>> {
         let inner = upgrade(&self.inner)?;
         Ok(Page::new(inner.new_page().await?))
     }
 
-    pub async fn set_default_navigation_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+    pub async fn set_default_navigation_timeout(&self, timeout: u32) -> ArcResult<()> {
         upgrade(&self.inner)?
             .set_default_navigation_timeout(timeout)
             .await
     }
 
-    pub async fn set_default_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+    pub async fn set_default_timeout(&self, timeout: u32) -> ArcResult<()> {
         upgrade(&self.inner)?.set_default_timeout(timeout).await
     }
 
-    pub async fn cookies(&mut self, urls: &[String]) -> ArcResult<Vec<Cookie>> {
+    pub async fn cookies(&self, urls: &[String]) -> ArcResult<Vec<Cookie>> {
         upgrade(&self.inner)?.cookies(urls).await
     }
 
-    pub async fn add_cookies(&mut self, cookies: &[Cookie]) -> ArcResult<()> {
+    pub async fn add_cookies(&self, cookies: &[Cookie]) -> ArcResult<()> {
         upgrade(&self.inner)?.add_cookies(cookies).await
     }
 
-    pub async fn clear_cookies(&mut self) -> ArcResult<()> {
+    pub async fn clear_cookies(&self) -> ArcResult<()> {
         upgrade(&self.inner)?.clear_cookies().await
     }
 
     pub async fn grant_permission(
-        &mut self,
+        &self,
         permissions: &[String],
         origin: Option<&str>
     ) -> ArcResult<()> {
@@ -67,23 +68,23 @@ impl BrowserContext {
             .await
     }
 
-    pub async fn clear_permissions(&mut self) -> ArcResult<()> {
+    pub async fn clear_permissions(&self) -> ArcResult<()> {
         upgrade(&self.inner)?.clear_permissions().await
     }
 
-    pub async fn set_geolocation(&mut self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
+    pub async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
         upgrade(&self.inner)?.set_geolocation(geolocation).await
     }
 
-    pub async fn set_offline(&mut self, offline: bool) -> ArcResult<()> {
+    pub async fn set_offline(&self, offline: bool) -> ArcResult<()> {
         upgrade(&self.inner)?.set_offline(offline).await
     }
 
-    pub async fn add_init_script(&mut self, script: &str) -> ArcResult<()> {
+    pub async fn add_init_script(&self, script: &str) -> ArcResult<()> {
         upgrade(&self.inner)?.add_init_script(script).await
     }
 
-    pub async fn set_extra_http_headers<T>(&mut self, headers: T) -> ArcResult<()>
+    pub async fn set_extra_http_headers<T>(&self, headers: T) -> ArcResult<()>
     where
         T: IntoIterator<Item = (String, String)>
     {
@@ -98,23 +99,27 @@ impl BrowserContext {
 
     // async fn unroute(&mut self) -> Result<(), Error> { unimplemented!() }
 
-    // async fn expect_event(&mut self) -> Result<(), Error> { unimplemented!() }
-
-    // async fn wait_for_event(&mut self) -> Result<StorageState, Error> { unimplemented!() }
-
-    // async fn expect_page(&mut self) -> Result<StorageState, Error> { unimplemented!() }
-
-    pub fn subscribe_event(&self) -> Result<broadcast::Receiver<Event>, Error> {
-        Ok(upgrade(&self.inner)?.subscribe_event())
+    pub async fn expect_event(&self, evt: EventType) -> Result<Event, Error> {
+        upgrade(&self.inner)?
+            .expect_event(evt)
+            .await
+            .map(|e| match e {
+                Evt::Close => Event::Close,
+                Evt::Page(w) => Event::Page(Page::new(w))
+            })
     }
 
-    pub async fn storage_state(&mut self) -> ArcResult<StorageState> {
+    // pub fn subscribe_event(&self) -> Result<broadcast::Receiver<Event>, Error> {
+    //    Ok(upgrade(&self.inner)?.subscribe_event())
+    //}
+
+    pub async fn storage_state(&self) -> ArcResult<StorageState> {
         upgrade(&self.inner)?.storage_state().await
     }
 
     /// All temporary browsers will be closed when the connection is terminated, but
     /// this struct has no Drop. it needs to be called explicitly to close it at any given time.
-    pub async fn close(&mut self) -> ArcResult<()> {
+    pub async fn close(&self) -> ArcResult<()> {
         let inner = match self.inner.upgrade() {
             None => return Ok(()),
             Some(inner) => inner
@@ -123,8 +128,7 @@ impl BrowserContext {
     }
 }
 
-// impl EventEmitter for BrowserContext {
-//    type Event = Event;
-//    fn tx(&self) -> &Option<broadcast::Sender<Event>> { panic!("No use") }
-//    fn set_tx(&mut self, _tx: broadcast::Sender<Event>) { panic!("No use") }
-//}
+pub enum Event {
+    Close,
+    Page(Page)
+}

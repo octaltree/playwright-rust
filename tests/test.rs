@@ -1,11 +1,11 @@
 use playwright::{
-    api::{Browser, BrowserContext, BrowserType, DateTime, Page, Response},
+    api::{browser_context, Browser, BrowserContext, BrowserType, DateTime, Page, Response},
     *
 };
 
 runtime_test!(awesome, {
     env_logger::builder().is_test(true).try_init().ok();
-    let (_playwright, _browser, _context, mut page) = init().await;
+    let (_playwright, _browser, mut _context, mut page) = init().await;
     let _response: Option<Response> = page
         .goto_builder("https://example.com/")
         .goto()
@@ -22,6 +22,10 @@ runtime_test!(awesome, {
         .await
         .unwrap();
     println!("{:?}", s);
+    let a = _context.expect_event(browser_context::EventType::Close);
+    let b = _context.close();
+    let (closed, _) = tokio::join!(a, b);
+    closed.unwrap();
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
     // let mut a = p.query_selector("a").await.unwrap().unwrap();

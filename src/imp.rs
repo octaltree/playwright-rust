@@ -14,7 +14,8 @@ pub(crate) mod prelude {
         path::{Path, PathBuf},
         pin::Pin,
         sync::{Arc, Mutex, MutexGuard, Weak},
-        task::{Poll, Waker}
+        task::{Poll, Waker},
+        time::Duration
     };
     pub use strong::*;
     pub type Wm<T> = Weak<Mutex<T>>;

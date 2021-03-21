@@ -22,8 +22,8 @@ pub(crate) struct Page {
 pub(crate) struct Variable {
     viewport: Option<Viewport>,
     frames: Vec<Weak<Frame>>,
-    timeout: Option<f64>,
-    navigation_timeout: Option<f64>
+    timeout: Option<u32>,
+    navigation_timeout: Option<u32>
 }
 
 #[derive(Debug)]
@@ -73,7 +73,7 @@ macro_rules! mouse_down {
 }
 
 impl Page {
-    const DEFAULT_TIMEOUT: f64 = 30000.;
+    const DEFAULT_TIMEOUT: u32 = 30000;
 
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {
@@ -307,7 +307,7 @@ impl Page {
 
     pub(crate) fn frames(&self) -> Vec<Weak<Frame>> { self.var.lock().unwrap().frames.clone() }
 
-    pub(crate) fn default_timeout(&self) -> f64 {
+    pub(crate) fn default_timeout(&self) -> u32 {
         let this = self.var.lock().unwrap().timeout;
         let parent = || {
             self.browser_context
@@ -318,7 +318,7 @@ impl Page {
         this.unwrap_or_else(parent)
     }
 
-    pub(crate) fn default_navigation_timeout(&self) -> f64 {
+    pub(crate) fn default_navigation_timeout(&self) -> u32 {
         let this = self.var.lock().unwrap().navigation_timeout;
         let parent = || {
             self.browser_context
@@ -329,7 +329,7 @@ impl Page {
         this.unwrap_or_else(parent)
     }
 
-    pub(crate) async fn set_default_timeout(&self, timeout: f64) -> ArcResult<()> {
+    pub(crate) async fn set_default_timeout(&self, timeout: u32) -> ArcResult<()> {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultTimeoutNoReply", args);
@@ -337,7 +337,7 @@ impl Page {
         Ok(())
     }
 
-    pub(crate) async fn set_default_navigation_timeout(&self, timeout: f64) -> ArcResult<()> {
+    pub(crate) async fn set_default_navigation_timeout(&self, timeout: u32) -> ArcResult<()> {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultNavigationTimeoutNoReply", args);

@@ -70,13 +70,13 @@ impl Page {
         GoForwardBuilder::new(self.inner.clone())
     }
 
-    pub async fn set_default_navigation_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+    pub async fn set_default_navigation_timeout(&mut self, timeout: u32) -> ArcResult<()> {
         upgrade(&self.inner)?
             .set_default_navigation_timeout(timeout)
             .await
     }
 
-    pub async fn set_default_timeout(&mut self, timeout: f64) -> ArcResult<()> {
+    pub async fn set_default_timeout(&mut self, timeout: u32) -> ArcResult<()> {
         upgrade(&self.inner)?.set_default_timeout(timeout).await
     }
 

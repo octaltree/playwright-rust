@@ -60,7 +60,11 @@ pub enum Error {
     #[error(transparent)]
     DeserializationPwJson(#[from] de::Error),
     #[error(transparent)]
-    Arc(#[from] Arc<Error>)
+    Arc(#[from] Arc<Error>),
+    #[error(transparent)]
+    Event(broadcast::error::RecvError),
+    #[error("Timed out")]
+    Timeout
 }
 
 pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;

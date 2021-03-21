@@ -22,6 +22,13 @@ macro_rules! optional_setter {
     };
 }
 
+mod event {
+    use crate::imp::{core::*, prelude::*};
+
+    // pub trait EventEmitter
+}
+// pub use event::Event
+
 pub mod playwright;
 
 pub mod accessibility;

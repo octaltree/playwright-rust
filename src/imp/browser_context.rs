@@ -8,28 +8,28 @@ use crate::imp::{
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
-    tx: broadcast::Sender<Event>,
-    rx: broadcast::Receiver<Event>,
+    tx: broadcast::Sender<Evt>,
+    rx: broadcast::Receiver<Evt>,
     channel: ChannelOwner,
     browser: Option<Weak<Browser>>,
     var: Mutex<Variable>
 }
 
+#[derive(Debug, Clone)]
+pub(crate) enum Evt {
+    Close,
+    Page(Weak<Page>)
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
     pages: Vec<Weak<Page>>,
-    timeout: Option<f64>,
-    navigation_timeout: Option<f64>
-}
-
-#[derive(Debug, Clone)]
-pub enum Event {
-    Close,
-    Page
+    timeout: Option<u32>,
+    navigation_timeout: Option<u32>
 }
 
 impl BrowserContext {
-    const DEFAULT_TIMEOUT: f64 = 30000.;
+    const DEFAULT_TIMEOUT: u32 = 30000;
 
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
@@ -161,10 +161,31 @@ impl BrowserContext {
     // async def expose_function(self, name: str, callback: Callable) -> None:
     // async def route(self, url: URLMatch, handler: RouteHandler) -> None:
     // async def unroute(
-    // def expect_event(
-    // async def close(self) -> None:
-    // async def wait_for_event(
-    // def expect_page(
+
+    pub(crate) async fn expect_event(&self, evt: <Evt as Event>::EventType) -> Result<Evt, Error> {
+        let mut rx = self.subscribe_event();
+        // consume
+        loop {
+            match rx.try_recv() {
+                Err(TryRecvError::Empty) | Err(TryRecvError::Closed) => break,
+                _ => {}
+            }
+        }
+        let sleep = sleep(Duration::from_millis(self.default_timeout() as u64));
+        let event = async {
+            loop {
+                match rx.recv().await {
+                    Ok(x) if x.event_type() == evt => break Ok(x),
+                    Ok(_) => continue,
+                    Err(e) => break Err(Error::Event(e))
+                }
+            }
+        };
+        tokio::select! {
+            _ = sleep => Err(Error::Timeout),
+            x = event => x
+        }
+    }
 
     pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.browser.clone() }
 }
@@ -189,7 +210,7 @@ impl BrowserContext {
         pages.remove(i);
     }
 
-    pub(crate) fn default_timeout(&self) -> f64 {
+    pub(crate) fn default_timeout(&self) -> u32 {
         self.var
             .lock()
             .unwrap()
@@ -197,7 +218,7 @@ impl BrowserContext {
             .unwrap_or(Self::DEFAULT_TIMEOUT)
     }
 
-    pub(crate) fn default_navigation_timeout(&self) -> f64 {
+    pub(crate) fn default_navigation_timeout(&self) -> u32 {
         self.var
             .lock()
             .unwrap()
@@ -205,7 +226,7 @@ impl BrowserContext {
             .unwrap_or(Self::DEFAULT_TIMEOUT)
     }
 
-    pub(crate) async fn set_default_timeout(&self, timeout: f64) -> ArcResult<()> {
+    pub(crate) async fn set_default_timeout(&self, timeout: u32) -> ArcResult<()> {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultTimeoutNoReply", args);
@@ -213,7 +234,7 @@ impl BrowserContext {
         Ok(())
     }
 
-    pub(crate) async fn set_default_navigation_timeout(&self, timeout: f64) -> ArcResult<()> {
+    pub(crate) async fn set_default_navigation_timeout(&self, timeout: u32) -> ArcResult<()> {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultNavigationTimeoutNoReply", args);
@@ -247,10 +268,12 @@ impl RemoteObject for BrowserContext {
                 let first = first_object(params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 let p = get_object!(ctx, &guid, Page)?;
-                self.push_page(p);
+                self.push_page(p.clone());
+                self.emit_event(Evt::Page(p));
             }
             "close" => {
                 self.on_close(ctx)?;
+                self.emit_event(Evt::Close);
             }
             _ => {}
         }
@@ -259,8 +282,25 @@ impl RemoteObject for BrowserContext {
 }
 
 impl EventEmitter for BrowserContext {
-    type Event = Event;
+    type Event = Evt;
     fn tx(&self) -> &broadcast::Sender<Self::Event> { &self.tx }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EventType {
+    Close,
+    Page
+}
+
+impl Event for Evt {
+    type EventType = EventType;
+
+    fn event_type(&self) -> Self::EventType {
+        match self {
+            Self::Close => EventType::Close,
+            Self::Page(_) => EventType::Page
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -284,6 +324,6 @@ mod tests {
         let c = c.upgrade().unwrap();
         c.storage_state().await.unwrap();
         c.cookies(&[]).await.unwrap();
-        c.set_default_timeout(30000.).await.unwrap();
+        c.set_default_timeout(30000).await.unwrap();
     });
 }
