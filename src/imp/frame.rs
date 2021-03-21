@@ -443,6 +443,16 @@ impl Frame {
         let _ = send_message!(self, "setInputFiles", args);
         Ok(())
     }
+
+    pub(crate) async fn wait_for_function(
+        &self,
+        args: WaitForFunctionArgs<'_>
+    ) -> ArcResult<Weak<JsHandle>> {
+        let v = send_message!(self, "waitForFunction", args);
+        let guid = only_guid(&v)?;
+        let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        Ok(h)
+    }
 }
 
 // mutable
@@ -820,6 +830,45 @@ impl<'a> SetInputFilesArgs<'a> {
     }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct WaitForFunctionArgs<'a> {
+    expression: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeout: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) polling: Option<Polling>,
+    pub(crate) arg: Option<Value>
+}
+
+pub enum Polling {
+    RequestAnimationFrame,
+    Millis(u32)
+}
+
+impl Serialize for Polling {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer
+    {
+        match self {
+            Self::Millis(x) => x.serialize(serializer),
+            Self::RequestAnimationFrame => "raf".serialize(serializer)
+        }
+    }
+}
+
+impl<'a> WaitForFunctionArgs<'a> {
+    pub(crate) fn new(expression: &'a str) -> Self {
+        Self {
+            expression,
+            timeout: None,
+            polling: None,
+            arg: None
+        }
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Initializer {
@@ -858,4 +907,12 @@ mod tests {
         let frame: Arc<Frame> = frame.upgrade().unwrap();
         let _handle: Weak<JsHandle> = frame.eval_handle("() => location.href").await.unwrap();
     });
+
+    #[test]
+    fn serialize_enum() {
+        let s = serde_json::to_string(&Polling::Millis(3)).unwrap();
+        assert_eq!(s, "3");
+        let s = serde_json::to_string(&Polling::RequestAnimationFrame).unwrap();
+        assert_eq!(s, r#""raf""#);
+    }
 }

@@ -405,7 +405,12 @@ impl Page {
         sleep(std::time::Duration::from_millis(timeout as u64)).await
     }
 
-    // wait_for_function
+    pub async fn wait_for_function_builder<'a>(
+        &self,
+        expression: &'a str
+    ) -> WaitForSelectorBuilder<'a> {
+        self.main_frame().wait_for_selector_builder(expression)
+    }
     // expect_navigation
 }
 

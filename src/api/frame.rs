@@ -1,4 +1,4 @@
-pub use crate::imp::frame::FrameState;
+pub use crate::imp::frame::{FrameState, Polling};
 use crate::{
     api::{ElementHandle, JsHandle, Page, Response},
     imp::{
@@ -6,7 +6,7 @@ use crate::{
         frame::{
             AddScriptTagArgs, CheckArgs, ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs,
             Opt, PressArgs, SelectOptionArgs, SetContentArgs, SetInputFilesArgs, TapArgs, TypeArgs,
-            WaitForSelectorArgs
+            WaitForFunctionArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
@@ -261,6 +261,10 @@ impl Frame {
         file: File
     ) -> SetInputFilesBuilder<'a> {
         SetInputFilesBuilder::new(self.inner.clone(), selector, file)
+    }
+
+    pub fn wait_for_function_builder<'a>(&self, expression: &'a str) -> WaitForSelectorBuilder<'a> {
+        WaitForSelectorBuilder::new(self.inner.clone(), expression)
     }
 }
 
@@ -643,6 +647,59 @@ impl<'a> SetInputFilesBuilder<'a> {
 
     pub fn clear_files(mut self) -> Self {
         self.args.files = vec![];
+        self
+    }
+}
+
+pub struct WaitForFunctionBuilder<'a> {
+    inner: Weak<Impl>,
+    args: WaitForFunctionArgs<'a>,
+    err: Option<Error>
+}
+
+impl<'a> WaitForFunctionBuilder<'a> {
+    pub(crate) fn new(inner: Weak<Impl>, expression: &'a str) -> Self {
+        let args = WaitForFunctionArgs::new(expression);
+        Self {
+            inner,
+            args,
+            err: None
+        }
+    }
+
+    pub async fn wait_for_function(self) -> Result<JsHandle, Arc<Error>> {
+        let Self { inner, args, err } = self;
+        if let Some(e) = err {
+            return Err(e.into());
+        }
+        upgrade(&inner)?
+            .wait_for_function(args)
+            .await
+            .map(JsHandle::new)
+    }
+
+    pub fn arg<T>(mut self, x: &T) -> Self
+    where
+        T: Serialize
+    {
+        let arg = match ser::to_value(x).map_err(Error::SerializationPwJson) {
+            Err(e) => {
+                self.err = Some(e);
+                return self;
+            }
+            Ok(arg) => arg
+        };
+        self.args.arg = Some(arg);
+        self
+    }
+
+    optional_setter!(
+        polling, Polling;
+        timeout, f64);
+
+    pub fn clear_arg(mut self) -> Self {
+        self.args.arg = None;
+        self.err = None;
         self
     }
 }
