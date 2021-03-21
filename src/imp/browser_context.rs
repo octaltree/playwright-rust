@@ -163,28 +163,7 @@ impl BrowserContext {
     // async def unroute(
 
     pub(crate) async fn expect_event(&self, evt: <Evt as Event>::EventType) -> Result<Evt, Error> {
-        let mut rx = self.subscribe_event();
-        // consume
-        loop {
-            match rx.try_recv() {
-                Err(TryRecvError::Empty) | Err(TryRecvError::Closed) => break,
-                _ => {}
-            }
-        }
-        let sleep = sleep(Duration::from_millis(self.default_timeout() as u64));
-        let event = async {
-            loop {
-                match rx.recv().await {
-                    Ok(x) if x.event_type() == evt => break Ok(x),
-                    Ok(_) => continue,
-                    Err(e) => break Err(Error::Event(e))
-                }
-            }
-        };
-        tokio::select! {
-            _ = sleep => Err(Error::Timeout),
-            x = event => x
-        }
+        expect_event(self.subscribe_event(), evt, self.default_timeout()).await
     }
 
     pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.browser.clone() }

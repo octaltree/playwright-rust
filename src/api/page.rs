@@ -7,7 +7,7 @@ pub use crate::{
         },
         JsHandle
     },
-    imp::page::Media
+    imp::page::{EventType, Media}
 };
 use crate::{
     api::{
@@ -17,7 +17,7 @@ use crate::{
     imp::{
         core::*,
         frame::Frame as FrameImpl,
-        page::{EmulateMediaArgs, Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
+        page::{EmulateMediaArgs, Evt, Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
         prelude::*,
         utils::{
             ColorScheme, DocumentLoadState, File, FloatRect, Length, PdfMargins, ScreenshotType,
@@ -136,6 +136,61 @@ impl Page {
         T: IntoIterator<Item = (String, String)>
     {
         upgrade(&self.inner)?.set_extra_http_headers(headers).await
+    }
+
+    pub async fn expect_event(&self, evt: EventType) -> Result<Event, Error> {
+        upgrade(&self.inner)?
+            .expect_event(evt)
+            .await
+            .map(Event::from)
+    }
+}
+
+pub enum Event {
+    Close,
+    Crash,
+    Console,
+    Dialog,
+    Download,
+    FileChooser,
+    DOMContentLoaded,
+    PageError,
+    Request,
+    Response,
+    RequestFailed,
+    RequestFinished,
+    FrameAttached,
+    FrameDetached,
+    FrameNavigated,
+    Load,
+    Popup,
+    WebSocket,
+    Worker
+}
+
+impl From<Evt> for Event {
+    fn from(e: Evt) -> Event {
+        match e {
+            Evt::Close => Event::Close,
+            Evt::Crash => Event::Crash,
+            Evt::Console => Event::Console,
+            Evt::Dialog => Event::Dialog,
+            Evt::Download => Event::Download,
+            Evt::FileChooser => Event::FileChooser,
+            Evt::DOMContentLoaded => Event::DOMContentLoaded,
+            Evt::PageError => Event::PageError,
+            Evt::Request => Event::Request,
+            Evt::Response => Event::Response,
+            Evt::RequestFailed => Event::RequestFailed,
+            Evt::RequestFinished => Event::RequestFinished,
+            Evt::FrameAttached => Event::FrameAttached,
+            Evt::FrameDetached => Event::FrameDetached,
+            Evt::FrameNavigated => Event::FrameNavigated,
+            Evt::Load => Event::Load,
+            Evt::Popup => Event::Popup,
+            Evt::WebSocket => Event::WebSocket,
+            Evt::Worker => Event::Worker
+        }
     }
 }
 

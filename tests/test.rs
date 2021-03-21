@@ -51,7 +51,7 @@ async fn init() -> (Playwright, Browser, BrowserContext, Page) {
     (pw, b, c, p)
 }
 
-async fn launch(t: &BrowserType) -> Browser { t.launcher().headless(false).launch().await.unwrap() }
+async fn launch(t: &BrowserType) -> Browser { t.launcher().headless(true).launch().await.unwrap() }
 
 async fn new_context(b: &Browser) -> BrowserContext {
     let a = "asdf".to_string();

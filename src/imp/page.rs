@@ -12,10 +12,35 @@ use crate::imp::{
 
 #[derive(Debug)]
 pub(crate) struct Page {
+    tx: broadcast::Sender<Evt>,
+    rx: broadcast::Receiver<Evt>,
     channel: ChannelOwner,
     main_frame: Weak<Frame>,
     browser_context: Weak<BrowserContext>,
     var: Mutex<Variable>
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum Evt {
+    Close,
+    Crash,
+    Console,
+    Dialog,
+    Download,
+    FileChooser,
+    DOMContentLoaded,
+    PageError,
+    Request,
+    Response,
+    RequestFailed,
+    RequestFinished,
+    FrameAttached,
+    FrameDetached,
+    FrameNavigated,
+    Load,
+    Popup,
+    WebSocket,
+    Worker
 }
 
 #[derive(Debug, Default)]
@@ -90,7 +115,10 @@ impl Page {
             viewport,
             ..Variable::default()
         });
+        let (tx, rx) = broadcast::channel(16);
         Ok(Self {
+            tx,
+            rx,
             channel,
             main_frame,
             browser_context,
@@ -284,6 +312,10 @@ impl Page {
         let _ = send_message!(self, "setExtraHTTPHeaders", args);
         Ok(())
     }
+
+    pub(crate) async fn expect_event(&self, evt: <Evt as Event>::EventType) -> Result<Evt, Error> {
+        expect_event(self.subscribe_event(), evt, self.default_timeout()).await
+    }
 }
 
 // mutable
@@ -352,6 +384,7 @@ impl Page {
         };
         let this = get_object!(ctx, &self.guid(), Page)?;
         bc.remove_page(&this);
+        self.emit_event(Evt::Close);
         Ok(())
     }
 
@@ -360,7 +393,7 @@ impl Page {
         let f = get_object!(ctx, &guid, Frame)?;
         upgrade(&f)?.set_page(this);
         self.var.lock().unwrap().frames.push(f);
-        // event
+        self.emit_event(Evt::FrameAttached);
         Ok(())
     }
 
@@ -371,6 +404,7 @@ impl Page {
             .filter(|w| w.upgrade().map(|a| a.guid() != guid).unwrap_or(false))
             .cloned()
             .collect();
+        self.emit_event(Evt::FrameDetached);
         Ok(())
     }
 }
@@ -402,6 +436,62 @@ impl RemoteObject for Page {
             _ => {}
         }
         Ok(())
+    }
+}
+
+impl EventEmitter for Page {
+    type Event = Evt;
+    fn tx(&self) -> &broadcast::Sender<Self::Event> { &self.tx }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EventType {
+    Close,
+    Crash,
+    Console,
+    Dialog,
+    Download,
+    FileChooser,
+    DOMContentLoaded,
+    PageError,
+    Request,
+    Response,
+    RequestFailed,
+    RequestFinished,
+    FrameAttached,
+    FrameDetached,
+    FrameNavigated,
+    Load,
+    Popup,
+    WebSocket,
+    Worker
+}
+
+impl Event for Evt {
+    type EventType = EventType;
+
+    fn event_type(&self) -> Self::EventType {
+        match self {
+            Self::Close => EventType::Close,
+            Self::Crash => EventType::Crash,
+            Self::Console => EventType::Console,
+            Self::Dialog => EventType::Dialog,
+            Self::Download => EventType::Download,
+            Self::FileChooser => EventType::FileChooser,
+            Self::DOMContentLoaded => EventType::DOMContentLoaded,
+            Self::PageError => EventType::PageError,
+            Self::Request => EventType::Request,
+            Self::Response => EventType::Response,
+            Self::RequestFailed => EventType::RequestFailed,
+            Self::RequestFinished => EventType::RequestFinished,
+            Self::FrameAttached => EventType::FrameAttached,
+            Self::FrameDetached => EventType::FrameDetached,
+            Self::FrameNavigated => EventType::FrameNavigated,
+            Self::Load => EventType::Load,
+            Self::Popup => EventType::Popup,
+            Self::WebSocket => EventType::WebSocket,
+            Self::Worker => EventType::Worker
+        }
     }
 }
 

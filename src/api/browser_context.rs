@@ -103,10 +103,7 @@ impl BrowserContext {
         upgrade(&self.inner)?
             .expect_event(evt)
             .await
-            .map(|e| match e {
-                Evt::Close => Event::Close,
-                Evt::Page(w) => Event::Page(Page::new(w))
-            })
+            .map(Event::from)
     }
 
     // pub fn subscribe_event(&self) -> Result<broadcast::Receiver<Event>, Error> {
@@ -131,4 +128,13 @@ impl BrowserContext {
 pub enum Event {
     Close,
     Page(Page)
+}
+
+impl From<Evt> for Event {
+    fn from(e: Evt) -> Event {
+        match e {
+            Evt::Close => Event::Close,
+            Evt::Page(w) => Event::Page(Page::new(w))
+        }
+    }
 }
