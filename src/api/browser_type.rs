@@ -5,7 +5,9 @@ use crate::{
         browser_type::{BrowserType as Impl, LaunchArgs, LaunchPersistentContextArgs},
         core::*,
         prelude::*,
-        utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
+        utils::{
+            BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport
+        }
     },
     Error
 };
@@ -29,24 +31,24 @@ impl BrowserType {
     }
 
     /// launch [`Browser`]
-    pub fn launcher(&self) -> Launcher<'_, '_, '_, '_> { Launcher::new(self.inner.clone()) }
+    pub fn launcher(&self) -> Launcher<'_, '_, '_> { Launcher::new(self.inner.clone()) }
 
     /// launch_persistent_context [`BrowserContext`]
     pub fn persistent_context_launcher<'a>(
         &self,
         user_data_dir: &'a Path
-    ) -> PersistentContextLauncher<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
+    ) -> PersistentContextLauncher<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
         PersistentContextLauncher::new(self.inner.clone(), user_data_dir)
     }
 }
 
 /// [`BrowserType::launcher`]
-pub struct Launcher<'a, 'b, 'c, 'd> {
+pub struct Launcher<'a, 'b, 'c> {
     inner: Weak<Impl>,
-    args: LaunchArgs<'a, 'b, 'c, 'd>
+    args: LaunchArgs<'a, 'b, 'c>
 }
 
-impl<'a, 'b, 'c, 'd> Launcher<'a, 'b, 'c, 'd> {
+impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
     pub async fn launch(self) -> Result<Browser, Arc<Error>> {
         let Self { inner, args } = self;
         let r = upgrade(&inner)?.launch(args).await?;
@@ -76,19 +78,19 @@ impl<'a, 'b, 'c, 'd> Launcher<'a, 'b, 'c, 'd> {
         slowmo, f64;
         chromium_sandbox, f64;
         firefox_user_prefs, Map<String, Value>;
-        channel, &'d str);
+        channel, BrowserChannel);
 }
 
 /// [`BrowserType::persistent_context_launcher`]
 ///
 /// Has launch args and context args
-pub struct PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l> {
+pub struct PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     inner: Weak<Impl>,
-    args: LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l>
+    args: LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
 }
 
-impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l>
-    PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l>
+impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
+    PersistentContextLauncher<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
 {
     pub async fn launch(self) -> Result<BrowserContext, Arc<Error>> {
         let Self { inner, args } = self;
@@ -138,5 +140,5 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l>
         chromium_sandbox, bool;
         record_video, RecordVideo<'j>;
         record_har, RecordHar<'k>;
-        channel, &'l str);
+        channel, BrowserChannel);
 }

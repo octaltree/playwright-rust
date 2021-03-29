@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf}
 };
 
-const DRIVER_VERSION: &str = "1.10.0-next-1616094973000";
+const DRIVER_VERSION: &str = "1.10.0-next-1616530863000";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();

@@ -199,3 +199,16 @@ impl File {
         Self { name, mime, buffer }
     }
 }
+
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+#[serde(rename_all = "snake_case")]
+pub enum BrowserChannel {
+    Chrome,
+    ChromeBeta,
+    ChromeDev,
+    ChromeCanary,
+    Msedge,
+    MsedgeBeta,
+    MsedgeDev,
+    MsedgeCanary
+}
