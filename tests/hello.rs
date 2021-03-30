@@ -18,5 +18,6 @@ async fn main() -> Result<(), playwright::Error> {
     let s: String = page.eval("() => location.href").await?;
     assert_eq!(s, "https://example.com/");
     page.click_builder("a").click().await?;
+    assert_eq!(page.url().unwrap(), "https://www.iana.org/domains/reserved");
     Ok(())
 }

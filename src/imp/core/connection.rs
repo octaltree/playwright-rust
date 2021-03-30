@@ -156,7 +156,7 @@ impl Connection {
             if status.is_ok() {
                 log::trace!("Done");
             } else {
-                log::trace!("Failed");
+                log::trace!("Failed {:?}", status);
                 if let Some(c) = c.upgrade() {
                     let mut ctx = c.lock().unwrap();
                     ctx.notify_closed();
