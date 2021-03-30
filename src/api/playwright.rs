@@ -39,6 +39,28 @@ impl Playwright {
         Ok(())
     }
 
+    /// Runs $ playwright install chromium
+    pub fn install_chromium(&self) -> io::Result<()> {
+        Command::new(self.driver.executable())
+            .args(&["install", "chromium"])
+            .status()?;
+        Ok(())
+    }
+
+    pub fn install_firefox(&self) -> io::Result<()> {
+        Command::new(self.driver.executable())
+            .args(&["install", "firefox"])
+            .status()?;
+        Ok(())
+    }
+
+    pub fn install_webkit(&self) -> io::Result<()> {
+        Command::new(self.driver.executable())
+            .args(&["install", "webkit"])
+            .status()?;
+        Ok(())
+    }
+
     /// Launcher
     pub fn chromium(&self) -> BrowserType {
         let inner = weak_and_then(&self.inner, |rc| rc.chromium());
