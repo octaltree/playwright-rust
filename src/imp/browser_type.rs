@@ -149,8 +149,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_default_viewport: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "ignoreHTTPSErrors")]
-    pub(crate) ignore_http_errors: Option<bool>,
+    pub(crate) ignore_https_errors: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "javaScriptEnabled")]
     pub(crate) js_enabled: Option<bool>,
@@ -231,7 +230,7 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             slowmo: None,
             viewport: None,
             no_default_viewport: None,
-            ignore_http_errors: None,
+            ignore_https_errors: None,
             js_enabled: None,
             bypass_csp: None,
             user_agent: None,

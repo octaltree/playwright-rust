@@ -124,8 +124,7 @@ pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_default_viewport: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "ignoreHTTPSErrors")]
-    pub(crate) ignore_http_errors: Option<bool>,
+    pub(crate) ignore_https_errors: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "javaScriptEnabled")]
     pub(crate) js_enabled: Option<bool>,

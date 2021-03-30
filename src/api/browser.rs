@@ -75,7 +75,7 @@ impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> ContextBuilder<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
         proxy, ProxySettings;
         viewport, Viewport;
         no_default_viewport, bool;
-        ignore_http_errors, bool;
+        ignore_https_errors, bool;
         js_enabled, bool;
         bypass_csp, bool;
         user_agent, &'e str;
