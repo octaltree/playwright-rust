@@ -1,7 +1,7 @@
 use playwright::{
     api::{
-        browser_context, Browser, BrowserContext, BrowserType, DateTime, KeyboardModifier, Page,
-        Response
+        browser_context, page, Browser, BrowserContext, BrowserType, DateTime, KeyboardModifier,
+        Page, Response
     },
     *
 };
@@ -35,6 +35,7 @@ runtime_test!(awesome, {
         browser_context::Event::Page(p) => p,
         _ => unreachable!()
     };
+    ensure_timeout(&page).await;
     //// let _ = p.main_frame().query_selector_all("a").await.unwrap();
     //// let _ = p.main_frame().title().await.unwrap();
     // let mut a = p.query_selector("a").await.unwrap().unwrap();
@@ -42,6 +43,14 @@ runtime_test!(awesome, {
     // dbg!(v);
     // p.go_back_builder().go_back().await.unwrap();
 });
+
+async fn ensure_timeout(page: &Page) {
+    page.set_default_timeout(500).await.unwrap();
+    match page.expect_event(page::EventType::Load).await {
+        Err(Error::Timeout) => {}
+        _ => panic!("Not expected")
+    }
+}
 
 async fn init() -> (Playwright, Browser, BrowserContext, Page) {
     let pw = Playwright::initialize().await.unwrap();
