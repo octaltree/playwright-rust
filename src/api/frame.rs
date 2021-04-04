@@ -4,9 +4,9 @@ use crate::{
     imp::{
         core::*,
         frame::{
-            AddScriptTagArgs, CheckArgs, ClickArgs, FillArgs, Frame as Impl, GotoArgs, HoverArgs,
-            Opt, PressArgs, SelectOptionArgs, SetContentArgs, SetInputFilesArgs, TapArgs, TypeArgs,
-            WaitForFunctionArgs, WaitForSelectorArgs
+            AddScriptTagArgs, CheckArgs, ClickArgs, Evt, FillArgs, Frame as Impl, GotoArgs,
+            HoverArgs, Opt, PressArgs, SelectOptionArgs, SetContentArgs, SetInputFilesArgs,
+            TapArgs, TypeArgs, WaitForFunctionArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
@@ -275,6 +275,20 @@ impl Frame {
 
     pub fn wait_for_function_builder<'a>(&self, expression: &'a str) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), expression)
+    }
+}
+
+pub enum Event {
+    LoadState,
+    Navigated
+}
+
+impl From<Evt> for Event {
+    fn from(e: Evt) -> Self {
+        match e {
+            Evt::LoadState => Self::LoadState,
+            Evt::Navigated => Self::Navigated
+        }
     }
 }
 

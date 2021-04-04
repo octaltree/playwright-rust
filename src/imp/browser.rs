@@ -93,16 +93,6 @@ impl Browser {
 impl RemoteObject for Browser {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
-
-    fn handle_event(
-        &self,
-        ctx: &Context,
-        method: &S<Method>,
-        params: &Map<String, Value>
-    ) -> Result<(), Error> {
-        if method == S::validate("close").unwrap() {}
-        Ok(())
-    }
 }
 
 #[derive(Debug, Deserialize)]

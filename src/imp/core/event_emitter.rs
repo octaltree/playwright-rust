@@ -49,8 +49,8 @@ pub(crate) async fn expect_event<E: Event>(
 mod tests {
     crate::runtime_test!(select, {
         use crate::imp::prelude::*;
-        let first = sleep(Duration::from_millis(200 as u64));
-        let second = sleep(Duration::from_millis(400 as u64));
+        let first = sleep(Duration::from_millis(200u64));
+        let second = sleep(Duration::from_millis(400u64));
         tokio::select! {
             _ = first => {},
             _ = second => unreachable!()

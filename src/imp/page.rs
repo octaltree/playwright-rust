@@ -396,8 +396,8 @@ impl RemoteObject for Page {
     fn handle_event(
         &self,
         ctx: &Context,
-        method: &S<Method>,
-        params: &Map<String, Value>
+        method: Str<Method>,
+        params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
             "close" => {

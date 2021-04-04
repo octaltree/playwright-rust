@@ -15,12 +15,6 @@ pub(crate) struct BrowserContext {
     var: Mutex<Variable>
 }
 
-#[derive(Debug, Clone)]
-pub(crate) enum Evt {
-    Close,
-    Page(Weak<Page>)
-}
-
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
     pages: Vec<Weak<Page>>,
@@ -244,12 +238,12 @@ impl RemoteObject for BrowserContext {
     fn handle_event(
         &self,
         ctx: &Context,
-        method: &S<Method>,
-        params: &Map<String, Value>
+        method: Str<Method>,
+        params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
             "page" => {
-                let first = first_object(params).ok_or(Error::InvalidParams)?;
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 let p = get_object!(ctx, &guid, Page)?;
                 self.push_page(p.clone());
@@ -263,6 +257,12 @@ impl RemoteObject for BrowserContext {
         }
         Ok(())
     }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum Evt {
+    Close,
+    Page(Weak<Page>)
 }
 
 impl EventEmitter for BrowserContext {

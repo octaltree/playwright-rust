@@ -480,17 +480,19 @@ impl Frame {
         self.var.lock().unwrap().child_frames.push(child);
     }
 
-    fn on_navigated(&self, params: &Map<String, Value>) -> Result<(), Error> {
+    fn on_navigated(&self, params: Map<String, Value>) -> Result<(), Error> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct New {
             name: String,
             url: String
         }
-        let New { name, url } = serde_json::from_value(params.clone().into())?;
+        let New { name, url } = serde_json::from_value(params.into())?;
         let var = &mut self.var.lock().unwrap();
         var.name = name;
         var.url = url;
+        // TODO: payload
+        self.emit_event(Evt::Navigated);
         if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
             log::error!("{} {}", &var.name, &var.url);
             page.on_frame_navigated();
@@ -506,13 +508,14 @@ impl RemoteObject for Frame {
     fn handle_event(
         &self,
         ctx: &Context,
-        method: &S<Method>,
-        params: &Map<String, Value>
+        method: Str<Method>,
+        params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
             "navigated" => {
                 self.on_navigated(params)?;
             }
+            "loadstate" => {}
             _ => {}
         }
         Ok(())

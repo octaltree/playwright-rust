@@ -125,8 +125,8 @@ pub(crate) trait RemoteObject: Debug {
     fn handle_event(
         &self,
         _ctx: &Context,
-        _method: &S<Method>,
-        _params: &Map<String, Value>
+        _method: Str<Method>,
+        _params: Map<String, Value>
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -187,7 +187,7 @@ mod remote_enum {
 
     macro_rules! handle_event {
         ($($t:ident),*) => {
-            pub(crate) fn handle_event(&self, ctx: &Context, method: &S<Method>, params: &Map<String, Value>) -> Result<(), Error> {
+            pub(crate) fn handle_event(&self, ctx: &Context, method: Str<Method>, params: Map<String, Value>) -> Result<(), Error> {
                 match self {
                     $(
                         Self::$t(x) => x.handle_event(ctx, method, params)

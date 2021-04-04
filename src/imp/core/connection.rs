@@ -218,7 +218,8 @@ impl Context {
                     return Ok(());
                 }
                 let target = self.objects.get(&msg.guid).ok_or(Error::ObjectNotFound)?;
-                target.handle_event(self, &msg.method, &msg.params)?;
+                let ResInitial { method, params, .. } = msg;
+                target.handle_event(self, method, params)?;
             }
         }
         Ok(())
