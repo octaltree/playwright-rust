@@ -148,7 +148,7 @@ impl Connection {
                         };
                         let mut ctx = c.lock().unwrap();
                         ctx.dispatch(response)?;
-                        log::debug!("{:?}", ctx.objects.keys());
+                        // log::debug!("{:?}", ctx.objects.keys());
                     }
                 }
                 Ok(())
