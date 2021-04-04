@@ -377,6 +377,8 @@ impl Page {
         Ok(())
     }
 
+    pub(crate) fn on_frame_navigated(&self) { self.emit_event(Evt::FrameNavigated); }
+
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let bc = match self.browser_context().upgrade() {
             None => return Ok(()),
@@ -432,6 +434,9 @@ impl RemoteObject for Page {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 self.on_frame_detached(ctx, guid)?;
+            }
+            "load" => {
+                self.emit_event(Evt::Load);
             }
             _ => {}
         }

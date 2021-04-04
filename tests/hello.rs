@@ -20,6 +20,7 @@ async fn main() -> Result<(), playwright::Error> {
     let url: String = page.eval("() => location.href").await?;
     assert_eq!(url, "https://docs.rs/playwright/0.0.5/playwright/");
 
+    // Wait until navigated
     page.click_builder(r#"a[title="playwright::api mod"]"#)
         .click()
         .await?;
@@ -28,14 +29,10 @@ async fn main() -> Result<(), playwright::Error> {
         "https://docs.rs/playwright/0.0.5/playwright/api/index.html"
     );
 
-    // Click waits to be navigated, so waiting afterwards times out.
-    page.set_default_timeout(1000).await?;
-    let waiting = page.expect_event(playwright::api::page::EventType::FrameNavigated);
-    match waiting.await {
-        Err(playwright::Error::Timeout) => {}
-        Err(e) => return Err(e),
-        Ok(_) => panic!("Not expected navigation occured")
-    }
+    // Waiting load explicitly is unnecessary.
+    // [many functions wait contents automaticaly](https://playwright.dev/docs/actionability/).
+    page.expect_event(playwright::api::page::EventType::Load)
+        .await?;
 
     Ok(())
 }

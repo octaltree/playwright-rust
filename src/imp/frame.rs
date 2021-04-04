@@ -486,6 +486,10 @@ impl Frame {
         let var = &mut self.var.lock().unwrap();
         var.name = name;
         var.url = url;
+        if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
+            log::error!("{} {}", &var.name, &var.url);
+            page.on_frame_navigated();
+        }
         Ok(())
     }
 }
