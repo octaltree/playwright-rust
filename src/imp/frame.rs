@@ -480,7 +480,7 @@ impl Frame {
         self.var.lock().unwrap().child_frames.push(child);
     }
 
-    fn on_navigated(&self, params: Map<String, Value>) -> Result<(), Error> {
+    fn on_navigated(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct New {
@@ -494,8 +494,8 @@ impl Frame {
         // TODO: payload
         self.emit_event(Evt::Navigated);
         if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
-            log::error!("{} {}", &var.name, &var.url);
-            page.on_frame_navigated();
+            let this = get_object!(ctx, &self.guid(), Frame)?;
+            page.on_frame_navigated(this);
         }
         Ok(())
     }
@@ -513,7 +513,7 @@ impl RemoteObject for Frame {
     ) -> Result<(), Error> {
         match method.as_str() {
             "navigated" => {
-                self.on_navigated(params)?;
+                self.on_navigated(ctx, params)?;
             }
             "loadstate" => {}
             _ => {}

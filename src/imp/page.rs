@@ -354,7 +354,9 @@ impl Page {
         Ok(())
     }
 
-    pub(crate) fn on_frame_navigated(&self) { self.emit_event(Evt::FrameNavigated); }
+    pub(crate) fn on_frame_navigated(&self, f: Weak<Frame>) {
+        self.emit_event(Evt::FrameNavigated(f));
+    }
 
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let bc = match self.browser_context().upgrade() {
@@ -438,7 +440,7 @@ pub(crate) enum Evt {
     RequestFinished,
     FrameAttached(Weak<Frame>),
     FrameDetached(Weak<Frame>),
-    FrameNavigated,
+    FrameNavigated(Weak<Frame>),
     Load,
     Popup,
     WebSocket,
@@ -492,7 +494,7 @@ impl Event for Evt {
             Self::RequestFinished => EventType::RequestFinished,
             Self::FrameAttached(_) => EventType::FrameAttached,
             Self::FrameDetached(_) => EventType::FrameDetached,
-            Self::FrameNavigated => EventType::FrameNavigated,
+            Self::FrameNavigated(_) => EventType::FrameNavigated,
             Self::Load => EventType::Load,
             Self::Popup => EventType::Popup,
             Self::WebSocket => EventType::WebSocket,
