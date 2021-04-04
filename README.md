@@ -55,6 +55,8 @@ Application uses this library will be bundled the driver into rust binary at bui
 
 ## Other languages
 - [microsoft/playwright](https://github.com/microsoft/playwright)
+    * [Documentation](https://playwright.dev/docs/intro/)
+    * [API Reference](https://playwright.dev/docs/api/class-playwright/)
 - [microsoft/playwright-python](https://github.com/microsoft/playwright-python)
 - [microsoft/playwright-sharp](https://github.com/microsoft/playwright-sharp)
 - [microsoft/playwright-java](https://github.com/microsoft/playwright-java)
