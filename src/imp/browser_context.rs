@@ -253,6 +253,8 @@ impl RemoteObject for BrowserContext {
                 self.on_close(ctx)?;
                 self.emit_event(Evt::Close);
             }
+            "bindingCall" => {}
+            "route" => {}
             _ => {}
         }
         Ok(())

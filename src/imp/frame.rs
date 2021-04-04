@@ -8,6 +8,7 @@ use crate::imp::{
     response::Response,
     utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
 };
+use std::{collections::HashSet, iter::FromIterator};
 
 #[derive(Debug)]
 pub(crate) struct Frame {
@@ -23,7 +24,8 @@ struct Variable {
     url: String,
     name: String,
     page: Option<Weak<Page>>,
-    child_frames: Vec<Weak<Frame>>
+    child_frames: Vec<Weak<Frame>>,
+    load_states: HashSet<DocumentLoadState>
 }
 
 macro_rules! is_checked {
@@ -51,7 +53,8 @@ impl Frame {
         let Initializer {
             name,
             url,
-            parent_frame
+            parent_frame,
+            load_states
         } = serde_json::from_value(channel.initializer.clone())?;
         let parent_frame =
             match parent_frame.map(|OnlyGuid { guid }| get_object!(ctx, &guid, Frame)) {
@@ -63,7 +66,8 @@ impl Frame {
             url,
             name,
             page: None,
-            child_frames: Vec::new()
+            child_frames: Vec::new(),
+            load_states: HashSet::from_iter(load_states)
         });
         let (tx, rx) = broadcast::channel(16);
         Ok(Self {
@@ -499,6 +503,27 @@ impl Frame {
         }
         Ok(())
     }
+
+    fn on_load_state(&self, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        enum Op {
+            Add(DocumentLoadState),
+            Remove(DocumentLoadState)
+        }
+        let op: Op = serde_json::from_value(params.into())?;
+        let load_states = &mut self.var.lock().unwrap().load_states;
+        match op {
+            Op::Add(x) => {
+                load_states.insert(x);
+                self.emit_event(Evt::LoadState(x));
+            }
+            Op::Remove(x) => {
+                load_states.remove(&x);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl RemoteObject for Frame {
@@ -512,10 +537,8 @@ impl RemoteObject for Frame {
         params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
-            "navigated" => {
-                self.on_navigated(ctx, params)?;
-            }
-            "loadstate" => {}
+            "navigated" => self.on_navigated(ctx, params)?,
+            "loadstate" => self.on_load_state(params)?,
             _ => {}
         }
         Ok(())
@@ -524,7 +547,7 @@ impl RemoteObject for Frame {
 
 #[derive(Debug, Clone)]
 pub(crate) enum Evt {
-    LoadState,
+    LoadState(DocumentLoadState),
     Navigated
 }
 
@@ -545,7 +568,7 @@ impl Event for Evt {
 
     fn event_type(&self) -> Self::EventType {
         match self {
-            Evt::LoadState => EventType::LoadState,
+            Evt::LoadState(_) => EventType::LoadState,
             Evt::Navigated => EventType::Navigated
         }
     }
@@ -915,7 +938,8 @@ impl<'a> WaitForFunctionArgs<'a> {
 struct Initializer {
     name: String,
     url: String,
-    parent_frame: Option<OnlyGuid>
+    parent_frame: Option<OnlyGuid>,
+    load_states: Vec<DocumentLoadState>
 }
 
 #[cfg(test)]

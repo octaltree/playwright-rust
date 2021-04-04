@@ -279,14 +279,14 @@ impl Frame {
 }
 
 pub enum Event {
-    LoadState,
+    LoadState(DocumentLoadState),
     Navigated
 }
 
 impl From<Evt> for Event {
     fn from(e: Evt) -> Self {
         match e {
-            Evt::LoadState => Self::LoadState,
+            Evt::LoadState(x) => Self::LoadState(x),
             Evt::Navigated => Self::Navigated
         }
     }

@@ -402,9 +402,7 @@ impl RemoteObject for Page {
         params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
-            "close" => {
-                self.on_close(ctx)?;
-            }
+            "close" => self.on_close(ctx)?,
             "frameAttached" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
@@ -415,9 +413,9 @@ impl RemoteObject for Page {
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 self.on_frame_detached(ctx, guid)?;
             }
-            "load" => {
-                self.emit_event(Evt::Load);
-            }
+            "load" => self.emit_event(Evt::Load),
+            "domcontentloaded" => self.emit_event(Evt::DOMContentLoaded),
+            "crash" => self.emit_event(Evt::Crash),
             _ => {}
         }
         Ok(())
