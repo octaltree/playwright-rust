@@ -20,29 +20,6 @@ pub(crate) struct Page {
     var: Mutex<Variable>
 }
 
-#[derive(Debug, Clone)]
-pub(crate) enum Evt {
-    Close,
-    Crash,
-    Console,
-    Dialog,
-    Download,
-    FileChooser,
-    DOMContentLoaded,
-    PageError,
-    Request,
-    Response,
-    RequestFailed,
-    RequestFinished,
-    FrameAttached,
-    FrameDetached,
-    FrameNavigated,
-    Load,
-    Popup,
-    WebSocket,
-    Worker
-}
-
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
     viewport: Option<Viewport>,
@@ -394,8 +371,8 @@ impl Page {
         let this = get_object!(ctx, self.guid(), Page)?;
         let f = get_object!(ctx, &guid, Frame)?;
         upgrade(&f)?.set_page(this);
-        self.var.lock().unwrap().frames.push(f);
-        self.emit_event(Evt::FrameAttached);
+        self.var.lock().unwrap().frames.push(f.clone());
+        self.emit_event(Evt::FrameAttached(f));
         Ok(())
     }
 
@@ -406,7 +383,8 @@ impl Page {
             .filter(|w| w.upgrade().map(|a| a.guid() != guid).unwrap_or(false))
             .cloned()
             .collect();
-        self.emit_event(Evt::FrameDetached);
+        let f = get_object!(ctx, &guid, Frame)?;
+        self.emit_event(Evt::FrameDetached(f));
         Ok(())
     }
 }
@@ -442,6 +420,29 @@ impl RemoteObject for Page {
         }
         Ok(())
     }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum Evt {
+    Close,
+    Crash,
+    Console,
+    Dialog,
+    Download,
+    FileChooser,
+    DOMContentLoaded,
+    PageError,
+    Request,
+    Response,
+    RequestFailed,
+    RequestFinished,
+    FrameAttached(Weak<Frame>),
+    FrameDetached(Weak<Frame>),
+    FrameNavigated,
+    Load,
+    Popup,
+    WebSocket,
+    Worker
 }
 
 impl EventEmitter for Page {
@@ -489,8 +490,8 @@ impl Event for Evt {
             Self::Response => EventType::Response,
             Self::RequestFailed => EventType::RequestFailed,
             Self::RequestFinished => EventType::RequestFinished,
-            Self::FrameAttached => EventType::FrameAttached,
-            Self::FrameDetached => EventType::FrameDetached,
+            Self::FrameAttached(_) => EventType::FrameAttached,
+            Self::FrameDetached(_) => EventType::FrameDetached,
             Self::FrameNavigated => EventType::FrameNavigated,
             Self::Load => EventType::Load,
             Self::Popup => EventType::Popup,

@@ -11,6 +11,16 @@ pub struct Route {
     inner: Weak<Impl>
 }
 
+impl PartialEq for Route {
+    fn eq(&self, other: &Self) -> bool {
+        let a = self.inner.upgrade();
+        let b = other.inner.upgrade();
+        a.and_then(|a| b.map(|b| (a, b)))
+            .map(|(a, b)| a.guid() == b.guid())
+            .unwrap_or_default()
+    }
+}
+
 impl Route {
     fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 

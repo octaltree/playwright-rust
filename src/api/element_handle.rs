@@ -18,6 +18,16 @@ pub struct ElementHandle {
     inner: Weak<Impl>
 }
 
+impl PartialEq for ElementHandle {
+    fn eq(&self, other: &Self) -> bool {
+        let a = self.inner.upgrade();
+        let b = other.inner.upgrade();
+        a.and_then(|a| b.map(|b| (a, b)))
+            .map(|(a, b)| a.guid() == b.guid())
+            .unwrap_or_default()
+    }
+}
+
 macro_rules! is_checked {
     ($f: ident) => {
         pub async fn $f(&self) -> ArcResult<bool> { upgrade(&self.inner)?.$f().await }

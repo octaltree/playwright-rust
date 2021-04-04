@@ -11,6 +11,8 @@ use crate::imp::{
 
 #[derive(Debug)]
 pub(crate) struct Frame {
+    tx: broadcast::Sender<Evt>,
+    rx: broadcast::Receiver<Evt>,
     channel: ChannelOwner,
     parent_frame: Option<Weak<Frame>>,
     var: Mutex<Variable>
@@ -63,7 +65,10 @@ impl Frame {
             page: None,
             child_frames: Vec::new()
         });
+        let (tx, rx) = broadcast::channel(16);
         Ok(Self {
+            tx,
+            rx,
             channel,
             parent_frame,
             var
@@ -511,6 +516,35 @@ impl RemoteObject for Frame {
             _ => {}
         }
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum Evt {
+    LoadState,
+    Navigated
+}
+
+impl EventEmitter for Frame {
+    type Event = Evt;
+
+    fn tx(&self) -> &broadcast::Sender<Self::Event> { &self.tx }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EventType {
+    LoadState,
+    Navigated
+}
+
+impl Event for Evt {
+    type EventType = EventType;
+
+    fn event_type(&self) -> Self::EventType {
+        match self {
+            Evt::LoadState => EventType::LoadState,
+            Evt::Navigated => EventType::Navigated
+        }
     }
 }
 

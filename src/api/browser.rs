@@ -15,6 +15,16 @@ pub struct Browser {
     inner: Weak<imp::browser::Browser>
 }
 
+impl PartialEq for Browser {
+    fn eq(&self, other: &Self) -> bool {
+        let a = self.inner.upgrade();
+        let b = other.inner.upgrade();
+        a.and_then(|a| b.map(|b| (a, b)))
+            .map(|(a, b)| a.guid() == b.guid())
+            .unwrap_or_default()
+    }
+}
+
 impl Browser {
     pub(crate) fn new(inner: Weak<imp::browser::Browser>) -> Self { Self { inner } }
 

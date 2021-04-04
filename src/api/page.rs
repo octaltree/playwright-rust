@@ -35,6 +35,16 @@ pub struct Page {
     pub accessibility: Accessibility
 }
 
+impl PartialEq for Page {
+    fn eq(&self, other: &Self) -> bool {
+        let a = self.inner.upgrade();
+        let b = other.inner.upgrade();
+        a.and_then(|a| b.map(|b| (a, b)))
+            .map(|(a, b)| a.guid() == b.guid())
+            .unwrap_or_default()
+    }
+}
+
 impl Page {
     pub(crate) fn new(inner: Weak<Impl>) -> Self {
         Self {
@@ -159,8 +169,8 @@ pub enum Event {
     Response,
     RequestFailed,
     RequestFinished,
-    FrameAttached,
-    FrameDetached,
+    FrameAttached(Frame),
+    FrameDetached(Frame),
     FrameNavigated,
     Load,
     Popup,
@@ -183,8 +193,8 @@ impl From<Evt> for Event {
             Evt::Response => Event::Response,
             Evt::RequestFailed => Event::RequestFailed,
             Evt::RequestFinished => Event::RequestFinished,
-            Evt::FrameAttached => Event::FrameAttached,
-            Evt::FrameDetached => Event::FrameDetached,
+            Evt::FrameAttached(x) => Event::FrameAttached(Frame::new(x)),
+            Evt::FrameDetached(x) => Event::FrameDetached(Frame::new(x)),
             Evt::FrameNavigated => Event::FrameNavigated,
             Evt::Load => Event::Load,
             Evt::Popup => Event::Popup,
