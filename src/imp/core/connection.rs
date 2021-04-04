@@ -158,7 +158,6 @@ impl Connection {
             } else {
                 log::trace!("Failed {:?}", status);
                 if let Some(c) = c.upgrade() {
-                    log::trace!("asdf");
                     let mut ctx = c.lock().unwrap();
                     ctx.notify_closed();
                 }
