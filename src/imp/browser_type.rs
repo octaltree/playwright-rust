@@ -196,17 +196,17 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordVideo<'a> {
-    dir: &'a Path,
+    pub dir: &'a Path,
     #[serde(skip_serializing_if = "Option::is_none")]
-    size: Option<Viewport>
+    pub size: Option<Viewport>
 }
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordHar<'a> {
-    path: &'a Path,
+    pub path: &'a Path,
     #[serde(skip_serializing_if = "Option::is_none")]
-    omit_content: Option<bool>
+    pub omit_content: Option<bool>
 }
 
 impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
