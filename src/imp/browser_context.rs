@@ -227,6 +227,12 @@ impl BrowserContext {
         };
         let this = get_object!(ctx, &self.guid(), BrowserContext)?;
         browser.remove_context(&this);
+        self.emit_event(Evt::Close);
+        Ok(())
+    }
+
+    fn on_route(&self, _ctx: &Context, _parmas: Map<String, Value>) -> Result<(), Error> {
+        // TODO: noimplemented
         Ok(())
     }
 }
@@ -249,12 +255,9 @@ impl RemoteObject for BrowserContext {
                 self.push_page(p.clone());
                 self.emit_event(Evt::Page(p));
             }
-            "close" => {
-                self.on_close(ctx)?;
-                self.emit_event(Evt::Close);
-            }
+            "close" => self.on_close(ctx)?,
             "bindingCall" => {}
-            "route" => {}
+            "route" => self.on_route(ctx, params)?,
             _ => {}
         }
         Ok(())

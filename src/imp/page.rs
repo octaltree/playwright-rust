@@ -1,5 +1,6 @@
 use crate::imp::{
     browser_context::BrowserContext,
+    console_message::ConsoleMessage,
     core::*,
     frame::Frame,
     prelude::*,
@@ -416,6 +417,12 @@ impl RemoteObject for Page {
             "load" => self.emit_event(Evt::Load),
             "domcontentloaded" => self.emit_event(Evt::DOMContentLoaded),
             "crash" => self.emit_event(Evt::Crash),
+            "console" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let console = get_object!(ctx, &guid, ConsoleMessage)?;
+                self.emit_event(Evt::Console(console));
+            }
             _ => {}
         }
         Ok(())
@@ -426,7 +433,7 @@ impl RemoteObject for Page {
 pub(crate) enum Evt {
     Close,
     Crash,
-    Console,
+    Console(Weak<ConsoleMessage>),
     Dialog,
     Download,
     FileChooser,
@@ -480,7 +487,7 @@ impl Event for Evt {
         match self {
             Self::Close => EventType::Close,
             Self::Crash => EventType::Crash,
-            Self::Console => EventType::Console,
+            Self::Console(_) => EventType::Console,
             Self::Dialog => EventType::Dialog,
             Self::Download => EventType::Download,
             Self::FileChooser => EventType::FileChooser,

@@ -212,3 +212,10 @@ pub enum BrowserChannel {
     MsedgeDev,
     MsedgeCanary
 }
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub struct SourceLocation {
+    pub url: String,
+    pub line_number: i32,
+    pub column_number: i32
+}

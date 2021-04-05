@@ -11,8 +11,8 @@ pub use crate::{
 };
 use crate::{
     api::{
-        input_device::*, Accessibility, BrowserContext, ElementHandle, Frame, Keyboard, Response,
-        TouchScreen, Video, Worker
+        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, Frame,
+        Keyboard, Response, TouchScreen, Video, Worker
     },
     imp::{
         core::*,
@@ -159,7 +159,7 @@ impl Page {
 pub enum Event {
     Close,
     Crash,
-    Console,
+    Console(ConsoleMessage),
     Dialog,
     Download,
     FileChooser,
@@ -183,7 +183,7 @@ impl From<Evt> for Event {
         match e {
             Evt::Close => Event::Close,
             Evt::Crash => Event::Crash,
-            Evt::Console => Event::Console,
+            Evt::Console(x) => Event::Console(ConsoleMessage::new(x)),
             Evt::Dialog => Event::Dialog,
             Evt::Download => Event::Download,
             Evt::FileChooser => Event::FileChooser,
