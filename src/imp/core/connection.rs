@@ -71,7 +71,7 @@ pub(crate) type ArcResult<T> = Result<T, Arc<Error>>;
 
 impl Drop for Connection {
     fn drop(&mut self) {
-        self.notify_closed();
+        self.notify_closed(Error::ReceiverClosed);
         self.should_stop.store(true, Ordering::Relaxed);
     }
 }
@@ -109,10 +109,10 @@ impl Connection {
         let r2 = Arc::downgrade(&self.reader);
         let s2 = Arc::downgrade(&self.should_stop);
         std::thread::spawn(move || {
-            log::trace!("succcess starting connection");
             let c = c2;
             let r = r2;
             let s = s2;
+            log::trace!("succcess starting connection");
             let status = (|| -> Result<(), Error> {
                 loop {
                     let response = {
@@ -153,23 +153,23 @@ impl Connection {
                 }
                 Ok(())
             })();
-            if status.is_ok() {
-                log::trace!("Done");
-            } else {
-                log::trace!("Failed {:?}", status);
+            if let Err(e) = status {
+                log::trace!("Failed with {:?}", e);
                 if let Some(c) = c.upgrade() {
                     let mut ctx = c.lock().unwrap();
-                    ctx.notify_closed();
+                    ctx.notify_closed(e);
                 }
+            } else {
+                log::trace!("Done");
             }
         });
     }
 
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
 
-    fn notify_closed(&mut self) {
+    fn notify_closed(&mut self, e: Error) {
         let ctx = &mut self.ctx.lock().unwrap();
-        ctx.notify_closed();
+        ctx.notify_closed(e);
     }
 }
 
@@ -193,9 +193,10 @@ impl Context {
         am
     }
 
-    fn notify_closed(&mut self) {
+    fn notify_closed(&mut self, e: Error) {
+        let err = Arc::new(e);
         for p in self.callbacks.iter().map(|(_, v)| v) {
-            Context::respond_wait(p, Err(Arc::new(Error::ReceiverClosed)));
+            Context::respond_wait(p, Err(err.clone()));
         }
         self.objects = HashMap::new();
     }

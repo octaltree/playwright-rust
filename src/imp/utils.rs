@@ -214,6 +214,7 @@ pub enum BrowserChannel {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct SourceLocation {
     pub url: String,
     pub line_number: i32,
