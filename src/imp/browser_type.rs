@@ -148,6 +148,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     pub(crate) viewport: Option<Viewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_default_viewport: Option<bool>,
+    #[serde(rename = "ignoreHTTPSErrors")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) ignore_https_errors: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
