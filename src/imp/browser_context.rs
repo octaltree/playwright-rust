@@ -10,12 +10,12 @@ use crate::imp::{
 pub(crate) struct BrowserContext {
     channel: ChannelOwner,
     browser: Option<Weak<Browser>>,
-    var: Mutex<Variable>
+    var: Mutex<Variable>,
+    tx: Mutex<Option<broadcast::Sender<Evt>>>
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
-    tx: Option<broadcast::Sender<Evt>>,
     pages: Vec<Weak<Page>>,
     timeout: Option<u32>,
     navigation_timeout: Option<u32>
@@ -34,7 +34,8 @@ impl BrowserContext {
         Ok(Self {
             channel,
             browser,
-            var
+            var,
+            tx: Mutex::default()
         })
     }
 
@@ -269,9 +270,9 @@ pub(crate) enum Evt {
 impl EventEmitter for BrowserContext {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.var.lock().unwrap().tx.clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { self.var.lock().unwrap().tx = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

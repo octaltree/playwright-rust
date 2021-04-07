@@ -17,12 +17,12 @@ pub(crate) struct Page {
     channel: ChannelOwner,
     main_frame: Weak<Frame>,
     browser_context: Weak<BrowserContext>,
-    var: Mutex<Variable>
+    var: Mutex<Variable>,
+    tx: Mutex<Option<broadcast::Sender<Evt>>>
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
-    tx: Option<broadcast::Sender<Evt>>,
     viewport: Option<Viewport>,
     frames: Vec<Weak<Frame>>,
     timeout: Option<u32>,
@@ -97,7 +97,8 @@ impl Page {
             channel,
             main_frame,
             browser_context,
-            var
+            var,
+            tx: Mutex::default()
         })
     }
 
@@ -504,8 +505,8 @@ pub(crate) enum Evt {
 
 impl EventEmitter for Page {
     type Event = Evt;
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.var.lock().unwrap().tx.clone() }
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { self.var.lock().unwrap().tx = Some(tx); }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
