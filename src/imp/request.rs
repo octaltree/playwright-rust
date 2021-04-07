@@ -3,7 +3,7 @@ use crate::imp::{
     frame::Frame,
     prelude::*,
     response::Response,
-    utils::{Header, ResourceTiming}
+    utils::{Header, ResponseTiming}
 };
 
 #[derive(Debug)]
@@ -20,31 +20,12 @@ pub(crate) struct Request {
     var: Mutex<Variable>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct Variable {
     redirected_to: Option<Weak<Request>>,
     failure: Option<String>,
-    timing: ResourceTiming
-}
-
-impl Default for Variable {
-    fn default() -> Self {
-        Self {
-            redirected_to: None,
-            failure: None,
-            timing: ResourceTiming {
-                start_time: 0.,
-                domain_lookup_start: -1.,
-                domain_lookup_end: -1.,
-                connect_start: -1.,
-                secure_connection_start: -1.,
-                connect_end: -1.,
-                request_start: -1.,
-                response_start: -1.,
-                response_end: -1.
-            }
-        }
-    }
+    timing: Option<ResponseTiming>,
+    response_end: Option<f64>
 }
 
 impl Request {
@@ -82,7 +63,7 @@ impl Request {
         });
         if let Some(from) = arc.redirected_from.as_ref().and_then(|w| w.upgrade()) {
             let this = Arc::downgrade(&arc);
-            Self::set_redirected_to(&from, this);
+            from.set_redirected_to(this);
         }
         Ok(arc)
     }
@@ -123,7 +104,11 @@ impl Request {
 }
 
 impl Request {
-    pub(crate) fn timing(&self) -> ResourceTiming { self.var.lock().unwrap().timing.clone() }
+    pub(crate) fn timing(&self) -> Option<ResponseTiming> {
+        self.var.lock().unwrap().timing.clone()
+    }
+
+    pub(crate) fn response_end(&self) -> Option<f64> { self.var.lock().unwrap().response_end }
 
     pub(crate) fn failure(&self) -> Option<String> { self.var.lock().unwrap().failure.clone() }
 
@@ -131,19 +116,19 @@ impl Request {
         self.var.lock().unwrap().redirected_to.clone()
     }
 
-    fn set_redirected_to(from: &Self, to: Weak<Request>) {
-        let var = &mut from.var.lock().unwrap();
+    fn set_redirected_to(&self, to: Weak<Request>) {
+        let var = &mut self.var.lock().unwrap();
         var.redirected_to = Some(to);
     }
 
-    pub(crate) fn set_timing(&self, timing: ResourceTiming) {
+    pub(crate) fn set_response_timing(&self, timing: ResponseTiming) {
         let var = &mut self.var.lock().unwrap();
-        var.timing = timing;
+        var.timing = Some(timing);
     }
 
     pub(crate) fn set_response_end(&self, response_end: f64) {
         let var = &mut self.var.lock().unwrap();
-        var.timing.response_end = response_end;
+        var.response_end = Some(response_end);
     }
 
     pub(crate) fn set_failure(&self, failure: Option<String>) {
