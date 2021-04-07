@@ -221,6 +221,7 @@ pub struct SourceLocation {
     pub column_number: i32
 }
 
+/// Default isn't 0
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ResourceTiming {

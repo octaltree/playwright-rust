@@ -141,6 +141,11 @@ impl Request {
         var.timing = timing;
     }
 
+    pub(crate) fn set_response_end(&self, response_end: f64) {
+        let var = &mut self.var.lock().unwrap();
+        var.timing.response_end = response_end;
+    }
+
     pub(crate) fn set_failure(&self, failure: Option<String>) {
         let var = &mut self.var.lock().unwrap();
         var.failure = failure;

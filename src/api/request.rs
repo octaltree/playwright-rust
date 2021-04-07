@@ -1,6 +1,6 @@
 use crate::{
     api::{Frame, Response},
-    imp::{core::*, prelude::*, request::Request as Impl}
+    imp::{core::*, prelude::*, request::Request as Impl, utils::ResourceTiming}
 };
 
 pub struct Request {
@@ -60,4 +60,8 @@ impl Request {
     pub async fn response(&self) -> Result<Option<Response>, Arc<Error>> {
         Ok(upgrade(&self.inner)?.response().await?.map(Response::new))
     }
+
+    pub fn failure(&self) -> Result<Option<String>, Error> { Ok(upgrade(&self.inner)?.failure()) }
+
+    pub fn timing(&self) -> Result<ResourceTiming, Error> { Ok(upgrade(&self.inner)?.timing()) }
 }

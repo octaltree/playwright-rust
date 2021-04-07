@@ -391,6 +391,45 @@ impl Page {
         self.emit_event(Evt::FrameDetached(f));
         Ok(())
     }
+
+    fn on_request_failed(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct De {
+            request: OnlyGuid,
+            response_end_timing: f64,
+            failure_text: Option<String>
+        }
+        let De {
+            request: OnlyGuid { guid },
+            response_end_timing,
+            failure_text
+        } = serde_json::from_value(params.into())?;
+        let request = get_object!(ctx, &guid, Request)?;
+        let req = upgrade(&request)?;
+        req.set_failure(failure_text);
+        req.set_response_end(response_end_timing);
+        self.emit_event(Evt::RequestFailed(request));
+        Ok(())
+    }
+
+    fn on_request_finished(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct De {
+            request: OnlyGuid,
+            response_end_timing: f64
+        }
+        let De {
+            request: OnlyGuid { guid },
+            response_end_timing
+        } = serde_json::from_value(params.into())?;
+        let request = get_object!(ctx, &guid, Request)?;
+        let req = upgrade(&request)?;
+        req.set_response_end(response_end_timing);
+        self.emit_event(Evt::RequestFinished(request));
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -430,6 +469,8 @@ impl RemoteObject for Page {
                 let request = get_object!(ctx, &guid, Request)?;
                 self.emit_event(Evt::Request(request));
             }
+            "requestFailed" => self.on_request_failed(ctx, params)?,
+            "requestFinished" => self.on_request_finished(ctx, params)?,
             _ => {}
         }
         Ok(())
@@ -448,8 +489,8 @@ pub(crate) enum Evt {
     PageError,
     Request(Weak<Request>),
     Response,
-    RequestFailed,
-    RequestFinished,
+    RequestFailed(Weak<Request>),
+    RequestFinished(Weak<Request>),
     FrameAttached(Weak<Frame>),
     FrameDetached(Weak<Frame>),
     FrameNavigated(Weak<Frame>),
@@ -502,8 +543,8 @@ impl Event for Evt {
             Self::PageError => EventType::PageError,
             Self::Request(_) => EventType::Request,
             Self::Response => EventType::Response,
-            Self::RequestFailed => EventType::RequestFailed,
-            Self::RequestFinished => EventType::RequestFinished,
+            Self::RequestFailed(_) => EventType::RequestFailed,
+            Self::RequestFinished(_) => EventType::RequestFinished,
             Self::FrameAttached(_) => EventType::FrameAttached,
             Self::FrameDetached(_) => EventType::FrameDetached,
             Self::FrameNavigated(_) => EventType::FrameNavigated,
