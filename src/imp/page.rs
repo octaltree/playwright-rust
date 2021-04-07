@@ -471,6 +471,12 @@ impl RemoteObject for Page {
             }
             "requestFailed" => self.on_request_failed(ctx, params)?,
             "requestFinished" => self.on_request_finished(ctx, params)?,
+            "response" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let response = get_object!(ctx, &guid, Response)?;
+                self.emit_event(Evt::Response(response));
+            }
             _ => {}
         }
         Ok(())
@@ -488,7 +494,7 @@ pub(crate) enum Evt {
     DOMContentLoaded,
     PageError,
     Request(Weak<Request>),
-    Response,
+    Response(Weak<Response>),
     RequestFailed(Weak<Request>),
     RequestFinished(Weak<Request>),
     FrameAttached(Weak<Frame>),
@@ -542,7 +548,7 @@ impl Event for Evt {
             Self::DOMContentLoaded => EventType::DOMContentLoaded,
             Self::PageError => EventType::PageError,
             Self::Request(_) => EventType::Request,
-            Self::Response => EventType::Response,
+            Self::Response(_) => EventType::Response,
             Self::RequestFailed(_) => EventType::RequestFailed,
             Self::RequestFinished(_) => EventType::RequestFinished,
             Self::FrameAttached(_) => EventType::FrameAttached,
