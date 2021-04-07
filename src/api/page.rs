@@ -5,7 +5,7 @@ pub use crate::{
             GotoBuilder, HoverBuilder, PressBuilder, SelectOptionBuilder, SetContentBuilder,
             SetInputFilesBuilder, TapBuilder, TypeBuilder, UncheckBuilder, WaitForSelectorBuilder
         },
-        JsHandle
+        JsHandle, Request
     },
     imp::page::{EventType, Media}
 };
@@ -165,7 +165,7 @@ pub enum Event {
     FileChooser,
     DOMContentLoaded,
     PageError,
-    Request,
+    Request(Request),
     Response,
     RequestFailed,
     RequestFinished,
@@ -189,7 +189,7 @@ impl From<Evt> for Event {
             Evt::FileChooser => Event::FileChooser,
             Evt::DOMContentLoaded => Event::DOMContentLoaded,
             Evt::PageError => Event::PageError,
-            Evt::Request => Event::Request,
+            Evt::Request(x) => Event::Request(Request::new(x)),
             Evt::Response => Event::Response,
             Evt::RequestFailed => Event::RequestFailed,
             Evt::RequestFinished => Event::RequestFinished,

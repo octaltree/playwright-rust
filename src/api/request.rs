@@ -53,6 +53,10 @@ impl Request {
         Ok(upgrade(&self.inner)?.redirected_from().map(Request::new))
     }
 
+    pub async fn redirected_to(&self) -> Result<Option<Request>, Error> {
+        Ok(upgrade(&self.inner)?.redirected_to().map(Request::new))
+    }
+
     pub async fn response(&self) -> Result<Option<Response>, Arc<Error>> {
         Ok(upgrade(&self.inner)?.response().await?.map(Response::new))
     }

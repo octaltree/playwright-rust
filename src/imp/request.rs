@@ -1,4 +1,10 @@
-use crate::imp::{core::*, frame::Frame, prelude::*, response::Response, utils::Header};
+use crate::imp::{
+    core::*,
+    frame::Frame,
+    prelude::*,
+    response::Response,
+    utils::{Header, ResourceTiming}
+};
 
 #[derive(Debug)]
 pub(crate) struct Request {
@@ -10,11 +16,39 @@ pub(crate) struct Request {
     post_data: Option<String>,
     frame: Weak<Frame>,
     headers: HashMap<String, String>,
-    redirected_from: Option<Weak<Request>>
+    redirected_from: Option<Weak<Request>>,
+    var: Mutex<Variable>
+}
+
+#[derive(Debug)]
+pub(crate) struct Variable {
+    redirected_to: Option<Weak<Request>>,
+    failure: Option<String>,
+    timing: ResourceTiming
+}
+
+impl Default for Variable {
+    fn default() -> Self {
+        Self {
+            redirected_to: None,
+            failure: None,
+            timing: ResourceTiming {
+                start_time: 0.,
+                domain_lookup_start: -1.,
+                domain_lookup_end: -1.,
+                connect_start: -1.,
+                secure_connection_start: -1.,
+                connect_end: -1.,
+                request_start: -1.,
+                response_start: -1.,
+                response_end: -1.
+            }
+        }
+    }
 }
 
 impl Request {
-    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
+    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Arc<Self>, Error> {
         let Initializer {
             url,
             resource_type,
@@ -33,7 +67,8 @@ impl Request {
                 Some(Ok(x)) => Some(x),
                 Some(Err(e)) => return Err(e)
             };
-        Ok(Self {
+        let var = Mutex::new(Variable::default());
+        let arc = Arc::new(Self {
             channel,
             url,
             resource_type,
@@ -42,8 +77,14 @@ impl Request {
             post_data,
             frame,
             headers,
-            redirected_from
-        })
+            redirected_from,
+            var
+        });
+        if let Some(from) = arc.redirected_from.as_ref().and_then(|w| w.upgrade()) {
+            let this = Arc::downgrade(&arc);
+            Self::set_redirected_to(&from, this);
+        }
+        Ok(arc)
     }
 
     pub(crate) fn url(&self) -> &str { &self.url }
@@ -78,6 +119,31 @@ impl Request {
         };
         let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
         Ok(Some(r))
+    }
+}
+
+impl Request {
+    pub(crate) fn timing(&self) -> ResourceTiming { self.var.lock().unwrap().timing.clone() }
+
+    pub(crate) fn failure(&self) -> Option<String> { self.var.lock().unwrap().failure.clone() }
+
+    pub(crate) fn redirected_to(&self) -> Option<Weak<Request>> {
+        self.var.lock().unwrap().redirected_to.clone()
+    }
+
+    fn set_redirected_to(from: &Self, to: Weak<Request>) {
+        let var = &mut from.var.lock().unwrap();
+        var.redirected_to = Some(to);
+    }
+
+    pub(crate) fn set_timing(&self, timing: ResourceTiming) {
+        let var = &mut self.var.lock().unwrap();
+        var.timing = timing;
+    }
+
+    pub(crate) fn set_failure(&self, failure: Option<String>) {
+        let var = &mut self.var.lock().unwrap();
+        var.failure = failure;
     }
 }
 

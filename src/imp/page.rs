@@ -4,6 +4,7 @@ use crate::imp::{
     core::*,
     frame::Frame,
     prelude::*,
+    request::Request,
     response::Response,
     utils::{
         ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
@@ -423,6 +424,12 @@ impl RemoteObject for Page {
                 let console = get_object!(ctx, &guid, ConsoleMessage)?;
                 self.emit_event(Evt::Console(console));
             }
+            "request" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let request = get_object!(ctx, &guid, Request)?;
+                self.emit_event(Evt::Request(request));
+            }
             _ => {}
         }
         Ok(())
@@ -439,7 +446,7 @@ pub(crate) enum Evt {
     FileChooser,
     DOMContentLoaded,
     PageError,
-    Request,
+    Request(Weak<Request>),
     Response,
     RequestFailed,
     RequestFinished,
@@ -493,7 +500,7 @@ impl Event for Evt {
             Self::FileChooser => EventType::FileChooser,
             Self::DOMContentLoaded => EventType::DOMContentLoaded,
             Self::PageError => EventType::PageError,
-            Self::Request => EventType::Request,
+            Self::Request(_) => EventType::Request,
             Self::Response => EventType::Response,
             Self::RequestFailed => EventType::RequestFailed,
             Self::RequestFinished => EventType::RequestFinished,
