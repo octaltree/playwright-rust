@@ -84,6 +84,7 @@ impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> ContextBuilder<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     optional_setter!(
         proxy, ProxySettings;
         viewport, Viewport;
+        screen, Viewport;
         no_default_viewport, bool;
         ignore_https_errors, bool;
         js_enabled, bool;

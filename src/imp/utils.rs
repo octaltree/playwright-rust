@@ -220,3 +220,16 @@ pub struct SourceLocation {
     pub line_number: i32,
     pub column_number: i32
 }
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ResponseTiming {
+    pub start_time: f64,
+    pub domain_lookup_start: f64,
+    pub domain_lookup_end: f64,
+    pub connect_start: f64,
+    pub secure_connection_start: f64,
+    pub connect_end: f64,
+    pub request_start: f64,
+    pub response_start: f64
+}

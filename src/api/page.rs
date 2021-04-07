@@ -5,7 +5,7 @@ pub use crate::{
             GotoBuilder, HoverBuilder, PressBuilder, SelectOptionBuilder, SetContentBuilder,
             SetInputFilesBuilder, TapBuilder, TypeBuilder, UncheckBuilder, WaitForSelectorBuilder
         },
-        JsHandle
+        JsHandle, Request
     },
     imp::page::{EventType, Media}
 };
@@ -165,10 +165,10 @@ pub enum Event {
     FileChooser,
     DOMContentLoaded,
     PageError,
-    Request,
-    Response,
-    RequestFailed,
-    RequestFinished,
+    Request(Request),
+    Response(Response),
+    RequestFailed(Request),
+    RequestFinished(Request),
     FrameAttached(Frame),
     FrameDetached(Frame),
     FrameNavigated(Frame),
@@ -189,10 +189,10 @@ impl From<Evt> for Event {
             Evt::FileChooser => Event::FileChooser,
             Evt::DOMContentLoaded => Event::DOMContentLoaded,
             Evt::PageError => Event::PageError,
-            Evt::Request => Event::Request,
-            Evt::Response => Event::Response,
-            Evt::RequestFailed => Event::RequestFailed,
-            Evt::RequestFinished => Event::RequestFinished,
+            Evt::Request(x) => Event::Request(Request::new(x)),
+            Evt::Response(x) => Event::Response(Response::new(x)),
+            Evt::RequestFailed(x) => Event::RequestFailed(Request::new(x)),
+            Evt::RequestFinished(x) => Event::RequestFinished(Request::new(x)),
             Evt::FrameAttached(x) => Event::FrameAttached(Frame::new(x)),
             Evt::FrameDetached(x) => Event::FrameDetached(Frame::new(x)),
             Evt::FrameNavigated(x) => Event::FrameNavigated(Frame::new(x)),

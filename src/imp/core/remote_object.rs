@@ -292,7 +292,7 @@ mod remote_enum {
                 "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
                 "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(ctx, c)?)),
                 "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
-                "Request" => RemoteArc::Request(Arc::new(Request::try_new(ctx, c)?)),
+                "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
                 "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
                 "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(ctx, c)?)),
                 "Worker" => RemoteArc::Worker(Arc::new(Worker::new(c))),

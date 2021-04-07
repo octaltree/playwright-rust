@@ -12,11 +12,10 @@ use std::{collections::HashSet, iter::FromIterator};
 
 #[derive(Debug)]
 pub(crate) struct Frame {
-    tx: broadcast::Sender<Evt>,
-    rx: broadcast::Receiver<Evt>,
     channel: ChannelOwner,
     parent_frame: Option<Weak<Frame>>,
-    var: Mutex<Variable>
+    var: Mutex<Variable>,
+    tx: Mutex<Option<broadcast::Sender<Evt>>>
 }
 
 #[derive(Debug)]
@@ -69,13 +68,11 @@ impl Frame {
             child_frames: Vec::new(),
             load_states: HashSet::from_iter(load_states)
         });
-        let (tx, rx) = broadcast::channel(16);
         Ok(Self {
-            tx,
-            rx,
             channel,
             parent_frame,
-            var
+            var,
+            tx: Mutex::default()
         })
     }
 
@@ -554,7 +551,9 @@ pub(crate) enum Evt {
 impl EventEmitter for Frame {
     type Event = Evt;
 
-    fn tx(&self) -> &broadcast::Sender<Self::Event> { &self.tx }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

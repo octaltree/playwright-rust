@@ -1,4 +1,9 @@
-use crate::imp::{core::*, prelude::*, request::Request, utils::Header};
+use crate::imp::{
+    core::*,
+    prelude::*,
+    request::Request,
+    utils::{Header, ResponseTiming}
+};
 
 #[derive(Debug)]
 pub(crate) struct Response {
@@ -15,9 +20,11 @@ impl Response {
             url,
             status,
             status_text,
-            request
+            request,
+            timing
         } = serde_json::from_value(channel.initializer.clone())?;
         let request = get_object!(ctx, &request.guid, Request)?;
+        upgrade(&request)?.set_response_timing(timing);
         Ok(Self {
             channel,
             url,
@@ -72,5 +79,6 @@ struct Initializer {
     url: String,
     status: i32,
     status_text: String,
-    request: OnlyGuid
+    request: OnlyGuid,
+    timing: ResponseTiming
 }

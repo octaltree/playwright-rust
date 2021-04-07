@@ -1,6 +1,6 @@
 use crate::{
     api::{Frame, Response},
-    imp::{core::*, prelude::*, request::Request as Impl}
+    imp::{core::*, prelude::*, request::Request as Impl, utils::ResponseTiming}
 };
 
 pub struct Request {
@@ -53,7 +53,21 @@ impl Request {
         Ok(upgrade(&self.inner)?.redirected_from().map(Request::new))
     }
 
+    pub async fn redirected_to(&self) -> Result<Option<Request>, Error> {
+        Ok(upgrade(&self.inner)?.redirected_to().map(Request::new))
+    }
+
     pub async fn response(&self) -> Result<Option<Response>, Arc<Error>> {
         Ok(upgrade(&self.inner)?.response().await?.map(Response::new))
+    }
+
+    pub fn failure(&self) -> Result<Option<String>, Error> { Ok(upgrade(&self.inner)?.failure()) }
+
+    pub fn timing(&self) -> Result<Option<ResponseTiming>, Error> {
+        Ok(upgrade(&self.inner)?.timing())
+    }
+
+    pub fn response_end(&self) -> Result<Option<f64>, Error> {
+        Ok(upgrade(&self.inner)?.response_end())
     }
 }

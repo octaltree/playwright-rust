@@ -2,13 +2,32 @@ use crate::imp::{core::*, prelude::*};
 pub(crate) use tokio::sync::{broadcast, broadcast::error::TryRecvError};
 
 pub trait EventEmitter {
-    type Event;
+    type Event: Clone;
 
-    fn tx(&self) -> &broadcast::Sender<Self::Event>;
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>>;
 
-    fn subscribe_event(&self) -> broadcast::Receiver<Self::Event> { self.tx().subscribe() }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>);
 
-    fn emit_event<E: Into<Self::Event>>(&self, e: E) { self.tx().send(e.into()).ok(); }
+    fn new_tx(
+        &self
+    ) -> (
+        broadcast::Sender<Self::Event>,
+        broadcast::Receiver<Self::Event>
+    ) {
+        broadcast::channel(16)
+    }
+
+    fn subscribe_event(&self) -> broadcast::Receiver<Self::Event> {
+        if let Some(tx) = self.tx() {
+            tx.subscribe()
+        } else {
+            let (tx, rx) = self.new_tx();
+            self.set_tx(tx);
+            rx
+        }
+    }
+
+    fn emit_event<E: Into<Self::Event>>(&self, e: E) { self.tx().map(|tx| tx.send(e.into()).ok()); }
 }
 
 pub(crate) trait Event: Clone {
