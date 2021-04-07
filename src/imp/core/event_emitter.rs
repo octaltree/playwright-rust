@@ -14,7 +14,7 @@ pub trait EventEmitter {
         broadcast::Sender<Self::Event>,
         broadcast::Receiver<Self::Event>
     ) {
-        broadcast::channel(16)
+        broadcast::channel(64)
     }
 
     fn subscribe_event(&self) -> broadcast::Receiver<Self::Event> {
@@ -49,6 +49,7 @@ pub(crate) async fn expect_event<E: Event>(
         }
     }
     let sleep = sleep(Duration::from_millis(timeout as u64));
+    // TODO: Need spawning to prevent lagged?
     let event = async {
         loop {
             match rx.recv().await {
