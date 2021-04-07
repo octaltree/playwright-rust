@@ -14,8 +14,6 @@ use crate::imp::{
 
 #[derive(Debug)]
 pub(crate) struct Page {
-    tx: broadcast::Sender<Evt>,
-    rx: broadcast::Receiver<Evt>,
     channel: ChannelOwner,
     main_frame: Weak<Frame>,
     browser_context: Weak<BrowserContext>,
@@ -24,6 +22,7 @@ pub(crate) struct Page {
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
+    tx: Option<broadcast::Sender<Evt>>,
     viewport: Option<Viewport>,
     frames: Vec<Weak<Frame>>,
     timeout: Option<u32>,
@@ -94,10 +93,7 @@ impl Page {
             viewport,
             ..Variable::default()
         });
-        let (tx, rx) = broadcast::channel(16);
         Ok(Self {
-            tx,
-            rx,
             channel,
             main_frame,
             browser_context,
@@ -508,7 +504,8 @@ pub(crate) enum Evt {
 
 impl EventEmitter for Page {
     type Event = Evt;
-    fn tx(&self) -> &broadcast::Sender<Self::Event> { &self.tx }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.var.lock().unwrap().tx.clone() }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { self.var.lock().unwrap().tx = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
