@@ -120,6 +120,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         downloads, &'d Path;
         slowmo, f64;
         viewport, Viewport;
+        screen, Viewport;
         no_default_viewport, bool;
         ignore_https_errors, bool;
         js_enabled, bool;
