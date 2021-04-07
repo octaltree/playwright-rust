@@ -1,7 +1,13 @@
 all: format lint test doc
 
+dev:
+	cargo fmt
+	cargo clippy --all-targets
+	cargo test
+	cargo doc
+
 d:
-	cargo watch -c -s 'make all'
+	cargo watch -c -s 'make dev'
 
 format:
 	cargo fmt
