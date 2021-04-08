@@ -1,4 +1,5 @@
 use crate::imp::{core::*, prelude::*};
+use std::fmt;
 
 #[derive(Debug)]
 pub(crate) struct JsHandle {
@@ -61,9 +62,44 @@ impl JsHandle {
     }
 }
 
+impl JsHandle {
+    fn set_preview(&self, preview: String) {
+        let var = &mut self.var.lock().unwrap();
+        var.preview = preview;
+    }
+
+    fn on_preview_updated(&self, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Deserialize)]
+        struct De {
+            preview: String
+        }
+        let De { preview } = serde_json::from_value(params.into())?;
+        self.set_preview(preview);
+        Ok(())
+    }
+}
+
 impl RemoteObject for JsHandle {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+
+    fn handle_event(
+        &self,
+        _ctx: &Context,
+        method: Str<Method>,
+        params: Map<String, Value>
+    ) -> Result<(), Error> {
+        if method.as_str() == "previewUpdated" {
+            self.on_preview_updated(params)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for JsHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", &self.var.lock().unwrap().preview)
+    }
 }
 
 #[derive(Debug, Deserialize)]
