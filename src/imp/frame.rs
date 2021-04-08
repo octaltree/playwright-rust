@@ -488,12 +488,12 @@ impl Frame {
             name: String,
             url: String
         }
-        let New { name, url } = serde_json::from_value(params.into())?;
+        let New { name, url } = serde_json::from_value(params.clone().into())?;
         let var = &mut self.var.lock().unwrap();
         var.name = name;
         var.url = url;
-        // TODO: payload
-        self.emit_event(Evt::Navigated);
+        let payload: FrameNavigatedEvent = serde_json::from_value(params.into())?;
+        self.emit_event(Evt::Navigated(payload));
         if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
             let this = get_object!(ctx, &self.guid(), Frame)?;
             page.on_frame_navigated(this);
@@ -545,7 +545,7 @@ impl RemoteObject for Frame {
 #[derive(Debug, Clone)]
 pub(crate) enum Evt {
     LoadState(DocumentLoadState),
-    Navigated
+    Navigated(FrameNavigatedEvent)
 }
 
 impl EventEmitter for Frame {
@@ -568,7 +568,7 @@ impl Event for Evt {
     fn event_type(&self) -> Self::EventType {
         match self {
             Evt::LoadState(_) => EventType::LoadState,
-            Evt::Navigated => EventType::Navigated
+            Evt::Navigated(_) => EventType::Navigated
         }
     }
 }
@@ -939,6 +939,21 @@ struct Initializer {
     url: String,
     parent_frame: Option<OnlyGuid>,
     load_states: Vec<DocumentLoadState>
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FrameNavigatedEvent {
+    url: String,
+    name: String,
+    new_document: Option<Document>,
+    error: Option<String>
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Document {
+    request: Value
 }
 
 #[cfg(test)]
