@@ -1,4 +1,9 @@
-use crate::imp::{core::*, prelude::*, websocket::WebSocket as Impl};
+pub use crate::imp::websocket::Buffer;
+use crate::imp::{
+    core::*,
+    prelude::*,
+    websocket::{Evt, WebSocket as Impl}
+};
 
 pub struct WebSocket {
     inner: Weak<Impl>
@@ -15,7 +20,28 @@ impl PartialEq for WebSocket {
 }
 
 impl WebSocket {
-    fn new(&self, inner: Weak<Impl>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().to_owned()) }
+
+    pub fn is_closed(&self) -> Result<bool, Error> { Ok(upgrade(&self.inner)?.is_closed()) }
+}
+
+#[derive(Debug)]
+pub(crate) enum Event {
+    FrameSent(Buffer),
+    FrameReceived(Buffer),
+    Error,
+    Close
+}
+
+impl From<Evt> for Event {
+    fn from(e: Evt) -> Self {
+        match e {
+            Evt::FrameSent(x) => Self::FrameSent(x),
+            Evt::FrameReceived(x) => Self::FrameReceived(x),
+            Evt::Error => Self::Error,
+            Evt::Close => Self::Close
+        }
+    }
 }

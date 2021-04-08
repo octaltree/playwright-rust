@@ -1,4 +1,4 @@
-pub use crate::imp::frame::{FrameState, Polling};
+pub use crate::imp::frame::{FrameNavigatedEvent, FrameState, Polling};
 use crate::{
     api::{ElementHandle, JsHandle, Page, Response},
     imp::{
@@ -278,16 +278,17 @@ impl Frame {
     }
 }
 
+#[derive(Debug)]
 pub enum Event {
     LoadState(DocumentLoadState),
-    Navigated
+    Navigated(FrameNavigatedEvent)
 }
 
 impl From<Evt> for Event {
     fn from(e: Evt) -> Self {
         match e {
             Evt::LoadState(x) => Self::LoadState(x),
-            Evt::Navigated => Self::Navigated
+            Evt::Navigated(x) => Self::Navigated(x)
         }
     }
 }

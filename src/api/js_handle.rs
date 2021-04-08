@@ -1,4 +1,5 @@
 use crate::imp::{core::*, js_handle::JsHandle as Impl, prelude::*};
+use std::fmt;
 
 pub struct JsHandle {
     inner: Weak<Impl>
@@ -40,6 +41,16 @@ impl JsHandle {
         U: DeserializeOwned
     {
         upgrade(&self.inner)?.json_value().await
+    }
+}
+
+impl fmt::Display for JsHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(inner) = self.inner.upgrade() {
+            inner.fmt(f)
+        } else {
+            write!(f, "")
+        }
     }
 }
 

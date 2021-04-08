@@ -12,7 +12,7 @@ pub use crate::{
 use crate::{
     api::{
         input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, Frame,
-        Keyboard, Response, TouchScreen, Video, Worker
+        Keyboard, Response, TouchScreen, Video, WebSocket, Worker
     },
     imp::{
         core::*,
@@ -173,8 +173,8 @@ pub enum Event {
     FrameDetached(Frame),
     FrameNavigated(Frame),
     Load,
-    Popup,
-    WebSocket,
+    Popup(Page),
+    WebSocket(WebSocket),
     Worker
 }
 
@@ -197,8 +197,8 @@ impl From<Evt> for Event {
             Evt::FrameDetached(x) => Event::FrameDetached(Frame::new(x)),
             Evt::FrameNavigated(x) => Event::FrameNavigated(Frame::new(x)),
             Evt::Load => Event::Load,
-            Evt::Popup => Event::Popup,
-            Evt::WebSocket => Event::WebSocket,
+            Evt::Popup(x) => Event::Popup(Page::new(x)),
+            Evt::WebSocket(x) => Event::WebSocket(WebSocket::new(x)),
             Evt::Worker => Event::Worker
         }
     }

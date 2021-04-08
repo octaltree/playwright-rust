@@ -9,7 +9,8 @@ use crate::imp::{
     utils::{
         ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
         ScreenshotType, Viewport
-    }
+    },
+    websocket::WebSocket
 };
 
 #[derive(Debug)]
@@ -474,6 +475,18 @@ impl RemoteObject for Page {
                 let response = get_object!(ctx, &guid, Response)?;
                 self.emit_event(Evt::Response(response));
             }
+            "popup" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let page = get_object!(ctx, &guid, Page)?;
+                self.emit_event(Evt::Popup(page));
+            }
+            "websocket" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let websocket = get_object!(ctx, &guid, WebSocket)?;
+                self.emit_event(Evt::WebSocket(websocket));
+            }
             _ => {}
         }
         Ok(())
@@ -498,8 +511,8 @@ pub(crate) enum Evt {
     FrameDetached(Weak<Frame>),
     FrameNavigated(Weak<Frame>),
     Load,
-    Popup,
-    WebSocket,
+    Popup(Weak<Page>),
+    WebSocket(Weak<WebSocket>),
     Worker
 }
 
@@ -553,8 +566,8 @@ impl Event for Evt {
             Self::FrameDetached(_) => EventType::FrameDetached,
             Self::FrameNavigated(_) => EventType::FrameNavigated,
             Self::Load => EventType::Load,
-            Self::Popup => EventType::Popup,
-            Self::WebSocket => EventType::WebSocket,
+            Self::Popup(_) => EventType::Popup,
+            Self::WebSocket(_) => EventType::WebSocket,
             Self::Worker => EventType::Worker
         }
     }
