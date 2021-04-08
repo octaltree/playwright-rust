@@ -173,7 +173,7 @@ pub enum Event {
     FrameDetached(Frame),
     FrameNavigated(Frame),
     Load,
-    Popup,
+    Popup(Page),
     WebSocket,
     Worker
 }
@@ -197,7 +197,7 @@ impl From<Evt> for Event {
             Evt::FrameDetached(x) => Event::FrameDetached(Frame::new(x)),
             Evt::FrameNavigated(x) => Event::FrameNavigated(Frame::new(x)),
             Evt::Load => Event::Load,
-            Evt::Popup => Event::Popup,
+            Evt::Popup(x) => Event::Popup(Page::new(x)),
             Evt::WebSocket => Event::WebSocket,
             Evt::Worker => Event::Worker
         }
