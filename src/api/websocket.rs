@@ -1,3 +1,4 @@
+pub use crate::imp::websocket::Buffer;
 use crate::imp::{
     core::*,
     prelude::*,
@@ -28,8 +29,8 @@ impl WebSocket {
 
 #[derive(Debug)]
 pub(crate) enum Event {
-    FrameSent,
-    FrameReceived,
+    FrameSent(Buffer),
+    FrameReceived(Buffer),
     Error,
     Close
 }
@@ -37,8 +38,8 @@ pub(crate) enum Event {
 impl From<Evt> for Event {
     fn from(e: Evt) -> Self {
         match e {
-            Evt::FrameSent => Self::FrameSent,
-            Evt::FrameReceived => Self::FrameReceived,
+            Evt::FrameSent(x) => Self::FrameSent(x),
+            Evt::FrameReceived(x) => Self::FrameReceived(x),
             Evt::Error => Self::Error,
             Evt::Close => Self::Close
         }

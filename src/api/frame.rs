@@ -278,6 +278,7 @@ impl Frame {
     }
 }
 
+#[derive(Debug)]
 pub enum Event {
     LoadState(DocumentLoadState),
     Navigated(FrameNavigatedEvent)
