@@ -15,7 +15,7 @@ impl PartialEq for WebSocket {
 }
 
 impl WebSocket {
-    fn new(&self, inner: Weak<Impl>) -> Self { Self { inner } }
+    pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().to_owned()) }
 }

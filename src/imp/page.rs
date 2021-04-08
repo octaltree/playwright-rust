@@ -9,7 +9,8 @@ use crate::imp::{
     utils::{
         ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
         ScreenshotType, Viewport
-    }
+    },
+    websocket::WebSocket
 };
 
 #[derive(Debug)]
@@ -480,6 +481,12 @@ impl RemoteObject for Page {
                 let page = get_object!(ctx, &guid, Page)?;
                 self.emit_event(Evt::Popup(page));
             }
+            "websocket" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let websocket = get_object!(ctx, &guid, WebSocket)?;
+                self.emit_event(Evt::WebSocket(websocket));
+            }
             _ => {}
         }
         Ok(())
@@ -505,7 +512,7 @@ pub(crate) enum Evt {
     FrameNavigated(Weak<Frame>),
     Load,
     Popup(Weak<Page>),
-    WebSocket,
+    WebSocket(Weak<WebSocket>),
     Worker
 }
 
@@ -560,7 +567,7 @@ impl Event for Evt {
             Self::FrameNavigated(_) => EventType::FrameNavigated,
             Self::Load => EventType::Load,
             Self::Popup(_) => EventType::Popup,
-            Self::WebSocket => EventType::WebSocket,
+            Self::WebSocket(_) => EventType::WebSocket,
             Self::Worker => EventType::Worker
         }
     }
