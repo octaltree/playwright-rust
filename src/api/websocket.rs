@@ -31,7 +31,7 @@ impl WebSocket {
 pub(crate) enum Event {
     FrameSent(Buffer),
     FrameReceived(Buffer),
-    Error,
+    Error(Value),
     Close
 }
 
@@ -40,7 +40,7 @@ impl From<Evt> for Event {
         match e {
             Evt::FrameSent(x) => Self::FrameSent(x),
             Evt::FrameReceived(x) => Self::FrameReceived(x),
-            Evt::Error => Self::Error,
+            Evt::Error(x) => Self::Error(x),
             Evt::Close => Self::Close
         }
     }

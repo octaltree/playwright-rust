@@ -72,7 +72,10 @@ impl RemoteObject for WebSocket {
         match method.as_str() {
             "frameSent" => self.on_frame_sent(params)?,
             "frameReceived" => self.on_frame_received(params)?,
-            "error" => {}
+            "error" => {
+                let error: Value = params.get("error").cloned().unwrap_or_default();
+                self.emit_event(Evt::Error(error));
+            }
             "close" => {
                 self.var.lock().unwrap().is_closed = true;
                 self.emit_event(Evt::Close);
@@ -87,7 +90,7 @@ impl RemoteObject for WebSocket {
 pub(crate) enum Evt {
     FrameSent(Buffer),
     FrameReceived(Buffer),
-    Error,
+    Error(Value),
     Close
 }
 
@@ -120,7 +123,7 @@ impl Event for Evt {
         match self {
             Evt::FrameSent(_) => EventType::FrameSent,
             Evt::FrameReceived(_) => EventType::FrameReceived,
-            Evt::Error => EventType::Error,
+            Evt::Error(_) => EventType::Error,
             Evt::Close => EventType::Close
         }
     }
