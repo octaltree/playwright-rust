@@ -162,6 +162,8 @@ impl Page {
             .await
             .map(Event::from)
     }
+
+    subscribe_event! {}
 }
 
 pub enum Event {

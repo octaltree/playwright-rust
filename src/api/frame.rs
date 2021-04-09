@@ -276,6 +276,8 @@ impl Frame {
     pub fn wait_for_function_builder<'a>(&self, expression: &'a str) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), expression)
     }
+
+    subscribe_event! {}
 }
 
 #[derive(Debug)]

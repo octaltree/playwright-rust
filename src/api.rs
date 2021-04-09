@@ -22,6 +22,27 @@ macro_rules! optional_setter {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! subscribe_event {
+    () => {
+        // TODO: FusedStream + Sink
+        pub fn subscribe_event(
+            &self
+        ) -> Result<
+            impl futures::stream::Stream<
+                Item = Result<Event, tokio_stream::wrappers::errors::BroadcastStreamRecvError>
+            >,
+            Error
+        > {
+            use futures::stream::StreamExt;
+            use tokio_stream::wrappers::BroadcastStream;
+            let stream = BroadcastStream::new(upgrade(&self.inner)?.subscribe_event());
+            Ok(stream.map(|e| e.map(Event::from)))
+        }
+    };
+}
+
 pub mod playwright;
 
 pub mod accessibility;
