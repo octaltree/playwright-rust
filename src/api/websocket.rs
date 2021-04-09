@@ -25,10 +25,12 @@ impl WebSocket {
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().to_owned()) }
 
     pub fn is_closed(&self) -> Result<bool, Error> { Ok(upgrade(&self.inner)?.is_closed()) }
+
+    subscribe_event! {}
 }
 
 #[derive(Debug)]
-pub(crate) enum Event {
+pub enum Event {
     FrameSent(Buffer),
     FrameReceived(Buffer),
     Error(Value),

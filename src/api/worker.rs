@@ -57,10 +57,12 @@ impl Worker {
     {
         upgrade(&self.inner)?.evaluate(expression, arg).await
     }
+
+    subscribe_event! {}
 }
 
 #[derive(Debug)]
-pub(crate) enum Event {
+pub enum Event {
     Close
 }
 
