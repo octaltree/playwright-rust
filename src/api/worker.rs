@@ -1,7 +1,10 @@
-use crate::imp::{
-    core::*,
-    prelude::*,
-    worker::{Evt, Worker as Impl}
+use crate::{
+    api::JsHandle,
+    imp::{
+        core::*,
+        prelude::*,
+        worker::{Evt, Worker as Impl}
+    }
 };
 
 pub struct Worker {
@@ -21,9 +24,39 @@ impl PartialEq for Worker {
 impl Worker {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
-    // pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().to_owned()) }
+    pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().to_owned()) }
 
-    // pub fn is_closed(&self) -> Result<bool, Error> { Ok(upgrade(&self.inner)?.is_closed()) }
+    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
+        upgrade(&self.inner)?
+            .eval_handle(expression)
+            .await
+            .map(JsHandle::new)
+    }
+
+    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
+    where
+        T: Serialize
+    {
+        upgrade(&self.inner)?
+            .evaluate_handle(expression, arg)
+            .await
+            .map(JsHandle::new)
+    }
+
+    pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?.eval(expression).await
+    }
+
+    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        upgrade(&self.inner)?.evaluate(expression, arg).await
+    }
 }
 
 #[derive(Debug)]

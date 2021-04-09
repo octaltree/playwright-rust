@@ -1,8 +1,11 @@
-use crate::imp::{browser_context::BrowserContext, core::*, page::Page, prelude::*};
+use crate::imp::{
+    browser_context::BrowserContext, core::*, js_handle::JsHandle, page::Page, prelude::*
+};
 
 #[derive(Debug)]
 pub(crate) struct Worker {
     channel: ChannelOwner,
+    url: String,
     var: Mutex<Variable>,
     tx: Mutex<Option<broadcast::Sender<Evt>>>
 }
@@ -14,12 +17,65 @@ pub(crate) struct Variable {
 }
 
 impl Worker {
-    pub(crate) fn new(channel: ChannelOwner) -> Self {
-        Self {
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
+        let Initializer { url } = serde_json::from_value(channel.initializer.clone())?;
+        Ok(Self {
             channel,
+            url,
             var: Mutex::default(),
             tx: Mutex::default()
+        })
+    }
+
+    pub(crate) fn url(&self) -> &str { &self.url }
+
+    pub(crate) async fn eval<U>(&self, expression: &str) -> ArcResult<U>
+    where
+        U: DeserializeOwned
+    {
+        self.evaluate::<(), U>(expression, None).await
+    }
+
+    pub(crate) async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    where
+        T: Serialize,
+        U: DeserializeOwned
+    {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            expression: &'a str,
+            arg: Value
         }
+        let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
+        let args = Args { expression, arg };
+        let v = send_message!(self, "evaluateExpression", args);
+        let first = first(&v).ok_or(Error::ObjectNotFound)?;
+        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+    }
+
+    pub(crate) async fn eval_handle(&self, expression: &str) -> ArcResult<Weak<JsHandle>> {
+        self.evaluate_handle::<()>(expression, None).await
+    }
+
+    pub(crate) async fn evaluate_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<Weak<JsHandle>>
+    where
+        T: Serialize
+    {
+        #[derive(Serialize)]
+        struct Args<'a> {
+            expression: &'a str,
+            arg: Value
+        }
+        let arg = ser::to_value(&arg).map_err(Error::SerializationPwJson)?;
+        let args = Args { expression, arg };
+        let v = send_message!(self, "evaluateExpressionHandle", args);
+        let guid = only_guid(&v)?;
+        let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        Ok(h)
     }
 }
 
@@ -57,6 +113,12 @@ impl RemoteObject for Worker {
         }
         Ok(())
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Initializer {
+    url: String
 }
 
 #[derive(Debug, Clone)]
