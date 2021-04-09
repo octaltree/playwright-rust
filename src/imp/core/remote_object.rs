@@ -295,7 +295,7 @@ mod remote_enum {
                 "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
                 "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
                 "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(ctx, c)?)),
-                "Worker" => RemoteArc::Worker(Arc::new(Worker::new(c))),
+                "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
                 "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
                 "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
                 "ConsoleMessage" => {

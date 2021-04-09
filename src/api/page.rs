@@ -74,6 +74,14 @@ impl Page {
             .collect())
     }
 
+    pub fn workers(&self) -> Result<Vec<Worker>, Error> {
+        Ok(upgrade(&self.inner)?
+            .workers()
+            .into_iter()
+            .map(Worker::new)
+            .collect())
+    }
+
     pub fn reload_builder(&self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
     pub fn go_back_builder(&self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
     pub fn go_forward_builder(&self) -> GoForwardBuilder {
@@ -154,6 +162,8 @@ impl Page {
             .await
             .map(Event::from)
     }
+
+    subscribe_event! {}
 }
 
 pub enum Event {
@@ -175,7 +185,7 @@ pub enum Event {
     Load,
     Popup(Page),
     WebSocket(WebSocket),
-    Worker
+    Worker(Worker)
 }
 
 impl From<Evt> for Event {
@@ -199,7 +209,7 @@ impl From<Evt> for Event {
             Evt::Load => Event::Load,
             Evt::Popup(x) => Event::Popup(Page::new(x)),
             Evt::WebSocket(x) => Event::WebSocket(WebSocket::new(x)),
-            Evt::Worker => Event::Worker
+            Evt::Worker(x) => Event::Worker(Worker::new(x))
         }
     }
 }

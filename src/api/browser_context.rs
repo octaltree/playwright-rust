@@ -135,6 +135,8 @@ impl BrowserContext {
     }
 
     pub async fn pause(&self) -> ArcResult<()> { upgrade(&self.inner)?.pause().await }
+
+    subscribe_event! {}
 }
 
 pub enum Event {

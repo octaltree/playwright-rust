@@ -25,13 +25,15 @@ impl WebSocket {
     pub fn url(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.url().to_owned()) }
 
     pub fn is_closed(&self) -> Result<bool, Error> { Ok(upgrade(&self.inner)?.is_closed()) }
+
+    subscribe_event! {}
 }
 
 #[derive(Debug)]
-pub(crate) enum Event {
+pub enum Event {
     FrameSent(Buffer),
     FrameReceived(Buffer),
-    Error,
+    Error(Value),
     Close
 }
 
@@ -40,7 +42,7 @@ impl From<Evt> for Event {
         match e {
             Evt::FrameSent(x) => Self::FrameSent(x),
             Evt::FrameReceived(x) => Self::FrameReceived(x),
-            Evt::Error => Self::Error,
+            Evt::Error(x) => Self::Error(x),
             Evt::Close => Self::Close
         }
     }

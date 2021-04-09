@@ -171,18 +171,9 @@ impl BrowserContext {
 
     pub(super) fn push_page(&self, p: Weak<Page>) { self.var.lock().unwrap().pages.push(p); }
 
-    pub(super) fn remove_page(&self, p: &Weak<Page>) {
+    pub(super) fn remove_page(&self, page: &Weak<Page>) {
         let pages = &mut self.var.lock().unwrap().pages;
-        let i = match pages
-            .iter()
-            .zip(0usize..)
-            .find(|(v, _)| v.ptr_eq(p))
-            .map(|(_, i)| i)
-        {
-            None => return,
-            Some(i) => i
-        };
-        pages.remove(i);
+        pages.remove_one(|p| p.ptr_eq(page));
     }
 
     pub(crate) fn default_timeout(&self) -> u32 {
