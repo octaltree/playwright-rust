@@ -433,7 +433,7 @@ impl Page {
 
     fn push_worker(&self, worker: Weak<Worker>) { self.var.lock().unwrap().workers.push(worker); }
 
-    fn remove_worker(&self, worker: &Weak<Worker>) {
+    pub(crate) fn remove_worker(&self, worker: &Weak<Worker>) {
         let workers = &mut self.var.lock().unwrap().workers;
         workers.remove_one(|w| w.ptr_eq(&worker));
     }
