@@ -431,6 +431,8 @@ impl Page {
         Ok(())
     }
 
+    pub(crate) fn workers(&self) -> Vec<Weak<Worker>> { self.var.lock().unwrap().workers.clone() }
+
     fn push_worker(&self, worker: Weak<Worker>) { self.var.lock().unwrap().workers.push(worker); }
 
     pub(crate) fn remove_worker(&self, worker: &Weak<Worker>) {
@@ -439,6 +441,7 @@ impl Page {
     }
 
     fn on_worker(&self, ctx: &Context, worker: Weak<Worker>) -> Result<(), Error> {
+        self.push_worker(worker.clone());
         let this = get_object!(ctx, &self.guid(), Page)?;
         upgrade(&worker)?.set_page(this);
         self.emit_event(Evt::Worker(worker));

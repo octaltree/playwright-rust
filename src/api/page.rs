@@ -74,6 +74,14 @@ impl Page {
             .collect())
     }
 
+    pub fn workers(&self) -> Result<Vec<Worker>, Error> {
+        Ok(upgrade(&self.inner)?
+            .workers()
+            .into_iter()
+            .map(Worker::new)
+            .collect())
+    }
+
     pub fn reload_builder(&self) -> ReloadBuilder { ReloadBuilder::new(self.inner.clone()) }
     pub fn go_back_builder(&self) -> GoBackBuilder { GoBackBuilder::new(self.inner.clone()) }
     pub fn go_forward_builder(&self) -> GoForwardBuilder {
