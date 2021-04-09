@@ -27,6 +27,25 @@ pub(crate) mod prelude {
     pub use tokio::{task::spawn, time::sleep};
     #[cfg(feature = "rt-tokio")]
     pub use tokio::{task::spawn, time::sleep};
+
+    pub(crate) trait RemoveOne<T> {
+        fn remove_one<F>(&mut self, f: F)
+        where
+            F: Fn(&T) -> bool;
+    }
+
+    impl<T> RemoveOne<T> for Vec<T> {
+        fn remove_one<F>(&mut self, f: F)
+        where
+            F: Fn(&T) -> bool
+        {
+            let index = match self.iter().position(f) {
+                Some(i) => i,
+                None => return
+            };
+            self.remove(index);
+        }
+    }
 }
 
 #[macro_use]

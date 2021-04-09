@@ -57,16 +57,7 @@ impl Browser {
 
     pub(super) fn remove_context(&self, c: &Weak<BrowserContext>) {
         let contexts = &mut self.var.lock().unwrap().contexts;
-        let i = match contexts
-            .iter()
-            .zip(0usize..)
-            .find(|(v, _)| v.ptr_eq(c))
-            .map(|(_, i)| i)
-        {
-            None => return,
-            Some(i) => i
-        };
-        contexts.remove(i);
+        contexts.remove_one(|v| v.ptr_eq(c));
     }
 
     pub(crate) async fn new_context(

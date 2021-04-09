@@ -175,7 +175,7 @@ pub enum Event {
     Load,
     Popup(Page),
     WebSocket(WebSocket),
-    Worker
+    Worker(Worker)
 }
 
 impl From<Evt> for Event {
@@ -199,7 +199,7 @@ impl From<Evt> for Event {
             Evt::Load => Event::Load,
             Evt::Popup(x) => Event::Popup(Page::new(x)),
             Evt::WebSocket(x) => Event::WebSocket(WebSocket::new(x)),
-            Evt::Worker => Event::Worker
+            Evt::Worker(x) => Event::Worker(Worker::new(x))
         }
     }
 }

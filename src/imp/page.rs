@@ -10,7 +10,8 @@ use crate::imp::{
         ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
         ScreenshotType, Viewport
     },
-    websocket::WebSocket
+    websocket::WebSocket,
+    worker::Worker
 };
 
 #[derive(Debug)]
@@ -27,7 +28,8 @@ pub(crate) struct Variable {
     viewport: Option<Viewport>,
     frames: Vec<Weak<Frame>>,
     timeout: Option<u32>,
-    navigation_timeout: Option<u32>
+    navigation_timeout: Option<u32>,
+    workers: Vec<Weak<Worker>>
 }
 
 #[derive(Debug)]
@@ -428,6 +430,20 @@ impl Page {
         self.emit_event(Evt::RequestFinished(request));
         Ok(())
     }
+
+    fn push_worker(&self, worker: Weak<Worker>) { self.var.lock().unwrap().workers.push(worker); }
+
+    fn remove_worker(&self, worker: &Weak<Worker>) {
+        let workers = &mut self.var.lock().unwrap().workers;
+        workers.remove_one(|w| w.ptr_eq(&worker));
+    }
+
+    fn on_worker(&self, ctx: &Context, worker: Weak<Worker>) -> Result<(), Error> {
+        let this = get_object!(ctx, &self.guid(), Page)?;
+        upgrade(&worker)?.set_page(this);
+        self.emit_event(Evt::Worker(worker));
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -487,6 +503,12 @@ impl RemoteObject for Page {
                 let websocket = get_object!(ctx, &guid, WebSocket)?;
                 self.emit_event(Evt::WebSocket(websocket));
             }
+            "worker" => {
+                let first = first_object(&params).ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
+                let worker = get_object!(ctx, &guid, Worker)?;
+                self.on_worker(ctx, worker)?;
+            }
             _ => {}
         }
         Ok(())
@@ -513,7 +535,7 @@ pub(crate) enum Evt {
     Load,
     Popup(Weak<Page>),
     WebSocket(Weak<WebSocket>),
-    Worker
+    Worker(Weak<Worker>)
 }
 
 impl EventEmitter for Page {
@@ -568,7 +590,7 @@ impl Event for Evt {
             Self::Load => EventType::Load,
             Self::Popup(_) => EventType::Popup,
             Self::WebSocket(_) => EventType::WebSocket,
-            Self::Worker => EventType::Worker
+            Self::Worker(_) => EventType::Worker
         }
     }
 }
