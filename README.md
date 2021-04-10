@@ -48,6 +48,7 @@ Playwright is designed as a server-client. All playwright client dependent on th
 Application uses this library will be bundled the driver into rust binary at build time. There is an overhead of unzipping on the first run.
 
 ### NOTICE
+```
 playwright-rust redistributes Playwright licensed under the Apache 2.0.
 Playwright has NOTICE:
 """
@@ -57,6 +58,7 @@ Copyright (c) Microsoft Corporation
 This software contains code derived from the Puppeteer project (https://github.com/puppeteer/puppeteer),
 available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/blob/master/LICENSE).
 """
+```
 
 ## Browser automation in rust
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
