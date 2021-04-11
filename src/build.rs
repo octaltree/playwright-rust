@@ -18,8 +18,20 @@ fn main() {
 
 #[cfg(not(feature = "only-for-docs-rs"))]
 fn download(url: &str, dest: &Path) {
+    let cache_dir: &Path = "/tmp/build-playwright-rust".as_ref();
+    let cached = cache_dir.join("driver.zip");
+    if cached.is_file() {
+        fs::copy(cached, dest).unwrap();
+        return;
+    }
     let mut resp = reqwest::blocking::get(url).unwrap();
     let mut dest = File::create(dest).unwrap();
+    if cfg!(debug_assertions) {
+        fs::create_dir_all(cache_dir).ok();
+        File::create(cached)
+            .ok()
+            .and_then(|mut cached| resp.copy_to(&mut cached).ok());
+    }
     resp.copy_to(&mut dest).unwrap();
 }
 

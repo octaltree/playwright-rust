@@ -8,6 +8,7 @@ use crate::{
     }
 };
 
+#[derive(Debug)]
 pub struct Accessibility {
     inner: Weak<PageImpl>
 }

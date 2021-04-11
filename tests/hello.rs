@@ -1,7 +1,6 @@
 use playwright::Playwright;
 
 playwright::runtime_test!(hello, {
-    env_logger::builder().is_test(true).try_init().ok();
     main().await.unwrap();
 });
 
