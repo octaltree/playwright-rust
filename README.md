@@ -77,4 +77,4 @@ available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/b
 - [YusukeIwaki/playwright-ruby-client](https://github.com/YusukeIwaki/playwright-ruby-client)
 - [teodesian/playwright-perl](https://github.com/teodesian/playwright-perl)
 - [luka-dev/playwright-php](https://github.com/luka-dev/playwright-php)
-- [https://github.com/naqvis/playwright-cr](https://github.com/naqvis/playwright-cr)
+- [naqvis/playwright-cr](https://github.com/naqvis/playwright-cr)
