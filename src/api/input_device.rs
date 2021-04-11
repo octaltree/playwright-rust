@@ -5,14 +5,17 @@ use crate::imp::{
     utils::MouseButton
 };
 
+#[derive(Debug)]
 pub struct Keyboard {
     inner: Weak<PageImpl>
 }
 
+#[derive(Debug)]
 pub struct Mouse {
     inner: Weak<PageImpl>
 }
 
+#[derive(Debug)]
 pub struct TouchScreen {
     inner: Weak<PageImpl>
 }

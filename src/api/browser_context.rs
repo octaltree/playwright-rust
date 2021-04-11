@@ -139,6 +139,7 @@ impl BrowserContext {
     subscribe_event! {}
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Event {
     Close,
     Page(Page)

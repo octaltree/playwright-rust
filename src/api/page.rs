@@ -27,6 +27,7 @@ use crate::{
     Error
 };
 
+#[derive(Debug)]
 pub struct Page {
     inner: Weak<Impl>,
     pub keyboard: Keyboard,
