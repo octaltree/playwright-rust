@@ -1,3 +1,4 @@
+mod browser;
 mod browser_type;
 
 use playwright::Playwright;
@@ -23,7 +24,8 @@ async fn all(which: Which) {
         Which::Chromium => playwright.chromium()
     };
     install_browser(&playwright, which);
-    browser_type::all(browser_type, which).await;
+    let browser = browser_type::all(browser_type, which).await;
+    browser::all(browser, which).await;
 }
 
 fn install_browser(p: &Playwright, which: Which) {
