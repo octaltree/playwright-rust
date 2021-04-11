@@ -1,4 +1,5 @@
 mod browser;
+mod browser_context;
 mod browser_type;
 
 use playwright::Playwright;
@@ -25,7 +26,8 @@ async fn all(which: Which) {
     };
     install_browser(&playwright, which);
     let browser = browser_type::all(browser_type, which).await;
-    browser::all(browser, which).await;
+    let browser_context = browser::all(browser, which).await;
+    let _page = browser_context::all(browser_context, which).await;
 }
 
 fn install_browser(p: &Playwright, which: Which) {
