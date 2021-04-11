@@ -1,6 +1,6 @@
 # 🎭 [Playwright](https://playwright.dev) for Rust
 
-[![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/playwright) [![docs.rs](https://docs.rs/playwright/badge.svg)](https://docs.rs/playwright/) ![MIT](https://img.shields.io/crates/l/playwright) ![](https://github.com/octaltree/playwright-rust/workflows/Test/badge.svg)
+[![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/playwright) [![docs.rs](https://docs.rs/playwright/badge.svg)](https://docs.rs/playwright/) ![MIT OR Apache-2.0](https://img.shields.io/crates/l/playwright) ![](https://github.com/octaltree/playwright-rust/workflows/Test/badge.svg)
 
 Playwright is a rust library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) built on top of Node.js library.
 
@@ -77,3 +77,4 @@ available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/b
 - [YusukeIwaki/playwright-ruby-client](https://github.com/YusukeIwaki/playwright-ruby-client)
 - [teodesian/playwright-perl](https://github.com/teodesian/playwright-perl)
 - [luka-dev/playwright-php](https://github.com/luka-dev/playwright-php)
+- [https://github.com/naqvis/playwright-cr](https://github.com/naqvis/playwright-cr)
