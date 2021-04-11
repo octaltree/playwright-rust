@@ -13,7 +13,7 @@ playwright::runtime_test!(chromium, all(Which::Chromium).await);
 
 playwright::runtime_test!(firefox, all(Which::Firefox).await);
 
-playwright::runtime_test!(webkit, all(Which::Webkit).await);
+// playwright::runtime_test!(webkit, all(Which::Webkit).await);
 
 async fn all(which: Which) {
     let playwright = playwright_with_driver().await;
@@ -22,7 +22,17 @@ async fn all(which: Which) {
         Which::Firefox => playwright.firefox(),
         Which::Chromium => playwright.chromium()
     };
+    install_browser(&playwright, which);
     browser_type::all(browser_type, which).await;
+}
+
+fn install_browser(p: &Playwright, which: Which) {
+    match which {
+        Which::Webkit => p.install_webkit(),
+        Which::Firefox => p.install_firefox(),
+        Which::Chromium => p.install_chromium()
+    }
+    .unwrap();
 }
 
 async fn playwright_with_driver() -> Playwright {

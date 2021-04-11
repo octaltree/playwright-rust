@@ -5,7 +5,8 @@ pub async fn all(t: BrowserType, which: Which) -> Browser {
     name_should_work(&t, which);
     executable_should_exist(&t);
     should_handle_timeout(&t).await;
-    // should_fire_close(&t).await;
+    should_fire_close(&t).await;
+    should_be_callable_twice(&t).await;
     t.launcher().launch().await.unwrap()
 }
 
@@ -42,7 +43,15 @@ async fn should_fire_close(t: &BrowserType) {
     use playwright::api::browser_context::{Event, EventType};
     let browser = t.launcher().launch().await.unwrap();
     let context = browser.context_builder().build().await.unwrap();
-    let wait = context.expect_event(EventType::Close);
-    browser.close().await.unwrap();
-    assert_eq!(wait.await.unwrap(), Event::Close);
+    let (wait, close) = tokio::join!(context.expect_event(EventType::Close), browser.close());
+    close.unwrap();
+    assert_eq!(wait.unwrap(), Event::Close);
+}
+
+// 'should be callable twice'
+async fn should_be_callable_twice(t: &BrowserType) {
+    let browser = t.launcher().launch().await.unwrap();
+    let (fst, snd) = tokio::join!(browser.close(), browser.close());
+    fst.unwrap();
+    snd.unwrap();
 }
