@@ -8,18 +8,27 @@ use serde_json::Value;
 
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
-    let mut all_types = Vec::new();
-    for i in api.0 {
-        for m in i.members {
-            all_types.push(m.r#type.clone());
-            for a in m.args {
-                all_types.push(a.r#type.clone());
-            }
+    let t = api.into_token_stream();
+    println!("{}", t);
+}
+
+fn escape(s: String) -> String {
+    match s.as_str() {
+        // keywords https://doc.rust-lang.org/book/appendix-01-keywords.html
+        "as" | "async" | "await" | "break" | "const" | "continue" | "crate" | "dyn" | "else"
+        | "enum" | "extern" | "false" | "fn" | "for" | "if" | "impl" | "in" | "let" | "loop"
+        | "match" | "mod" | "move" | "mut" | "pub" | "ref" | "return" | "Self" | "self"
+        | "static" | "struct" | "super" | "trait" | "true" | "type" | "union" | "unsafe"
+        | "use" | "where" | "while" => {
+            format!("r#{}", s)
         }
+        // reserved
+        "abstract" | "become" | "box" | "do" | "final" | "macro" | "override" | "priv" | "try"
+        | "typeof" | "unsized" | "virtual" | "yield" => {
+            format!("r#{}", s)
+        }
+        _ => s
     }
-    println!("{}", serde_json::to_string(&all_types).unwrap());
-    // let t = api.into_token_stream();
-    // println!("{}", t);
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,7 +51,7 @@ struct Member {
     name: String,
     // langs
     // alias
-    r#type: Value,
+    r#type: Type,
     // spec
     #[serde(default)]
     comment: String,
@@ -100,7 +109,7 @@ struct Arg {
     kind: ArgKind,
     // langs
     // alias
-    r#type: Value,
+    r#type: Type,
     // spec
     comment: String,
     required: bool,
@@ -142,7 +151,12 @@ impl Interface {
         }
     }
 
-    fn name(&self) -> Ident { format_ident!("{}", &self.name) }
+    fn name(&self) -> Ident {
+        if self.name == "JSHandle" {
+            return format_ident!("JsHandle");
+        }
+        format_ident!("{}", &self.name)
+    }
 
     fn extends(&self) -> Option<TokenStream> {
         self.extends.as_ref().map(|e| {
@@ -166,7 +180,17 @@ impl Interface {
     }
 
     fn methods(&self) -> TokenStream {
-        quote! {}
+        let ms = self
+            .members
+            .iter()
+            .filter(|m| m.kind == Kind::Method)
+            .map(|m| Method {
+                name: &self.name,
+                body: m
+            });
+        quote! {
+            #(#ms)*
+        }
     }
 
     fn events(&self) -> TokenStream {
@@ -192,17 +216,34 @@ impl ToTokens for Event<'_, '_> {
 }
 
 impl ToTokens for Method<'_, '_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) { todo!() }
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let name = self.name();
+        let comment = &self.body.comment;
+        let ty = &self.body.r#type;
+        let err = if self.body.is_async {
+            quote! {Arc<Error>}
+        } else {
+            quote! {Error}
+        };
+        tokens.extend(quote! {
+            //TODO:#[doc = #comment]
+            pub fn #name() -> Result<#ty, #err> {}
+        });
+    }
+}
+
+impl Method<'_, '_> {
+    fn name(&self) -> Ident { format_ident!("{}", escape(self.body.name.to_case(Case::Snake))) }
 }
 
 impl ToTokens for Property<'_, '_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let name = self.name();
         let comment = &self.body.comment;
-        // let ty = &self.body.r#type;
+        let ty = &self.body.r#type;
         tokens.extend(quote! {
             //TODO:#[doc = #comment]
-            pub fn #name() {}
+            pub fn #name() -> #ty {}
         });
     }
 }
@@ -211,29 +252,81 @@ impl Property<'_, '_> {
     fn name(&self) -> Ident { format_ident!("{}", &self.body.name.to_case(Case::Snake)) }
 }
 
-// impl ToTokens for Type {
-//    fn to_tokens(&self, tokens: &mut TokenStream) {
-//        match self.name.as_str() {
-//            "" => {
-//                // unimplemented!()
-//                tokens.extend(quote! {
-//                    ()
-//                });
-//                return;
-//            }
-//            "Object" => {
-//                tokens.extend(quote! {
-//                    Value
-//                });
-//                return;
-//            }
-//            n => {
-//                let name = format_ident!("{}", n);
-//                tokens.extend(quote! {
-//                    #name
-//                });
-//                return;
-//            }
-//        }
-//    }
-//}
+impl ToTokens for Type {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        if !self.properties.is_null() {
+            tokens.extend(quote! {
+                NotImplementedYet
+            });
+            return;
+        }
+        if !self.return_type.is_null() {
+            tokens.extend(quote! {
+                NotImplementedYet
+            });
+            return;
+        }
+        if !self.templates.is_null() {
+            tokens.extend(quote! {
+                NotImplementedYet
+            });
+            return;
+        }
+        if !self.union.is_null() {
+            tokens.extend(quote! {
+                NotImplementedYet
+            });
+            return;
+        }
+        match self.name.as_str() {
+            "" => {
+                unreachable!()
+            }
+            "Object" => {
+                self.object(tokens);
+                return;
+            }
+            "void" => {
+                tokens.extend(quote! { () });
+                return;
+            }
+            "string" => {
+                tokens.extend(quote! { String });
+                return;
+            }
+            "boolean" => {
+                tokens.extend(quote! { bool });
+                return;
+            }
+            "JSHandle" => {
+                tokens.extend(quote! { JsHandle });
+                return;
+            }
+            "int" => {
+                tokens.extend(quote! { i64 });
+                return;
+            }
+            // any
+            // Any
+            n => {
+                let name = if n == "System.Net.HttpStatusCode" {
+                    format_ident!("i32")
+                } else {
+                    format_ident!("{}", n)
+                };
+                tokens.extend(quote! {
+                    #name
+                });
+                return;
+            }
+        }
+    }
+}
+
+impl Type {
+    fn object(&self, tokens: &mut TokenStream) {
+        tokens.extend(quote! {
+            Object
+        });
+    }
+}
