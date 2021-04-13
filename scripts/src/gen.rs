@@ -1,9 +1,14 @@
 #[macro_use]
 extern crate serde;
 
+use proc_macro2::TokenStream;
+use quote::{ToTokens, TokenStreamExt};
+use std::fmt;
+
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
-    println!("{:?}", api);
+    let t = api.into_token_stream();
+    println!("{}", t);
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,7 +63,15 @@ struct Type {
     // 10 ('property', dict_keys(['name', 'expression']))
     //  1 ('property', dict_keys(['name', 'properties', 'expression']))
     //  1 ('property', dict_keys(['name', 'union', 'expression']))
-    name: String
+    name: String,
+    #[serde(default)]
+    expression: Option<String>,
+    #[serde(default)]
+    properties: serde_json::Value,
+    #[serde(default)]
+    templates: serde_json::Value,
+    #[serde(default)]
+    union: serde_json::Value
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +98,7 @@ enum ArgKind {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ArgType {
     //  9 dict_keys(['name', 'args', 'returnType', 'expression'])
     // 220 dict_keys(['name', 'expression'])
@@ -92,5 +106,23 @@ struct ArgType {
     // 150 dict_keys(['name', 'properties'])
     //  9 dict_keys(['name', 'templates', 'expression'])
     // 54 dict_keys(['name', 'union', 'expression'])
-    name: String
+    name: String,
+    #[serde(default)]
+    return_type: serde_json::Value,
+    #[serde(default)]
+    expression: Option<String>,
+    #[serde(default)]
+    properties: serde_json::Value,
+    #[serde(default)]
+    templates: serde_json::Value,
+    #[serde(default)]
+    union: serde_json::Value
+}
+
+impl ToTokens for Api {
+    fn to_tokens(&self, tokens: &mut TokenStream) { tokens.append_all(&self.0); }
+}
+
+impl ToTokens for Interface {
+    fn to_tokens(&self, tokens: &mut TokenStream) { tokens.extend(quote::quote! {}); }
 }

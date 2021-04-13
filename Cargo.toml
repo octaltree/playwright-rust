@@ -46,11 +46,3 @@ only-for-docs-rs = []
 
 [package.metadata.docs.rs]
 features = ["only-for-docs-rs"]
-
-[[bin]]
-name = "playwright"
-path = "src/main.rs"
-
-[[bin]]
-name = "gen"
-path = "src/gen.rs"
