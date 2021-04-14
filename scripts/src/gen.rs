@@ -127,7 +127,6 @@ enum ArgKind {
 impl ToTokens for Api {
     fn to_tokens(&self, tokens: &mut TokenStream) { tokens.append_all(&self.0); }
 }
-// TODO:EventEmitter, Timeout
 
 impl ToTokens for Interface {
     fn to_tokens(&self, tokens: &mut TokenStream) { tokens.extend(self.body()); }
@@ -136,13 +135,17 @@ impl ToTokens for Interface {
 impl Interface {
     fn body(&self) -> TokenStream {
         let name = self.name();
-        let extends = self.extends();
+        let extends = self.extends.as_deref().map(|e| {
+            let e = format!("Extends {}", e);
+            quote! { #[doc=#e] }
+        });
         let comment = &self.comment;
         let methods = self.methods();
         let properties = self.properties();
         let events = self.events();
         quote! {
             //TODO:#[doc = #comment]
+            #extends
             impl #name {
                 #properties
                 #methods
@@ -253,21 +256,12 @@ impl ToTokens for Method<'_, '_> {
         } else {
             quote! {Error}
         };
-        let num_not_required = self.body.args.iter().filter(|a| !a.required).count();
         let required = self
             .body
             .args
             .iter()
             .filter(|a| a.required)
             .map(|a| a.with_colon());
-        let opts = self.body.args.iter().filter(|a| !a.required).map(|a| {
-            if a.name == "options" {
-                let xs = a.r#type.properties.iter().map(|a| a.with_colon_option());
-                quote! { #(#xs),* }
-            } else {
-                a.with_colon_option()
-            }
-        });
         let opts = self
             .body
             .args
@@ -284,10 +278,9 @@ impl ToTokens for Method<'_, '_> {
                 quote! { #[doc = "options"] #(#xs),* }
             });
         let all = required.chain(opts).chain(options);
-        // TODO: flatten "options"
         tokens.extend(quote! {
             //TODO:#[doc = #comment]
-            pub fn #name(&self, #(#all),*) -> Result<Builder, #err> { todo!() }
+            pub fn #name(&self, #(#all),*) -> Result<#ty, #err> { todo!() }
         });
     }
 }
@@ -340,7 +333,6 @@ impl ToTokens for Type {
                 let t = self.r#enum();
                 tokens.extend(optional.map(|_| quote! { Option<#t> }).unwrap_or(t));
             } else {
-                let t = self.r#enum();
                 let name = format_ident!("{}", self.name);
                 let name = quote! { #name };
                 tokens.extend(optional.map(|_| quote! { Option<#name> }).unwrap_or(name));
