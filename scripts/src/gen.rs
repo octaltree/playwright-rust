@@ -260,17 +260,34 @@ impl ToTokens for Method<'_, '_> {
             .iter()
             .filter(|a| a.required)
             .map(|a| a.with_colon());
+        let opts = self.body.args.iter().filter(|a| !a.required).map(|a| {
+            if a.name == "options" {
+                let xs = a.r#type.properties.iter().map(|a| a.with_colon_option());
+                quote! { #(#xs),* }
+            } else {
+                a.with_colon_option()
+            }
+        });
         let opts = self
             .body
             .args
             .iter()
-            .filter(|a| !a.required)
+            .filter(|a| !a.required && a.name != "options")
             .map(|a| a.with_colon_option());
-        let all = required.chain(opts);
+        let options = self
+            .body
+            .args
+            .iter()
+            .filter(|a| !a.required && a.name == "options")
+            .map(|a| {
+                let xs = a.r#type.properties.iter().map(|a| a.with_colon_option());
+                quote! { #[doc = "options"] #(#xs),* }
+            });
+        let all = required.chain(opts).chain(options);
         // TODO: flatten "options"
         tokens.extend(quote! {
             //TODO:#[doc = #comment]
-            pub fn #name(&self, #(#all),*) -> Result<Builder, #err> {}
+            pub fn #name(&self, #(#all),*) -> Result<Builder, #err> { todo!() }
         });
     }
 }
@@ -366,6 +383,8 @@ impl ToTokens for Type {
             n => {
                 let name = if n == "System.Net.HttpStatusCode" {
                     format_ident!("u16")
+                } else if n == r#""gone""# {
+                    format_ident!("Gone")
                 } else {
                     format_ident!("{}", n)
                 };
