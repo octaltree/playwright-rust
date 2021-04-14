@@ -9,7 +9,7 @@ use serde_json::Value;
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
     let t = api.into_token_stream();
-    println!("{}", t);
+    println!("{}\n// vim: foldnestmax=0 ft=rust", t);
 }
 
 fn escape(s: String) -> String {
@@ -70,7 +70,7 @@ enum Kind {
     Property
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize)]
 struct Type {
     // 30 ('event', dict_keys(['name', 'expression']))
     //  2 ('event', dict_keys(['name', 'properties', 'expression']))
@@ -92,15 +92,15 @@ struct Type {
     // 54 dict_keys(['name', 'union', 'expression'])
     name: String,
     #[serde(default)]
-    return_type: serde_json::Value,
+    return_type: Option<Box<Type>>,
     #[serde(default)]
     expression: Option<String>,
     #[serde(default)]
-    properties: serde_json::Value,
+    properties: Vec<Arg>,
     #[serde(default)]
-    templates: serde_json::Value,
+    templates: Vec<Type>,
     #[serde(default)]
-    union: serde_json::Value
+    union: Vec<Type>
 }
 
 #[derive(Debug, Deserialize)]
@@ -194,7 +194,35 @@ impl Interface {
     }
 
     fn events(&self) -> TokenStream {
-        quote! {}
+        let es = self
+            .members
+            .iter()
+            .filter(|x| x.kind == Kind::Event)
+            .map(|x| Event {
+                name: &self.name,
+                body: x
+            });
+        if es.clone().next().is_none() {
+            return quote! {};
+        }
+        let labels = es
+            .clone()
+            .map(|e| format_ident!("{}", e.body.name.to_case(Case::UpperCamel)));
+        let bodies = es.map(|e| {
+            let label = format_ident!("{}", e.body.name.to_case(Case::UpperCamel));
+            let t = &e.body.r#type;
+            quote! { #label(#t) }
+        });
+        let et = format_ident!("{}EventType", self.name);
+        let e = format_ident!("{}Event", self.name);
+        quote! {
+            enum #et {
+                #(#labels),*
+            }
+            enum #e {
+                #(#bodies),*
+            }
+        }
     }
 }
 
@@ -225,9 +253,24 @@ impl ToTokens for Method<'_, '_> {
         } else {
             quote! {Error}
         };
+        let num_not_required = self.body.args.iter().filter(|a| !a.required).count();
+        let required = self
+            .body
+            .args
+            .iter()
+            .filter(|a| a.required)
+            .map(|a| a.with_colon());
+        let opts = self
+            .body
+            .args
+            .iter()
+            .filter(|a| !a.required)
+            .map(|a| a.with_colon_option());
+        let all = required.chain(opts);
+        // TODO: flatten "options"
         tokens.extend(quote! {
             //TODO:#[doc = #comment]
-            pub fn #name() -> Result<#ty, #err> {}
+            pub fn #name(&self, #(#all),*) -> Result<Builder, #err> {}
         });
     }
 }
@@ -243,7 +286,7 @@ impl ToTokens for Property<'_, '_> {
         let ty = &self.body.r#type;
         tokens.extend(quote! {
             //TODO:#[doc = #comment]
-            pub fn #name() -> #ty {}
+            pub fn #name(&self) -> #ty {}
         });
     }
 }
@@ -254,28 +297,37 @@ impl Property<'_, '_> {
 
 impl ToTokens for Type {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if !self.properties.is_null() {
-            tokens.extend(quote! {
-                NotImplementedYet
+        if self.return_type.is_some() {
+            tokens.extend(self.function());
+            return;
+        }
+        if !self.templates.is_empty() {
+            tokens.extend(match self.name.as_str() {
+                "Array" => self.array(),
+                "Object" | "Map" => self.map(),
+                _ => unreachable!()
             });
             return;
         }
-        if !self.return_type.is_null() {
-            tokens.extend(quote! {
-                NotImplementedYet
-            });
+        if !self.properties.is_empty() {
+            if self.name.is_empty() || self.name == "Object" {
+                tokens.extend(quote! { NotImplementedYet });
+            } else {
+                unreachable!();
+            }
             return;
         }
-        if !self.templates.is_null() {
-            tokens.extend(quote! {
-                NotImplementedYet
-            });
-            return;
-        }
-        if !self.union.is_null() {
-            tokens.extend(quote! {
-                NotImplementedYet
-            });
+        if !self.union.is_empty() {
+            let optional = self.union.iter().find(|u| u.name == "null");
+            if self.name.is_empty() {
+                let t = self.r#enum();
+                tokens.extend(optional.map(|_| quote! { Option<#t> }).unwrap_or(t));
+            } else {
+                let t = self.r#enum();
+                let name = format_ident!("{}", self.name);
+                let name = quote! { #name };
+                tokens.extend(optional.map(|_| quote! { Option<#name> }).unwrap_or(name));
+            }
             return;
         }
         match self.name.as_str() {
@@ -306,11 +358,14 @@ impl ToTokens for Type {
                 tokens.extend(quote! { i64 });
                 return;
             }
-            // any
-            // Any
+            "float" => {
+                tokens.extend(quote! { f64 });
+                return;
+            }
+            // any Any Serializable path
             n => {
                 let name = if n == "System.Net.HttpStatusCode" {
-                    format_ident!("i32")
+                    format_ident!("u16")
                 } else {
                     format_ident!("{}", n)
                 };
@@ -329,4 +384,59 @@ impl Type {
             Object
         });
     }
+
+    fn function(&self) -> TokenStream {
+        quote! {
+            NotImplementedYet
+        }
+    }
+
+    fn array(&self) -> TokenStream {
+        quote! {
+            NotImplementedYet
+        }
+    }
+
+    fn map(&self) -> TokenStream {
+        quote! {
+            NotImplementedYet
+        }
+    }
+
+    fn r#enum(&self) -> TokenStream {
+        let mut entries = self.union.iter().filter(|u| u.name != "null");
+        let num = entries.clone().count();
+        match num {
+            0 => unreachable!(),
+            1 => {
+                let first = entries.next().unwrap();
+                quote! { #first }
+            }
+            _ => {
+                quote! {
+                    NotImplementedYet
+                }
+            }
+        }
+    }
+}
+
+impl Arg {
+    fn with_colon(&self) -> TokenStream {
+        let name = self.name();
+        let ty = &self.r#type;
+        quote! {
+            #name: #ty
+        }
+    }
+
+    fn with_colon_option(&self) -> TokenStream {
+        let name = self.name();
+        let ty = &self.r#type;
+        quote! {
+            #name: Option<#ty>
+        }
+    }
+
+    fn name(&self) -> Ident { format_ident!("{}", escape(self.name.to_case(Case::Snake))) }
 }
