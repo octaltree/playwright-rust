@@ -48,46 +48,31 @@ impl BrowserType {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LaunchArgs<'a, 'b, 'c> {
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "executablePath")]
     pub(crate) executable: Option<&'a Path>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) args: Option<&'b [String]>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) ignore_all_default_args: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "handleSIGINT")]
     pub(crate) handle_sigint: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "handleSIGTERM")]
     pub(crate) handle_sigterm: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "handleSIGHUP")]
     pub(crate) handle_sighup: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) env: Option<Map<String, Value>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) headless: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) devtools: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) proxy: Option<ProxySettings>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "downloadsPath")]
     pub(crate) downloads: Option<&'c Path>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) chromium_sandbox: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) firefox_user_prefs: Option<Map<String, Value>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) channel: Option<BrowserChannel>
 }
 
@@ -105,110 +90,75 @@ struct Initializer {
 }
 
 // launch args | context args | {user_data_dir: }
+#[skip_serializing_none]
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     user_data_dir: &'a Path,
     sdk_language: &'static str,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "executablePath")]
     pub(crate) executable: Option<&'b Path>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) args: Option<&'c [String]>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) ignore_all_default_args: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "handleSIGINT")]
     pub(crate) handle_sigint: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "handleSIGTERM")]
     pub(crate) handle_sigterm: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "handleSIGHUP")]
     pub(crate) handle_sighup: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) env: Option<Map<String, Value>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) headless: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) devtools: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) proxy: Option<ProxySettings>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "downloadsPath")]
     pub(crate) downloads: Option<&'d Path>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) viewport: Option<Viewport>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) screen: Option<Viewport>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_default_viewport: Option<bool>,
     #[serde(rename = "ignoreHTTPSErrors")]
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) ignore_https_errors: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "javaScriptEnabled")]
     pub(crate) js_enabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "bypassCSP")]
     pub(crate) bypass_csp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) user_agent: Option<&'e str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) locale: Option<&'f str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timezone_id: Option<&'g str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) geolocation: Option<Geolocation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) permissions: Option<&'h [String]>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "extraHTTPHeaders")]
     pub(crate) extra_http_headers: Option<HashMap<String, String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) offline: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) http_credentials: Option<&'i HttpCredentials>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) device_scale_factor: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) is_mobile: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) has_touch: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) color_scheme: Option<ColorScheme>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) accept_downloads: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) chromium_sandbox: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) record_video: Option<RecordVideo<'j>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) record_har: Option<RecordHar<'k>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) channel: Option<BrowserChannel>
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordVideo<'a> {
     pub dir: &'a Path,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub size: Option<Viewport>
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordHar<'a> {
     pub path: &'a Path,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub omit_content: Option<bool>
 }
 

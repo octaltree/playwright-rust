@@ -89,10 +89,10 @@ impl BrowserContext {
         permissions: &[String],
         origin: Option<&str>
     ) -> ArcResult<()> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args<'a, 'b> {
             permissions: &'a [String],
-            #[serde(skip_serializing_if = "Option::is_none")]
             origin: Option<&'b str>
         }
         let args = Args {
@@ -109,9 +109,9 @@ impl BrowserContext {
     }
 
     pub(crate) async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args<'a> {
-            #[serde(skip_serializing_if = "Option::is_none")]
             geolocation: Option<&'a Geolocation>
         }
         let args = Args { geolocation };

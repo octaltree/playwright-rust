@@ -30,10 +30,10 @@ struct Variable {
 macro_rules! is_checked {
     ($f: ident, $m: literal) => {
         pub(crate) async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
+            #[skip_serializing_none]
             #[derive(Serialize)]
             struct Args<'a> {
                 selector: &'a str,
-                #[serde(skip_serializing_if = "Option::is_none")]
                 timeout: Option<f64>
             }
             let args = Args { selector, timeout };
@@ -158,11 +158,11 @@ impl Frame {
         name: &str,
         timeout: Option<f64>
     ) -> ArcResult<Option<String>> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args<'a, 'b> {
             selector: &'a str,
             name: &'b str,
-            #[serde(skip_serializing_if = "Option::is_none")]
             timeout: Option<f64>
         }
         let args = Args {
@@ -573,15 +573,13 @@ impl Event for Evt {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct GotoArgs<'a, 'b> {
     url: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) wait_until: Option<DocumentLoadState>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) referer: Option<&'b str>
 }
 
@@ -596,26 +594,19 @@ impl<'a> GotoArgs<'a, '_> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ClickArgs<'a> {
     selector: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) position: Option<Position>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) delay: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) button: Option<MouseButton>,
     /// Is ignored if dblclick
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) click_count: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) force: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
@@ -636,13 +627,12 @@ impl<'a> ClickArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WaitForSelectorArgs<'a> {
     selector: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) state: Option<FrameState>
 }
 
@@ -694,17 +684,14 @@ macro_rules! type_args {
 type_args! {TypeArgs, text}
 type_args! {PressArgs, key}
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct HoverArgs<'a> {
     selector: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) position: Option<Position>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) force: Option<bool>
 }
 
@@ -720,13 +707,12 @@ impl<'a> HoverArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SetContentArgs<'a> {
     html: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) wait_until: Option<DocumentLoadState>
 }
 
@@ -740,19 +726,15 @@ impl<'a> SetContentArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct TapArgs<'a> {
     selector: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) position: Option<Position>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) force: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
@@ -769,14 +751,13 @@ impl<'a> TapArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct FillArgs<'a, 'b> {
     selector: &'a str,
     value: &'b str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
@@ -791,23 +772,21 @@ impl<'a, 'b> FillArgs<'a, 'b> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SelectorTimeout<'a> {
     selector: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     timeout: Option<f64>
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CheckArgs<'a> {
     selector: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) force: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
@@ -822,13 +801,12 @@ impl<'a> CheckArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AddScriptTagArgs<'a, 'b, 'c> {
     content: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) url: Option<&'b str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) r#type: Option<&'c str>
 }
 
@@ -842,19 +820,16 @@ impl<'a, 'b, 'c> AddScriptTagArgs<'a, 'b, 'c> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SelectOptionArgs<'a> {
     selector: &'a str,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) options: Option<Vec<Opt>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) elements: Option<Vec<OnlyGuid>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
@@ -870,15 +845,14 @@ impl<'a> SelectOptionArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SetInputFilesArgs<'a> {
     selector: &'a str,
 
     pub(crate) files: Vec<File>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_wait_after: Option<bool>
 }
 
@@ -893,14 +867,14 @@ impl<'a> SetInputFilesArgs<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WaitForFunctionArgs<'a> {
     expression: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) polling: Option<Polling>,
+    // XXX
     pub(crate) arg: Option<Value>
 }
 

@@ -6,22 +6,20 @@ pub struct Viewport {
     pub height: i32
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ProxySettings {
     pub server: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub bypass: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub username: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Geolocation {
     pub latitude: f64,
     pub longitude: f64,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub accuracy: Option<f64>
 }
 
@@ -39,32 +37,25 @@ pub enum ColorScheme {
     NoPreference
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StorageState {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub cookies: Option<Vec<Cookie>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub origins: Option<Vec<OriginState>>
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Cookie {
     pub name: String,
     pub value: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub domain: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub expires: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub http_only: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub secure: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub same_site: Option<SameSite>
 }
 

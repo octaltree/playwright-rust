@@ -61,11 +61,10 @@ macro_rules! mouse_down {
             button: Option<MouseButton>,
             click_count: Option<i32>
         ) -> Result<(), Arc<Error>> {
+            #[skip_serializing_none]
             #[derive(Serialize)]
             struct Args {
-                #[serde(skip_serializing_if = "Option::is_none")]
                 button: Option<MouseButton>,
-                #[serde(skip_serializing_if = "Option::is_none")]
                 click_count: Option<i32>
             }
             let args = Args {
@@ -140,10 +139,10 @@ impl Page {
     }
 
     pub(crate) async fn key_type(&self, text: &str, delay: Option<f64>) -> Result<(), Arc<Error>> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args<'b> {
             text: &'b str,
-            #[serde(skip_serializing_if = "Option::is_none")]
             delay: Option<f64>
         }
         let args = Args { text, delay };
@@ -152,10 +151,10 @@ impl Page {
     }
 
     pub(crate) async fn key_press(&self, text: &str, delay: Option<f64>) -> Result<(), Arc<Error>> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args<'b> {
             text: &'b str,
-            #[serde(skip_serializing_if = "Option::is_none")]
             delay: Option<f64>
         }
         let args = Args { text, delay };
@@ -180,11 +179,11 @@ impl Page {
         y: f64,
         steps: Option<i32>
     ) -> Result<(), Arc<Error>> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args {
             x: f64,
             y: f64,
-            #[serde(skip_serializing_if = "Option::is_none")]
             steps: Option<i32>
         }
         let args = Args { x, y, steps };
@@ -245,9 +244,9 @@ impl Page {
     }
 
     pub(crate) async fn close(&self, run_before_unload: Option<bool>) -> Result<(), Arc<Error>> {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         struct Args {
-            #[serde(skip_serializing_if = "Option::is_none")]
             run_before_unload: Option<bool>
         }
         let args = Args { run_before_unload };
@@ -598,16 +597,14 @@ impl Event for Evt {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct MouseClickArgs {
     x: f64,
     y: f64,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) delay: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) button: Option<MouseButton>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) click_count: Option<i32>
 }
 
@@ -623,12 +620,11 @@ impl MouseClickArgs {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AccessibilitySnapshoptArgs {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) interesting_only: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) root: Option<OnlyGuid>
 }
 
@@ -655,72 +651,54 @@ impl RemoteObject for BindingCall {
 #[serde(rename_all = "camelCase")]
 struct Initializer {
     main_frame: OnlyGuid,
-    #[serde(rename = "viewportSIze")]
+    #[serde(rename = "viewportSize")]
     viewport: Option<Viewport>
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ReloadArgs {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) wait_until: Option<DocumentLoadState>
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PdfArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) scale: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) display_header_footer: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) header_template: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) footer_template: Option<&'b str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) print_background: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) landscape: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) page_ranges: Option<&'c str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) format: Option<&'d str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) width: Option<Length<'e>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) height: Option<Length<'f>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "preferCSSPageSize")]
     pub(crate) prefer_css_page_size: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) margin: Option<PdfMargins<'g, 'h, 'i, 'j>>
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ScreenshotArgs {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timeout: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) r#type: Option<ScreenshotType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) quality: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) omit_background: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) full_page: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) clip: Option<FloatRect>
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct EmulateMediaArgs {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) media: Option<Media>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) color_scheme: Option<ColorScheme>
 }
 
