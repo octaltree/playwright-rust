@@ -4,7 +4,6 @@ extern crate serde;
 use convert_case::{Case, Casing};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
-use serde_json::Value;
 
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
@@ -163,12 +162,12 @@ impl Interface {
         format_ident!("{}", &self.name)
     }
 
-    fn extends(&self) -> Option<TokenStream> {
-        self.extends.as_ref().map(|e| {
-            let e = format_ident!("{}", e);
-            quote! { :#e }
-        })
-    }
+    // fn extends(&self) -> Option<TokenStream> {
+    //    self.extends.as_ref().map(|e| {
+    //        let e = format_ident!("{}", e);
+    //        quote! { :#e }
+    //    })
+    //}
 
     fn properties(&self) -> TokenStream {
         let ps = self
@@ -262,10 +261,6 @@ struct Method<'a, 'b> {
 struct Property<'a, 'b> {
     name: &'a str,
     body: &'b Member
-}
-
-impl ToTokens for Event<'_, '_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) { todo!() }
 }
 
 impl ToTokens for Method<'_, '_> {
