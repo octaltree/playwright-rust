@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf}
 };
 
-const DRIVER_VERSION: &str = "1.11.0-next-1617207797000";
+const DRIVER_VERSION: &str = "1.11.0-next-1617404897000";
 // playwright-python ea66054d
 
 fn main() {

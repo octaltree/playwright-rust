@@ -92,64 +92,41 @@ struct Initializer {
     version: String
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     sdk_language: &'static str,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) proxy: Option<ProxySettings>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) viewport: Option<Viewport>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) screen: Option<Viewport>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) no_default_viewport: Option<bool>,
     #[serde(rename = "ignoreHTTPSErrors")]
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) ignore_https_errors: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "javaScriptEnabled")]
     pub(crate) js_enabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "bypassCSP")]
     pub(crate) bypass_csp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) user_agent: Option<&'e str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) locale: Option<&'f str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) timezone_id: Option<&'g str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) geolocation: Option<Geolocation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) permissions: Option<&'h [String]>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "extraHTTPHeaders")]
     pub(crate) extra_http_headers: Option<HashMap<String, String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) offline: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) http_credentials: Option<&'i HttpCredentials>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) device_scale_factor: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) is_mobile: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) has_touch: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) color_scheme: Option<ColorScheme>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) accept_downloads: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) chromium_sandbox: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) record_video: Option<RecordVideo<'j>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) record_har: Option<RecordHar<'k>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) storage_state: Option<StorageState>
 }
 

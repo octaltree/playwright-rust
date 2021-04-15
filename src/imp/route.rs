@@ -46,16 +46,14 @@ struct Initializer {
     request: OnlyGuid
 }
 
+#[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct FulfillArgs<'a, 'b> {
     body: &'a str,
     is_base64: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) status: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) headers: Option<Vec<Header>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) content_type: Option<&'b str>
 }
 
@@ -71,15 +69,12 @@ impl<'a, 'b> FulfillArgs<'a, 'b> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ContinueArgs<'a, 'b, 'c> {
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) url: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) method: Option<&'b str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) headers: Option<Vec<Header>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) post_data: Option<&'c str>
 }

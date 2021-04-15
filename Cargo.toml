@@ -33,6 +33,7 @@ itertools = "0.10.0"
 chrono = { version = "0.4.19", optional = true, features = ["serde"] }
 tokio-stream = { version = "0.1.5", features = ["sync"] }
 futures = "0.3.14"
+serde_with = { version = "1.8.0", default-features = false, features = ["macros"] }
 
 [dev-dependencies]
 env_logger = "0.8.3"
