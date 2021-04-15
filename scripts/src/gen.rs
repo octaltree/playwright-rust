@@ -143,13 +143,15 @@ impl Interface {
         let methods = self.methods();
         let properties = self.properties();
         let events = self.events();
+        let declares = self.collect_declares();
         quote! {
-            //TODO:#[doc = #comment]
+            #[doc = #comment]
             #extends
             impl #name {
                 #properties
                 #methods
             }
+            #declares
             #events
         }
     }
@@ -208,13 +210,22 @@ impl Interface {
         if es.clone().next().is_none() {
             return quote! {};
         }
-        let labels = es
-            .clone()
-            .map(|e| format_ident!("{}", e.body.name.to_case(Case::UpperCamel)));
+        let labels = es.clone().map(|e| {
+            let label = format_ident!("{}", e.body.name.to_case(Case::UpperCamel));
+            let comment = &e.body.comment;
+            quote! {
+                #[doc=#comment]
+                #label
+            }
+        });
         let bodies = es.map(|e| {
             let label = format_ident!("{}", e.body.name.to_case(Case::UpperCamel));
             let t = &e.body.r#type;
-            quote! { #label(#t) }
+            let comment = &e.body.comment;
+            quote! {
+                #[doc=#comment]
+                #label(#t)
+            }
         });
         let et = format_ident!("{}EventType", self.name);
         let e = format_ident!("{}Event", self.name);
@@ -226,6 +237,17 @@ impl Interface {
                 #(#bodies),*
             }
         }
+    }
+
+    fn collect_declares(&self) -> TokenStream {
+        let mut res: TokenStream = quote! {};
+        for member in &self.members {
+            res.extend(member.r#type.declare(&member.name));
+            for arg in member.args.iter().filter(|a| a.name != "options") {
+                res.extend(arg.r#type.declare(&arg.name));
+            }
+        }
+        res
     }
 }
 
@@ -279,8 +301,8 @@ impl ToTokens for Method<'_, '_> {
             });
         let all = required.chain(opts).chain(options);
         tokens.extend(quote! {
-            //TODO:#[doc = #comment]
-            pub fn #name(&self, #(#all),*) -> Result<#ty, #err> { todo!() }
+            #[doc = #comment]
+            fn #name(&self, #(#all),*) -> Result<#ty, #err> { todo!() }
         });
     }
 }
@@ -295,7 +317,7 @@ impl ToTokens for Property<'_, '_> {
         let comment = &self.body.comment;
         let ty = &self.body.r#type;
         tokens.extend(quote! {
-            //TODO:#[doc = #comment]
+            #[doc = #comment]
             pub fn #name(&self) -> #ty {}
         });
     }
@@ -344,7 +366,7 @@ impl ToTokens for Type {
                 unreachable!()
             }
             "Object" => {
-                self.object(tokens);
+                tokens.extend(quote! { Object });
                 return;
             }
             "void" => {
@@ -377,6 +399,9 @@ impl ToTokens for Type {
                     format_ident!("u16")
                 } else if n == r#""gone""# {
                     format_ident!("Gone")
+                } else if n.starts_with('"') && n.ends_with('"') {
+                    // TODO
+                    format_ident!("{}", n[1..(n.len() - 1)])
                 } else {
                     format_ident!("{}", n)
                 };
@@ -390,27 +415,25 @@ impl ToTokens for Type {
 }
 
 impl Type {
-    fn object(&self, tokens: &mut TokenStream) {
-        tokens.extend(quote! {
-            Object
-        });
-    }
-
     fn function(&self) -> TokenStream {
+        let ret = self.return_type.as_ref().unwrap();
         quote! {
-            NotImplementedYet
+            impl Fn(NotImplementedYet) ->  #ret
         }
     }
 
     fn array(&self) -> TokenStream {
+        let t = self.templates.iter().next().unwrap();
         quote! {
-            NotImplementedYet
+            Vec<#t>
         }
     }
 
     fn map(&self) -> TokenStream {
+        let fst = self.templates.iter().next().unwrap();
+        let snd = self.templates.iter().next().unwrap();
         quote! {
-            NotImplementedYet
+            Map<#fst, #snd>
         }
     }
 
@@ -430,13 +453,70 @@ impl Type {
             }
         }
     }
+
+    // TODO: recursive
+    fn declare(&self, hint: &str) -> Option<TokenStream> {
+        if !self.properties.is_empty() && self.name != "function" {
+            let name = format_ident!("NotImplementedYet{}", hint);
+            let required = self
+                .properties
+                .iter()
+                .filter(|a| a.required)
+                .map(|a| a.with_colon());
+            let opts = self
+                .properties
+                .iter()
+                .filter(|a| !a.required)
+                .map(|a| a.with_colon_option());
+            let all = required.chain(opts);
+            let nested = self
+                .properties
+                .iter()
+                .map(|a| a.r#type.declare(&a.name))
+                .fold(quote! {}, |mut a, b| {
+                    a.extend(b);
+                    a
+                });
+            return Some(quote! {
+                struct #name {
+                    #(#all),*
+                }
+                #nested
+            });
+        } else if !self.union.is_empty() {
+            let name = format_ident!("NotImplementedYet{}", hint);
+            let not_null = self.union.iter().filter(|u| u.name != "null");
+            if not_null.clone().count() <= 1 {
+                return None;
+            }
+            let nested = not_null
+                .clone()
+                .map(|t| t.declare(""))
+                .fold(quote! {}, |mut a, b| {
+                    a.extend(b);
+                    a
+                });
+            let xs = not_null.map(|t| {
+                quote! { NotImplementedYet(#t) }
+            });
+            return Some(quote! {
+                enum #name {
+                    #(#xs),*
+                }
+                #nested
+            });
+        }
+        None
+    }
 }
 
 impl Arg {
     fn with_colon(&self) -> TokenStream {
         let name = self.name();
         let ty = &self.r#type;
+        let comment = &self.comment;
         quote! {
+            #[doc = #comment]
             #name: #ty
         }
     }
@@ -444,7 +524,9 @@ impl Arg {
     fn with_colon_option(&self) -> TokenStream {
         let name = self.name();
         let ty = &self.r#type;
+        let comment = &self.comment;
         quote! {
+            #[doc = #comment]
             #name: Option<#ty>
         }
     }
