@@ -9,7 +9,8 @@ use crate::{
         },
         prelude::*,
         utils::{
-            ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType
+            ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
+            WaitForSelectorState
         }
     }
 };
@@ -285,6 +286,7 @@ impl ElementHandle {
         ScreenshotBuilder::new(self.inner.clone())
     }
 
+    /// Returns when the element satisfies the `state`.
     pub async fn wait_for_element_state(
         &self,
         state: ElementState,
@@ -295,6 +297,29 @@ impl ElementHandle {
             .await
     }
 
+    /// Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
+    /// `detached`.
+    ///
+    /// Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
+    /// the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
+    /// selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+    ///
+    /// This method works across navigations:
+    ///
+    /// ```js
+    /// const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+    ///
+    /// (async () => {
+    ///  const browser = await chromium.launch();
+    ///  const page = await browser.newPage();
+    ///  for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+    ///    await page.goto(currentURL);
+    ///    const element = await page.mainFrame().waitForSelector('img');
+    ///    console.log('Loaded image: ' + await element.getAttribute('src'));
+    ///  }
+    ///  await browser.close();
+    /// })();
+    /// ```
     pub fn wait_for_selector_builder<'a>(&self, selector: &'a str) -> WaitForSelectorBuilder<'a> {
         WaitForSelectorBuilder::new(self.inner.clone(), selector)
     }
@@ -365,8 +390,6 @@ impl ElementHandle {
 
     // eval_on_selector
     // eval_on_selector_all
-    // wait_for_element_state
-    // wait_for_selector
 }
 
 // TODO: JsHandle
@@ -634,9 +657,10 @@ impl<'a> WaitForSelectorBuilder<'a> {
         Ok(())
     }
 
-    optional_setter!(
-        state, ElementState;
-        timeout, f64);
+    setter! {
+        state: Option<WaitForSelectorState>,
+        timeout: Option<f64>
+    }
 }
 
 pub struct SelectOptionBuilder {
@@ -712,9 +736,13 @@ impl SelectOptionBuilder {
         self
     }
 
-    optional_setter!(
-        no_wait_after, bool;
-        timeout, f64);
+    setter! {
+        /// Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+        /// opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+        /// inaccessible pages. Defaults to `false`.
+        no_wait_after: Option<bool>,
+        timeout: Option<f64>
+    }
 
     pub fn clear_elements(mut self) -> Self {
         self.args.elements = None;
@@ -751,9 +779,13 @@ impl SetInputFilesBuilder {
         self
     }
 
-    optional_setter!(
-        no_wait_after, bool;
-        timeout, f64);
+    setter! {
+        /// Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+        /// opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+        /// inaccessible pages. Defaults to `false`.
+        no_wait_after: Option<bool>,
+        timeout: Option<f64>
+    }
 
     pub fn clear_files(mut self) -> Self {
         self.args.files = vec![];

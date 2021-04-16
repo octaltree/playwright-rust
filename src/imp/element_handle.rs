@@ -3,7 +3,8 @@ use crate::imp::{
     frame::Frame,
     prelude::*,
     utils::{
-        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType
+        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
+        WaitForSelectorState
     }
 };
 
@@ -379,7 +380,7 @@ pub(crate) struct ScreenshotArgs<'a> {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WaitForSelectorArgs<'a> {
     selector: &'a str,
-    pub(crate) state: Option<ElementState>,
+    pub(crate) state: Option<WaitForSelectorState>,
     pub(crate) timeout: Option<f64>
 }
 

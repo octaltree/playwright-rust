@@ -148,6 +148,15 @@ pub enum ElementState {
     Visible
 }
 
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum WaitForSelectorState {
+    Attached,
+    Detached,
+    Visible,
+    Hidden
+}
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Header {
     pub name: String,
