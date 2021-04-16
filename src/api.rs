@@ -141,7 +141,7 @@ pub use worker::Worker;
 // Electron
 // ElectronApplication
 // FirefoxBrowser
-
 // Logger
+
 // WebKitBrowser
 // WebSocketFrame

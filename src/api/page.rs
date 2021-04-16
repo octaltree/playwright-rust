@@ -27,6 +27,45 @@ use crate::{
     Error
 };
 
+/// Page provides methods to interact with a single tab in a `Browser`, or an
+/// [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One `Browser`
+/// instance might have multiple `Page` instances.
+///
+/// This example creates a page, navigates it to a URL, and then saves a screenshot:
+///
+/// ```js
+/// const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+///
+/// (async () => {
+///  const browser = await webkit.launch();
+///  const context = await browser.newContext();
+///  const page = await context.newPage();
+///  await page.goto('https://example.com');
+///  await page.screenshot({path: 'screenshot.png'});
+///  await browser.close();
+/// })();
+/// ```
+///
+/// The Page class emits various events (described below) which can be handled using any of Node's native
+/// [`EventEmitter`](https://nodejs.org/api/events.html#events_class_eventemitter) methods, such as `on`, `once` or
+/// `removeListener`.
+///
+/// This example logs a message for a single page `load` event:
+///
+/// ```js
+/// page.once('load', () => console.log('Page loaded!'));
+/// ```
+///
+/// To unsubscribe from events use the `removeListener` method:
+///
+/// ```js
+/// function logRequest(interceptedRequest) {
+///  console.log('A request was made:', interceptedRequest.url());
+/// }
+/// page.on('request', logRequest);
+///// Sometime later...
+/// page.removeListener('request', logRequest);
+/// ```
 #[derive(Debug)]
 pub struct Page {
     inner: Weak<Impl>,
