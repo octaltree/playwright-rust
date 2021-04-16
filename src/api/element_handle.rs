@@ -14,6 +14,27 @@ use crate::{
     }
 };
 
+/// ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`]
+/// method.
+///
+/// ```js
+/// const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+///
+/// (async () => {
+///  const browser = await chromium.launch();
+///  const page = await browser.newPage();
+///  await page.goto('https://example.com');
+///  const hrefElement = await page.$('a');
+///  await hrefElement.click();
+///  // ...
+/// })();
+/// ```
+///
+/// ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
+/// [`method: JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
+///
+/// ElementHandle instances can be used as an argument in [`method: Page.evalOnSelector`] and [`method: Page.evaluate`]
+/// methods.
 pub struct ElementHandle {
     inner: Weak<Impl>
 }
@@ -155,6 +176,9 @@ impl ElementHandle {
         SetInputFilesBuilder::new(self.inner.clone(), file)
     }
 }
+
+// TODO: JsHandle
+impl ElementHandle {}
 
 pub struct HoverBuilder {
     inner: Weak<Impl>,

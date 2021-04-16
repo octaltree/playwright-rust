@@ -133,13 +133,14 @@ pub use worker::Worker;
 // AndroidInput
 // AndroidSocket
 // AndroidWebView
-
 // BrowserServer
+// CDPSession
 // ChromiumBrowser
 // ChromiumBrowserContext
 // ChromiumCoverage
 // Electron
 // ElectronApplication
+
 // FirefoxBrowser
 // Logger
 // WebKitBrowser

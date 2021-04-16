@@ -214,7 +214,9 @@ pub enum BrowserChannel {
 #[serde(rename_all = "camelCase")]
 pub struct SourceLocation {
     pub url: String,
+    /// 0-based line number in the resource.
     pub line_number: i32,
+    /// 0-based column number in the resource.
     pub column_number: i32
 }
 
