@@ -71,7 +71,7 @@ pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     pub(crate) downloads: Option<&'c Path>,
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
-    pub(crate) chromium_sandbox: Option<f64>,
+    pub(crate) chromium_sandbox: Option<bool>,
     pub(crate) firefox_user_prefs: Option<Map<String, Value>>,
     pub(crate) channel: Option<BrowserChannel>
 }
@@ -117,9 +117,9 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
 
-    pub(crate) viewport: Option<Viewport>,
+    pub(crate) viewport: Option<Option<Viewport>>,
     pub(crate) screen: Option<Viewport>,
-    pub(crate) no_default_viewport: Option<bool>,
+    pub(crate) no_viewport: Option<bool>,
     #[serde(rename = "ignoreHTTPSErrors")]
     pub(crate) ignore_https_errors: Option<bool>,
     #[serde(rename = "javaScriptEnabled")]
@@ -183,7 +183,7 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             slowmo: None,
             viewport: None,
             screen: None,
-            no_default_viewport: None,
+            no_viewport: None,
             ignore_https_errors: None,
             js_enabled: None,
             bypass_csp: None,

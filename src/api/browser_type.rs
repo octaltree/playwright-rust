@@ -20,10 +20,12 @@ pub struct BrowserType {
 impl BrowserType {
     pub(crate) fn new(inner: Weak<Impl>) -> Self { Self { inner } }
 
+    /// Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
     /// # Errors
     /// Returns error only if this function is called after object is disposed.
     pub fn name(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.name().into()) }
 
+    /// A path where Playwright expects to find a bundled browser executable.
     /// # Errors
     /// Returns error only if this function is called after object is disposed.
     pub fn executable(&self) -> Result<PathBuf, Error> {
@@ -31,15 +33,67 @@ impl BrowserType {
     }
 
     /// launch [`Browser`]
+    /// Returns the browser instance.
+    ///
+    /// You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
+    ///
+    /// ```js
+    /// const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
+    ///  ignoreDefaultArgs: ['--mute-audio']
+    /// });
+    /// ```
+    ///
+    /// ```java
+    ///// Or "firefox" or "webkit".
+    /// Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+    ///  .setIgnoreDefaultArgs(Arrays.asList("--mute-audio")));
+    /// ```
+    /// ```python async
+    /// browser = await playwright.chromium.launch( # or "firefox" or "webkit".
+    ///    ignore_default_args=["--mute-audio"]
+    /// )
+    /// ```
+    /// ```python sync
+    /// browser = playwright.chromium.launch( # or "firefox" or "webkit".
+    ///    ignore_default_args=["--mute-audio"]
+    /// )
+    /// ```
+    /// 
+    /// > **Chromium-only** Playwright can also be used to control the Google Chrome or Microsoft Edge browsers, but it works
+    /// best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use
+    /// `executablePath` option with extreme caution.
+    /// >
+    /// > If Google Chrome (rather than Chromium) is preferred, a
+    /// [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or
+    /// [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
+    /// >
+    /// > Stock browsers like Google Chrome and Microsoft Edge are suitable for tests that require proprietary media codecs for
+    /// video playback. See
+    /// [this article](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for other
+    /// differences between Chromium and Chrome.
+    /// [This article](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md)
+    /// describes some differences for Linux users.
     pub fn launcher(&self) -> Launcher<'_, '_, '_> { Launcher::new(self.inner.clone()) }
 
     /// launch_persistent_context [`BrowserContext`]
+    /// Returns the persistent browser context instance.
+    ///
+    /// Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this
+    /// context will automatically close the browser.
+    /// user_data_dir: Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
+    /// [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md#introduction) and
+    /// [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile). Note that Chromium's user
+    /// data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`.
     pub fn persistent_context_launcher<'a>(
         &self,
         user_data_dir: &'a Path
     ) -> PersistentContextLauncher<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
         PersistentContextLauncher::new(self.inner.clone(), user_data_dir)
     }
+
+    // connect
+    // connect_over_cdp
+    // launch_server
 }
 
 /// [`BrowserType::launcher`]
@@ -62,23 +116,44 @@ impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
         }
     }
 
-    optional_setter!(
-        executable, &'a Path;
-        args, &'b [String];
-        ignore_all_default_args, bool;
-        handle_sigint, bool;
-        handle_sigterm, bool;
-        handle_sighup, bool;
-        timeout, f64;
-        env, Map<String, Value>;
-        headless, bool;
-        devtools, bool;
-        proxy, ProxySettings;
-        downloads, &'c Path;
-        slowmo, f64;
-        chromium_sandbox, f64;
-        firefox_user_prefs, Map<String, Value>;
-        channel, BrowserChannel);
+    setter! {
+        #[doc = "Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is\nresolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox\nor WebKit, use at your own risk."]
+        executable: Option<&'a Path>,
+        #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
+        args: Option<&'b [String]>,
+        #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care. Defaults to `false`."]
+        ignore_all_default_args: Option<bool>,
+        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."]
+        handle_sigint: Option<bool>,
+        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."]
+        handle_sigterm: Option<bool>,
+        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."]
+        handle_sighup: Option<bool>,
+        #[doc = "Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
+        timeout: Option<f64>,
+        #[doc = "**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`\noption will be set `false`."]
+        devtools: Option<bool>,
+        #[doc = "Network proxy settings."]
+        proxy: Option<ProxySettings>,
+        #[doc = "If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is\ndeleted when browser is closed."]
+        downloads: Option<&'c Path>,
+        #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on."]
+        slowmo: Option<f64>,
+        #[doc = "Specify environment variables that will be visible to the browser. Defaults to `process.env`."]
+        env: Option<Map<String, Value>>,
+        #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
+        headless: Option<bool>,
+        #[doc = "Enable Chromium sandboxing. Defaults to `false`."]
+        chromium_sandbox: Option<bool>,
+        #[doc = "Firefox user preferences. Learn more about the Firefox user preferences at\n[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox)."]
+        firefox_user_prefs: Option<Map<String, Value>>,
+        #[doc = "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge)."]
+        channel: Option<BrowserChannel>
+    }
+    //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is\ngiven, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`."]
+    // ignore_default_args: Option<NotImplementedYet>,
+    //#[doc = "Logger sink for Playwright logging."]
+    // logger: Option<Logger>,
 }
 
 /// [`BrowserType::persistent_context_launcher`]
@@ -105,41 +180,91 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         }
     }
 
-    optional_setter!(
-        executable, &'b Path;
-        args, &'c [String];
-        ignore_all_default_args, bool;
-        handle_sigint, bool;
-        handle_sigterm, bool;
-        handle_sighup, bool;
-        timeout, f64;
-        env, Map<String, Value>;
-        headless, bool;
-        devtools, bool;
-        proxy, ProxySettings;
-        downloads, &'d Path;
-        slowmo, f64;
-        viewport, Viewport;
-        screen, Viewport;
-        no_default_viewport, bool;
-        ignore_https_errors, bool;
-        js_enabled, bool;
-        bypass_csp, bool;
-        user_agent, &'e str;
-        locale, &'f str;
-        timezone_id, &'g str;
-        geolocation, Geolocation;
-        permissions, &'h [String];
-        extra_http_headers, HashMap<String, String>;
-        offline, bool;
-        http_credentials, &'i HttpCredentials;
-        device_scale_factor, f64;
-        is_mobile, bool;
-        has_touch, bool;
-        color_scheme, ColorScheme;
-        accept_downloads, bool;
-        chromium_sandbox, bool;
-        record_video, RecordVideo<'j>;
-        record_har, RecordHar<'k>;
-        channel, BrowserChannel);
+    setter! {
+        #[doc = "Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is\nresolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled\nChromium, Firefox or WebKit, use at your own risk."]
+        executable: Option<&'b Path>,
+        #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
+        args: Option<&'c [String]>,
+        #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care. Defaults to `false`."]
+        ignore_all_default_args: Option<bool>,
+        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."]
+        handle_sighup: Option<bool>,
+        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."]
+        handle_sigint: Option<bool>,
+        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."]
+        handle_sigterm: Option<bool>,
+        #[doc = "Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
+        timeout: Option<f64>,
+        #[doc = "Specify environment variables that will be visible to the browser. Defaults to `process.env`."]
+        env: Option<Map<String, Value>>,
+        #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
+        headless: Option<bool>,
+        #[doc = "**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`\noption will be set `false`."]
+        devtools: Option<bool>,
+        #[doc = "Network proxy settings."]
+        proxy: Option<ProxySettings>,
+        #[doc = "If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is\ndeleted when browser is closed."]
+        downloads: Option<&'d Path>,
+        #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
+        slowmo: Option<f64>,
+        #[doc = "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport."]
+        viewport: Option<Option<Viewport>>,
+        #[doc = "Does not enforce fixed viewport, allows resizing window in the headed mode."]
+        no_viewport: Option<bool>,
+        #[doc = "Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`\nis set."]
+        screen: Option<Viewport>,
+        #[doc = "Whether to ignore HTTPS errors during navigation. Defaults to `false`."]
+        ignore_https_errors: Option<bool>,
+        #[doc = "Whether or not to enable JavaScript in the context. Defaults to `true`."]
+        js_enabled: Option<bool>,
+        #[doc = "Toggles bypassing page's Content-Security-Policy."]
+        bypass_csp: Option<bool>,
+        #[doc = "Specific user agent to use in this context."]
+        user_agent: Option<&'e str>,
+        #[doc = "Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language`\nrequest header value as well as number and date formatting rules."]
+        locale: Option<&'f str>,
+        #[doc = "Changes the timezone of the context. See\n[ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)\nfor a list of supported timezone IDs."]
+        timezone_id: Option<&'g str>,
+        #[doc = ""]
+        geolocation: Option<Geolocation>,
+        #[doc = "A list of permissions to grant to all pages in this context. See [`method: BrowserContext.grantPermissions`] for more\ndetails."]
+        permissions: Option<&'h [String]>,
+        #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
+        extra_http_headers: Option<HashMap<String, String>>,
+        #[doc = "Whether to emulate network being offline. Defaults to `false`."]
+        offline: Option<bool>,
+        #[doc = "Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)."]
+        http_credentials: Option<&'i HttpCredentials>,
+        #[doc = "Specify device scale factor (can be thought of as dpr). Defaults to `1`."]
+        device_scale_factor: Option<f64>,
+        #[doc = "Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported\nin Firefox."]
+        is_mobile: Option<bool>,
+        /// Specifies if viewport supports touch events. Defaults to false.
+        has_touch : Option < bool >,
+        #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
+        color_scheme: Option<ColorScheme>,
+        #[doc = "Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled."]
+        accept_downloads: Option<bool>,
+        #[doc = "Enable Chromium sandboxing. Defaults to `true`."]
+        chromium_sandbox: Option<bool>,
+        #[doc = "Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make\nsure to await [`method: BrowserContext.close`] for videos to be saved."]
+        record_video: Option<RecordVideo<'j>>,
+        #[doc = "Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not\nspecified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved."]
+        record_har: Option<RecordHar<'k>>,
+        #[doc = "Browser distribution channel."]
+        channel: Option<BrowserChannel>
+    }
+    //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care."]
+    // ignore_default_args: Option<Vec<String>>,
+    //#[doc = "Logger sink for Playwright logging."] logger: Option<Logger>,
+    //#[doc = "Optional setting to control whether to omit request content from the HAR. Defaults to `false`."]
+    // record_har_omit_content: Option<bool>,
+    //#[doc = "Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into the specified HAR file on the\nfilesystem. If not specified, the HAR is not recorded. Make sure to call [`method: BrowserContext.close`] for the HAR to\nbe saved."]
+    // record_har_path: Option<path>,
+    //#[doc = "Enables video recording for all pages into the specified directory. If not specified videos are not recorded. Make sure\nto call [`method: BrowserContext.close`] for videos to be saved."]
+    // record_video_dir: Option<path>,
+    //#[doc = "Dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit into\n800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will\nbe scaled down if necessary to fit the specified size."]
+    // record_video_size: Option<NotImplementedYet>,
+    //#[doc = "**DEPRECATED** Use `recordVideo` instead."] video_size: Option<NotImplementedYet>,
+    //#[doc = "**DEPRECATED** Use `recordVideo` instead."] videos_path: Option<path>,
 }

@@ -9,7 +9,9 @@ pub struct Viewport {
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ProxySettings {
+    /// Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or\n`socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
     pub server: String,
+    /// Optional coma-separated domains to bypass proxy, for example `\".com, chromium.org, .domain.com\"`.
     pub bypass: Option<String>,
     pub username: Option<String>,
     pub password: Option<String>
@@ -18,8 +20,11 @@ pub struct ProxySettings {
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Geolocation {
+    /// Latitude between -90 and 90.
     pub latitude: f64,
+    /// Longitude between -180 and 180.
     pub longitude: f64,
+    /// Non-negative accuracy value. Defaults to `0`.
     pub accuracy: Option<f64>
 }
 

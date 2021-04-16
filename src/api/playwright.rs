@@ -86,6 +86,60 @@ impl Playwright {
         Selectors::new(inner)
     }
 
+    /// Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
+    ///
+    /// ```js
+    /// const { webkit, devices } = require('playwright');
+    /// const iPhone = devices['iPhone 6'];
+    ///
+    /// (async () => {
+    ///  const browser = await webkit.launch();
+    ///  const context = await browser.newContext({
+    ///    ...iPhone
+    ///  });
+    ///  const page = await context.newPage();
+    ///  await page.goto('http://example.com');
+    ///  // other actions...
+    ///  await browser.close();
+    /// })();
+    /// ```
+    ///
+    /// ```python async
+    /// import asyncio
+    /// from playwright.async_api import async_playwright
+    ///
+    /// async def run(playwright):
+    ///    webkit = playwright.webkit
+    ///    iphone = playwright.devices["iPhone 6"]
+    ///    browser = await webkit.launch()
+    ///    context = await browser.new_context(**iphone)
+    ///    page = await context.new_page()
+    ///    await page.goto("http://example.com")
+    ///    # other actions...
+    ///    await browser.close()
+    ///
+    /// async def main():
+    ///    async with async_playwright() as playwright:
+    ///        await run(playwright)
+    /// asyncio.run(main())
+    /// ```
+    ///
+    /// ```python sync
+    /// from playwright.sync_api import sync_playwright
+    ///
+    /// def run(playwright):
+    ///    webkit = playwright.webkit
+    ///    iphone = playwright.devices["iPhone 6"]
+    ///    browser = webkit.launch()
+    ///    context = browser.new_context(**iphone)
+    ///    page = context.new_page()
+    ///    page.goto("http://example.com")
+    ///    # other actions...
+    ///    browser.close()
+    ///
+    /// with sync_playwright() as playwright:
+    ///    run(playwright)
+    /// ```
     pub fn devices(&self) -> Vec<DeviceDescriptor> {
         upgrade(&self.inner)
             .map(|x| x.devices().to_vec())

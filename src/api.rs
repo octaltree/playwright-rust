@@ -22,6 +22,34 @@ macro_rules! optional_setter {
     };
 }
 
+macro_rules! setter {
+    (
+        $(
+            $(#[$meta:ident $($args:tt)*])*
+            $field:ident :  Option<$t:ty>
+        ),+
+    ) => {
+        $(
+            paste::paste! {
+                #[allow(clippy::wrong_self_convention)]
+                $(#[$meta $($args)*])*
+                pub fn [<$field>](mut self, x:$t) -> Self {
+                    self.args.$field = Some(x);
+                    self
+                }
+            }
+        )*
+        $(
+            paste::paste! {
+                pub fn [<clear_$field>](mut self) -> Self {
+                    self.args.$field = None;
+                    self
+                }
+            }
+        )*
+    };
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! subscribe_event {
