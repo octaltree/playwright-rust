@@ -91,20 +91,20 @@ impl AndroidDevice {
         #[doc = "options"]
         #[doc = "Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled."]
         accept_downloads: Option<bool>,
-        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_csp: Option<bool>,
+        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_c_s_p: Option<bool>,
         #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
         color_scheme: Option<ColorScheme>,
         command : Option < String >,
         #[doc = "Specify device scale factor (can be thought of as dpr). Defaults to `1`."]
         device_scale_factor: Option<f64>,
         #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
-        extra_http_headers: Option<Map<String, String>>,
+        extra_h_t_t_p_headers: Option<Map<String, String>>,
         #[doc = ""] geolocation: Option<NotImplementedYet>,
         has_touch : Option < bool >,
         #[doc = "Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)."]
         http_credentials: Option<NotImplementedYet>,
         #[doc = "Whether to ignore HTTPS errors during navigation. Defaults to `false`."]
-        ignore_https_errors: Option<bool>,
+        ignore_h_t_t_p_s_errors: Option<bool>,
         #[doc = "Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported\nin Firefox."]
         is_mobile: Option<bool>,
         #[doc = "Whether or not to enable JavaScript in the context. Defaults to `true`."]
@@ -471,19 +471,19 @@ impl Browser {
         #[doc = "options"]
         #[doc = "Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled."]
         accept_downloads: Option<bool>,
-        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_csp: Option<bool>,
+        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_c_s_p: Option<bool>,
         #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
         color_scheme: Option<ColorScheme>,
         #[doc = "Specify device scale factor (can be thought of as dpr). Defaults to `1`."]
         device_scale_factor: Option<f64>,
         #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
-        extra_http_headers: Option<Map<String, String>>,
+        extra_h_t_t_p_headers: Option<Map<String, String>>,
         #[doc = ""] geolocation: Option<NotImplementedYet>,
         has_touch : Option < bool >,
         #[doc = "Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)."]
         http_credentials: Option<NotImplementedYet>,
         #[doc = "Whether to ignore HTTPS errors during navigation. Defaults to `false`."]
-        ignore_https_errors: Option<bool>,
+        ignore_h_t_t_p_s_errors: Option<bool>,
         #[doc = "Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported\nin Firefox."]
         is_mobile: Option<bool>,
         #[doc = "Whether or not to enable JavaScript in the context. Defaults to `true`."]
@@ -538,19 +538,19 @@ impl Browser {
         #[doc = "options"]
         #[doc = "Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled."]
         accept_downloads: Option<bool>,
-        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_csp: Option<bool>,
+        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_c_s_p: Option<bool>,
         #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
         color_scheme: Option<ColorScheme>,
         #[doc = "Specify device scale factor (can be thought of as dpr). Defaults to `1`."]
         device_scale_factor: Option<f64>,
         #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
-        extra_http_headers: Option<Map<String, String>>,
+        extra_h_t_t_p_headers: Option<Map<String, String>>,
         #[doc = ""] geolocation: Option<NotImplementedYet>,
         has_touch : Option < bool >,
         #[doc = "Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)."]
         http_credentials: Option<NotImplementedYet>,
         #[doc = "Whether to ignore HTTPS errors during navigation. Defaults to `false`."]
-        ignore_https_errors: Option<bool>,
+        ignore_h_t_t_p_s_errors: Option<bool>,
         #[doc = "Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported\nin Firefox."]
         is_mobile: Option<bool>,
         #[doc = "Whether or not to enable JavaScript in the context. Defaults to `true`."]
@@ -704,7 +704,7 @@ impl BrowserContext {
         todo!()
     }
     #[doc = "The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged\nwith page-specific extra HTTP headers set with [`method: Page.setExtraHTTPHeaders`]. If page overrides a particular\nheader, page-specific header value will be used instead of the browser context header value.\n\n> NOTE: [`method: BrowserContext.setExtraHTTPHeaders`] does not guarantee the order of headers in the outgoing requests."]
-    fn set_extra_http_headers(
+    fn set_extra_h_t_t_p_headers(
         &self,
         #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
         headers: Map<String, String>
@@ -719,7 +719,7 @@ impl BrowserContext {
         todo!()
     }
     #[doc = "**DEPRECATED** Browsers may cache credentials after successful authentication. Create a new browser context instead."]
-    fn set_http_credentials(
+    fn set_h_t_t_p_credentials(
         &self,
         #[doc = ""] http_credentials: Option<NotImplementedYet>
     ) -> Result<(), Arc<Error>> {
@@ -780,7 +780,7 @@ impl BrowserContext {
         todo!()
     }
     #[doc = "> NOTE: In most cases, you should use [`method: BrowserContext.waitForEvent`].\n\nWaits for given `event` to fire. If predicate is provided, it passes event's value into the `predicate` function and\nwaits for `predicate(event)` to return a truthy value. Will throw an error if the socket is closed before the `event` is\nfired."]
-    fn wait_for_event_2(
+    fn wait_for_event2(
         &self,
         #[doc = "Event name, same one typically passed into `*.on(event)`."] event: String,
         #[doc = "options"]
@@ -884,7 +884,7 @@ impl BrowserType {
         todo!()
     }
     #[doc = "This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.\n\nThe default browser context is accessible via [`method: Browser.contexts`].\n\n> NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers."]
-    fn connect_over_cdp(
+    fn connect_over_c_d_p(
         &self,
         #[doc = ""] params: NotImplementedYet
     ) -> Result<Browser, Arc<Error>> {
@@ -915,15 +915,9 @@ impl BrowserType {
         firefox_user_prefs: Option<Map<String, String>>,
         #[doc = "Firefox user preferences. Learn more about the Firefox user preferences at\n[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox)."]
         firefox_user_prefs: Option<Map<String, String>>,
-        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."] handle_sighup: Option<
-            bool
-        >,
-        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."] handle_sigint: Option<
-            bool
-        >,
-        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."] handle_sigterm: Option<
-            bool
-        >,
+        handle_s_i_g_h_u_p : Option < bool >,
+        handle_s_i_g_i_n_t : Option < bool >,
+        handle_s_i_g_t_e_r_m : Option < bool >,
         #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
         headless: Option<bool>,
         #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care. Defaults to `false`."]
@@ -951,7 +945,7 @@ impl BrowserType {
         accept_downloads: Option<bool>,
         #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
         args: Option<Vec<String>>,
-        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_csp: Option<bool>,
+        #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_c_s_p: Option<bool>,
         #[doc = "Browser distribution channel."] channel: Option<BrowserChannel>,
         #[doc = "Enable Chromium sandboxing. Defaults to `true`."] chromium_sandbox: Option<bool>,
         #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
@@ -969,17 +963,11 @@ impl BrowserType {
         #[doc = "Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is\nresolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled\nChromium, Firefox or WebKit, use at your own risk."]
         executable_path: Option<path>,
         #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
-        extra_http_headers: Option<Map<String, String>>,
+        extra_h_t_t_p_headers: Option<Map<String, String>>,
         #[doc = ""] geolocation: Option<NotImplementedYet>,
-        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."] handle_sighup: Option<
-            bool
-        >,
-        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."] handle_sigint: Option<
-            bool
-        >,
-        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."] handle_sigterm: Option<
-            bool
-        >,
+        handle_s_i_g_h_u_p : Option < bool >,
+        handle_s_i_g_i_n_t : Option < bool >,
+        handle_s_i_g_t_e_r_m : Option < bool >,
         has_touch : Option < bool >,
         #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
         headless: Option<bool>,
@@ -992,7 +980,7 @@ impl BrowserType {
         #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care."]
         ignore_default_args: Option<Vec<String>>,
         #[doc = "Whether to ignore HTTPS errors during navigation. Defaults to `false`."]
-        ignore_https_errors: Option<bool>,
+        ignore_h_t_t_p_s_errors: Option<bool>,
         #[doc = "Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported\nin Firefox."]
         is_mobile: Option<bool>,
         #[doc = "Whether or not to enable JavaScript in the context. Defaults to `true`."]
@@ -1055,15 +1043,9 @@ impl BrowserType {
         executable_path: Option<path>,
         #[doc = "Firefox user preferences. Learn more about the Firefox user preferences at\n[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox)."]
         firefox_user_prefs: Option<Map<String, String>>,
-        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."] handle_sighup: Option<
-            bool
-        >,
-        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."] handle_sigint: Option<
-            bool
-        >,
-        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."] handle_sigterm: Option<
-            bool
-        >,
+        handle_s_i_g_h_u_p : Option < bool >,
+        handle_s_i_g_i_n_t : Option < bool >,
+        handle_s_i_g_t_e_r_m : Option < bool >,
         #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
         headless: Option<bool>,
         #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is\ngiven, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`."]
@@ -1118,7 +1100,7 @@ impl CDPSession {
 #[doc = "Extends Browser"]
 impl ChromiumBrowser {
     #[doc = "Returns the newly created browser session."]
-    fn new_browser_cdp_session(&self) -> Result<CDPSession, Arc<Error>> { todo!() }
+    fn new_browser_c_d_p_session(&self) -> Result<CDPSession, Arc<Error>> { todo!() }
     #[doc = "Only one trace can be active at a time per browser."]
     fn start_tracing(
         &self,
@@ -1140,7 +1122,7 @@ impl ChromiumBrowserContext {
     #[doc = "All existing background pages in the context."]
     fn background_pages(&self) -> Result<Vec<Page>, Error> { todo!() }
     #[doc = "Returns the newly created session."]
-    fn new_cdp_session(
+    fn new_c_d_p_session(
         &self,
         #[doc = "Page to create new session for."] page: Page
     ) -> Result<CDPSession, Arc<Error>> {
@@ -1164,7 +1146,7 @@ enum ChromiumBrowserContextEvent {
 #[doc = "Coverage gathers information about parts of JavaScript and CSS that were used by the page.\n\nAn example of using JavaScript coverage to produce Istanbul report for page load:\n\n```js\nconst { chromium } = require('playwright');\nconst v8toIstanbul = require('v8-to-istanbul');\n\n(async() => {\n  const browser = await chromium.launch();\n  const page = await browser.newPage();\n  await page.coverage.startJSCoverage();\n  await page.goto('https://chromium.org');\n  const coverage = await page.coverage.stopJSCoverage();\n  for (const entry of coverage) {\n    const converter = new v8toIstanbul('', 0, { source: entry.source });\n    await converter.load();\n    converter.applyCoverage(entry.functions);\n    console.log(JSON.stringify(converter.toIstanbul()));\n  }\n  await browser.close();\n})();\n```\n"]
 impl ChromiumCoverage {
     #[doc = "Returns coverage is started"]
-    fn start_css_coverage(
+    fn start_c_s_s_coverage(
         &self,
         #[doc = "options"]
         #[doc = "Whether to reset coverage on every navigation. Defaults to `true`."]
@@ -1173,7 +1155,7 @@ impl ChromiumCoverage {
         todo!()
     }
     #[doc = "Returns coverage is started\n\n> NOTE: Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on\nthe page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have\n`__playwright_evaluation_script__` as their URL."]
-    fn start_js_coverage(
+    fn start_j_s_coverage(
         &self,
         #[doc = "options"]
         #[doc = "Whether anonymous scripts generated by the page should be reported. Defaults to `false`."]
@@ -1184,9 +1166,9 @@ impl ChromiumCoverage {
         todo!()
     }
     #[doc = "Returns the array of coverage reports for all stylesheets\n\n> NOTE: CSS Coverage doesn't include dynamically injected style tags without sourceURLs."]
-    fn stop_css_coverage(&self) -> Result<Vec<NotImplementedYet>, Arc<Error>> { todo!() }
+    fn stop_c_s_s_coverage(&self) -> Result<Vec<NotImplementedYet>, Arc<Error>> { todo!() }
     #[doc = "Returns the array of coverage reports for all scripts\n\n> NOTE: JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are reported."]
-    fn stop_js_coverage(&self) -> Result<Vec<NotImplementedYet>, Arc<Error>> { todo!() }
+    fn stop_j_s_coverage(&self) -> Result<Vec<NotImplementedYet>, Arc<Error>> { todo!() }
 }
 #[doc = "`ConsoleMessage` objects are dispatched by page via the [`event: Page.console`] event."]
 impl ConsoleMessage {
@@ -1460,7 +1442,7 @@ impl ElementHandle {
         todo!()
     }
     #[doc = "Returns the `element.innerHTML`."]
-    fn inner_html(&self) -> Result<String, Arc<Error>> { todo!() }
+    fn inner_h_t_m_l(&self) -> Result<String, Arc<Error>> { todo!() }
     #[doc = "Returns the `element.innerText`."]
     fn inner_text(&self) -> Result<String, Arc<Error>> { todo!() }
     #[doc = "Returns whether the element is checked. Throws if the element is not a checkbox or radio input."]
@@ -1957,7 +1939,7 @@ impl Frame {
         todo!()
     }
     #[doc = "Returns `element.innerHTML`."]
-    fn inner_html(
+    fn inner_h_t_m_l(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
@@ -2261,7 +2243,7 @@ impl Frame {
         todo!()
     }
     #[doc = "Waits for the frame to navigate to the given URL.\n\n```js\nawait frame.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation\nawait frame.waitForURL('**/target.html');\n```\n\n```java\nframe.click(\"a.delayed-navigation\"); // Clicking the link will indirectly cause a navigation\nframe.waitForURL(\"**/target.html\");\n```\n\n```python async\nawait frame.click(\"a.delayed-navigation\") # clicking the link will indirectly cause a navigation\nawait frame.wait_for_url(\"**/target.html\")\n```\n\n```python sync\nframe.click(\"a.delayed-navigation\") # clicking the link will indirectly cause a navigation\nframe.wait_for_url(\"**/target.html\")\n```\n"]
-    fn wait_for_url(
+    fn wait_for_u_r_l(
         &self,
         #[doc = "A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation."]
         url: NotImplementedYet,
@@ -2845,7 +2827,7 @@ impl Page {
         todo!()
     }
     #[doc = "Returns `element.innerHTML`."]
-    fn inner_html(
+    fn inner_h_t_m_l(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
@@ -2964,7 +2946,7 @@ impl Page {
         #[doc = "The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to the current working\ndirectory. If no path is provided, the PDF won't be saved to the disk."]
         path: Option<path>,
         #[doc = "Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format`\noptions. Defaults to `false`, which will scale the content to fit the paper size."]
-        prefer_css_page_size: Option<bool>,
+        prefer_c_s_s_page_size: Option<bool>,
         #[doc = "Print background graphics. Defaults to `false`."] print_background: Option<bool>,
         #[doc = "Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2."]
         scale: Option<f64>,
@@ -3096,7 +3078,7 @@ impl Page {
         todo!()
     }
     #[doc = "The extra HTTP headers will be sent with every request the page initiates.\n\n> NOTE: [`method: Page.setExtraHTTPHeaders`] does not guarantee the order of headers in the outgoing requests."]
-    fn set_extra_http_headers(
+    fn set_extra_h_t_t_p_headers(
         &self,
         #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
         headers: Map<String, String>
@@ -3363,7 +3345,7 @@ impl Page {
         todo!()
     }
     #[doc = "Waits for the main frame to navigate to the given URL.\n\n```js\nawait page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation\nawait page.waitForURL('**/target.html');\n```\n\n```java\npage.click(\"a.delayed-navigation\"); // Clicking the link will indirectly cause a navigation\npage.waitForURL(\"**/target.html\");\n```\n\n```python async\nawait page.click(\"a.delayed-navigation\") # clicking the link will indirectly cause a navigation\nawait page.wait_for_url(\"**/target.html\")\n```\n\n```python sync\npage.click(\"a.delayed-navigation\") # clicking the link will indirectly cause a navigation\npage.wait_for_url(\"**/target.html\")\n```\n\nShortcut for main frame's [`method: Frame.waitForURL`]."]
-    fn wait_for_url(
+    fn wait_for_u_r_l(
         &self,
         #[doc = "A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation."]
         url: NotImplementedYet,
@@ -3410,7 +3392,7 @@ impl Page {
         todo!()
     }
     #[doc = "> NOTE: In most cases, you should use [`method: Page.waitForEvent`].\n\nWaits for given `event` to fire. If predicate is provided, it passes event's value into the `predicate` function and\nwaits for `predicate(event)` to return a truthy value. Will throw an error if the socket is closed before the `event` is\nfired."]
-    fn wait_for_event_2(
+    fn wait_for_event2(
         &self,
         #[doc = "Event name, same one typically passed into `*.on(event)`."] event: String,
         #[doc = "options"]
@@ -3559,7 +3541,7 @@ enum PageEventType {
     #[doc = "Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**\neither [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will\n[freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and\nactions like click will never finish.\n\n> NOTE: When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed."]
     Dialog,
     #[doc = "Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)\nevent is dispatched."]
-    DomContentLoaded,
+    DOMContentLoaded,
     #[doc = "Emitted when attachment download started. User can access basic file operations on downloaded content via the passed\n`Download` instance.\n\n> NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the\ndownloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not\nperformed and user has no access to the downloaded files."]
     Download,
     #[doc = "Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can\nrespond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.\n\n```js\npage.on('filechooser', async (fileChooser) => {\n  await fileChooser.setFiles('/tmp/myfile.pdf');\n});\n```\n\n```java\npage.onFileChooser(fileChooser -> {\n  fileChooser.setFiles(Paths.get(\"/tmp/myfile.pdf\"));\n});\n```\n\n```py\npage.on(\"filechooser\", lambda file_chooser: file_chooser.set_files(\"/tmp/myfile.pdf\"))\n```\n"]
@@ -3599,7 +3581,7 @@ enum PageEvent {
     #[doc = "Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**\neither [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will\n[freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and\nactions like click will never finish.\n\n> NOTE: When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed."]
     Dialog(Dialog),
     #[doc = "Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)\nevent is dispatched."]
-    DomContentLoaded(Page),
+    DOMContentLoaded(Page),
     #[doc = "Emitted when attachment download started. User can access basic file operations on downloaded content via the passed\n`Download` instance.\n\n> NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the\ndownloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not\nperformed and user has no access to the downloaded files."]
     Download(Download),
     #[doc = "Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can\nrespond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.\n\n```js\npage.on('filechooser', async (fileChooser) => {\n  await fileChooser.setFiles('/tmp/myfile.pdf');\n});\n```\n\n```java\npage.onFileChooser(fileChooser -> {\n  fileChooser.setFiles(Paths.get(\"/tmp/myfile.pdf\"));\n});\n```\n\n```py\npage.on(\"filechooser\", lambda file_chooser: file_chooser.set_files(\"/tmp/myfile.pdf\"))\n```\n"]
@@ -3674,7 +3656,7 @@ impl Request {
     #[doc = "Request's post body in a binary form, if any."]
     fn post_data_buffer(&self) -> Result<Option<Buffer>, Error> { todo!() }
     #[doc = "Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.\n\nWhen the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.\nOtherwise it will be parsed as JSON."]
-    fn post_data_json(&self) -> Result<Option<any>, Error> { todo!() }
+    fn post_data_j_s_o_n(&self) -> Result<Option<any>, Error> { todo!() }
     #[doc = "Request that was redirected by the server to this one, if any.\n\nWhen the server responds with a redirect, Playwright creates a new `Request` object. The two requests are connected by\n`redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to\nconstruct the whole redirect chain by repeatedly calling `redirectedFrom()`.\n\nFor example, if the website `http://example.com` redirects to `https://example.com`:\n\n```js\nconst response = await page.goto('http://example.com');\nconsole.log(response.request().redirectedFrom().url()); // 'http://example.com'\n```\n\n```java\nResponse response = page.navigate(\"http://example.com\");\nSystem.out.println(response.request().redirectedFrom().url()); // \"http://example.com\"\n```\n\n```python async\nresponse = await page.goto(\"http://example.com\")\nprint(response.request.redirected_from.url) # \"http://example.com\"\n```\n\n```python sync\nresponse = page.goto(\"http://example.com\")\nprint(response.request.redirected_from.url) # \"http://example.com\"\n```\n\nIf the website `https://google.com` has no redirects:\n\n```js\nconst response = await page.goto('https://google.com');\nconsole.log(response.request().redirectedFrom()); // null\n```\n\n```java\nResponse response = page.navigate(\"https://google.com\");\nSystem.out.println(response.request().redirectedFrom()); // null\n```\n\n```python async\nresponse = await page.goto(\"https://google.com\")\nprint(response.request.redirected_from) # None\n```\n\n```python sync\nresponse = page.goto(\"https://google.com\")\nprint(response.request.redirected_from) # None\n```\n"]
     fn redirected_from(&self) -> Result<Option<Request>, Error> { todo!() }
     #[doc = "New request issued by the browser if the server responded with redirect.\n\nThis method is the opposite of [`method: Request.redirectedFrom`]:\n\n```js\nconsole.log(request.redirectedFrom().redirectedTo() === request); // true\n```\n\n```java\nSystem.out.println(request.redirectedFrom().redirectedTo() == request); // true\n```\n\n```py\nassert request.redirected_from.redirected_to == request\n```\n"]
@@ -3885,7 +3867,7 @@ impl WebSocket {
         todo!()
     }
     #[doc = "> NOTE: In most cases, you should use [`method: WebSocket.waitForEvent`].\n\nWaits for given `event` to fire. If predicate is provided, it passes event's value into the `predicate` function and\nwaits for `predicate(event)` to return a truthy value. Will throw an error if the socket is closed before the `event` is\nfired."]
-    fn wait_for_event_2(
+    fn wait_for_event2(
         &self,
         #[doc = "Event name, same one typically passed into `*.on(event)`."] event: String,
         #[doc = "options"]
