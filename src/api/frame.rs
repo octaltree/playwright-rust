@@ -390,7 +390,7 @@ impl Frame {
     /// The only difference between [`method: Frame.evaluate`] and [`method: Frame.evaluateHandle`] is that
     /// [`method: Frame.evaluateHandle`] returns `JSHandle`.
     ///
-    /// If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Promise], then
+    /// If the function, passed to the [`method: Frame.evaluateHandle`], returns a Promise, then
     /// [`method: Frame.evaluateHandle`] would wait for the promise to resolve and return its value.
     ///
     /// ```js
@@ -429,10 +429,10 @@ impl Frame {
 
     /// Returns the return value of `expression`.
     ///
-    /// If the function passed to the [`method: Frame.evaluate`] returns a [Promise], then [`method: Frame.evaluate`] would wait
+    /// If the function passed to the [`method: Frame.evaluate`] returns a Promise, then [`method: Frame.evaluate`] would wait
     /// for the promise to resolve and return its value.
     ///
-    /// If the function passed to the [`method: Frame.evaluate`] returns a non-[Serializable] value, then
+    /// If the function passed to the [`method: Frame.evaluate`] returns a non-Serializable value, then
     /// [`method: Frame.evaluate`] returns `undefined`. Playwright also supports transferring some additional values that are
     /// not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
     ///
@@ -464,7 +464,7 @@ impl Frame {
     /// `expression`. If no elements match the selector, the
     /// method throws an error.
     ///
-    /// If `expression` returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and
+    /// If `expression` returns a Promise, then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and
     /// return its value.
     ///
     /// Examples:
@@ -494,7 +494,7 @@ impl Frame {
     /// The method finds all elements matching the specified selector within the frame and passes an array of matched elements
     /// as a first argument to `expression`.
     ///
-    /// If `expression` returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and
+    /// If `expression` returns a Promise, then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and
     /// return its value.
     ///
     /// Examples:
