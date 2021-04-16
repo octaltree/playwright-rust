@@ -13,6 +13,36 @@ use crate::{
     }
 };
 
+/// At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`] and
+/// [`method: Frame.childFrames`] methods.
+///
+/// `Frame` object's lifecycle is controlled by three events, dispatched on the page object:
+/// - [`event: Page.frameAttached`] - fired when the frame gets attached to the page. A Frame can be attached to the page
+///  only once.
+/// - [`event: Page.frameNavigated`] - fired when the frame commits navigation to a different URL.
+/// - [`event: Page.frameDetached`] - fired when the frame gets detached from the page.  A Frame can be detached from the
+///  page only once.
+///
+/// An example of dumping frame tree:
+///
+/// ```js
+/// const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+///
+/// (async () => {
+///  const browser = await firefox.launch();
+///  const page = await browser.newPage();
+///  await page.goto('https://www.google.com/chrome/browser/canary.html');
+///  dumpFrameTree(page.mainFrame(), '');
+///  await browser.close();
+///
+///  function dumpFrameTree(frame, indent) {
+///    console.log(indent + frame.url());
+///    for (const child of frame.childFrames()) {
+///      dumpFrameTree(child, indent + '  ');
+///    }
+///  }
+/// })();
+/// ```
 pub struct Frame {
     inner: Weak<Impl>
 }

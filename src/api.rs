@@ -140,8 +140,8 @@ pub use worker::Worker;
 // ChromiumCoverage
 // Electron
 // ElectronApplication
-
 // FirefoxBrowser
+
 // Logger
 // WebKitBrowser
 // WebSocketFrame

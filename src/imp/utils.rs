@@ -122,8 +122,10 @@ impl From<(f64, f64)> for Position {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
 pub struct FloatRect {
+    /// the x coordinate of the element in pixels.
     x: f64,
     y: f64,
+    /// the width of the element in pixels.
     width: f64,
     height: f64
 }
