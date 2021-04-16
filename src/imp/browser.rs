@@ -100,9 +100,9 @@ pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
 
     pub(crate) proxy: Option<ProxySettings>,
 
-    pub(crate) viewport: Option<Viewport>,
+    pub(crate) viewport: Option<Option<Viewport>>,
     pub(crate) screen: Option<Viewport>,
-    pub(crate) no_default_viewport: Option<bool>,
+    pub(crate) no_viewport: Option<bool>,
     #[serde(rename = "ignoreHTTPSErrors")]
     pub(crate) ignore_https_errors: Option<bool>,
     #[serde(rename = "javaScriptEnabled")]

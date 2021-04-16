@@ -9,7 +9,9 @@ pub struct Viewport {
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ProxySettings {
+    /// Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or\n`socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
     pub server: String,
+    /// Optional coma-separated domains to bypass proxy, for example `\".com, chromium.org, .domain.com\"`.
     pub bypass: Option<String>,
     pub username: Option<String>,
     pub password: Option<String>
@@ -18,8 +20,11 @@ pub struct ProxySettings {
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Geolocation {
+    /// Latitude between -90 and 90.
     pub latitude: f64,
+    /// Longitude between -180 and 180.
     pub longitude: f64,
+    /// Non-negative accuracy value. Defaults to `0`.
     pub accuracy: Option<f64>
 }
 
@@ -53,6 +58,7 @@ pub struct Cookie {
     pub url: Option<String>,
     pub domain: Option<String>,
     pub path: Option<String>,
+    /// Optional Unix time in seconds.
     pub expires: Option<f64>,
     pub http_only: Option<bool>,
     pub secure: Option<bool>,
@@ -116,8 +122,10 @@ impl From<(f64, f64)> for Position {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
 pub struct FloatRect {
+    /// the x coordinate of the element in pixels.
     x: f64,
     y: f64,
+    /// the width of the element in pixels.
     width: f64,
     height: f64
 }
@@ -138,6 +146,15 @@ pub enum ElementState {
     Hidden,
     Stable,
     Visible
+}
+
+#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum WaitForSelectorState {
+    Attached,
+    Detached,
+    Visible,
+    Hidden
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
@@ -208,19 +225,29 @@ pub enum BrowserChannel {
 #[serde(rename_all = "camelCase")]
 pub struct SourceLocation {
     pub url: String,
+    /// 0-based line number in the resource.
     pub line_number: i32,
+    /// 0-based column number in the resource.
     pub column_number: i32
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ResponseTiming {
+    /// Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
     pub start_time: f64,
+    /// Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds\nrelative to `startTime`, -1 if not available.
     pub domain_lookup_start: f64,
+    /// Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds\nrelative to `startTime`, -1 if not available.
     pub domain_lookup_end: f64,
+    /// Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The\nvalue is given in milliseconds relative to `startTime`, -1 if not available.
     pub connect_start: f64,
+    /// Time immediately before the browser starts the handshake process to secure the current connection. The value is given in\nmilliseconds relative to `startTime`, -1 if not available.
     pub secure_connection_start: f64,
+    /// Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The\nvalue is given in milliseconds relative to `startTime`, -1 if not available.
     pub connect_end: f64,
+    /// Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value\nis given in milliseconds relative to `startTime`, -1 if not available.
     pub request_start: f64,
+    /// Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value\nis given in milliseconds relative to `startTime`, -1 if not available.
     pub response_start: f64
 }

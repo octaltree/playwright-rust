@@ -3,7 +3,8 @@ use crate::imp::{
     frame::Frame,
     prelude::*,
     utils::{
-        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType
+        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
+        WaitForSelectorState
     }
 };
 
@@ -197,7 +198,7 @@ impl ElementHandle {
         Ok(Some(f))
     }
 
-    pub(crate) async fn screenshot(&self, args: ScreenshotArgs) -> ArcResult<Vec<u8>> {
+    pub(crate) async fn screenshot(&self, args: ScreenshotArgs<'_>) -> ArcResult<Vec<u8>> {
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&&v)?;
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
@@ -366,10 +367,11 @@ type_args! {PressArgs, key}
 #[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ScreenshotArgs {
+pub(crate) struct ScreenshotArgs<'a> {
+    pub(crate) path: Option<&'a Path>,
     pub(crate) timeout: Option<f64>,
     pub(crate) r#type: Option<ScreenshotType>,
-    pub(crate) quality: Option<i32>,
+    pub(crate) quality: Option<i64>,
     pub(crate) omit_background: Option<bool>
 }
 
@@ -378,7 +380,7 @@ pub(crate) struct ScreenshotArgs {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WaitForSelectorArgs<'a> {
     selector: &'a str,
-    pub(crate) state: Option<ElementState>,
+    pub(crate) state: Option<WaitForSelectorState>,
     pub(crate) timeout: Option<f64>
 }
 

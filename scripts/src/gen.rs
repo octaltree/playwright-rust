@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate serde;
 
-use convert_case::{Case, Casing};
+use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
@@ -11,8 +11,8 @@ fn main() {
     println!("{}\n// vim: foldnestmax=0 ft=rust", t);
 }
 
-fn escape(s: String) -> String {
-    match s.as_str() {
+fn escape(s: &str) -> String {
+    match s {
         // keywords https://doc.rust-lang.org/book/appendix-01-keywords.html
         "as" | "async" | "await" | "break" | "const" | "continue" | "crate" | "dyn" | "else"
         | "enum" | "extern" | "false" | "fn" | "for" | "if" | "impl" | "in" | "let" | "loop"
@@ -26,7 +26,7 @@ fn escape(s: String) -> String {
         | "typeof" | "unsized" | "virtual" | "yield" => {
             format!("r#{}", s)
         }
-        _ => s
+        _ => s.into()
     }
 }
 
@@ -210,7 +210,7 @@ impl Interface {
             return quote! {};
         }
         let labels = es.clone().map(|e| {
-            let label = format_ident!("{}", e.body.name.to_case(Case::UpperCamel));
+            let label = format_ident!("{}", e.body.name.to_camel());
             let comment = &e.body.comment;
             quote! {
                 #[doc=#comment]
@@ -218,7 +218,7 @@ impl Interface {
             }
         });
         let bodies = es.map(|e| {
-            let label = format_ident!("{}", e.body.name.to_case(Case::UpperCamel));
+            let label = format_ident!("{}", e.body.name.to_camel());
             let t = &e.body.r#type;
             let comment = &e.body.comment;
             quote! {
@@ -303,7 +303,7 @@ impl ToTokens for Method<'_, '_> {
 }
 
 impl Method<'_, '_> {
-    fn name(&self) -> Ident { format_ident!("{}", escape(self.body.name.to_case(Case::Snake))) }
+    fn name(&self) -> Ident { format_ident!("{}", escape(&self.body.name.to_snake())) }
 }
 
 impl ToTokens for Property<'_, '_> {
@@ -319,7 +319,7 @@ impl ToTokens for Property<'_, '_> {
 }
 
 impl Property<'_, '_> {
-    fn name(&self) -> Ident { format_ident!("{}", &self.body.name.to_case(Case::Snake)) }
+    fn name(&self) -> Ident { format_ident!("{}", &self.body.name.to_snake()) }
 }
 
 impl ToTokens for Type {
@@ -526,5 +526,10 @@ impl Arg {
         }
     }
 
-    fn name(&self) -> Ident { format_ident!("{}", escape(self.name.to_case(Case::Snake))) }
+    fn name(&self) -> Ident { format_ident!("{}", escape(&self.name.to_snake())) }
+}
+
+#[test]
+fn case() {
+    assert_eq!("handleSIGINT".to_snake(), "handle_s_i_g_i_n_t");
 }

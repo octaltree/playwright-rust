@@ -7,6 +7,20 @@ use crate::{
     }
 };
 
+/// The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). `worker`
+/// event is emitted on the page object to signal a worker creation. `close` event is emitted on the worker object when the
+/// worker is gone.
+///
+/// ```js
+/// page.on('worker', worker => {
+///  console.log('Worker created: ' + worker.url());
+///  worker.on('close', worker => console.log('Worker destroyed: ' + worker.url()));
+/// });
+///
+/// console.log('Current workers:');
+/// for (const worker of page.workers())
+///  console.log('  ' + worker.url());
+/// ```
 pub struct Worker {
     inner: Weak<Impl>
 }
