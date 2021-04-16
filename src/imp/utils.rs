@@ -58,6 +58,7 @@ pub struct Cookie {
     pub url: Option<String>,
     pub domain: Option<String>,
     pub path: Option<String>,
+    /// Optional Unix time in seconds.
     pub expires: Option<f64>,
     pub http_only: Option<bool>,
     pub secure: Option<bool>,
