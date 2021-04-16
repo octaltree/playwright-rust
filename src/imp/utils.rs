@@ -225,12 +225,20 @@ pub struct SourceLocation {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ResponseTiming {
+    /// Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
     pub start_time: f64,
+    /// Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds\nrelative to `startTime`, -1 if not available.
     pub domain_lookup_start: f64,
+    /// Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds\nrelative to `startTime`, -1 if not available.
     pub domain_lookup_end: f64,
+    /// Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The\nvalue is given in milliseconds relative to `startTime`, -1 if not available.
     pub connect_start: f64,
+    /// Time immediately before the browser starts the handshake process to secure the current connection. The value is given in\nmilliseconds relative to `startTime`, -1 if not available.
     pub secure_connection_start: f64,
+    /// Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The\nvalue is given in milliseconds relative to `startTime`, -1 if not available.
     pub connect_end: f64,
+    /// Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value\nis given in milliseconds relative to `startTime`, -1 if not available.
     pub request_start: f64,
+    /// Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value\nis given in milliseconds relative to `startTime`, -1 if not available.
     pub response_start: f64
 }
