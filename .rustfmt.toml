@@ -1,5 +1,7 @@
 edition = "2018"
+unstable_features = true
 fn_single_line = true
-normalize_comments = true
 trailing_comma = "Never"
 imports_granularity = "Crate"
+normalize_comments = true
+normalize_doc_attributes = true

@@ -63,14 +63,14 @@ pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     #[serde(rename = "handleSIGHUP")]
     pub(crate) handle_sighup: Option<bool>,
     pub(crate) timeout: Option<f64>,
-    pub(crate) env: Option<Map<String, Value>>,
-    pub(crate) headless: Option<bool>,
     pub(crate) devtools: Option<bool>,
     pub(crate) proxy: Option<ProxySettings>,
     #[serde(rename = "downloadsPath")]
     pub(crate) downloads: Option<&'c Path>,
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>,
+    pub(crate) env: Option<Map<String, Value>>,
+    pub(crate) headless: Option<bool>,
     pub(crate) chromium_sandbox: Option<bool>,
     pub(crate) firefox_user_prefs: Option<Map<String, Value>>,
     pub(crate) channel: Option<BrowserChannel>

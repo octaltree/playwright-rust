@@ -43,22 +43,6 @@ impl BrowserType {
     /// });
     /// ```
     ///
-    /// ```java
-    ///// Or "firefox" or "webkit".
-    /// Browser browser = chromium.launch(new BrowserType.LaunchOptions()
-    ///  .setIgnoreDefaultArgs(Arrays.asList("--mute-audio")));
-    /// ```
-    /// ```python async
-    /// browser = await playwright.chromium.launch( # or "firefox" or "webkit".
-    ///    ignore_default_args=["--mute-audio"]
-    /// )
-    /// ```
-    /// ```python sync
-    /// browser = playwright.chromium.launch( # or "firefox" or "webkit".
-    ///    ignore_default_args=["--mute-audio"]
-    /// )
-    /// ```
-    /// 
     /// > **Chromium-only** Playwright can also be used to control the Google Chrome or Microsoft Edge browsers, but it works
     /// best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use
     /// `executablePath` option with extreme caution.
@@ -117,37 +101,49 @@ impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
     }
 
     setter! {
-        #[doc = "Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is\nresolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox\nor WebKit, use at your own risk."]
+        /// Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
+        /// resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox
+        /// or WebKit, use at your own risk.
         executable: Option<&'a Path>,
-        #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
+        /// Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+        /// [here](http://peter.sh/experiments/chromium-command-line-switches/).
         args: Option<&'b [String]>,
-        #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care. Defaults to `false`."]
+        /// If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;
+        /// use with care. Defaults to `false`.
         ignore_all_default_args: Option<bool>,
-        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."]
+        /// Close the browser process on Ctrl-C. Defaults to `true`.
         handle_sigint: Option<bool>,
-        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."]
+        /// Close the browser process on SIGTERM. Defaults to `true`.
         handle_sigterm: Option<bool>,
-        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."]
+        /// Close the browser process on SIGHUP. Defaults to `true`.
         handle_sighup: Option<bool>,
-        #[doc = "Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
+        /// Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+        /// disable timeout.
         timeout: Option<f64>,
-        #[doc = "**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`\noption will be set `false`."]
+        /// **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
+        /// option will be set `false`.
         devtools: Option<bool>,
-        #[doc = "Network proxy settings."]
+        /// Network proxy settings.
         proxy: Option<ProxySettings>,
-        #[doc = "If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is\ndeleted when browser is closed."]
+        /// If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
+        /// deleted when browser is closed.
         downloads: Option<&'c Path>,
-        #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on."]
+        /// Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
         slowmo: Option<f64>,
-        #[doc = "Specify environment variables that will be visible to the browser. Defaults to `process.env`."]
+        /// Specify environment variables that will be visible to the browser. Defaults to `process.env`.
         env: Option<Map<String, Value>>,
-        #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
+        /// Whether to run browser in headless mode. More details for
+        /// [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+        /// [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+        /// `devtools` option is `true`.
         headless: Option<bool>,
-        #[doc = "Enable Chromium sandboxing. Defaults to `false`."]
+        /// Enable Chromium sandboxing. Defaults to `false`.
         chromium_sandbox: Option<bool>,
-        #[doc = "Firefox user preferences. Learn more about the Firefox user preferences at\n[`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox)."]
+        /// Firefox user preferences. Learn more about the Firefox user preferences at
+        /// [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
         firefox_user_prefs: Option<Map<String, Value>>,
-        #[doc = "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge)."]
+        /// Browser distribution channel. Read more about using
+        /// [Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge).
         channel: Option<BrowserChannel>
     }
     //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is\ngiven, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`."]
@@ -181,77 +177,96 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
     }
 
     setter! {
-        #[doc = "Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is\nresolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled\nChromium, Firefox or WebKit, use at your own risk."]
+        /// Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
+        /// resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled
+        /// Chromium, Firefox or WebKit, use at your own risk.
         executable: Option<&'b Path>,
-        #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
+        /// Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+        /// [here](http://peter.sh/experiments/chromium-command-line-switches/).
         args: Option<&'c [String]>,
-        #[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care. Defaults to `false`."]
+        /// If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;
+        /// use with care. Defaults to `false`.
         ignore_all_default_args: Option<bool>,
-        #[doc = "Close the browser process on SIGHUP. Defaults to `true`."]
+        /// Close the browser process on SIGHUP. Defaults to `true`.
         handle_sighup: Option<bool>,
-        #[doc = "Close the browser process on Ctrl-C. Defaults to `true`."]
+        /// Close the browser process on Ctrl-C. Defaults to `true`.
         handle_sigint: Option<bool>,
-        #[doc = "Close the browser process on SIGTERM. Defaults to `true`."]
+        /// Close the browser process on SIGTERM. Defaults to `true`.
         handle_sigterm: Option<bool>,
-        #[doc = "Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
+        /// Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+        /// disable timeout.
         timeout: Option<f64>,
-        #[doc = "Specify environment variables that will be visible to the browser. Defaults to `process.env`."]
+        /// Specify environment variables that will be visible to the browser. Defaults to `process.env`.
         env: Option<Map<String, Value>>,
-        #[doc = "Whether to run browser in headless mode. More details for\n[Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and\n[Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the\n`devtools` option is `true`."]
+        /// Whether to run browser in headless mode. More details for
+        /// [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+        /// [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+        /// `devtools` option is `true`.
         headless: Option<bool>,
-        #[doc = "**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`\noption will be set `false`."]
+        /// **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
+        /// option will be set `false`.
         devtools: Option<bool>,
-        #[doc = "Network proxy settings."]
+        /// Network proxy settings.
         proxy: Option<ProxySettings>,
-        #[doc = "If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is\ndeleted when browser is closed."]
+        /// If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
+        /// deleted when browser is closed.
         downloads: Option<&'d Path>,
-        #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
+        /// Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+        /// Defaults to 0.
         slowmo: Option<f64>,
-        #[doc = "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport."]
+        /// Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
         viewport: Option<Option<Viewport>>,
-        #[doc = "Does not enforce fixed viewport, allows resizing window in the headed mode."]
+        /// Does not enforce fixed viewport, allows resizing window in the headed mode.
         no_viewport: Option<bool>,
-        #[doc = "Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`\nis set."]
+        /// Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
+        /// is set.
         screen: Option<Viewport>,
-        #[doc = "Whether to ignore HTTPS errors during navigation. Defaults to `false`."]
+        /// Whether to ignore HTTPS errors during navigation. Defaults to `false`.
         ignore_https_errors: Option<bool>,
-        #[doc = "Whether or not to enable JavaScript in the context. Defaults to `true`."]
+        /// Whether or not to enable JavaScript in the context. Defaults to `true`.
         js_enabled: Option<bool>,
-        #[doc = "Toggles bypassing page's Content-Security-Policy."]
+        /// Toggles bypassing page's Content-Security-Policy.
         bypass_csp: Option<bool>,
-        #[doc = "Specific user agent to use in this context."]
+        /// Specific user agent to use in this context.
         user_agent: Option<&'e str>,
-        #[doc = "Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language`\nrequest header value as well as number and date formatting rules."]
+        /// Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language`
+        /// request header value as well as number and date formatting rules.
         locale: Option<&'f str>,
-        #[doc = "Changes the timezone of the context. See\n[ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)\nfor a list of supported timezone IDs."]
+        /// Changes the timezone of the context. See
+        /// [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+        /// for a list of supported timezone IDs.
         timezone_id: Option<&'g str>,
-        #[doc = ""]
         geolocation: Option<Geolocation>,
-        #[doc = "A list of permissions to grant to all pages in this context. See [`method: BrowserContext.grantPermissions`] for more\ndetails."]
+        /// A list of permissions to grant to all pages in this context. See [`method: BrowserContext.grantPermissions`] for more
+        /// details.
         permissions: Option<&'h [String]>,
-        #[doc = "An object containing additional HTTP headers to be sent with every request. All header values must be strings."]
+        /// An object containing additional HTTP headers to be sent with every request. All header values must be strings.
         extra_http_headers: Option<HashMap<String, String>>,
-        #[doc = "Whether to emulate network being offline. Defaults to `false`."]
+        /// Whether to emulate network being offline. Defaults to `false`.
         offline: Option<bool>,
-        #[doc = "Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)."]
+        /// Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
         http_credentials: Option<&'i HttpCredentials>,
-        #[doc = "Specify device scale factor (can be thought of as dpr). Defaults to `1`."]
+        /// Specify device scale factor (can be thought of as dpr). Defaults to `1`.
         device_scale_factor: Option<f64>,
-        #[doc = "Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported\nin Firefox."]
+        /// Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported
+        /// in Firefox.
         is_mobile: Option<bool>,
         /// Specifies if viewport supports touch events. Defaults to false.
-        has_touch : Option < bool >,
-        #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
+        has_touch: Option<bool>,
+        /// Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+        /// [`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
         color_scheme: Option<ColorScheme>,
-        #[doc = "Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled."]
+        /// Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
         accept_downloads: Option<bool>,
-        #[doc = "Enable Chromium sandboxing. Defaults to `true`."]
+        /// Enable Chromium sandboxing. Defaults to `true`.
         chromium_sandbox: Option<bool>,
-        #[doc = "Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make\nsure to await [`method: BrowserContext.close`] for videos to be saved."]
+        /// Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
+        /// sure to await [`method: BrowserContext.close`] for videos to be saved.
         record_video: Option<RecordVideo<'j>>,
-        #[doc = "Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not\nspecified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved."]
+        /// Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
+        /// specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved.
         record_har: Option<RecordHar<'k>>,
-        #[doc = "Browser distribution channel."]
+        /// Browser distribution channel.
         channel: Option<BrowserChannel>
     }
     //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care."]
