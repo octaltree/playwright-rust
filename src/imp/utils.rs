@@ -112,8 +112,8 @@ pub enum MouseButton {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
 pub struct Position {
-    x: f64,
-    y: f64
+    pub x: f64,
+    pub y: f64
 }
 
 impl From<(f64, f64)> for Position {
@@ -123,11 +123,11 @@ impl From<(f64, f64)> for Position {
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
 pub struct FloatRect {
     /// the x coordinate of the element in pixels.
-    x: f64,
-    y: f64,
+    pub x: f64,
+    pub y: f64,
     /// the width of the element in pixels.
-    width: f64,
-    height: f64
+    pub width: f64,
+    pub height: f64
 }
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
@@ -186,19 +186,20 @@ impl<'a> From<&'a str> for Length<'a> {
     fn from(x: &'a str) -> Self { Self::WithUnit(x) }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub struct PdfMargins<'a, 'b, 'c, 'd> {
-    top: Option<Length<'a>>,
-    right: Option<Length<'b>>,
-    bottom: Option<Length<'c>>,
-    left: Option<Length<'d>>
+    pub top: Option<Length<'a>>,
+    pub right: Option<Length<'b>>,
+    pub bottom: Option<Length<'c>>,
+    pub left: Option<Length<'d>>
 }
 
 #[derive(Debug, Serialize, PartialEq)]
 pub struct File {
-    name: String,
-    mime: String,
-    buffer: String
+    pub name: String,
+    pub mime: String,
+    pub buffer: String
 }
 
 impl File {

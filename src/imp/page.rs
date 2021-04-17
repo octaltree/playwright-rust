@@ -471,7 +471,7 @@ impl RemoteObject for Page {
                 self.on_frame_detached(ctx, guid)?;
             }
             "load" => self.emit_event(Evt::Load),
-            "domcontentloaded" => self.emit_event(Evt::DOMContentLoaded),
+            "domcontentloaded" => self.emit_event(Evt::DomContentLoaded),
             "crash" => self.emit_event(Evt::Crash),
             "console" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
@@ -525,7 +525,7 @@ pub(crate) enum Evt {
     Dialog,
     Download,
     FileChooser,
-    DOMContentLoaded,
+    DomContentLoaded,
     PageError,
     Request(Weak<Request>),
     Response(Weak<Response>),
@@ -554,7 +554,7 @@ pub enum EventType {
     Dialog,
     Download,
     FileChooser,
-    DOMContentLoaded,
+    DomContentLoaded,
     PageError,
     Request,
     Response,
@@ -580,7 +580,7 @@ impl Event for Evt {
             Self::Dialog => EventType::Dialog,
             Self::Download => EventType::Download,
             Self::FileChooser => EventType::FileChooser,
-            Self::DOMContentLoaded => EventType::DOMContentLoaded,
+            Self::DomContentLoaded => EventType::DomContentLoaded,
             Self::PageError => EventType::PageError,
             Self::Request(_) => EventType::Request,
             Self::Response(_) => EventType::Response,
@@ -679,7 +679,8 @@ pub(crate) struct PdfArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j> {
     pub(crate) height: Option<Length<'f>>,
     #[serde(rename = "preferCSSPageSize")]
     pub(crate) prefer_css_page_size: Option<bool>,
-    pub(crate) margin: Option<PdfMargins<'g, 'h, 'i, 'j>>
+    pub(crate) margin: Option<PdfMargins<'g, 'h, 'i, 'j>>,
+    pub(crate) path: Option<PathBuf>
 }
 
 #[skip_serializing_none]
@@ -691,15 +692,16 @@ pub(crate) struct ScreenshotArgs {
     pub(crate) quality: Option<i32>,
     pub(crate) omit_background: Option<bool>,
     pub(crate) full_page: Option<bool>,
-    pub(crate) clip: Option<FloatRect>
+    pub(crate) clip: Option<FloatRect>,
+    pub(crate) path: Option<PathBuf>
 }
 
 #[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct EmulateMediaArgs {
-    pub(crate) media: Option<Media>,
-    pub(crate) color_scheme: Option<ColorScheme>
+    pub(crate) media: Option<Option<Media>>,
+    pub(crate) color_scheme: Option<Option<ColorScheme>>
 }
 
 #[derive(Serialize)]
