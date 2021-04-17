@@ -387,7 +387,7 @@ pub enum Event {
     /// [`event: BrowserContext.page`], but only for popups relevant to this page.
     ///
     /// The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
-    /// popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
+    /// popup with `window.open('http://example.com')`, this event will fire when the network request to <http://example.com> is
     /// done and its response has started loading in the popup.
     ///
     /// ```js
@@ -401,7 +401,7 @@ pub enum Event {
     /// > NOTE: Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it
     /// in most cases).
     Popup(Page),
-    /// Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
+    /// Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see
     /// [`method: Page.route`] or [`method: BrowserContext.route`].
     Request(Request),
     /// Emitted when a request fails, for example by timing out.
@@ -412,7 +412,7 @@ pub enum Event {
     /// Emitted when a request finishes successfully after downloading the response body. For a successful response, the
     /// sequence of events is `request`, `response` and `requestfinished`.
     RequestFinished(Request),
-    /// Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+    /// Emitted when response status and headers are received for a request. For a successful response, the sequence of events
     /// is `request`, `response` and `requestfinished`.
     Response(Response),
     WebSocket(WebSocket),
