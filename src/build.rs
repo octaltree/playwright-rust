@@ -4,8 +4,7 @@ use std::{
     path::{Path, PathBuf}
 };
 
-const DRIVER_VERSION: &str = "1.11.0-next-1617404897000";
-// playwright-python ea66054d
+const DRIVER_VERSION: &str = "1.11.0-next-1618513089000";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();
