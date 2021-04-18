@@ -37,6 +37,7 @@ serde_with = { version = "1.8.0", default-features = false, features = ["macros"
 
 [dev-dependencies]
 env_logger = "0.8.3"
+warp = "0.3.1"
 
 [features]
 default = ["chrono", "rt-tokio"]

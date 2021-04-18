@@ -3,6 +3,7 @@ use crate::{
     imp::{core::*, prelude::*, response::Response as Impl, utils::Header}
 };
 
+#[derive(Debug)]
 pub struct Response {
     inner: Weak<Impl>
 }

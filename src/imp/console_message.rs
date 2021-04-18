@@ -12,12 +12,12 @@ impl ConsoleMessage {
         #[derive(Deserialize)]
         struct De {
             location: SourceLocation,
-            args: Vec<Str<Guid>>
+            args: Vec<OnlyGuid>
         }
         let De { location, args } = serde_json::from_value(channel.initializer.clone())?;
         let args = args
             .iter()
-            .map(|g| get_object!(ctx, g, JsHandle))
+            .map(|OnlyGuid { guid }| get_object!(ctx, guid, JsHandle))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self {
             channel,

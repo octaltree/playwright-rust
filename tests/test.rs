@@ -3,6 +3,13 @@ mod browser_context;
 mod browser_type;
 mod page;
 
+#[cfg(feature = "rt-async-std")]
+use async_std::{task::sleep, task::spawn};
+#[cfg(feature = "rt-actix")]
+use tokio::{task::spawn, time::sleep};
+#[cfg(feature = "rt-tokio")]
+use tokio::{task::spawn, time::sleep};
+
 use playwright::Playwright;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -19,6 +26,8 @@ playwright::runtime_test!(firefox, all(Which::Firefox).await);
 // playwright::runtime_test!(webkit, all(Which::Webkit).await);
 
 async fn all(which: Which) {
+    let port = free_local_port().unwrap();
+    start_test_server(port).await;
     let playwright = playwright_with_driver().await;
     let browser_type = match which {
         Which::Webkit => playwright.webkit(),
@@ -30,7 +39,7 @@ async fn all(which: Which) {
     let browser_context = browser::all(browser, which).await;
     assert_ne!(persistent, browser_context);
     let page = browser_context::all(&browser_context, which).await;
-    page::all(&browser_context, page, which).await;
+    page::all(&browser_context, page, port, which).await;
 }
 
 fn install_browser(p: &Playwright, which: Which) {
@@ -48,6 +57,26 @@ async fn playwright_with_driver() -> Playwright {
     let mut playwright = Playwright::with_driver(driver).await.unwrap();
     let _ = playwright.driver();
     playwright
+}
+
+async fn start_test_server(port: u16) {
+    use warp::Filter;
+    let route = warp::path("static").and(warp::fs::dir("tests/server"));
+    spawn(async move {
+        warp::serve(route).run(([127, 0, 0, 1], port)).await;
+    });
+}
+
+fn free_local_port() -> Option<u16> {
+    let socket = std::net::SocketAddrV4::new(std::net::Ipv4Addr::LOCALHOST, 0);
+    std::net::TcpListener::bind(socket)
+        .and_then(|listener| listener.local_addr())
+        .map(|addr| addr.port())
+        .ok()
+}
+
+fn url_static(port: u16, path: &str) -> String {
+    format!("http://localhost:{}/static{}", port, path)
 }
 
 // use playwright::{

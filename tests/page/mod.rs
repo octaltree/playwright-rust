@@ -2,10 +2,15 @@ use super::Which;
 use futures::stream::StreamExt;
 use playwright::api::{page, BrowserContext, Page};
 
-pub async fn all(c: &BrowserContext, p1: Page, which: Which) {
+pub async fn all(c: &BrowserContext, p1: Page, port: u16, which: Which) {
     eq_context_close(c, &p1).await;
+    set_timeout(c).await;
     focus_should_work(&p1).await;
     reload_should_worker(&p1).await;
+    if which != Which::Firefox {
+        // go_back response is null on firefox
+        navigations(&p1, port).await
+    }
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
@@ -68,4 +73,34 @@ async fn reload_should_worker(page: &Page) {
     page.reload_builder().reload().await.unwrap();
     let x: Option<i32> = page.eval("() => window._foo").await.unwrap();
     assert_eq!(x, None);
+}
+
+async fn navigations(page: &Page, port: u16) {
+    assert_eq!(page.go_back_builder().go_back().await.unwrap(), None);
+    let url1 = super::url_static(port, "/empty.html");
+    let url2 = super::url_static(port, "/empty2.html");
+    page.goto_builder(&url1).goto().await.unwrap();
+    page.goto_builder(&url2).goto().await.unwrap();
+    {
+        let response = page.go_back_builder().go_back().await.unwrap().unwrap();
+        assert_eq!(response.ok().unwrap(), true);
+        assert_eq!(response.url().unwrap(), url1);
+    }
+    {
+        let response = page
+            .go_forward_builder()
+            .go_forward()
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.ok().unwrap(), true);
+        assert_eq!(response.url().unwrap(), url2);
+    }
+    let maybe_response = page.go_forward_builder().go_forward().await.unwrap();
+    assert_eq!(maybe_response, None);
+}
+
+async fn set_timeout(c: &BrowserContext) {
+    c.set_default_navigation_timeout(10000).await.unwrap();
+    c.set_default_timeout(10000).await.unwrap();
 }
