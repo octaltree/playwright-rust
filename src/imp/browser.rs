@@ -38,13 +38,7 @@ impl Browser {
 
     // Responds newtype `OwnerPage` of `SinglePageBrowserContext`.
     // There are different behavior in BrowserContext::new_page
-    // pub(crate) async fn new_page(
-    //    &self,
-    //    args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>
-    //) -> Result<Weak<Page>, Arc<Error>> {
-    //    let context = self.new_context(args).await?;
-    //    unimplemented!()
-    //}
+    // async fn new_page(
 }
 
 // mutable

@@ -11,7 +11,14 @@ pub async fn all(t: BrowserType, which: Which) -> (Browser, BrowserContext) {
     tokio::join!(launch(&t), launch_persistent_context(&t))
 }
 
-async fn launch(t: &BrowserType) -> Browser { t.launcher().launch().await.unwrap() }
+async fn launch(t: &BrowserType) -> Browser {
+    t.launcher()
+        .headless(false)
+        .clear_headless()
+        .launch()
+        .await
+        .unwrap()
+}
 
 async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
     t.persistent_context_launcher("./target".as_ref())

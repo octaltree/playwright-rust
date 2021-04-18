@@ -196,10 +196,6 @@ impl BrowserContext {
             .map(Event::from)
     }
 
-    // pub fn subscribe_event(&self) -> Result<broadcast::Receiver<Event>, Error> {
-    //    Ok(upgrade(&self.inner)?.subscribe_event())
-    //}
-
     /// Returns storage state for this browser context, contains current cookies and local storage snapshot.
     pub async fn storage_state(&self) -> ArcResult<StorageState> {
         // path no supported
