@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <script>
+    const worker = new Worker('worker.js');
+    worker.onmessage = msg => console.log(msg.data);
+  </script>
+</body>
+</html>

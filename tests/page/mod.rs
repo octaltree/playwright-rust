@@ -8,9 +8,10 @@ pub async fn all(c: &BrowserContext, p1: Page, port: u16, which: Which) {
     focus_should_work(&p1).await;
     reload_should_worker(&p1).await;
     if which != Which::Firefox {
-        // go_back response is null on firefox
-        navigations(&p1, port).await
+        // XXX: go_back response is null on firefox
+        navigations(&p1, port).await;
     }
+    workers_should_work(&p1, port, which).await;
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
@@ -103,4 +104,33 @@ async fn navigations(page: &Page, port: u16) {
 async fn set_timeout(c: &BrowserContext) {
     c.set_default_navigation_timeout(10000).await.unwrap();
     c.set_default_timeout(10000).await.unwrap();
+}
+
+async fn workers_should_work(page: &Page, port: u16, which: Which) {
+    let url = super::url_static(port, "/worker.html");
+    let js = super::url_static(port, "/worker.js");
+    let empty = super::url_static(port, "/empty.html");
+    let workers = || page.workers().unwrap();
+    assert_eq!(workers().len(), 0);
+    let (_, _) = tokio::join!(
+        page.expect_event(page::EventType::Worker),
+        page.goto_builder(&url).goto()
+    );
+    assert_eq!(workers().len(), 1);
+    let w = &workers()[0];
+    assert_eq!(
+        w.url().unwrap(),
+        match which {
+            Which::Firefox => "worker.js".to_owned(),
+            _ => js
+        }
+    );
+    assert_eq!(
+        w.eval::<String>("() => self.workerFunction()")
+            .await
+            .unwrap(),
+        "worker function result"
+    );
+    page.goto_builder(&empty).goto().await.unwrap();
+    assert_eq!(workers().len(), 0);
 }

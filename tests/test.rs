@@ -59,11 +59,22 @@ async fn playwright_with_driver() -> Playwright {
     playwright
 }
 
+#[cfg(any(feature = "rt-tokio", feature = "rt-actix"))]
 async fn start_test_server(port: u16) {
     use warp::Filter;
     let route = warp::path("static").and(warp::fs::dir("tests/server"));
     spawn(async move {
         warp::serve(route).run(([127, 0, 0, 1], port)).await;
+    });
+}
+
+#[cfg(feature = "rt-async-std")]
+async fn start_test_server(port: u16) {
+    use tide::Server;
+    let mut app = Server::new();
+    app.at("/static").serve_dir("tests/server/").unwrap();
+    spawn(async move {
+        app.listen(format!("127.0.0.1:{}", port)).await.unwrap();
     });
 }
 

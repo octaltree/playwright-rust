@@ -1,6 +1,6 @@
 [package]
 name = "playwright"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["octaltree <octaltree@gmail.com>"]
 description = "Playwright port to Rust"
 license = "MIT OR Apache-2.0"
@@ -37,6 +37,7 @@ serde_with = { version = "1.8.0", default-features = false, features = ["macros"
 
 [dev-dependencies]
 env_logger = "0.8.3"
+tide = "0.16.0"
 warp = "0.3.1"
 
 [features]
