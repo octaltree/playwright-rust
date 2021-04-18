@@ -219,10 +219,16 @@ impl BrowserContext {
     pub async fn pause(&self) -> ArcResult<()> { upgrade(&self.inner)?.pause().await }
 
     subscribe_event! {}
+
+    // background_page for chromium
+    // new_cdp_session
+    // service_workers
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Event {
+    // BackgroundPage for chromium persistent
+    // ServiceWorker
     /// Emitted when Browser context gets closed. This might happen because of one of the following:
     /// - Browser context is closed.
     /// - Browser application is closed or crashed.

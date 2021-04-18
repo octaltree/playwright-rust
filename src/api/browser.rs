@@ -68,6 +68,10 @@ impl Browser {
         };
         inner.close().await
     }
+
+    // new_browser_cdp_session
+    // start_tracing
+    // stop_tracing
 }
 
 // TODO: async drop

@@ -111,13 +111,9 @@ pub use worker::Worker;
 // AndroidWebView
 // BrowserServer
 // CDPSession
-// ChromiumBrowser
-// ChromiumBrowserContext
-// ChromiumCoverage
+// Coverage
 // Electron
 // ElectronApplication
-// FirefoxBrowser
 // Logger
 // Video
-// WebKitBrowser
 // WebSocketFrame

@@ -208,7 +208,8 @@ impl File {
         Self { name, mime, buffer }
     }
 }
-
+/// Browser distribution channel. Read more about using
+/// [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum BrowserChannel {
