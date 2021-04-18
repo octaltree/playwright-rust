@@ -27,4 +27,4 @@ doc:
 	cargo doc
 
 cov:
-	cargo tarpaulin --out html --exclude-files scripts/ tests/
+	cargo tarpaulin --out html --exclude-files scripts/ tests/ src/build.rs src/main.rs src/generated.rs

@@ -1,12 +1,12 @@
 use super::Which;
 use playwright::api::{BrowserContext, Page};
 
-pub async fn all(c: BrowserContext, _which: Which) -> Page {
+pub async fn all(c: &BrowserContext, _which: Which) -> Page {
     assert_eq!(c.browser().unwrap().is_some(), true);
-    cookies_work(&c).await;
-    // unimplemented!()
-    set_timeout(&c).await;
-    pages(&c).await
+    cookies_work(c).await;
+    //
+    set_timeout(c).await;
+    pages(c).await
 }
 
 async fn pages(c: &BrowserContext) -> Page {
