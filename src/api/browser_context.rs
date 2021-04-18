@@ -17,6 +17,7 @@ use crate::{
 ///
 /// Playwright allows creation of "incognito" browser contexts with `browser.newContext()` method. "Incognito" browser
 /// contexts don't write any browsing data to disk.
+#[derive(Debug)]
 pub struct BrowserContext {
     inner: Weak<Impl>
 }

@@ -25,8 +25,9 @@ async fn all(which: Which) {
         Which::Chromium => playwright.chromium()
     };
     install_browser(&playwright, which);
-    let browser = browser_type::all(browser_type, which).await;
+    let (browser, persistent) = browser_type::all(browser_type, which).await;
     let browser_context = browser::all(browser, which).await;
+    assert_ne!(persistent, browser_context);
     let _page = browser_context::all(browser_context, which).await;
 }
 

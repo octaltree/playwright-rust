@@ -80,7 +80,7 @@ impl BrowserContext {
             cookies: &'a [Cookie]
         }
         let args = Args { cookies };
-        let _ = send_message!(self, "cookies", args);
+        let _ = send_message!(self, "addCookies", args);
         Ok(())
     }
 

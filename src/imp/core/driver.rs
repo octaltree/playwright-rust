@@ -2,6 +2,7 @@ use crate::imp::prelude::*;
 use std::{env, fs, io};
 use zip::{result::ZipError, ZipArchive};
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Driver {
     path: PathBuf
 }
@@ -53,7 +54,7 @@ impl Driver {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Platform {
     Linux,
     Win32,
