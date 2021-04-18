@@ -142,7 +142,7 @@ impl AndroidDevice {
         viewport: Option<Option<NotImplementedYet>>,
         #[doc = "Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport."]
         viewport: Option<Option<NotImplementedYet>>
-    ) -> Result<ChromiumBrowserContext, Arc<Error>> {
+    ) -> Result<BrowserContext, Arc<Error>> {
         todo!()
     }
     #[doc = "Performs a long tap on the widget defined by `selector`."]
@@ -465,6 +465,8 @@ impl Browser {
     fn contexts(&self) -> Result<Vec<BrowserContext>, Error> { todo!() }
     #[doc = "Indicates that the browser is connected."]
     fn is_connected(&self) -> Result<bool, Error> { todo!() }
+    #[doc = "> NOTE: CDP Sessions are only supported on Chromium-based browsers.\n\nReturns the newly created browser session."]
+    fn new_browser_c_d_p_session(&self) -> Result<CDPSession, Arc<Error>> { todo!() }
     #[doc = "Creates a new browser context. It won't share cookies/cache with other browser contexts.\n\n```js\n(async () => {\n  const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.\n  // Create a new incognito browser context.\n  const context = await browser.newContext();\n  // Create a new page in a pristine context.\n  const page = await context.newPage();\n  await page.goto('https://example.com');\n})();\n```\n\n```java\nBrowser browser = playwright.firefox().launch();  // Or 'chromium' or 'webkit'.\n// Create a new incognito browser context.\nBrowserContext context = browser.newContext();\n// Create a new page in a pristine context.\nPage page = context.newPage();\npage.navigate('https://example.com');\n```\n\n```python async\nbrowser = await playwright.firefox.launch() # or \"chromium\" or \"webkit\".\n# create a new incognito browser context.\ncontext = await browser.new_context()\n# create a new page in a pristine context.\npage = await context.new_page()\nawait page.goto(\"https://example.com\")\n```\n\n```python sync\nbrowser = playwright.firefox.launch() # or \"chromium\" or \"webkit\".\n# create a new incognito browser context.\ncontext = browser.new_context()\n# create a new page in a pristine context.\npage = context.new_page()\npage.goto(\"https://example.com\")\n```\n"]
     fn new_context(
         &self,
@@ -599,6 +601,20 @@ impl Browser {
     ) -> Result<Page, Arc<Error>> {
         todo!()
     }
+    #[doc = "> NOTE: Tracing is only supported on Chromium-based browsers.\n\nYou can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can be\nopened in Chrome DevTools performance panel.\n\n```js\nawait browser.startTracing(page, {path: 'trace.json'});\nawait page.goto('https://www.google.com');\nawait browser.stopTracing();\n```\n\n```python async\nawait browser.start_tracing(page, path=\"trace.json\")\nawait page.goto(\"https://www.google.com\")\nawait browser.stop_tracing()\n```\n\n```python sync\nbrowser.start_tracing(page, path=\"trace.json\")\npage.goto(\"https://www.google.com\")\nbrowser.stop_tracing()\n```\n"]
+    fn start_tracing(
+        &self,
+        page : Option < Page >,
+        #[doc = "options"]
+        #[doc = "specify custom categories to use instead of default."]
+        categories: Option<Vec<String>>,
+        #[doc = "A path to write the trace file to."] path: Option<path>,
+        #[doc = "captures screenshots in the trace."] screenshots: Option<bool>
+    ) -> Result<(), Arc<Error>> {
+        todo!()
+    }
+    #[doc = "> NOTE: Tracing is only supported on Chromium-based browsers.\n\nReturns the buffer with trace data."]
+    fn stop_tracing(&self) -> Result<Buffer, Arc<Error>> { todo!() }
     #[doc = "Returns the browser version."]
     fn version(&self) -> Result<String, Error> { todo!() }
 }
@@ -630,6 +646,8 @@ impl BrowserContext {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
+    #[doc = "> NOTE: Background pages are only supported on Chromium-based browsers.\n\nAll existing background pages in the context."]
+    fn background_pages(&self) -> Result<Vec<Page>, Error> { todo!() }
     #[doc = "Returns the browser instance of the context. If it was launched as a persistent context null gets returned."]
     fn browser(&self) -> Result<Option<Browser>, Error> { todo!() }
     #[doc = "Clears context cookies."]
@@ -675,6 +693,13 @@ impl BrowserContext {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
+    #[doc = "> NOTE: CDP sessions are only supported on Chromium-based browsers.\n\nReturns the newly created session."]
+    fn new_c_d_p_session(
+        &self,
+        #[doc = "Page to create new session for."] page: Page
+    ) -> Result<CDPSession, Arc<Error>> {
+        todo!()
+    }
     #[doc = "Creates a new page in the browser context."]
     fn new_page(&self) -> Result<Page, Arc<Error>> { todo!() }
     #[doc = "Returns all open pages in the context."]
@@ -689,6 +714,8 @@ impl BrowserContext {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
+    #[doc = "> NOTE: Service workers are only supported on Chromium-based browsers.\n\nAll existing service workers in the context."]
+    fn service_workers(&self) -> Result<Vec<Worker>, Error> { todo!() }
     #[doc = "This setting will change the default maximum navigation time for the following methods and related shortcuts:\n- [`method: Page.goBack`]\n- [`method: Page.goForward`]\n- [`method: Page.goto`]\n- [`method: Page.reload`]\n- [`method: Page.setContent`]\n- [`method: Page.waitForNavigation`]\n\n> NOTE: [`method: Page.setDefaultNavigationTimeout`] and [`method: Page.setDefaultTimeout`] take priority over\n[`method: BrowserContext.setDefaultNavigationTimeout`]."]
     fn set_default_navigation_timeout(
         &self,
@@ -838,16 +865,24 @@ struct NotImplementedYet {
     timeout: Option<f64>
 }
 enum BrowserContextEventType {
+    #[doc = "> NOTE: Only works with Chromium browser's persistent context.\n\nEmitted when new background page is created in the context.\n\n```js\nconst backgroundPage = await context.waitForEvent('backgroundpage');\n```\n\n```python async\nbackground_page = await context.wait_for_event(\"backgroundpage\")\n```\n\n```python sync\nbackground_page = context.wait_for_event(\"backgroundpage\")\n```\n"]
+    BackgroundPage,
     #[doc = "Emitted when Browser context gets closed. This might happen because of one of the following:\n- Browser context is closed.\n- Browser application is closed or crashed.\n- The [`method: Browser.close`] method was called."]
     Close,
     #[doc = "The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will\nalso fire for popup pages. See also [`event: Page.popup`] to receive events about popups relevant to a specific page.\n\nThe earliest moment that page is available is when it has navigated to the initial url. For example, when opening a\npopup with `window.open('http://example.com')`, this event will fire when the network request to \"http://example.com\" is\ndone and its response has started loading in the popup.\n\n```js\nconst [newPage] = await Promise.all([\n  context.waitForEvent('page'),\n  page.click('a[target=_blank]'),\n]);\nconsole.log(await newPage.evaluate('location.href'));\n```\n\n```java\nPage newPage = context.waitForPage(() -> {\n  page.click(\"a[target=_blank]\");\n});\nSystem.out.println(newPage.evaluate(\"location.href\"));\n```\n\n```python async\nasync with context.expect_page() as page_info:\n    await page.click(\"a[target=_blank]\"),\npage = await page_info.value\nprint(await page.evaluate(\"location.href\"))\n```\n\n```python sync\nwith context.expect_page() as page_info:\n    page.click(\"a[target=_blank]\"),\npage = page_info.value\nprint(page.evaluate(\"location.href\"))\n```\n\n> NOTE: Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it\nin most cases)."]
-    Page
+    Page,
+    #[doc = "> NOTE: Service workers are only supported on Chromium-based browsers.\n\nEmitted when new service worker is created in the context."]
+    ServiceWorker
 }
 enum BrowserContextEvent {
+    #[doc = "> NOTE: Only works with Chromium browser's persistent context.\n\nEmitted when new background page is created in the context.\n\n```js\nconst backgroundPage = await context.waitForEvent('backgroundpage');\n```\n\n```python async\nbackground_page = await context.wait_for_event(\"backgroundpage\")\n```\n\n```python sync\nbackground_page = context.wait_for_event(\"backgroundpage\")\n```\n"]
+    BackgroundPage(Page),
     #[doc = "Emitted when Browser context gets closed. This might happen because of one of the following:\n- Browser context is closed.\n- Browser application is closed or crashed.\n- The [`method: Browser.close`] method was called."]
     Close(BrowserContext),
     #[doc = "The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will\nalso fire for popup pages. See also [`event: Page.popup`] to receive events about popups relevant to a specific page.\n\nThe earliest moment that page is available is when it has navigated to the initial url. For example, when opening a\npopup with `window.open('http://example.com')`, this event will fire when the network request to \"http://example.com\" is\ndone and its response has started loading in the popup.\n\n```js\nconst [newPage] = await Promise.all([\n  context.waitForEvent('page'),\n  page.click('a[target=_blank]'),\n]);\nconsole.log(await newPage.evaluate('location.href'));\n```\n\n```java\nPage newPage = context.waitForPage(() -> {\n  page.click(\"a[target=_blank]\");\n});\nSystem.out.println(newPage.evaluate(\"location.href\"));\n```\n\n```python async\nasync with context.expect_page() as page_info:\n    await page.click(\"a[target=_blank]\"),\npage = await page_info.value\nprint(await page.evaluate(\"location.href\"))\n```\n\n```python sync\nwith context.expect_page() as page_info:\n    page.click(\"a[target=_blank]\"),\npage = page_info.value\nprint(page.evaluate(\"location.href\"))\n```\n\n> NOTE: Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it\nin most cases)."]
-    Page(Page)
+    Page(Page),
+    #[doc = "> NOTE: Service workers are only supported on Chromium-based browsers.\n\nEmitted when new service worker is created in the context."]
+    ServiceWorker(Worker)
 }
 #[doc = ""]
 impl BrowserServer {
@@ -898,7 +933,7 @@ impl BrowserType {
         #[doc = "options"]
         #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
         args: Option<Vec<String>>,
-        #[doc = "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge)."]
+        #[doc = "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge)."]
         channel: Option<BrowserChannel>,
         #[doc = "Enable Chromium sandboxing. Defaults to `false`."] chromium_sandbox: Option<bool>,
         #[doc = "**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`\noption will be set `false`."]
@@ -1096,55 +1131,29 @@ impl CDPSession {
         todo!()
     }
 }
-#[doc = "- extends: `Browser`\n\nChromium-specific features including Tracing, service worker support, etc. You can use\n[`method: ChromiumBrowser.startTracing`] and [`method: ChromiumBrowser.stopTracing`] to create a trace file which can be\nopened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).\n\n```js\nawait browser.startTracing(page, {path: 'trace.json'});\nawait page.goto('https://www.google.com');\nawait browser.stopTracing();\n```\n\n`ChromiumBrowser` can also be used for testing Chrome Extensions.\n\n> NOTE: Extensions in Chrome / Chromium currently only work in non-headless mode.\n\nThe following is code for getting a handle to the\n[background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in\n`./my-extension`:\n\n```js\nconst { chromium } = require('playwright');\n\n(async () => {\n  const pathToExtension = require('path').join(__dirname, 'my-extension');\n  const userDataDir = '/tmp/test-user-data-dir';\n  const browserContext = await chromium.launchPersistentContext(userDataDir,{\n    headless: false,\n    args: [\n      `--disable-extensions-except=${pathToExtension}`,\n      `--load-extension=${pathToExtension}`\n    ]\n  });\n  const backgroundPage = browserContext.backgroundPages()[0];\n  // Test the background page as you would any other page.\n  await browserContext.close();\n})();\n```\n"]
-#[doc = "Extends Browser"]
-impl ChromiumBrowser {
-    #[doc = "Returns the newly created browser session."]
-    fn new_browser_c_d_p_session(&self) -> Result<CDPSession, Arc<Error>> { todo!() }
-    #[doc = "Only one trace can be active at a time per browser."]
-    fn start_tracing(
-        &self,
-        page : Option < Page >,
-        #[doc = "options"]
-        #[doc = "specify custom categories to use instead of default."]
-        categories: Option<Vec<String>>,
-        #[doc = "A path to write the trace file to."] path: Option<path>,
-        #[doc = "captures screenshots in the trace."] screenshots: Option<bool>
-    ) -> Result<(), Arc<Error>> {
-        todo!()
-    }
-    #[doc = "Returns the buffer with trace data."]
-    fn stop_tracing(&self) -> Result<Buffer, Arc<Error>> { todo!() }
+#[doc = "`ConsoleMessage` objects are dispatched by page via the [`event: Page.console`] event."]
+impl ConsoleMessage {
+    #[doc = ""]
+    fn args(&self) -> Result<Vec<JsHandle>, Error> { todo!() }
+    #[doc = ""]
+    fn location(&self) -> Result<NotImplementedYet, Error> { todo!() }
+    #[doc = "URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`."]
+    fn location(&self) -> Result<String, Error> { todo!() }
+    #[doc = ""]
+    fn text(&self) -> Result<String, Error> { todo!() }
+    #[doc = "One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,\n`'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,\n`'count'`, `'timeEnd'`."]
+    fn r#type(&self) -> Result<String, Error> { todo!() }
 }
-#[doc = "- extends: `BrowserContext`\n\nChromium-specific features including background pages, service worker support, etc.\n\n```js\nconst backgroundPage = await context.waitForEvent('backgroundpage');\n```\n\n```python async\nbackground_page = await context.wait_for_event(\"backgroundpage\")\n```\n\n```python sync\nbackground_page = context.wait_for_event(\"backgroundpage\")\n```\n"]
-#[doc = "Extends BrowserContext"]
-impl ChromiumBrowserContext {
-    #[doc = "All existing background pages in the context."]
-    fn background_pages(&self) -> Result<Vec<Page>, Error> { todo!() }
-    #[doc = "Returns the newly created session."]
-    fn new_c_d_p_session(
-        &self,
-        #[doc = "Page to create new session for."] page: Page
-    ) -> Result<CDPSession, Arc<Error>> {
-        todo!()
-    }
-    #[doc = "All existing service workers in the context."]
-    fn service_workers(&self) -> Result<Vec<Worker>, Error> { todo!() }
+struct NotImplementedYetlocation {
+    #[doc = "URL of the resource."]
+    url: String,
+    #[doc = "0-based line number in the resource."]
+    line_number: i64,
+    #[doc = "0-based column number in the resource."]
+    column_number: i64
 }
-enum ChromiumBrowserContextEventType {
-    #[doc = "Emitted when new background page is created in the context.\n\n> NOTE: Only works with persistent context."]
-    BackgroundPage,
-    #[doc = "Emitted when new service worker is created in the context."]
-    ServiceWorker
-}
-enum ChromiumBrowserContextEvent {
-    #[doc = "Emitted when new background page is created in the context.\n\n> NOTE: Only works with persistent context."]
-    BackgroundPage(Page),
-    #[doc = "Emitted when new service worker is created in the context."]
-    ServiceWorker(Worker)
-}
-#[doc = "Coverage gathers information about parts of JavaScript and CSS that were used by the page.\n\nAn example of using JavaScript coverage to produce Istanbul report for page load:\n\n```js\nconst { chromium } = require('playwright');\nconst v8toIstanbul = require('v8-to-istanbul');\n\n(async() => {\n  const browser = await chromium.launch();\n  const page = await browser.newPage();\n  await page.coverage.startJSCoverage();\n  await page.goto('https://chromium.org');\n  const coverage = await page.coverage.stopJSCoverage();\n  for (const entry of coverage) {\n    const converter = new v8toIstanbul('', 0, { source: entry.source });\n    await converter.load();\n    converter.applyCoverage(entry.functions);\n    console.log(JSON.stringify(converter.toIstanbul()));\n  }\n  await browser.close();\n})();\n```\n"]
-impl ChromiumCoverage {
+#[doc = "Coverage gathers information about parts of JavaScript and CSS that were used by the page.\n\nAn example of using JavaScript coverage to produce Istanbul report for page load:\n\n> NOTE: Coverage APIs are only supported on Chromium-based browsers.\n\n```js\nconst { chromium } = require('playwright');\nconst v8toIstanbul = require('v8-to-istanbul');\n\n(async() => {\n  const browser = await chromium.launch();\n  const page = await browser.newPage();\n  await page.coverage.startJSCoverage();\n  await page.goto('https://chromium.org');\n  const coverage = await page.coverage.stopJSCoverage();\n  for (const entry of coverage) {\n    const converter = new v8toIstanbul('', 0, { source: entry.source });\n    await converter.load();\n    converter.applyCoverage(entry.functions);\n    console.log(JSON.stringify(converter.toIstanbul()));\n  }\n  await browser.close();\n})();\n```\n"]
+impl Coverage {
     #[doc = "Returns coverage is started"]
     fn start_c_s_s_coverage(
         &self,
@@ -1170,27 +1179,6 @@ impl ChromiumCoverage {
     #[doc = "Returns the array of coverage reports for all scripts\n\n> NOTE: JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are reported."]
     fn stop_j_s_coverage(&self) -> Result<Vec<NotImplementedYet>, Arc<Error>> { todo!() }
 }
-#[doc = "`ConsoleMessage` objects are dispatched by page via the [`event: Page.console`] event."]
-impl ConsoleMessage {
-    #[doc = ""]
-    fn args(&self) -> Result<Vec<JsHandle>, Error> { todo!() }
-    #[doc = ""]
-    fn location(&self) -> Result<NotImplementedYet, Error> { todo!() }
-    #[doc = "URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`."]
-    fn location(&self) -> Result<String, Error> { todo!() }
-    #[doc = ""]
-    fn text(&self) -> Result<String, Error> { todo!() }
-    #[doc = "One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,\n`'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,\n`'count'`, `'timeEnd'`."]
-    fn r#type(&self) -> Result<String, Error> { todo!() }
-}
-struct NotImplementedYetlocation {
-    #[doc = "URL of the resource."]
-    url: String,
-    #[doc = "0-based line number in the resource."]
-    line_number: i64,
-    #[doc = "0-based column number in the resource."]
-    column_number: i64
-}
 #[doc = "`Dialog` objects are dispatched by page via the [`event: Page.dialog`] event.\n\nAn example of using `Dialog` class:\n\n```js\nconst { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.\n\n(async () => {\n  const browser = await chromium.launch();\n  const page = await browser.newPage();\n  page.on('dialog', async dialog => {\n    console.log(dialog.message());\n    await dialog.dismiss();\n  });\n  await page.evaluate(() => alert('1'));\n  await browser.close();\n})();\n```\n\n```java\nimport com.microsoft.playwright.*;\n\npublic class Example {\n  public static void main(String[] args) {\n    try (Playwright playwright = Playwright.create()) {\n      BrowserType chromium = playwright.chromium();\n      Browser browser = chromium.launch();\n      Page page = browser.newPage();\n      page.onDialog(dialog -> {\n        System.out.println(dialog.message());\n        dialog.dismiss();\n      });\n      page.evaluate(\"alert('1')\");\n      browser.close();\n    }\n  }\n}\n```\n\n```python async\nimport asyncio\nfrom playwright.async_api import async_playwright\n\nasync def handle_dialog(dialog):\n    print(dialog.message)\n    await dialog.dismiss()\n\nasync def run(playwright):\n    chromium = playwright.chromium\n    browser = await chromium.launch()\n    page = await browser.new_page()\n    page.on(\"dialog\", handle_dialog)\n    page.evaluate(\"alert('1')\")\n    await browser.close()\n\nasync def main():\n    async with async_playwright() as playwright:\n        await run(playwright)\nasyncio.run(main())\n```\n\n```python sync\nfrom playwright.sync_api import sync_playwright\n\ndef handle_dialog(dialog):\n    print(dialog.message)\n    dialog.dismiss()\n\ndef run(playwright):\n    chromium = playwright.chromium\n    browser = chromium.launch()\n    page = browser.new_page()\n    page.on(\"dialog\", handle_dialog)\n    page.evaluate(\"alert('1')\")\n    browser.close()\n\nwith sync_playwright() as playwright:\n    run(playwright)\n```\n\n> NOTE: Dialogs are dismissed automatically, unless there is a [`event: Page.dialog`] listener. When listener is\npresent, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will\n[freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and\nactions like click will never finish."]
 impl Dialog {
     #[doc = "Returns when the dialog has been accepted."]
@@ -1210,7 +1198,7 @@ impl Dialog {
     #[doc = "Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`."]
     fn r#type(&self) -> Result<String, Error> { todo!() }
 }
-#[doc = "`Download` objects are dispatched by page via the [`event: Page.download`] event.\n\nAll the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded\nfiles are deleted when the browser closes.\n\nDownload event is emitted once the download starts. Download path becomes available once download completes:\n\n```js\nconst [ download ] = await Promise.all([\n  page.waitForEvent('download'), // wait for download to start\n  page.click('a')\n]);\n// wait for download to complete\nconst path = await download.path();\n```\n\n```java\n// wait for download to start\nDownload download  = page.waitForDownload(() -> page.click(\"a\")); \n// wait for download to complete\nPath path = download.path();\n```\n\n```java\n// wait for download to start\nDownload download = page.waitForDownload(() -> {\n  page.click(\"a\");\n});\n// wait for download to complete\nPath path = download.path();\n```\n\n```python async\nasync with page.expect_download() as download_info:\n    await page.click(\"a\")\ndownload = await download_info.value\n# waits for download to complete\npath = await download.path()\n```\n\n```python sync\nwith page.expect_download() as download_info:\n    page.click(\"a\")\ndownload = download_info.value\n# wait for download to complete\npath = download.path()\n```\n\n> NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the\ndownloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not\nperformed and user has no access to the downloaded files."]
+#[doc = "`Download` objects are dispatched by page via the [`event: Page.download`] event.\n\nAll the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded\nfiles are deleted when the browser closes.\n\nDownload event is emitted once the download starts. Download path becomes available once download completes:\n\n```js\nconst [ download ] = await Promise.all([\n  page.waitForEvent('download'), // wait for download to start\n  page.click('a')\n]);\n// wait for download to complete\nconst path = await download.path();\n```\n\n```java\n// wait for download to start\nDownload download  = page.waitForDownload(() -> page.click(\"a\"));\n// wait for download to complete\nPath path = download.path();\n```\n\n```java\n// wait for download to start\nDownload download = page.waitForDownload(() -> {\n  page.click(\"a\");\n});\n// wait for download to complete\nPath path = download.path();\n```\n\n```python async\nasync with page.expect_download() as download_info:\n    await page.click(\"a\")\ndownload = await download_info.value\n# waits for download to complete\npath = await download.path()\n```\n\n```python sync\nwith page.expect_download() as download_info:\n    page.click(\"a\")\ndownload = download_info.value\n# wait for download to complete\npath = download.path()\n```\n\n> NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the\ndownloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not\nperformed and user has no access to the downloaded files."]
 impl Download {
     #[doc = "Returns readable stream for current download or `null` if download failed."]
     fn create_read_stream(&self) -> Result<Option<Readable>, Arc<Error>> { todo!() }
@@ -1218,7 +1206,7 @@ impl Download {
     fn delete(&self) -> Result<(), Arc<Error>> { todo!() }
     #[doc = "Returns download error if any. Will wait for the download to finish if necessary."]
     fn failure(&self) -> Result<Option<String>, Arc<Error>> { todo!() }
-    #[doc = "Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if\nnecessary."]
+    #[doc = "Returns path to the downloaded file in case of successful download. The method will wait for the download to finish if\nnecessary. The method throws when connected remotely."]
     fn path(&self) -> Result<Option<path>, Arc<Error>> { todo!() }
     #[doc = "Saves the download to a user-specified path. It is safe to call this method while the download is still in progress."]
     fn save_as(
@@ -1715,9 +1703,6 @@ struct NotImplementedYet {
     #[doc = "File content"]
     buffer: Buffer
 }
-#[doc = "- extends: `Browser`\n\nFirefox browser instance does not expose Firefox-specific features."]
-#[doc = "Extends Browser"]
-impl FirefoxBrowser {}
 #[doc = "At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`] and\n[`method: Frame.childFrames`] methods.\n\n`Frame` object's lifecycle is controlled by three events, dispatched on the page object:\n- [`event: Page.frameAttached`] - fired when the frame gets attached to the page. A Frame can be attached to the page\n  only once.\n- [`event: Page.frameNavigated`] - fired when the frame commits navigation to a different URL.\n- [`event: Page.frameDetached`] - fired when the frame gets detached from the page.  A Frame can be detached from the\n  page only once.\n\nAn example of dumping frame tree:\n\n```js\nconst { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.\n\n(async () => {\n  const browser = await firefox.launch();\n  const page = await browser.newPage();\n  await page.goto('https://www.google.com/chrome/browser/canary.html');\n  dumpFrameTree(page.mainFrame(), '');\n  await browser.close();\n\n  function dumpFrameTree(frame, indent) {\n    console.log(indent + frame.url());\n    for (const child of frame.childFrames()) {\n      dumpFrameTree(child, indent + '  ');\n    }\n  }\n})();\n```\n\n```java\nimport com.microsoft.playwright.*;\n\npublic class Example {\n  public static void main(String[] args) {\n    try (Playwright playwright = Playwright.create()) {\n      BrowserType firefox = playwright.firefox();\n      Browser browser = firefox.launch();\n      Page page = browser.newPage();\n      page.navigate(\"https://www.google.com/chrome/browser/canary.html\");\n      dumpFrameTree(page.mainFrame(), \"\");\n      browser.close();\n    }\n  }\n  static void dumpFrameTree(Frame frame, String indent) {\n    System.out.println(indent + frame.url());\n    for (Frame child : frame.childFrames()) {\n      dumpFrameTree(child, indent + \"  \");\n    }\n  }\n}\n```\n\n```python async\nimport asyncio\nfrom playwright.async_api import async_playwright\n\nasync def run(playwright):\n    firefox = playwright.firefox\n    browser = await firefox.launch()\n    page = await browser.new_page()\n    await page.goto(\"https://www.theverge.com\")\n    dump_frame_tree(page.main_frame, \"\")\n    await browser.close()\n\ndef dump_frame_tree(frame, indent):\n    print(indent + frame.name + '@' + frame.url)\n    for child in frame.child_frames:\n        dump_frame_tree(child, indent + \"    \")\n\nasync def main():\n    async with async_playwright() as playwright:\n        await run(playwright)\nasyncio.run(main())\n```\n\n```python sync\nfrom playwright.sync_api import sync_playwright\n\ndef run(playwright):\n    firefox = playwright.firefox\n    browser = firefox.launch()\n    page = browser.new_page()\n    page.goto(\"https://www.theverge.com\")\n    dump_frame_tree(page.main_frame, \"\")\n    browser.close()\n\ndef dump_frame_tree(frame, indent):\n    print(indent + frame.name + '@' + frame.url)\n    for child in frame.child_frames:\n        dump_frame_tree(child, indent + \"    \")\n\nwith sync_playwright() as playwright:\n    run(playwright)\n```\n"]
 impl Frame {
     #[doc = "Returns the added tag when the script's onload fires or when the script content was injected into frame.\n\nAdds a `<script>` tag into the page with the desired url or content."]
@@ -2503,8 +2488,8 @@ impl Mouse {
 impl Page {
     #[doc = ""]
     pub fn accessibility(&self) -> Accessibility {}
-    #[doc = "Browser-specific Coverage implementation, only available for Chromium atm. See\n`ChromiumCoverage`(#class-chromiumcoverage) for more details."]
-    pub fn coverage(&self) -> Option<ChromiumCoverage> {}
+    #[doc = "> NOTE: Only available for Chromium atm.\n\nBrowser-specific Coverage implementation. See `Coverage`(#class-coverage) for more details."]
+    pub fn coverage(&self) -> Coverage {}
     #[doc = ""]
     pub fn keyboard(&self) -> Keyboard {}
     #[doc = ""]
@@ -3613,17 +3598,17 @@ enum PageEvent {
 }
 #[doc = "Playwright module provides a method to launch a browser instance. The following is a typical example of using Playwright\nto drive automation:\n\n```js\nconst { chromium, firefox, webkit } = require('playwright');\n\n(async () => {\n  const browser = await chromium.launch();  // Or 'firefox' or 'webkit'.\n  const page = await browser.newPage();\n  await page.goto('http://example.com');\n  // other actions...\n  await browser.close();\n})();\n```\n\n```java\nimport com.microsoft.playwright.*;\n\npublic class Example {\n  public static void main(String[] args) {\n    try (Playwright playwright = Playwright.create()) {\n      BrowserType chromium = playwright.chromium();\n      Browser browser = chromium.launch();\n      Page page = browser.newPage();\n      page.navigate(\"http://example.com\");\n      // other actions...\n      browser.close();\n    }\n  }\n}\n```\n\n```python async\nimport asyncio\nfrom playwright.async_api import async_playwright\n\nasync def run(playwright):\n    chromium = playwright.chromium # or \"firefox\" or \"webkit\".\n    browser = await chromium.launch()\n    page = await browser.new_page()\n    await page.goto(\"http://example.com\")\n    # other actions...\n    await browser.close()\n\nasync def main():\n    async with async_playwright() as playwright:\n        await run(playwright)\nasyncio.run(main())\n```\n\n```python sync\nfrom playwright.sync_api import sync_playwright\n\ndef run(playwright):\n    chromium = playwright.chromium # or \"firefox\" or \"webkit\".\n    browser = chromium.launch()\n    page = browser.new_page()\n    page.goto(\"http://example.com\")\n    # other actions...\n    browser.close()\n\nwith sync_playwright() as playwright:\n    run(playwright)\n```\n"]
 impl Playwright {
-    #[doc = "This object can be used to launch or connect to Chromium, returning instances of `ChromiumBrowser`."]
+    #[doc = "This object can be used to launch or connect to Chromium, returning instances of `Browser`."]
     pub fn chromium(&self) -> BrowserType {}
     #[doc = "Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].\n\n```js\nconst { webkit, devices } = require('playwright');\nconst iPhone = devices['iPhone 6'];\n\n(async () => {\n  const browser = await webkit.launch();\n  const context = await browser.newContext({\n    ...iPhone\n  });\n  const page = await context.newPage();\n  await page.goto('http://example.com');\n  // other actions...\n  await browser.close();\n})();\n```\n\n```python async\nimport asyncio\nfrom playwright.async_api import async_playwright\n\nasync def run(playwright):\n    webkit = playwright.webkit\n    iphone = playwright.devices[\"iPhone 6\"]\n    browser = await webkit.launch()\n    context = await browser.new_context(**iphone)\n    page = await context.new_page()\n    await page.goto(\"http://example.com\")\n    # other actions...\n    await browser.close()\n\nasync def main():\n    async with async_playwright() as playwright:\n        await run(playwright)\nasyncio.run(main())\n```\n\n```python sync\nfrom playwright.sync_api import sync_playwright\n\ndef run(playwright):\n    webkit = playwright.webkit\n    iphone = playwright.devices[\"iPhone 6\"]\n    browser = webkit.launch()\n    context = browser.new_context(**iphone)\n    page = context.new_page()\n    page.goto(\"http://example.com\")\n    # other actions...\n    browser.close()\n\nwith sync_playwright() as playwright:\n    run(playwright)\n```\n"]
     pub fn devices(&self) -> Object {}
     #[doc = "Playwright methods might throw errors if they are unable to fulfill a request. For example,\n[`method: Page.waitForSelector`] might fail if the selector doesn't match any nodes during the given timeframe.\n\nFor certain types of errors Playwright uses specific error classes. These classes are available via\n[`playwright.errors`](#playwrighterrors).\n\nAn example of handling a timeout error:\n\n```js\ntry {\n  await page.waitForSelector('.foo');\n} catch (e) {\n  if (e instanceof playwright.errors.TimeoutError) {\n    // Do something if this is a timeout.\n  }\n}\n```\n\n```python async\ntry:\n    await page.wait_for_selector(\".foo\")\nexcept TimeoutError as e:\n    # do something if this is a timeout.\n```\n\n```python sync\ntry:\n    page.wait_for_selector(\".foo\")\nexcept TimeoutError as e:\n    # do something if this is a timeout.\n```\n"]
     pub fn errors(&self) -> NotImplementedYet {}
-    #[doc = "This object can be used to launch or connect to Firefox, returning instances of `FirefoxBrowser`."]
+    #[doc = "This object can be used to launch or connect to Firefox, returning instances of `Browser`."]
     pub fn firefox(&self) -> BrowserType {}
     #[doc = "Selectors can be used to install custom selector engines. See [Working with selectors](./selectors.md) for more\ninformation."]
     pub fn selectors(&self) -> Selectors {}
-    #[doc = "This object can be used to launch or connect to WebKit, returning instances of `WebKitBrowser`."]
+    #[doc = "This object can be used to launch or connect to WebKit, returning instances of `Browser`."]
     pub fn webkit(&self) -> BrowserType {}
     #[doc = "Terminates this instance of Playwright, will also close all created browsers if they are still running."]
     fn close(&self) -> Result<(), Error> { todo!() }
@@ -3814,14 +3799,20 @@ impl Touchscreen {
     #[doc = "Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`)."]
     fn tap(&self, #[doc = ""] x: f64, #[doc = ""] y: f64) -> Result<(), Arc<Error>> { todo!() }
 }
-#[doc = "When browser context is created with the `videosPath` option, each page has a video object associated with it.\n\n```js\nconsole.log(await page.video().path());\n```\n\n```java\nSystem.out.println(page.video().path());\n```\n\n```python async\nprint(await page.video.path())\n```\n\n```python sync\nprint(page.video.path())\n```\n"]
+#[doc = "When browser context is created with the `recordVideo` option, each page has a video object associated with it.\n\n```js\nconsole.log(await page.video().path());\n```\n\n```java\nSystem.out.println(page.video().path());\n```\n\n```python async\nprint(await page.video.path())\n```\n\n```python sync\nprint(page.video.path())\n```\n"]
 impl Video {
-    #[doc = "Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem\nupon closing the browser context."]
+    #[doc = "Deletes the video file. Will wait for the video to finish if necessary."]
+    fn delete(&self) -> Result<(), Arc<Error>> { todo!() }
+    #[doc = "Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem\nupon closing the browser context. This method throws when connected remotely."]
     fn path(&self) -> Result<path, Arc<Error>> { todo!() }
+    #[doc = "Saves the video to a user-specified path. It is safe to call this method while the video is still in progress, or after\nthe page has closed. This method waits until the page is closed and the video is fully saved."]
+    fn save_as(
+        &self,
+        #[doc = "Path where the video should be saved."] path: path
+    ) -> Result<(), Arc<Error>> {
+        todo!()
+    }
 }
-#[doc = "- extends: `Browser`\n\nWebKit browser instance does not expose WebKit-specific features."]
-#[doc = "Extends Browser"]
-impl WebKitBrowser {}
 #[doc = "The `WebSocket` class represents websocket connections in the page."]
 impl WebSocket {
     #[doc = "Indicates that the web socket has been closed."]

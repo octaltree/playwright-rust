@@ -1,2 +1,2 @@
-target/generated.rs: ../src/api/1.11.0-next-1617207797000.json
+../src/api/generated.rs: ../src/api/api.json
 	rustfmt --emit stdout <(cargo run < $^)| tail +3 > $@

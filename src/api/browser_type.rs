@@ -142,8 +142,6 @@ impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
         /// Firefox user preferences. Learn more about the Firefox user preferences at
         /// [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
         firefox_user_prefs: Option<Map<String, Value>>,
-        /// Browser distribution channel. Read more about using
-        /// [Google Chrome and Microsoft Edge](./browsers#google-chrome--microsoft-edge).
         channel: Option<BrowserChannel>
     }
     //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is\ngiven, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`."]
@@ -266,7 +264,6 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         /// Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
         /// specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved.
         record_har: Option<RecordHar<'k>>,
-        /// Browser distribution channel.
         channel: Option<BrowserChannel>
     }
     //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care."]
