@@ -71,6 +71,7 @@ pub(crate) struct CreateParams {
     #[serde(rename = "type")]
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
+    #[serde(default)]
     pub(crate) initializer: Value
 }
 
@@ -215,26 +216,3 @@ mod datetime {
         }
     }
 }
-
-// pub(crate) fn parse_value(v: &Value) -> Result<Value, ()> {
-//    if let Value::Object(v) = v {
-//        if v.contains_key("v") {
-//            match  v.get("v").unwrap() {
-//                Value::String("Infinity") =>
-//            }
-//            //}else if v.contains_key("a") { // array
-//            //}else if v.contains_key("d") { // datetime
-//            //}else if v.contains_key("o") { // object
-//            //}else if v.contains_key("n") {
-//            //    s.get("n").unwrap()
-//            //}else if v.contains_key("s") {
-//            //    s.get("s").unwrap()
-//            //}else if v.contains_key("b") { // bytes?
-//            //    v.get("b").unwrap()
-//        } else {
-//            v.clone()
-//        }
-//    } else {
-//        v.clone()
-//    }
-//}

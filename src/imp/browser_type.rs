@@ -224,16 +224,21 @@ mod tests {
         res.unwrap();
     });
 
-    // crate::runtime_test!(launch_persistent_context, {
-    //    let driver = Driver::install().unwrap();
-    //    let conn = Connection::run(&driver.executable()).unwrap();
-    //    let p = Playwright::wait_initial_object(&conn).await.unwrap();
-    //    let p = p.upgrade().unwrap();
-    //    let firefox = p.firefox().upgrade().unwrap();
-    //    let res = firefox
-    //        .launch_persistent_context(LaunchPersistentContextArgs::new(".".as_ref()))
-    //        .await;
-    //    dbg!(&res);
-    //    res.unwrap();
-    //});
+    crate::runtime_test!(typo, {
+        let driver = Driver::install().unwrap();
+        let conn = Connection::run(&driver.executable()).unwrap();
+        let p = Playwright::wait_initial_object(&conn).await.unwrap();
+        let p = p.upgrade().unwrap();
+        let chromium = p.chromium().upgrade().unwrap();
+        async fn send(c: &BrowserType) -> Result<Arc<Value>, Error> {
+            Ok(send_message!(c, "nonExistentMethod", Map::default()))
+        }
+        match send(&chromium).await {
+            Err(Error::ErrorResponded(e)) => dbg!(e),
+            x => {
+                dbg!(&x);
+                unreachable!()
+            }
+        }
+    });
 }

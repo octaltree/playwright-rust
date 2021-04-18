@@ -11,6 +11,7 @@ use crate::{
     Error
 };
 
+#[derive(Debug)]
 pub struct Browser {
     inner: Weak<imp::browser::Browser>
 }

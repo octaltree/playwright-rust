@@ -482,17 +482,12 @@ impl Frame {
     }
 
     fn on_navigated(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct New {
-            name: String,
-            url: String
-        }
-        let New { name, url } = serde_json::from_value(params.clone().into())?;
         let var = &mut self.var.lock().unwrap();
-        var.name = name;
-        var.url = url;
         let payload: FrameNavigatedEvent = serde_json::from_value(params.into())?;
+        {
+            var.name = payload.name.clone();
+            var.url = payload.url.clone();
+        }
         self.emit_event(Evt::Navigated(payload));
         if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
             let this = get_object!(ctx, &self.guid(), Frame)?;
@@ -927,6 +922,7 @@ pub struct FrameNavigatedEvent {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Document {
+    #[serde(default)]
     request: Value
 }
 

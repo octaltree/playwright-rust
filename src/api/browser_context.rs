@@ -17,6 +17,7 @@ use crate::{
 ///
 /// Playwright allows creation of "incognito" browser contexts with `browser.newContext()` method. "Incognito" browser
 /// contexts don't write any browsing data to disk.
+#[derive(Debug)]
 pub struct BrowserContext {
     inner: Weak<Impl>
 }
@@ -194,10 +195,6 @@ impl BrowserContext {
             .await
             .map(Event::from)
     }
-
-    // pub fn subscribe_event(&self) -> Result<broadcast::Receiver<Event>, Error> {
-    //    Ok(upgrade(&self.inner)?.subscribe_event())
-    //}
 
     /// Returns storage state for this browser context, contains current cookies and local storage snapshot.
     pub async fn storage_state(&self) -> ArcResult<StorageState> {

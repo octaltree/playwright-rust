@@ -410,12 +410,12 @@ impl Frame {
     /// console.log(await resultHandle.jsonValue());
     /// await resultHandle.dispose();
     /// ```
-    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
+    pub async fn evaluate_handle<T>(&self, expression: &str, arg: T) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
         upgrade(&self.inner)?
-            .evaluate_handle(expression, arg)
+            .evaluate_handle(expression, Some(arg))
             .await
             .map(JsHandle::new)
     }
@@ -450,12 +450,12 @@ impl Frame {
     /// const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
     /// await bodyHandle.dispose();
     /// ```
-    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    pub async fn evaluate<T, U>(&self, expression: &str, arg: T) -> ArcResult<U>
     where
         T: Serialize,
         U: DeserializeOwned
     {
-        upgrade(&self.inner)?.evaluate(expression, arg).await
+        upgrade(&self.inner)?.evaluate(expression, Some(arg)).await
     }
 
     /// Returns the return value of `expression`.
@@ -803,7 +803,7 @@ impl<'a> SetContentBuilder<'a> {
         Self { inner, args }
     }
 
-    pub async fn goto(self) -> Result<(), Arc<Error>> {
+    pub async fn set_content(self) -> Result<(), Arc<Error>> {
         let Self { inner, args } = self;
         upgrade(&inner)?.set_content(args).await
     }

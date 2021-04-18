@@ -494,7 +494,7 @@ impl Page {
         self.main_frame().eval_handle(expression).await
     }
 
-    pub async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<JsHandle>
+    pub async fn evaluate_handle<T>(&self, expression: &str, arg: T) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
@@ -508,7 +508,7 @@ impl Page {
         self.main_frame().eval(expression).await
     }
 
-    pub async fn evaluate<T, U>(&self, expression: &str, arg: Option<T>) -> ArcResult<U>
+    pub async fn evaluate<T, U>(&self, expression: &str, arg: T) -> ArcResult<U>
     where
         T: Serialize,
         U: DeserializeOwned

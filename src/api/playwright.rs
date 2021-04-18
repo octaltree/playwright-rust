@@ -13,6 +13,17 @@ pub struct Playwright {
     inner: Weak<Impl>
 }
 
+fn run(driver: &Driver, args: &'static [&'static str]) -> io::Result<()> {
+    let status = Command::new(driver.executable()).args(args).status()?;
+    if !status.success() {
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!("Exit with {}", status)
+        ));
+    }
+    Ok(())
+}
+
 impl Playwright {
     /// Installs playwright driver to "$CACHE_DIR/.ms-playwright/playwright-rust/driver"
     pub async fn initialize() -> Result<Playwright, Error> {
@@ -32,34 +43,14 @@ impl Playwright {
     }
 
     /// Runs $ playwright install
-    pub fn prepare(&self) -> io::Result<()> {
-        Command::new(self.driver.executable())
-            .args(&["install"])
-            .status()?;
-        Ok(())
-    }
+    pub fn prepare(&self) -> io::Result<()> { run(&self.driver, &["install"]) }
 
     /// Runs $ playwright install chromium
-    pub fn install_chromium(&self) -> io::Result<()> {
-        Command::new(self.driver.executable())
-            .args(&["install", "chromium"])
-            .status()?;
-        Ok(())
-    }
+    pub fn install_chromium(&self) -> io::Result<()> { run(&self.driver, &["install", "chromium"]) }
 
-    pub fn install_firefox(&self) -> io::Result<()> {
-        Command::new(self.driver.executable())
-            .args(&["install", "firefox"])
-            .status()?;
-        Ok(())
-    }
+    pub fn install_firefox(&self) -> io::Result<()> { run(&self.driver, &["install", "firefox"]) }
 
-    pub fn install_webkit(&self) -> io::Result<()> {
-        Command::new(self.driver.executable())
-            .args(&["install", "webkit"])
-            .status()?;
-        Ok(())
-    }
+    pub fn install_webkit(&self) -> io::Result<()> { run(&self.driver, &["install", "webkit"]) }
 
     /// Launcher
     pub fn chromium(&self) -> BrowserType {

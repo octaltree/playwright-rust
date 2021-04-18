@@ -19,9 +19,12 @@ lint:
 
 test:
 	cargo test hello
-	cargo tarpaulin
+	cargo test --all-targets
 	cargo test --no-default-features --features chrono --features rt-actix --all-targets
 	cargo test --no-default-features --features chrono --features rt-async-std --all-targets
 
 doc:
 	cargo doc
+
+cov:
+	cargo tarpaulin --out html --exclude-files scripts/ tests/ src/build.rs src/main.rs src/generated.rs

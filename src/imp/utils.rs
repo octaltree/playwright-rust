@@ -50,7 +50,7 @@ pub struct StorageState {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Cookie {
     pub name: String,
@@ -63,6 +63,22 @@ pub struct Cookie {
     pub http_only: Option<bool>,
     pub secure: Option<bool>,
     pub same_site: Option<SameSite>
+}
+
+impl Cookie {
+    pub fn new<S: Into<String>>(name: S, value: S) -> Self {
+        Self {
+            name: name.into(),
+            value: value.into(),
+            url: None,
+            domain: None,
+            path: None,
+            expires: None,
+            http_only: None,
+            secure: None,
+            same_site: None
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
