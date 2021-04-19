@@ -37,5 +37,10 @@ async fn contexts(b: &Browser) -> BrowserContext {
     assert_eq!(b.contexts().unwrap().len(), len + 1);
     context.close().await.unwrap();
     assert_eq!(b.contexts().unwrap().len(), len);
-    b.context_builder().build().await.unwrap()
+    b.context_builder()
+        .user_agent("asdf")
+        .permissions(&["geolocation".into()])
+        .build()
+        .await
+        .unwrap()
 }

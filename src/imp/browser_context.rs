@@ -84,7 +84,7 @@ impl BrowserContext {
         Ok(())
     }
 
-    pub(crate) async fn grant_permission(
+    pub(crate) async fn grant_permissions(
         &self,
         permissions: &[String],
         origin: Option<&str>

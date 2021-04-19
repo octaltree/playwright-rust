@@ -111,13 +111,13 @@ impl BrowserContext {
     /// - `'payment-handler'`
     /// ## origin
     /// The origin to grant permissions to, e.g. `"https://example.com"`.
-    pub async fn grant_permission(
+    pub async fn grant_permissions(
         &self,
         permissions: &[String],
         origin: Option<&str>
     ) -> ArcResult<()> {
         upgrade(&self.inner)?
-            .grant_permission(permissions, origin)
+            .grant_permissions(permissions, origin)
             .await
     }
 

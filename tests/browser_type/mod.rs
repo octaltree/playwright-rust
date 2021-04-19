@@ -22,6 +22,7 @@ async fn launch(t: &BrowserType) -> Browser {
 
 async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
     t.persistent_context_launcher("./target".as_ref())
+        .user_agent("asdf")
         .launch()
         .await
         .unwrap()

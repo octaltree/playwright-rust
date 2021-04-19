@@ -345,7 +345,6 @@ impl RequestBody {
             Value::Object(m) => m,
             _ => return Err(Error::NotObject)
         };
-        log::debug!("set request {:?}", &p);
         Ok(self.set_params(p))
     }
 

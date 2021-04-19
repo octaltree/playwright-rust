@@ -4,6 +4,9 @@ use playwright::api::{page, BrowserContext, Page};
 
 pub async fn all(c: &BrowserContext, p1: Page, port: u16, which: Which) {
     eq_context_close(c, &p1).await;
+    ensure_timeout(&p1).await;
+    // check_launched_permissions(c, &p1, port).await;
+    // check_add_permissions(c, &p1).await;
     set_timeout(c).await;
     focus_should_work(&p1).await;
     reload_should_worker(&p1).await;
@@ -134,3 +137,56 @@ async fn workers_should_work(page: &Page, port: u16, which: Which) {
     page.goto_builder(&empty).goto().await.unwrap();
     assert_eq!(workers().len(), 0);
 }
+
+async fn ensure_timeout(page: &Page) {
+    page.set_default_timeout(500).await.unwrap();
+    match page.expect_event(page::EventType::Load).await {
+        Err(playwright::Error::Timeout) => {}
+        _ => panic!("Not expected")
+    }
+}
+
+// async fn check_launched_permissions(c: &BrowserContext, page: &Page, port: u16) {
+//    page.goto_builder(&super::url_static(port, "/empty.html"))
+//        .goto()
+//        .await
+//        .unwrap();
+//    assert_eq!(get_permission(page, "geolocation").await, "granted");
+//    c.clear_permissions().await.unwrap();
+//    assert_eq!(get_permission(page, "geolocation").await, "prompt");
+//}
+
+// async fn check_add_permissions(c: &BrowserContext, page: &Page) {
+//    const PERMISSION_DENIED: i32 = 1;
+//    let snippet = "async () => {
+//        let getCurrentPositionAsync =
+//            () => new Promise((resolve, reject) =>
+//                navigator.geolocation.getCurrentPosition(resolve, reject));
+//        let err;
+//        const result = await getCurrentPositionAsync().catch(e => { err = e; });
+//        return [result?.coords.latitude, err?.code];
+//    }";
+//    let geo = || async {
+//        page.eval::<(Option<f64>, Option<i32>)>(snippet)
+//            .await
+//            .unwrap()
+//    };
+//    assert_eq!(geo().await, (None, Some(PERMISSION_DENIED)));
+//    c.grant_permissions(&["geolocation".into()], None)
+//        .await
+//        .unwrap();
+//    assert_eq!(get_permission(page, "geolocation").await, "granted");
+//    println!("granted");
+//    let result = geo().await;
+//    dbg!(&result);
+//    assert_eq!(result.0.is_some(), true);
+//}
+
+// async fn get_permission(p: &Page, name: &str) -> String {
+//    p.evaluate(
+//        "name => navigator.permissions.query({name}).then(result => result.state)",
+//        name
+//    )
+//    .await
+//    .unwrap()
+//}

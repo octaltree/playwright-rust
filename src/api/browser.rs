@@ -127,8 +127,7 @@ impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> ContextBuilder<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
         no_viewport: Option<bool>,
         /// Whether to emulate network being offline. Defaults to `false`.
         offline: Option<bool>,
-        /// A list of permissions to grant to all pages in this context. See [`method: BrowserContext.grantPermissions`] for more
-        /// details.
+        /// A list of permissions to grant to all pages in this context. See [BrowserContext::grant_permissions] for more details.
         permissions: Option<&'h [String]>,
         /// Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this
         /// option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example

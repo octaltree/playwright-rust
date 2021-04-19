@@ -4,8 +4,9 @@ use playwright::api::{BrowserContext, Page};
 pub async fn all(c: &BrowserContext, _which: Which) -> Page {
     assert_eq!(c.browser().unwrap().is_some(), true);
     set_timeout(c).await;
-    cookies_work(c).await;
+    cookies_should_work(c).await;
     //
+    add_init_script_should_work(c).await;
     pages(c).await
 }
 
@@ -21,7 +22,7 @@ async fn set_timeout(c: &BrowserContext) {
     c.set_default_timeout(10000).await.unwrap();
 }
 
-async fn cookies_work(c: &BrowserContext) {
+async fn cookies_should_work(c: &BrowserContext) {
     use playwright::api::Cookie;
     ensure_cookies_are_cleared(c).await;
     let cookie = Cookie {
@@ -48,3 +49,5 @@ async fn ensure_cookies_are_cleared(c: &BrowserContext) {
     let cs = c.cookies(&[]).await.unwrap();
     assert_eq!(0, cs.len());
 }
+
+async fn add_init_script_should_work(c: &BrowserContext) {}
