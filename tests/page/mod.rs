@@ -6,8 +6,9 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     let page = c.new_page().await.unwrap();
     eq_context_close(c, &page).await;
     ensure_timeout(&page).await;
+    set_timeout(&page).await;
     check_add_permissions(c, &page, port, which).await;
-    set_timeout(c).await;
+    front_should_work(c, &page).await;
     focus_should_work(&page).await;
     reload_should_worker(&page).await;
     viewport(&page).await;
@@ -49,6 +50,20 @@ async fn ensure_close(page: &Page) {
         page::Event::Close => (),
         _ => unreachable!()
     }
+}
+
+async fn front_should_work(c: &BrowserContext, p1: &Page) {
+    let p2 = c.new_page().await.unwrap();
+    p1.bring_to_front().await.unwrap();
+    assert_eq!(
+        p1.eval::<String>("document.visibilityState").await.unwrap(),
+        "visible"
+    );
+    assert_eq!(
+        p2.eval::<String>("document.visibilityState").await.unwrap(),
+        "visible"
+    );
+    p2.close(None).await.unwrap();
 }
 
 async fn focus_should_work(page: &Page) {
@@ -105,9 +120,9 @@ async fn navigations(page: &Page, port: u16) {
     assert_eq!(maybe_response, None);
 }
 
-async fn set_timeout(c: &BrowserContext) {
-    c.set_default_navigation_timeout(10000).await.unwrap();
-    c.set_default_timeout(10000).await.unwrap();
+async fn set_timeout(page: &Page) {
+    page.set_default_navigation_timeout(10000).await.unwrap();
+    page.set_default_timeout(10000).await.unwrap();
 }
 
 async fn workers_should_work(page: &Page, port: u16, which: Which) {

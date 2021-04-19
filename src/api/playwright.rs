@@ -108,9 +108,9 @@ mod tests {
     crate::runtime_test!(failure_status_code, {
         let mut p = Playwright::initialize().await.unwrap();
         let err = run(p.driver(), &["nonExistentArg"]);
-        match err {
-            Err(e) => assert_eq!(e.kind(), io::ErrorKind::Other),
-            Ok(_) => unreachable!()
+        assert_eq!(err.is_err(), true);
+        if let Some(e) = err.err() {
+            assert_eq!(e.kind(), io::ErrorKind::Other);
         }
     });
 }
