@@ -4,11 +4,11 @@ mod browser_type;
 mod page;
 
 #[cfg(feature = "rt-async-std")]
-use async_std::{task::sleep, task::spawn};
+use async_std::task::spawn;
 #[cfg(feature = "rt-actix")]
-use tokio::{task::spawn, time::sleep};
+use tokio::task::spawn;
 #[cfg(feature = "rt-tokio")]
-use tokio::{task::spawn, time::sleep};
+use tokio::task::spawn;
 
 use playwright::Playwright;
 
@@ -29,18 +29,12 @@ async fn all(which: Which) {
     let port = free_local_port().unwrap();
     start_test_server(port).await;
     let playwright = playwright_with_driver().await;
-    let browser_type = match which {
-        Which::Webkit => playwright.webkit(),
-        Which::Firefox => playwright.firefox(),
-        Which::Chromium => playwright.chromium()
-    };
     install_browser(&playwright, which);
-    let browser = browser_type::all(&browser_type, which).await;
-    let browser_context = browser::all(&browser, which).await;
+    let browser_type = browser_type::all(&playwright, which).await;
+    let browser = browser::all(&browser_type, which).await;
     let persistent = browser_context::persistent(&browser_type, port, which).await;
-    assert_ne!(&persistent, &browser_context);
-    let page = browser_context::all(&browser_context, &browser, which).await;
-    page::all(&browser_context, page, port, which).await;
+    let browser_context = browser_context::all(&browser, &persistent, which).await;
+    page::all(&browser_context, port, which).await;
 }
 
 fn install_browser(p: &Playwright, which: Which) {

@@ -1,22 +1,34 @@
 use super::Which;
-use playwright::api::{Browser, BrowserContext, BrowserType, Page};
+use playwright::api::{Browser, BrowserContext, BrowserType};
 
-pub async fn all(c: &BrowserContext, browser: &Browser, _which: Which) -> Page {
+pub async fn all(browser: &Browser, persistent: &BrowserContext, _which: Which) -> BrowserContext {
+    let c = launch(browser).await;
+    assert_ne!(persistent, &c);
     assert_eq!(c.browser().unwrap().is_some(), true);
-    set_timeout(c).await;
-    cookies_should_work(c).await;
+    set_timeout(&c).await;
+    cookies_should_work(&c).await;
     //
-    add_init_script_should_work(c).await;
-    pages(c).await
+    add_init_script_should_work(&c).await;
+    pages_should_work(&c).await;
+    c
 }
 
-pub async fn persistent(t: &BrowserType, port: u16, which: Which) -> BrowserContext {
+pub async fn persistent(t: &BrowserType, _port: u16, which: Which) -> BrowserContext {
     let c = launch_persistent_context(t).await;
     if Which::Firefox != which {
         // XXX: launch with permissions not work on firefox
-        check_launched_permissions(&c, port).await;
+        check_launched_permissions(&c).await;
     }
     c
+}
+
+async fn launch(b: &Browser) -> BrowserContext {
+    b.context_builder()
+        .user_agent("asdf")
+        .permissions(&["geolocation".into()])
+        .build()
+        .await
+        .unwrap()
 }
 
 async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
@@ -28,11 +40,13 @@ async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
         .unwrap()
 }
 
-async fn pages(c: &BrowserContext) -> Page {
+async fn pages_should_work(c: &BrowserContext) {
     let len = c.pages().unwrap().len();
     let page = c.new_page().await.unwrap();
     assert_eq!(c.pages().unwrap().len(), len + 1);
-    page
+    page.close(None).await.unwrap();
+    page.close(None).await.unwrap();
+    assert_eq!(c.pages().unwrap().len(), len);
 }
 
 async fn set_timeout(c: &BrowserContext) {
@@ -68,7 +82,7 @@ async fn ensure_cookies_are_cleared(c: &BrowserContext) {
     assert_eq!(0, cs.len());
 }
 
-async fn check_launched_permissions(c: &BrowserContext, port: u16) {
+async fn check_launched_permissions(c: &BrowserContext) {
     assert_eq!(get_permission(c, "geolocation").await, "granted");
     c.clear_permissions().await.unwrap();
     assert_eq!(get_permission(c, "geolocation").await, "prompt");
