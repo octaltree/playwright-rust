@@ -1,38 +1,18 @@
 use super::Which;
-use playwright::api::{Browser, BrowserContext, BrowserType};
+use playwright::api::{BrowserType, Playwright};
 
-pub async fn all(t: BrowserType, which: Which) -> (Browser, BrowserContext) {
+pub async fn all(playwright: &Playwright, which: Which) -> BrowserType {
+    let t = match which {
+        Which::Webkit => playwright.webkit(),
+        Which::Firefox => playwright.firefox(),
+        Which::Chromium => playwright.chromium()
+    };
     name_should_work(&t, which);
     executable_should_exist(&t);
     should_handle_timeout(&t).await;
     should_fire_close(&t).await;
     should_be_callable_twice(&t).await;
-    launch_close_browser(&t).await;
-    tokio::join!(launch(&t), launch_persistent_context(&t))
-}
-
-async fn launch(t: &BrowserType) -> Browser {
-    t.launcher()
-        .headless(false)
-        .clear_headless()
-        .launch()
-        .await
-        .unwrap()
-}
-
-async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
-    t.persistent_context_launcher("./target".as_ref())
-        .launch()
-        .await
-        .unwrap()
-}
-
-async fn launch_close_browser(t: &BrowserType) {
-    let (b1, b2) = tokio::join!(launch(&t), launch(&t));
-    assert_ne!(b1, b2);
-    b1.close().await.unwrap();
-    b2.close().await.unwrap();
-    assert_eq!(false, b1.exists());
+    t
 }
 
 fn name_should_work(t: &BrowserType, which: Which) {

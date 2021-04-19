@@ -1,17 +1,22 @@
 use super::Which;
 use futures::stream::StreamExt;
-use playwright::api::{page, BrowserContext, Page};
+use playwright::api::{page, BrowserContext, Geolocation, Page, Viewport};
 
-pub async fn all(c: &BrowserContext, p1: Page, port: u16, which: Which) {
-    eq_context_close(c, &p1).await;
-    set_timeout(c).await;
-    focus_should_work(&p1).await;
-    reload_should_worker(&p1).await;
+pub async fn all(c: &BrowserContext, port: u16, which: Which) {
+    let page = c.new_page().await.unwrap();
+    eq_context_close(c, &page).await;
+    ensure_timeout(&page).await;
+    set_timeout(&page).await;
+    check_add_permissions(c, &page, port, which).await;
+    front_should_work(c, &page).await;
+    focus_should_work(&page).await;
+    reload_should_worker(&page).await;
+    viewport(&page).await;
     if which != Which::Firefox {
         // XXX: go_back response is null on firefox
-        navigations(&p1, port).await;
+        navigations(&page, port).await;
     }
-    workers_should_work(&p1, port, which).await;
+    workers_should_work(&page, port, which).await;
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
@@ -45,6 +50,20 @@ async fn ensure_close(page: &Page) {
         page::Event::Close => (),
         _ => unreachable!()
     }
+}
+
+async fn front_should_work(c: &BrowserContext, p1: &Page) {
+    let p2 = c.new_page().await.unwrap();
+    p1.bring_to_front().await.unwrap();
+    assert_eq!(
+        p1.eval::<String>("document.visibilityState").await.unwrap(),
+        "visible"
+    );
+    assert_eq!(
+        p2.eval::<String>("document.visibilityState").await.unwrap(),
+        "visible"
+    );
+    p2.close(None).await.unwrap();
 }
 
 async fn focus_should_work(page: &Page) {
@@ -101,9 +120,9 @@ async fn navigations(page: &Page, port: u16) {
     assert_eq!(maybe_response, None);
 }
 
-async fn set_timeout(c: &BrowserContext) {
-    c.set_default_navigation_timeout(10000).await.unwrap();
-    c.set_default_timeout(10000).await.unwrap();
+async fn set_timeout(page: &Page) {
+    page.set_default_navigation_timeout(10000).await.unwrap();
+    page.set_default_timeout(10000).await.unwrap();
 }
 
 async fn workers_should_work(page: &Page, port: u16, which: Which) {
@@ -133,4 +152,73 @@ async fn workers_should_work(page: &Page, port: u16, which: Which) {
     );
     page.goto_builder(&empty).goto().await.unwrap();
     assert_eq!(workers().len(), 0);
+}
+
+async fn ensure_timeout(page: &Page) {
+    page.set_default_timeout(500).await.unwrap();
+    match page.expect_event(page::EventType::Load).await {
+        Err(playwright::Error::Timeout) => {}
+        _ => panic!("Not expected")
+    }
+}
+
+async fn check_add_permissions(c: &BrowserContext, page: &Page, port: u16, which: Which) {
+    const PERMISSION_DENIED: i32 = 1;
+    let snippet = "async () => {
+        let getCurrentPositionAsync =
+            () => new Promise((resolve, reject) =>
+                navigator.geolocation.getCurrentPosition(resolve, reject));
+        let err;
+        const result = await getCurrentPositionAsync().catch(e => { err = e; });
+        return [result?.coords.latitude, err?.code];
+    }";
+    page.goto_builder(&super::url_static(port, "/empty.html"))
+        .goto()
+        .await
+        .unwrap();
+    let geo = || async {
+        page.eval::<(Option<f64>, Option<i32>)>(snippet)
+            .await
+            .unwrap()
+    };
+    assert_eq!(get_permission(page, "geolocation").await, "granted");
+    c.clear_permissions().await.unwrap();
+    assert_eq!(get_permission(page, "geolocation").await, "prompt");
+    if which != Which::Firefox {
+        // firefox shows prompt
+        assert_eq!(geo().await, (None, Some(PERMISSION_DENIED)));
+    }
+    c.grant_permissions(&["geolocation".into()], None)
+        .await
+        .unwrap();
+    assert_eq!(get_permission(page, "geolocation").await, "granted");
+    c.set_geolocation(Some(&Geolocation {
+        latitude: 59.95,
+        longitude: 2.,
+        accuracy: None
+    }))
+    .await
+    .unwrap();
+    let result = geo().await;
+    dbg!(&result);
+    assert_eq!(result.0, Some(59.95))
+}
+
+async fn get_permission(p: &Page, name: &str) -> String {
+    p.evaluate(
+        "name => navigator.permissions.query({name}).then(result => result.state)",
+        name
+    )
+    .await
+    .unwrap()
+}
+
+async fn viewport(p: &Page) {
+    let v = Viewport {
+        width: 500,
+        height: 500
+    };
+    dbg!(p.viewport_size().unwrap());
+    p.set_viewport_size(v.clone()).await.unwrap();
+    assert_eq!(p.viewport_size().unwrap(), Some(v));
 }
