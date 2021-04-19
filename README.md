@@ -7,7 +7,7 @@ Playwright is a rust library to automate [Chromium](https://www.chromium.org/Hom
 ## Installation
 ```
 [dependencies]
-playwright = "0.0.13"
+playwright = "0.0.14"
 ```
 
 ## Usage
