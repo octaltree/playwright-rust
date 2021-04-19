@@ -2,6 +2,7 @@ mod browser;
 mod browser_context;
 mod browser_type;
 mod page;
+mod selectors;
 
 #[cfg(feature = "rt-async-std")]
 use async_std::task::spawn;
@@ -19,13 +20,15 @@ pub enum Which {
     Chromium
 }
 
-playwright::runtime_test!(chromium, all(Which::Chromium).await);
+playwright::runtime_test!(chromium_page, page(Which::Chromium).await);
+playwright::runtime_test!(firefox_page, page(Which::Firefox).await);
+// playwright::runtime_test!(webkit_page, page(Which::Webkit).await);
 
-playwright::runtime_test!(firefox, all(Which::Firefox).await);
+playwright::runtime_test!(chromium_selectors, selectors(Which::Chromium).await);
+playwright::runtime_test!(firefox_selectors, selectors(Which::Firefox).await);
+// playwright::runtime_test!(webkit_selectors, selectors(Which::Webkit).await);
 
-// playwright::runtime_test!(webkit, all(Which::Webkit).await);
-
-async fn all(which: Which) {
+async fn page(which: Which) {
     let port = free_local_port().unwrap();
     start_test_server(port).await;
     let playwright = playwright_with_driver().await;
@@ -35,6 +38,11 @@ async fn all(which: Which) {
     let persistent = browser_context::persistent(&browser_type, port, which).await;
     let browser_context = browser_context::all(&browser, &persistent, which).await;
     page::all(&browser_context, port, which).await;
+}
+
+async fn selectors(which: Which) {
+    let playwright = playwright_with_driver().await;
+    selectors::all(&playwright, which).await;
 }
 
 fn install_browser(p: &Playwright, which: Which) {

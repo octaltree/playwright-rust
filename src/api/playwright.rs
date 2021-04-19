@@ -100,3 +100,17 @@ impl Playwright {
             .unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    crate::runtime_test!(failure_status_code, {
+        let mut p = Playwright::initialize().await.unwrap();
+        let err = run(p.driver(), &["nonExistentArg"]);
+        match err {
+            Err(e) => assert_eq!(e.kind(), io::ErrorKind::Other),
+            Ok(_) => unreachable!()
+        }
+    });
+}

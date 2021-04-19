@@ -39,10 +39,13 @@ fn download(url: &str, dest: &Path) {
 fn download(_url: &str, dest: &Path) { File::create(dest).unwrap(); }
 
 fn url(platform: PlaywrightPlatform) -> String {
+    let next = DRIVER_VERSION
+        .contains("next")
+        .then(|| "/next")
+        .unwrap_or_default();
     format!(
-        "https://playwright.azureedge.net/builds/driver/\
-        next/playwright-{}-{}.zip",
-        DRIVER_VERSION, platform
+        "https://playwright.azureedge.net/builds/driver{}/playwright-{}-{}.zip",
+        next, DRIVER_VERSION, platform
     )
 }
 
