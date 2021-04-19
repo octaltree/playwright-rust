@@ -1,6 +1,6 @@
 use super::Which;
 use futures::stream::StreamExt;
-use playwright::api::{page, BrowserContext, Geolocation, Page};
+use playwright::api::{page, BrowserContext, Geolocation, Page, Viewport};
 
 pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     let page = c.new_page().await.unwrap();
@@ -10,6 +10,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     set_timeout(c).await;
     focus_should_work(&page).await;
     reload_should_worker(&page).await;
+    viewport(&page).await;
     if which != Which::Firefox {
         // XXX: go_back response is null on firefox
         navigations(&page, port).await;
@@ -195,4 +196,14 @@ async fn get_permission(p: &Page, name: &str) -> String {
     )
     .await
     .unwrap()
+}
+
+async fn viewport(p: &Page) {
+    let v = Viewport {
+        width: 500,
+        height: 500
+    };
+    dbg!(p.viewport_size().unwrap());
+    p.set_viewport_size(v.clone()).await.unwrap();
+    assert_eq!(p.viewport_size().unwrap(), Some(v));
 }

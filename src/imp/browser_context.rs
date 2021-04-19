@@ -64,6 +64,7 @@ impl BrowserContext {
 
     pub(crate) async fn cookies(&self, urls: &[String]) -> ArcResult<Vec<Cookie>> {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             urls: &'a [String]
         }
@@ -76,6 +77,7 @@ impl BrowserContext {
 
     pub(crate) async fn add_cookies(&self, cookies: &[Cookie]) -> ArcResult<()> {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             cookies: &'a [Cookie]
         }
@@ -91,6 +93,7 @@ impl BrowserContext {
     ) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a, 'b> {
             permissions: &'a [String],
             origin: Option<&'b str>
@@ -111,6 +114,7 @@ impl BrowserContext {
     pub(crate) async fn set_geolocation(&self, geolocation: Option<&Geolocation>) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             geolocation: Option<&'a Geolocation>
         }
@@ -138,6 +142,7 @@ impl BrowserContext {
         T: IntoIterator<Item = (String, String)>
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             headers: Vec<Header>
         }

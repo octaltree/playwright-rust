@@ -63,6 +63,7 @@ macro_rules! mouse_down {
         ) -> Result<(), Arc<Error>> {
             #[skip_serializing_none]
             #[derive(Serialize)]
+            #[serde(rename_all = "camelCase")]
             struct Args {
                 button: Option<MouseButton>,
                 click_count: Option<i32>
@@ -141,6 +142,7 @@ impl Page {
     pub(crate) async fn key_type(&self, text: &str, delay: Option<f64>) -> Result<(), Arc<Error>> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'b> {
             text: &'b str,
             delay: Option<f64>
@@ -153,6 +155,7 @@ impl Page {
     pub(crate) async fn key_press(&self, text: &str, delay: Option<f64>) -> Result<(), Arc<Error>> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'b> {
             text: &'b str,
             delay: Option<f64>
@@ -164,6 +167,7 @@ impl Page {
 
     pub(crate) async fn screen_tap(&self, x: f64, y: f64) -> Result<(), Arc<Error>> {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             x: f64,
             y: f64
@@ -181,6 +185,7 @@ impl Page {
     ) -> Result<(), Arc<Error>> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             x: f64,
             y: f64,
@@ -246,6 +251,7 @@ impl Page {
     pub(crate) async fn close(&self, run_before_unload: Option<bool>) -> Result<(), Arc<Error>> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             run_before_unload: Option<bool>
         }
@@ -281,6 +287,7 @@ impl Page {
         T: IntoIterator<Item = (String, String)>
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             headers: Vec<Header>
         }
@@ -304,6 +311,7 @@ impl Page {
 
     pub(crate) async fn set_viewport_size(&self, viewport_size: Viewport) -> ArcResult<()> {
         #[derive(Debug, Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             viewport_size: Viewport
         }

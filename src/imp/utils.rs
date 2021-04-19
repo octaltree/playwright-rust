@@ -1,6 +1,6 @@
 use crate::imp::prelude::*;
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Deserialize, Clone, Serialize, PartialEq, Eq)]
 pub struct Viewport {
     pub width: i32,
     pub height: i32

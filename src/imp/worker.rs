@@ -42,6 +42,7 @@ impl Worker {
         U: DeserializeOwned
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             expression: &'a str,
             arg: Value
@@ -66,6 +67,7 @@ impl Worker {
         T: Serialize
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             expression: &'a str,
             arg: Value

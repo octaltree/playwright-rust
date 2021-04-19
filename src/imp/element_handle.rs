@@ -169,6 +169,7 @@ impl ElementHandle {
     pub(crate) async fn scroll_into_view_if_needed(&self, timeout: Option<f64>) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             timeout: Option<f64>
         }
@@ -180,6 +181,7 @@ impl ElementHandle {
     pub(crate) async fn select_text(&self, timeout: Option<f64>) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             timeout: Option<f64>
         }
@@ -212,6 +214,7 @@ impl ElementHandle {
     ) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args {
             state: ElementState,
             timeout: Option<f64>
@@ -243,6 +246,7 @@ impl ElementHandle {
         T: Serialize
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             r#type: &'a str,
             event_init: Value

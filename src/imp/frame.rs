@@ -32,6 +32,7 @@ macro_rules! is_checked {
         pub(crate) async fn $f(&self, selector: &str, timeout: Option<f64>) -> ArcResult<bool> {
             #[skip_serializing_none]
             #[derive(Serialize)]
+            #[serde(rename_all = "camelCase")]
             struct Args<'a> {
                 selector: &'a str,
                 timeout: Option<f64>
@@ -160,6 +161,7 @@ impl Frame {
     ) -> ArcResult<Option<String>> {
         #[skip_serializing_none]
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a, 'b> {
             selector: &'a str,
             name: &'b str,
@@ -317,6 +319,7 @@ impl Frame {
         U: DeserializeOwned
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             expression: &'a str,
             arg: Value
@@ -341,6 +344,7 @@ impl Frame {
         T: Serialize
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             expression: &'a str,
             arg: Value
@@ -364,6 +368,7 @@ impl Frame {
         U: DeserializeOwned
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a, 'b> {
             selector: &'a str,
             expression: &'b str,
@@ -391,6 +396,7 @@ impl Frame {
         U: DeserializeOwned
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a, 'b> {
             selector: &'a str,
             expression: &'b str,
@@ -417,6 +423,7 @@ impl Frame {
         T: Serialize
     {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Args<'a, 'b> {
             selector: &'a str,
             r#type: &'b str,
