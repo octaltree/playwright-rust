@@ -128,7 +128,7 @@ impl BrowserContext {
 
     pub(crate) async fn add_init_script(&self, script: &str) -> ArcResult<()> {
         let mut args = HashMap::new();
-        args.insert("script", script);
+        args.insert("source", script);
         let _ = send_message!(self, "addInitScript", args);
         Ok(())
     }

@@ -1,13 +1,31 @@
 use super::Which;
-use playwright::api::{BrowserContext, Page};
+use playwright::api::{Browser, BrowserContext, BrowserType, Page};
 
-pub async fn all(c: &BrowserContext, _which: Which) -> Page {
+pub async fn all(c: &BrowserContext, browser: &Browser, _which: Which) -> Page {
     assert_eq!(c.browser().unwrap().is_some(), true);
     set_timeout(c).await;
     cookies_should_work(c).await;
     //
     add_init_script_should_work(c).await;
     pages(c).await
+}
+
+pub async fn persistent(t: &BrowserType, port: u16, which: Which) -> BrowserContext {
+    let c = launch_persistent_context(t).await;
+    if Which::Firefox != which {
+        // XXX: launch with permissions not work on firefox
+        check_launched_permissions(&c, port).await;
+    }
+    c
+}
+
+async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
+    t.persistent_context_launcher("./target".as_ref())
+        .user_agent("asdf")
+        .permissions(&["geolocation".into()])
+        .launch()
+        .await
+        .unwrap()
 }
 
 async fn pages(c: &BrowserContext) -> Page {
@@ -50,4 +68,29 @@ async fn ensure_cookies_are_cleared(c: &BrowserContext) {
     assert_eq!(0, cs.len());
 }
 
-async fn add_init_script_should_work(c: &BrowserContext) {}
+async fn check_launched_permissions(c: &BrowserContext, port: u16) {
+    assert_eq!(get_permission(c, "geolocation").await, "granted");
+    c.clear_permissions().await.unwrap();
+    assert_eq!(get_permission(c, "geolocation").await, "prompt");
+}
+
+async fn get_permission(c: &BrowserContext, name: &str) -> String {
+    let p = c.new_page().await.unwrap();
+    let res = p
+        .evaluate(
+            "name => navigator.permissions.query({name}).then(result => result.state)",
+            name
+        )
+        .await
+        .unwrap();
+    p.close(None).await.unwrap();
+    res
+}
+
+async fn add_init_script_should_work(c: &BrowserContext) {
+    c.add_init_script("HOGE = 2").await.unwrap();
+    let p = c.new_page().await.unwrap();
+    let x: i32 = p.eval("() => HOGE").await.unwrap();
+    assert_eq!(x, 2);
+    p.close(None).await.unwrap();
+}

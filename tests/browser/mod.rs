@@ -1,7 +1,7 @@
 use super::Which;
 use playwright::api::{Browser, BrowserContext};
 
-pub async fn all(b: Browser, which: Which) -> BrowserContext {
+pub async fn all(b: &Browser, which: Which) -> BrowserContext {
     assert_eq!(b.exists(), true);
     version_should_work(&b, which);
     contexts(&b).await

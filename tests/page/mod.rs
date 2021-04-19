@@ -146,15 +146,15 @@ async fn ensure_timeout(page: &Page) {
     }
 }
 
-// async fn check_launched_permissions(c: &BrowserContext, page: &Page, port: u16) {
-//    page.goto_builder(&super::url_static(port, "/empty.html"))
-//        .goto()
-//        .await
-//        .unwrap();
-//    assert_eq!(get_permission(page, "geolocation").await, "granted");
-//    c.clear_permissions().await.unwrap();
-//    assert_eq!(get_permission(page, "geolocation").await, "prompt");
-//}
+async fn check_launched_permissions(c: &BrowserContext, page: &Page, port: u16) {
+    page.goto_builder(&super::url_static(port, "/empty.html"))
+        .goto()
+        .await
+        .unwrap();
+    assert_eq!(get_permission(page, "geolocation").await, "granted");
+    c.clear_permissions().await.unwrap();
+    assert_eq!(get_permission(page, "geolocation").await, "prompt");
+}
 
 // async fn check_add_permissions(c: &BrowserContext, page: &Page) {
 //    const PERMISSION_DENIED: i32 = 1;
@@ -182,11 +182,11 @@ async fn ensure_timeout(page: &Page) {
 //    assert_eq!(result.0.is_some(), true);
 //}
 
-// async fn get_permission(p: &Page, name: &str) -> String {
-//    p.evaluate(
-//        "name => navigator.permissions.query({name}).then(result => result.state)",
-//        name
-//    )
-//    .await
-//    .unwrap()
-//}
+async fn get_permission(p: &Page, name: &str) -> String {
+    p.evaluate(
+        "name => navigator.permissions.query({name}).then(result => result.state)",
+        name
+    )
+    .await
+    .unwrap()
+}

@@ -1,28 +1,20 @@
 use super::Which;
 use playwright::api::{Browser, BrowserContext, BrowserType};
 
-pub async fn all(t: BrowserType, which: Which) -> (Browser, BrowserContext) {
-    name_should_work(&t, which);
-    executable_should_exist(&t);
-    should_handle_timeout(&t).await;
-    should_fire_close(&t).await;
-    should_be_callable_twice(&t).await;
-    launch_close_browser(&t).await;
-    tokio::join!(launch(&t), launch_persistent_context(&t))
+pub async fn all(t: &BrowserType, which: Which) -> Browser {
+    name_should_work(t, which);
+    executable_should_exist(t);
+    should_handle_timeout(t).await;
+    should_fire_close(t).await;
+    should_be_callable_twice(t).await;
+    launch_close_browser(t).await;
+    launch(t).await
 }
 
 async fn launch(t: &BrowserType) -> Browser {
     t.launcher()
         .headless(false)
         .clear_headless()
-        .launch()
-        .await
-        .unwrap()
-}
-
-async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
-    t.persistent_context_launcher("./target".as_ref())
-        .user_agent("asdf")
         .launch()
         .await
         .unwrap()
