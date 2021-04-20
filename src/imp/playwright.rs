@@ -111,6 +111,7 @@ pub struct DeviceDescriptor {
     pub name: String,
     pub user_agent: String,
     pub viewport: Viewport,
+    pub screen: Option<Viewport>,
     pub device_scale_factor: f64,
     pub is_mobile: bool,
     pub has_touch: bool,
@@ -132,6 +133,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
         struct Descriptor {
             user_agent: String,
             viewport: Viewport,
+            screen: Option<Viewport>,
             device_scale_factor: f64,
             is_mobile: bool,
             has_touch: bool,
@@ -143,6 +145,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
                 Descriptor {
                     user_agent,
                     viewport,
+                    screen,
                     device_scale_factor,
                     is_mobile,
                     has_touch,
@@ -153,6 +156,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
             name,
             user_agent,
             viewport,
+            screen,
             device_scale_factor,
             is_mobile,
             has_touch,

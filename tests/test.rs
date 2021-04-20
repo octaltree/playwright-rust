@@ -28,6 +28,8 @@ playwright::runtime_test!(chromium_selectors, selectors(Which::Chromium).await);
 playwright::runtime_test!(firefox_selectors, selectors(Which::Firefox).await);
 // playwright::runtime_test!(webkit_selectors, selectors(Which::Webkit).await);
 
+playwright::runtime_test!(chromium_devices, devices(Which::Chromium).await);
+
 async fn page(which: Which) {
     let port = free_local_port().unwrap();
     start_test_server(port).await;
@@ -43,6 +45,12 @@ async fn page(which: Which) {
 async fn selectors(which: Which) {
     let playwright = playwright_with_driver().await;
     selectors::all(&playwright, which).await;
+}
+
+async fn devices(which: Which) {
+    let playwright = playwright_with_driver().await;
+    let devices = playwright.devices();
+    println!("{:?}", devices);
 }
 
 fn install_browser(p: &Playwright, which: Which) {
