@@ -113,7 +113,7 @@ impl ElementHandle {
     }
 
     /// This method hovers over the element by performing the following steps:
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
@@ -128,7 +128,7 @@ impl ElementHandle {
 
     /// This method double clicks an element matching `selector` by performing the following steps:
     /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.
@@ -159,7 +159,7 @@ impl ElementHandle {
     /// This method checks the element by performing the following steps:
     /// 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
     ///   unchecked, this method returns immediately.
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
@@ -172,7 +172,7 @@ impl ElementHandle {
     pub fn uncheck_builder(&self) -> UncheckBuilder { UncheckBuilder::new(self.inner.clone()) }
 
     /// This method taps the element by performing the following steps:
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
@@ -412,7 +412,7 @@ impl HoverBuilder {
     }
 
     setter! {
-        /// Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+        /// Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`.
         force: Option<bool>,
         /// Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
         /// modifiers back. If not specified, currently pressed modifiers are used.
@@ -448,7 +448,7 @@ macro_rules! clicker {
                 button: Option<MouseButton>,
                 /// Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
                 delay: Option<f64>,
-                /// Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+                /// Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`.
                 force: Option<bool>,
                 /// Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
                 /// modifiers back. If not specified, currently pressed modifiers are used.

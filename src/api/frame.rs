@@ -118,7 +118,7 @@ impl Frame {
 
     /// This method clicks an element matching `selector` by performing the following steps:
     /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.
@@ -132,7 +132,7 @@ impl Frame {
 
     /// This method double clicks an element matching `selector` by performing the following steps:
     /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.
@@ -149,7 +149,7 @@ impl Frame {
 
     /// This method taps an element matching `selector` by performing the following steps:
     /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.
@@ -162,7 +162,7 @@ impl Frame {
     pub fn tap_builder<'a>(&self, selector: &'a str) -> TapBuilder<'a> {
         TapBuilder::new(self.inner.clone(), selector)
     }
-    /// This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the
+    /// This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability/) checks, focuses the
     /// element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has
     /// associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be
     /// filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this
@@ -304,7 +304,7 @@ impl Frame {
 
     /// This method hovers over an element matching `selector` by performing the following steps:
     /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.
@@ -351,7 +351,7 @@ impl Frame {
     /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
     /// 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
     ///   unchecked, this method returns immediately.
-    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -696,7 +696,7 @@ macro_rules! clicker {
                 click_count: Option<i32>,
                 /// Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
                 delay: Option<f64>,
-                /// Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+                /// Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`.
                 force: Option<bool>,
                 /// Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
                 /// modifiers back. If not specified, currently pressed modifiers are used.
