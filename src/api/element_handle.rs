@@ -113,74 +113,74 @@ impl ElementHandle {
     }
 
     /// This method hovers over the element by performing the following steps:
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
     ///
-    /// If the element is detached from the DOM at any moment during the action, this method rejects.
+    /// If the element is detached from the DOM at any moment during the action, this method throws.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn hover_builder(&self) -> HoverBuilder { HoverBuilder::new(self.inner.clone()) }
 
     pub fn click_builder(&self) -> ClickBuilder { ClickBuilder::new(self.inner.clone()) }
 
-    /// This method double clicks the element by performing the following steps:
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// This method double clicks an element matching `selector` by performing the following steps:
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the
+    ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
-    ///   first click of the `dblclick()` triggers a navigation event, this method will reject.
+    ///   first click of the `dblclick()` triggers a navigation event, this method will throw.
     ///
-    /// If the element is detached from the DOM at any moment during the action, this method rejects.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
-    ///
-    /// > NOTE: `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
+    /// > NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
     pub fn dblclick_builder(&self) -> DblClickBuilder { DblClickBuilder::new(self.inner.clone()) }
 
     /// This method checks the element by performing the following steps:
-    /// 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
-    ///   checked, this method returns immediately.
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already checked,
+    ///   this method returns immediately.
+    /// 1. Wait for actionability checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-    /// 1. Ensure that the element is now checked. If not, this method rejects.
+    /// 1. Ensure that the element is now checked. If not, this method throws.
     ///
-    /// If the element is detached from the DOM at any moment during the action, this method rejects.
+    /// If the element is detached from the DOM at any moment during the action, this method throws.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn check_builder(&self) -> CheckBuilder { CheckBuilder::new(self.inner.clone()) }
 
     /// This method checks the element by performing the following steps:
-    /// 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
+    /// 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
     ///   unchecked, this method returns immediately.
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-    /// 1. Ensure that the element is now unchecked. If not, this method rejects.
+    /// 1. Ensure that the element is now unchecked. If not, this method throws.
     ///
-    /// If the element is detached from the DOM at any moment during the action, this method rejects.
+    /// If the element is detached from the DOM at any moment during the action, this method throws.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn uncheck_builder(&self) -> UncheckBuilder { UncheckBuilder::new(self.inner.clone()) }
 
     /// This method taps the element by performing the following steps:
-    /// 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+    /// 1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
     ///
-    /// If the element is detached from the DOM at any moment during the action, this method rejects.
+    /// If the element is detached from the DOM at any moment during the action, this method throws.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     ///
     /// > NOTE: `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
     pub fn tap_builder(&self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
@@ -412,7 +412,7 @@ impl HoverBuilder {
     }
 
     setter! {
-        /// Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+        /// Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`.
         force: Option<bool>,
         /// Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
         /// modifiers back. If not specified, currently pressed modifiers are used.
@@ -448,7 +448,7 @@ macro_rules! clicker {
                 button: Option<MouseButton>,
                 /// Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
                 delay: Option<f64>,
-                /// Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+                /// Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`.
                 force: Option<bool>,
                 /// Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
                 /// modifiers back. If not specified, currently pressed modifiers are used.
@@ -489,6 +489,8 @@ macro_rules! check_builder {
             }
 
             setter! {
+                /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the element.
+                position: Option<Position>,
                 /// Whether to bypass the actionability checks. Defaults to `false`.
                 force: Option<bool>,
                 /// Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can

@@ -921,7 +921,14 @@ impl BrowserType {
     #[doc = "This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.\n\nThe default browser context is accessible via [`method: Browser.contexts`].\n\n> NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers."]
     fn connect_over_c_d_p(
         &self,
-        #[doc = ""] params: NotImplementedYet
+        #[doc = ""] params: NotImplementedYet,
+        #[doc = "A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or\n`ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`."]
+        endpoint_u_r_l: String,
+        #[doc = "options"]
+        #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
+        slow_mo: Option<f64>,
+        #[doc = "Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
+        timeout: Option<f64>
     ) -> Result<Browser, Arc<Error>> {
         todo!()
     }
@@ -1108,8 +1115,8 @@ struct NotImplementedYetparams {
     timeout: Option<f64>
 }
 struct NotImplementedYetparams {
-    #[doc = "A CDP websocket endpoint to connect to."]
-    ws_endpoint: String,
+    #[doc = "A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or\n`ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`."]
+    endpoint_u_r_l: String,
     #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
     slow_mo: Option<f64>,
     #[doc = "Logger sink for Playwright logging. Optional."]
@@ -1220,7 +1227,7 @@ impl Download {
     #[doc = "Returns downloaded url."]
     fn url(&self) -> Result<String, Error> { todo!() }
 }
-#[doc = "Playwright has **experimental** support for Electron automation. You can access electron namespace via:\n\n```js\nconst { _electron } = require('playwright');\n```\n\nAn example of the Electron automation script would be:\n\n```js\nconst { _electron: electron } = require('playwright');\n\n(async () => {\n  // Launch Electron app.\n  const electronApp = await electron.launch({ args: ['main.js'] });\n\n  // Evaluation expression in the Electron context.\n  const appPath = await electronApp.evaluate(async (electron) => {\n    // This runs in the main Electron process, |electron| parameter\n    // here is always the result of the require('electron') in the main\n    // app script.\n    return electron.getAppPath();\n  });\n\n  // Get the first window that the app opens, wait if necessary.\n  const window = await electronApp.firstWindow();\n  // Print the title.\n  console.log(await window.title());\n  // Capture a screenshot.\n  await window.screenshot({ path: 'intro.png' });\n  // Direct Electron console to Node terminal.\n  window.on('console', console.log);\n  // Click button.\n  await window.click('text=Click me');\n})();\n```\n\nNote that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download\nvia setting the following environment variable when installing Playwright:\n\n```sh js\n$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright\n```\n"]
+#[doc = "Playwright has **experimental** support for Electron automation. You can access electron namespace via:\n\n```js\nconst { _electron } = require('playwright');\n```\n\nAn example of the Electron automation script would be:\n\n```js\nconst { _electron: electron } = require('playwright');\n\n(async () => {\n  // Launch Electron app.\n  const electronApp = await electron.launch({ args: ['main.js'] });\n\n  // Evaluation expression in the Electron context.\n  const appPath = await electronApp.evaluate(async ({ app }) => {\n    // This runs in the main Electron process, parameter here is always\n    // the result of the require('electron') in the main app script.\n    return app.getAppPath();\n  });\n  console.log(appPath);\n\n  // Get the first window that the app opens, wait if necessary.\n  const window = await electronApp.firstWindow();\n  // Print the title.\n  console.log(await window.title());\n  // Capture a screenshot.\n  await window.screenshot({ path: 'intro.png' });\n  // Direct Electron console to Node terminal.\n  window.on('console', console.log);\n  // Click button.\n  await window.click('text=Click me');\n  // Exit app.\n  await electronApp.close();\n})();\n```\n\nNote that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download\nvia setting the following environment variable when installing Playwright:\n\n```sh js\n$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright\n```\n"]
 impl Electron {
     #[doc = "Launches electron application specified with the `executablePath`."]
     fn launch(
@@ -1237,7 +1244,7 @@ impl Electron {
         todo!()
     }
 }
-#[doc = "Electron application representation. You can use [`method: Electron.launch`] to obtain the application instance. This\ninstance you can control main electron process as well as work with Electron windows:\n\n```js\nconst { _electron: electron } = require('playwright');\n\n(async () => {\n  // Launch Electron app.\n  const electronApp = await electron.launch({ args: ['main.js'] });\n\n  // Evaluation expression in the Electron context.\n  const appPath = await electronApp.evaluate(async (electron) => {\n    // This runs in the main Electron process, |electron| parameter\n    // here is always the result of the require('electron') in the main\n    // app script.\n    return electron.getAppPath();\n  });\n\n  // Get the first window that the app opens, wait if necessary.\n  const window = await electronApp.firstWindow();\n  // Print the title.\n  console.log(await window.title());\n  // Capture a screenshot.\n  await window.screenshot({ path: 'intro.png' });\n  // Direct Electron console to Node terminal.\n  window.on('console', console.log);\n  // Click button.\n  await window.click('text=Click me');\n})();\n```\n"]
+#[doc = "Electron application representation. You can use [`method: Electron.launch`] to obtain the application instance. This\ninstance you can control main electron process as well as work with Electron windows:\n\n```js\nconst { _electron: electron } = require('playwright');\n\n(async () => {\n  // Launch Electron app.\n  const electronApp = await electron.launch({ args: ['main.js'] });\n\n  // Evaluation expression in the Electron context.\n  const appPath = await electronApp.evaluate(async ({ app }) => {\n    // This runs in the main Electron process, parameter here is always\n    // the result of the require('electron') in the main app script.\n    return app.getAppPath();\n  });\n  console.log(appPath);\n\n  // Get the first window that the app opens, wait if necessary.\n  const window = await electronApp.firstWindow();\n  // Print the title.\n  console.log(await window.title());\n  // Capture a screenshot.\n  await window.screenshot({ path: 'intro.png' });\n  // Direct Electron console to Node terminal.\n  window.on('console', console.log);\n  // Click button.\n  await window.click('text=Click me');\n  // Exit app.\n  await electronApp.close();\n})();\n```\n"]
 impl ElectronApplication {
     #[doc = "Closes Electron application."]
     fn close(&self) -> Result<(), Arc<Error>> { todo!() }
@@ -1302,20 +1309,22 @@ enum ElectronApplicationEvent {
 impl ElementHandle {
     #[doc = "This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is\ncalculated relative to the main frame viewport - which is usually the same as the browser window.\n\nScrolling affects the returned bonding box, similarly to\n[Element.getBoundingClientRect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect). That\nmeans `x` and/or `y` may be negative.\n\nElements from child frames return the bounding box relative to the main frame, unlike the\n[Element.getBoundingClientRect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).\n\nAssuming the page is static, it is safe to use bounding box coordinates to perform input. For example, the following\nsnippet should click the center of the element.\n\n```js\nconst box = await elementHandle.boundingBox();\nawait page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);\n```\n\n```java\nBoundingBox box = elementHandle.boundingBox();\npage.mouse().click(box.x + box.width / 2, box.y + box.height / 2);\n```\n\n```python async\nbox = await element_handle.bounding_box()\nawait page.mouse.click(box[\"x\"] + box[\"width\"] / 2, box[\"y\"] + box[\"height\"] / 2)\n```\n\n```python sync\nbox = element_handle.bounding_box()\npage.mouse.click(box[\"x\"] + box[\"width\"] / 2, box[\"y\"] + box[\"height\"] / 2)\n```\n"]
     fn bounding_box(&self) -> Result<Option<NotImplementedYet>, Arc<Error>> { todo!() }
-    #[doc = "This method checks the element by performing the following steps:\n1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already\n   checked, this method returns immediately.\n1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now checked. If not, this method rejects.\n\nIf the element is detached from the DOM at any moment during the action, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method checks the element by performing the following steps:\n1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already checked,\n   this method returns immediately.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now checked. If not, this method throws.\n\nIf the element is detached from the DOM at any moment during the action, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn check(
         &self,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can\nopt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to\ninaccessible pages. Defaults to `false`."]
         no_wait_after: Option<bool>,
+        #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
+        position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
         timeout: Option<f64>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method clicks the element by performing the following steps:\n1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nIf the element is detached from the DOM at any moment during the action, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method clicks the element by performing the following steps:\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nIf the element is detached from the DOM at any moment during the action, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn click(
         &self,
         #[doc = "options"]
@@ -1324,7 +1333,7 @@ impl ElementHandle {
         #[doc = "defaults to 1. See [UIEvent.detail]."] click_count: Option<i64>,
         #[doc = "Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0."]
         delay: Option<f64>,
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -1339,7 +1348,7 @@ impl ElementHandle {
     }
     #[doc = "Returns the content frame for element handles referencing iframe nodes, or `null` otherwise"]
     fn content_frame(&self) -> Result<Option<Frame>, Arc<Error>> { todo!() }
-    #[doc = "This method double clicks the element by performing the following steps:\n1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the\n   first click of the `dblclick()` triggers a navigation event, this method will reject.\n\nIf the element is detached from the DOM at any moment during the action, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\n> NOTE: `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event."]
+    #[doc = "This method double clicks the element by performing the following steps:\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the\n   first click of the `dblclick()` triggers a navigation event, this method will throw.\n\nIf the element is detached from the DOM at any moment during the action, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\n> NOTE: `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event."]
     fn dblclick(
         &self,
         #[doc = "options"]
@@ -1347,7 +1356,7 @@ impl ElementHandle {
         button: Option<MouseButton>,
         #[doc = "Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0."]
         delay: Option<f64>,
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -1392,7 +1401,7 @@ impl ElementHandle {
     ) -> Result<Serializable, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input`\nevent after filling. If the element is inside the `<label>` element that has associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled\ninstead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method\nthrows an error. Note that you can pass an empty string to clear the input field."]
+    #[doc = "This method waits for [actionability](https://playwright.dev/docs/actionability/) checks, focuses the element, fills it and triggers an `input`\nevent after filling. If the element is inside the `<label>` element that has associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled\ninstead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method\nthrows an error. Note that you can pass an empty string to clear the input field."]
     fn fill(
         &self,
         #[doc = "Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element."]
@@ -1414,11 +1423,11 @@ impl ElementHandle {
     ) -> Result<Option<String>, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method hovers over the element by performing the following steps:\n1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nIf the element is detached from the DOM at any moment during the action, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method hovers over the element by performing the following steps:\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nIf the element is detached from the DOM at any moment during the action, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn hover(
         &self,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -1478,7 +1487,7 @@ impl ElementHandle {
     ) -> Result<Vec<ElementHandle>, Arc<Error>> {
         todo!()
     }
-    #[doc = "Returns the buffer with the captured screenshot.\n\nThis method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a\nscreenshot. If the element is detached from DOM, the method throws an error."]
+    #[doc = "Returns the buffer with the captured screenshot.\n\nThis method waits for the [actionability](https://playwright.dev/docs/actionability/) checks, then scrolls element into view before taking a\nscreenshot. If the element is detached from DOM, the method throws an error."]
     fn screenshot(
         &self,
         #[doc = "options"]
@@ -1493,7 +1502,7 @@ impl ElementHandle {
     ) -> Result<Buffer, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is\ncompletely visible as defined by\n[IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.\n\nThrows when `elementHandle` does not point to an element\n[connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot."]
+    #[doc = "This method waits for [actionability](https://playwright.dev/docs/actionability/) checks, then tries to scroll element into view, unless it is\ncompletely visible as defined by\n[IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.\n\nThrows when `elementHandle` does not point to an element\n[connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot."]
     fn scroll_into_view_if_needed(
         &self,
         #[doc = "options"]
@@ -1523,7 +1532,7 @@ impl ElementHandle {
     ) -> Result<Vec<String>, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method waits for [actionability](./actionability.md) checks, then focuses the element and selects all its text\ncontent."]
+    #[doc = "This method waits for [actionability](https://playwright.dev/docs/actionability/) checks, then focuses the element and selects all its text\ncontent."]
     fn select_text(
         &self,
         #[doc = "options"]
@@ -1544,11 +1553,11 @@ impl ElementHandle {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method taps the element by performing the following steps:\n1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nIf the element is detached from the DOM at any moment during the action, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\n> NOTE: `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true."]
+    #[doc = "This method taps the element by performing the following steps:\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nIf the element is detached from the DOM at any moment during the action, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\n> NOTE: `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true."]
     fn tap(
         &self,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -1577,20 +1586,22 @@ impl ElementHandle {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method checks the element by performing the following steps:\n1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already\n   unchecked, this method returns immediately.\n1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now unchecked. If not, this method rejects.\n\nIf the element is detached from the DOM at any moment during the action, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method checks the element by performing the following steps:\n1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already\n   unchecked, this method returns immediately.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the element, unless `force` option is set.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now unchecked. If not, this method throws.\n\nIf the element is detached from the DOM at any moment during the action, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn uncheck(
         &self,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can\nopt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to\ninaccessible pages. Defaults to `false`."]
         no_wait_after: Option<bool>,
+        #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
+        position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
         timeout: Option<f64>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "Returns when the element satisfies the `state`.\n\nDepending on the `state` parameter, this method waits for one of the [actionability](./actionability.md) checks to pass.\nThis method throws when the element is detached while waiting, unless waiting for the `\"hidden\"` state.\n- `\"visible\"` Wait until the element is [visible](./actionability.md#visible).\n- `\"hidden\"` Wait until the element is [not visible](./actionability.md#visible) or\n  [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.\n- `\"stable\"` Wait until the element is both [visible](./actionability.md#visible) and\n  [stable](./actionability.md#stable).\n- `\"enabled\"` Wait until the element is [enabled](./actionability.md#enabled).\n- `\"disabled\"` Wait until the element is [not enabled](./actionability.md#enabled).\n- `\"editable\"` Wait until the element is [editable](./actionability.md#editable).\n\nIf the element does not satisfy the condition for the `timeout` milliseconds, this method will throw."]
+    #[doc = "Returns when the element satisfies the `state`.\n\nDepending on the `state` parameter, this method waits for one of the [actionability](https://playwright.dev/docs/actionability/) checks to pass.\nThis method throws when the element is detached while waiting, unless waiting for the `\"hidden\"` state.\n- `\"visible\"` Wait until the element is [visible](./actionability.md#visible).\n- `\"hidden\"` Wait until the element is [not visible](./actionability.md#visible) or\n  [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.\n- `\"stable\"` Wait until the element is both [visible](./actionability.md#visible) and\n  [stable](./actionability.md#stable).\n- `\"enabled\"` Wait until the element is [enabled](./actionability.md#enabled).\n- `\"disabled\"` Wait until the element is [not enabled](./actionability.md#enabled).\n- `\"editable\"` Wait until the element is [editable](./actionability.md#editable).\n\nIf the element does not satisfy the condition for the `timeout` milliseconds, this method will throw."]
     fn wait_for_element_state(
         &self,
         #[doc = "A state to wait for, see below for more details."] state: ElementState,
@@ -1731,16 +1742,18 @@ impl Frame {
     ) -> Result<ElementHandle, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method checks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already\n   checked, this method returns immediately.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now checked. If not, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method checks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already\n   checked, this method returns immediately.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now checked. If not, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn check(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can\nopt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to\ninaccessible pages. Defaults to `false`."]
         no_wait_after: Option<bool>,
+        #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
+        position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
         timeout: Option<f64>
     ) -> Result<(), Arc<Error>> {
@@ -1748,7 +1761,7 @@ impl Frame {
     }
     #[doc = ""]
     fn child_frames(&self) -> Result<Vec<Frame>, Error> { todo!() }
-    #[doc = "This method clicks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method clicks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn click(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
@@ -1759,7 +1772,7 @@ impl Frame {
         #[doc = "defaults to 1. See [UIEvent.detail]."] click_count: Option<i64>,
         #[doc = "Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0."]
         delay: Option<f64>,
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -1774,7 +1787,7 @@ impl Frame {
     }
     #[doc = "Gets the full HTML contents of the frame, including the doctype."]
     fn content(&self) -> Result<String, Arc<Error>> { todo!() }
-    #[doc = "This method double clicks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the\n   first click of the `dblclick()` triggers a navigation event, this method will reject.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\n> NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event."]
+    #[doc = "This method double clicks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the\n   first click of the `dblclick()` triggers a navigation event, this method will throw.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\n> NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event."]
     fn dblclick(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
@@ -1784,7 +1797,7 @@ impl Frame {
         button: Option<MouseButton>,
         #[doc = "Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0."]
         delay: Option<f64>,
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -1852,7 +1865,7 @@ impl Frame {
     ) -> Result<JsHandle, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the\nelement, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has\nassociated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be\nfilled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this\nmethod throws an error. Note that you can pass an empty string to clear the input field.\n\nTo send fine-grained keyboard events, use [`method: Frame.type`]."]
+    #[doc = "This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability/) checks, focuses the\nelement, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has\nassociated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be\nfilled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this\nmethod throws an error. Note that you can pass an empty string to clear the input field.\n\nTo send fine-grained keyboard events, use [`method: Frame.type`]."]
     fn fill(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
@@ -1906,13 +1919,13 @@ impl Frame {
     ) -> Result<Option<Response>, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method hovers over an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method hovers over an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn hover(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -2101,13 +2114,13 @@ impl Frame {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method taps an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\n> NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true."]
+    #[doc = "This method taps an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\n> NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true."]
     fn tap(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -2149,16 +2162,18 @@ impl Frame {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method checks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already\n   unchecked, this method returns immediately.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now unchecked. If not, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this."]
+    #[doc = "This method checks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already\n   unchecked, this method returns immediately.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now unchecked. If not, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this."]
     fn uncheck(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can\nopt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to\ninaccessible pages. Defaults to `false`."]
         no_wait_after: Option<bool>,
+        #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
+        position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
         timeout: Option<f64>
     ) -> Result<(), Arc<Error>> {
@@ -2537,22 +2552,24 @@ impl Page {
     }
     #[doc = "Brings page to front (activates tab)."]
     fn bring_to_front(&self) -> Result<(), Arc<Error>> { todo!() }
-    #[doc = "This method checks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already\n   checked, this method returns immediately.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now checked. If not, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\nShortcut for main frame's [`method: Frame.check`]."]
+    #[doc = "This method checks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already\n   checked, this method returns immediately.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now checked. If not, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\nShortcut for main frame's [`method: Frame.check`]."]
     fn check(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can\nopt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to\ninaccessible pages. Defaults to `false`."]
         no_wait_after: Option<bool>,
+        #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
+        position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
         timeout: Option<f64>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method clicks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\nShortcut for main frame's [`method: Frame.click`]."]
+    #[doc = "This method clicks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\nShortcut for main frame's [`method: Frame.click`]."]
     fn click(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
@@ -2563,7 +2580,7 @@ impl Page {
         #[doc = "defaults to 1. See [UIEvent.detail]."] click_count: Option<i64>,
         #[doc = "Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0."]
         delay: Option<f64>,
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -2589,7 +2606,7 @@ impl Page {
     fn content(&self) -> Result<String, Arc<Error>> { todo!() }
     #[doc = "Get the browser context that the page belongs to."]
     fn context(&self) -> Result<BrowserContext, Error> { todo!() }
-    #[doc = "This method double clicks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the\n   first click of the `dblclick()` triggers a navigation event, this method will reject.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\n> NOTE: `page.dblclick()` dispatches two `click` events and a single `dblclick` event.\n\nShortcut for main frame's [`method: Frame.dblclick`]."]
+    #[doc = "This method double clicks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the\n   first click of the `dblclick()` triggers a navigation event, this method will throw.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\n> NOTE: `page.dblclick()` dispatches two `click` events and a single `dblclick` event.\n\nShortcut for main frame's [`method: Frame.dblclick`]."]
     fn dblclick(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
@@ -2599,7 +2616,7 @@ impl Page {
         button: Option<MouseButton>,
         #[doc = "Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0."]
         delay: Option<f64>,
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -2697,7 +2714,7 @@ impl Page {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the\nelement, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has\nassociated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be\nfilled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this\nmethod throws an error. Note that you can pass an empty string to clear the input field.\n\nTo send fine-grained keyboard events, use [`method: Page.type`].\n\nShortcut for main frame's [`method: Frame.fill`]"]
+    #[doc = "This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability/) checks, focuses the\nelement, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has\nassociated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be\nfilled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this\nmethod throws an error. Note that you can pass an empty string to clear the input field.\n\nTo send fine-grained keyboard events, use [`method: Page.type`].\n\nShortcut for main frame's [`method: Frame.fill`]"]
     fn fill(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
@@ -2794,13 +2811,13 @@ impl Page {
     ) -> Result<Option<Response>, Arc<Error>> {
         todo!()
     }
-    #[doc = "This method hovers over an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\nShortcut for main frame's [`method: Frame.hover`]."]
+    #[doc = "This method hovers over an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\nShortcut for main frame's [`method: Frame.hover`]."]
     fn hover(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -3093,13 +3110,13 @@ impl Page {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method taps an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\n> NOTE: [`method: Page.tap`] requires that the `hasTouch` option of the browser context be set to true.\n\nShortcut for main frame's [`method: Frame.tap`]."]
+    #[doc = "This method taps an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\n> NOTE: [`method: Page.tap`] requires that the `hasTouch` option of the browser context be set to true.\n\nShortcut for main frame's [`method: Frame.tap`]."]
     fn tap(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current\nmodifiers back. If not specified, currently pressed modifiers are used."]
         modifiers: Option<Vec<KeyboardModifier>>,
@@ -3141,16 +3158,18 @@ impl Page {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "This method unchecks an element matching `selector` by performing the following steps:\n1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already\n   unchecked, this method returns immediately.\n1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now unchecked. If not, this method rejects.\n\nWhen all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.\nPassing zero timeout disables this.\n\nShortcut for main frame's [`method: Frame.uncheck`]."]
+    #[doc = "This method unchecks an element matching `selector` by performing the following steps:\n1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.\n1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already\n   unchecked, this method returns immediately.\n1. Wait for [actionability](https://playwright.dev/docs/actionability/) checks on the matched element, unless `force` option is set. If the\n   element is detached during the checks, the whole action is retried.\n1. Scroll the element into view if needed.\n1. Use [`property: Page.mouse`] to click in the center of the element.\n1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.\n1. Ensure that the element is now unchecked. If not, this method throws.\n\nWhen all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing\nzero timeout disables this.\n\nShortcut for main frame's [`method: Frame.uncheck`]."]
     fn uncheck(
         &self,
         #[doc = "A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See\n[working with selectors](./selectors.md) for more details."]
         selector: String,
         #[doc = "options"]
-        #[doc = "Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`."]
+        #[doc = "Whether to bypass the [actionability](https://playwright.dev/docs/actionability/) checks. Defaults to `false`."]
         force: Option<bool>,
         #[doc = "Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can\nopt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to\ninaccessible pages. Defaults to `false`."]
         no_wait_after: Option<bool>,
+        #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
+        position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
         timeout: Option<f64>
     ) -> Result<(), Arc<Error>> {
@@ -3179,10 +3198,10 @@ impl Page {
         #[doc = "options"]
         #[doc = "Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default\nvalue can be changed by using the [`method: BrowserContext.setDefaultTimeout`]."]
         timeout: Option<f64>
-    ) -> Result<Page, Error> {
+    ) -> Result<Page, Arc<Error>> {
         todo!()
     }
-    #[doc = "Performs action and waits for a [ConoleMessage] to be logged by in the page. If predicate is provided, it passes\n`ConsoleMessage` value into the `predicate` function and waits for `predicate(message)` to return a truthy value. Will\nthrow an error if the page is closed before the console event is fired."]
+    #[doc = "Performs action and waits for a `ConsoleMessage` to be logged by in the page. If predicate is provided, it passes\n`ConsoleMessage` value into the `predicate` function and waits for `predicate(message)` to return a truthy value. Will\nthrow an error if the page is closed before the console event is fired."]
     fn wait_for_console_message(
         &self,
         #[doc = "Callback that performs the action triggering the event."] callback: Runnable,

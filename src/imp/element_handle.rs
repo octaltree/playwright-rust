@@ -305,6 +305,7 @@ pub(crate) struct ClickArgs {
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CheckArgs {
+    pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
     pub(crate) no_wait_after: Option<bool>
