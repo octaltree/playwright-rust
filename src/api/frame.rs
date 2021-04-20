@@ -117,30 +117,30 @@ impl Frame {
     }
 
     /// This method clicks an element matching `selector` by performing the following steps:
-    /// 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for actionability checks on the matched element, unless `force` option is set. If the
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn click_builder<'a>(&self, selector: &'a str) -> ClickBuilder<'a> {
         ClickBuilder::new(self.inner.clone(), selector)
     }
 
     /// This method double clicks an element matching `selector` by performing the following steps:
-    /// 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for actionability checks on the matched element, unless `force` option is set. If the
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
-    ///   first click of the `dblclick()` triggers a navigation event, this method will reject.
+    ///   first click of the `dblclick()` triggers a navigation event, this method will throw.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     ///
     /// > NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
     pub fn dblclick_builder<'a>(&self, selector: &'a str) -> DblClickBuilder<'a> {
@@ -148,15 +148,15 @@ impl Frame {
     }
 
     /// This method taps an element matching `selector` by performing the following steps:
-    /// 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for actionability checks on the matched element, unless `force` option is set. If the
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     ///
     /// > NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
     pub fn tap_builder<'a>(&self, selector: &'a str) -> TapBuilder<'a> {
@@ -303,15 +303,15 @@ impl Frame {
     }
 
     /// This method hovers over an element matching `selector` by performing the following steps:
-    /// 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Wait for actionability checks on the matched element, unless `force` option is set. If the
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified `position`.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn hover_builder<'a>(&self, selector: &'a str) -> HoverBuilder<'a> {
         HoverBuilder::new(self.inner.clone(), selector)
     }
@@ -331,22 +331,35 @@ impl Frame {
     }
 
     /// This method checks an element matching `selector` by performing the following steps:
-    /// 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-    /// 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
     ///   checked, this method returns immediately.
     /// 1. Wait for actionability checks on the matched element, unless `force` option is set. If the
     ///   element is detached during the checks, the whole action is retried.
     /// 1. Scroll the element into view if needed.
     /// 1. Use [`property: Page.mouse`] to click in the center of the element.
     /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-    /// 1. Ensure that the element is now checked. If not, this method rejects.
+    /// 1. Ensure that the element is now checked. If not, this method throws.
     ///
-    /// When all steps combined have not finished during the specified `timeout`, this method rejects with a `TimeoutError`.
-    /// Passing zero timeout disables this.
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn check_builder<'a>(&self, selector: &'a str) -> CheckBuilder<'a> {
         CheckBuilder::new(self.inner.clone(), selector)
     }
 
+    /// This method checks an element matching `selector` by performing the following steps:
+    /// 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+    /// 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
+    ///   unchecked, this method returns immediately.
+    /// 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the
+    ///   element is detached during the checks, the whole action is retried.
+    /// 1. Scroll the element into view if needed.
+    /// 1. Use [`property: Page.mouse`] to click in the center of the element.
+    /// 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+    /// 1. Ensure that the element is now unchecked. If not, this method throws.
+    ///
+    /// When all steps combined have not finished during the specified `timeout`, this method throws a `TimeoutError`. Passing
+    /// zero timeout disables this.
     pub fn uncheck_builder<'a>(&self, selector: &'a str) -> UncheckBuilder<'a> {
         UncheckBuilder::new(self.inner.clone(), selector)
     }
@@ -894,6 +907,8 @@ macro_rules! check_builder {
             }
 
             setter! {
+                /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the element.
+                position: Option<Position>,
                 /// Whether to bypass the actionability checks. Defaults to `false`.
                 force: Option<bool>,
                 /// Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can

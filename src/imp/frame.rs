@@ -787,6 +787,7 @@ struct SelectorTimeout<'a> {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CheckArgs<'a> {
     selector: &'a str,
+    pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
     pub(crate) no_wait_after: Option<bool>
@@ -796,6 +797,7 @@ impl<'a> CheckArgs<'a> {
     pub(crate) fn new(selector: &'a str) -> Self {
         Self {
             selector,
+            position: None,
             timeout: None,
             force: None,
             no_wait_after: None
