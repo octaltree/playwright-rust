@@ -99,6 +99,12 @@ impl Playwright {
             .map(|x| x.devices().to_vec())
             .unwrap_or_default()
     }
+
+    pub fn device(&self, name: &str) -> Option<DeviceDescriptor> {
+        let inner = self.inner.upgrade()?;
+        let device = inner.device(name)?;
+        Some(device.to_owned())
+    }
 }
 
 #[cfg(test)]

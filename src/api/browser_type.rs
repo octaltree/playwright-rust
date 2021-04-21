@@ -1,6 +1,6 @@
 pub use crate::imp::browser_type::{RecordHar, RecordVideo};
 use crate::{
-    api::{browser::Browser, browser_context::BrowserContext},
+    api::{browser::Browser, browser_context::BrowserContext, playwright::DeviceDescriptor},
     imp::{
         browser_type::{BrowserType as Impl, LaunchArgs, LaunchPersistentContextArgs},
         core::*,
@@ -172,6 +172,10 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
             inner,
             args: LaunchPersistentContextArgs::new(user_data_dir)
         }
+    }
+
+    pub fn set_device(self, device: &'e DeviceDescriptor) -> Self {
+        DeviceDescriptor::set_persistent_context(&device, self)
     }
 
     setter! {

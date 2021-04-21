@@ -62,8 +62,11 @@ impl Response {
     pub(crate) async fn headers(&self) -> ArcResult<Vec<Header>> {
         let v = send_message!(self, "body", Map::new());
         let first = first(&v).ok_or(Error::InvalidParams)?;
-        let headers: Vec<Header> =
+        let mut headers: Vec<Header> =
             serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
+        for h in headers.iter_mut() {
+            h.name.make_ascii_lowercase();
+        }
         Ok(headers)
     }
 }

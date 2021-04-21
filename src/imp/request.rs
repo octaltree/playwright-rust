@@ -40,7 +40,14 @@ impl Request {
             headers,
             redirected_from
         } = serde_json::from_value(channel.initializer.clone())?;
-        let headers: HashMap<_, _> = headers.into_iter().map(Into::<(_, _)>::into).collect();
+        let headers: HashMap<_, _> = headers
+            .into_iter()
+            .map(Into::<(_, _)>::into)
+            .map(|(mut k, v)| {
+                k.make_ascii_lowercase();
+                (k, v)
+            })
+            .collect();
         let frame = get_object!(ctx, &frame.guid, Frame)?;
         let redirected_from =
             match redirected_from.map(|OnlyGuid { guid }| get_object!(ctx, &guid, Request)) {
