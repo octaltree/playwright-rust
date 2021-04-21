@@ -62,7 +62,8 @@ available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/b
 
 ## Browser automation in rust
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
-  * or [my fork](https://github.com/octaltree/rust-headless-chrome) supports set_cookies
+  * [my fork](https://github.com/octaltree/rust-headless-chrome) that imlements set_cookies is now merged, but
+  * It is in state looking for a maintainer.
 - [saresend/selenium-rs](https://github.com/saresend/selenium-rs)
 - [https://crates.io/crates/webdriver](https://crates.io/crates/webdriver)
 
