@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate serde;
-
 mod browser;
 mod browser_context;
 mod browser_type;

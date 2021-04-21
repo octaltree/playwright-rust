@@ -22,6 +22,14 @@ pub async fn all(playwright: &Playwright, port: u16, _which: Which) {
     assert_eq!(device_pixel_ratio(&page).await, 3.0);
     assert_eq!(has_touch(&page).await, true);
     // TODO: is_mobile
+    let tmp_dir = tempdir::TempDir::new("playwright-rust").unwrap();
+    dbg!(&tmp_dir);
+    chromium
+        .persistent_context_launcher(tmp_dir.path())
+        .set_device(&device)
+        .launch()
+        .await
+        .unwrap();
 }
 
 async fn check_size(page: &Page) {
