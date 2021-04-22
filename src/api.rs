@@ -47,6 +47,7 @@ macro_rules! subscribe_event {
     };
 }
 
+pub mod input_device;
 pub mod playwright;
 
 pub mod accessibility;
@@ -59,7 +60,6 @@ pub mod download;
 pub mod element_handle;
 pub mod file_chooser;
 pub mod frame;
-pub mod input_device;
 pub mod js_handle;
 pub mod page;
 pub mod request;
@@ -69,8 +69,6 @@ pub mod selectors;
 pub mod video;
 pub mod websocket;
 pub mod worker;
-
-// mod generated;
 
 pub use crate::imp::{core::DateTime, utils::*};
 
@@ -96,24 +94,19 @@ pub use video::Video;
 pub use websocket::WebSocket;
 pub use worker::Worker;
 
+// Artifact
 // BindingCall
-// ChromiumBrowserContext
-// FilePayload
-// FloatRect
-// PdfMargins
-// ResourceTiming
-// SourceLocation
+// Stream
 
 // Android
 // AndroidDevice
-// AndroidInput
-// AndroidSocket
-// AndroidWebView
-// BrowserServer
-// CDPSession
-// Coverage
-// Electron
-// ElectronApplication
-// Logger
-// Video
-// WebSocketFrame
+// androidinput
+// androidsocket
+// androidwebview
+// browserserver
+// cdpsession
+// coverage
+// electron
+// electronapplication
+// logger
+// websocketframe

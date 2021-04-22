@@ -620,8 +620,8 @@ impl Frame {
     ///  await browser.close();
     /// })();
     /// ```
-    pub fn wait_for_function_builder<'a>(&self, expression: &'a str) -> WaitForSelectorBuilder<'a> {
-        WaitForSelectorBuilder::new(self.inner.clone(), expression)
+    pub fn wait_for_function_builder<'a>(&self, expression: &'a str) -> WaitForFunctionBuilder<'a> {
+        WaitForFunctionBuilder::new(self.inner.clone(), expression)
     }
 
     subscribe_event! {}

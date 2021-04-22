@@ -3,7 +3,8 @@ pub use crate::{
         frame::{
             AddScriptTagBuilder, CheckBuilder, ClickBuilder, DblClickBuilder, FillBuilder,
             GotoBuilder, HoverBuilder, PressBuilder, SelectOptionBuilder, SetContentBuilder,
-            SetInputFilesBuilder, TapBuilder, TypeBuilder, UncheckBuilder, WaitForSelectorBuilder
+            SetInputFilesBuilder, TapBuilder, TypeBuilder, UncheckBuilder, WaitForFunctionBuilder,
+            WaitForSelectorBuilder
         },
         JsHandle, Request
     },
@@ -334,6 +335,10 @@ impl Page {
     // route
     // unroute
     // once_dialog
+
+    pub async fn wait_for_timeout(&self, timeout: f64) {
+        sleep(std::time::Duration::from_millis(timeout as u64)).await
+    }
 }
 
 pub enum Event {
@@ -674,15 +679,8 @@ impl Page {
         self.main_frame().uncheck_builder(selector)
     }
 
-    pub async fn wait_for_timeout(&self, timeout: f64) {
-        sleep(std::time::Duration::from_millis(timeout as u64)).await
-    }
-
-    pub async fn wait_for_function_builder<'a>(
-        &self,
-        expression: &'a str
-    ) -> WaitForSelectorBuilder<'a> {
-        self.main_frame().wait_for_selector_builder(expression)
+    pub fn wait_for_function_builder<'a>(&self, expression: &'a str) -> WaitForFunctionBuilder<'a> {
+        self.main_frame().wait_for_function_builder(expression)
     }
     // expect_navigation
 }

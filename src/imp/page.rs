@@ -530,10 +530,14 @@ pub(crate) enum Evt {
     Close,
     Crash,
     Console(Weak<ConsoleMessage>),
+    /// Not Implemented Yet
     Dialog,
+    /// Not Implemented Yet
     Download,
+    /// Not Implemented Yet
     FileChooser,
     DomContentLoaded,
+    /// Not Implemented Yet
     PageError,
     Request(Weak<Request>),
     Response(Weak<Response>),
