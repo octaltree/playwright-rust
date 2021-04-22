@@ -188,7 +188,7 @@ macro_rules! impl_set_device {
 }
 
 impl DeviceDescriptor {
-    pub(crate) fn set_persistent_context<'source, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l>(
+    pub(crate) fn set_persistent_context<'source, 'b, 'c, 'd, 'e, 'g, 'h, 'i, 'j, 'k, 'l>(
         device: &'source Self,
         builder: PersistentContextLauncher<'b, 'c, 'd, 'e, 'source, 'g, 'h, 'i, 'j, 'k, 'l>
     ) -> PersistentContextLauncher<'b, 'c, 'd, 'e, 'source, 'g, 'h, 'i, 'j, 'k, 'l> {

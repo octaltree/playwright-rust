@@ -19,7 +19,7 @@ pub async fn all(playwright: &Playwright, port: u16, _which: Which) {
     let page = ctx.new_page().await.unwrap();
     check_user_agent(&page, port).await;
     check_size(&page).await;
-    assert_eq!(device_pixel_ratio(&page).await, 3.0);
+    assert!((device_pixel_ratio(&page).await - 3.0).abs() < f64::EPSILON);
     assert_eq!(has_touch(&page).await, true);
     // TODO: is_mobile
     let tmp_dir = tempdir::TempDir::new("playwright-rust").unwrap();
