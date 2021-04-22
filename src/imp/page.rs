@@ -32,11 +32,6 @@ pub(crate) struct Variable {
     workers: Vec<Weak<Worker>>
 }
 
-#[derive(Debug)]
-pub(crate) struct BindingCall {
-    channel: ChannelOwner
-}
-
 macro_rules! navigation {
     ($f: ident, $m: literal) => {
         pub(crate) async fn $f(
@@ -609,6 +604,14 @@ impl Event for Evt {
     }
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Initializer {
+    main_frame: OnlyGuid,
+    #[serde(rename = "viewportSize")]
+    viewport: Option<Viewport>
+}
+
 #[skip_serializing_none]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -648,23 +651,6 @@ pub struct AccessibilitySnapshoptResponse {
     pub checked: Option<String>, // "checked" / "unchecked"
     pub pressed: Option<String>, // "pressed" / "released"
     pub children: Vec<AccessibilitySnapshoptResponse>
-}
-
-impl BindingCall {
-    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
-}
-
-impl RemoteObject for BindingCall {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Initializer {
-    main_frame: OnlyGuid,
-    #[serde(rename = "viewportSize")]
-    viewport: Option<Viewport>
 }
 
 #[skip_serializing_none]

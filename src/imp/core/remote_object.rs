@@ -135,11 +135,12 @@ pub(crate) trait RemoteObject: Debug {
 mod remote_enum {
     use super::*;
     use crate::imp::{
-        browser::Browser, browser_context::BrowserContext, browser_type::BrowserType,
+        artifact::Artifact, binding_call::BindingCall, browser::Browser,
+        browser_context::BrowserContext, browser_type::BrowserType,
         console_message::ConsoleMessage, dialog::Dialog, download::Download,
         element_handle::ElementHandle, frame::Frame, js_handle::JsHandle, page::Page,
         playwright::Playwright, request::Request, response::Response, route::Route,
-        selectors::Selectors, websocket::WebSocket, worker::Worker
+        selectors::Selectors, stream::Stream, websocket::WebSocket, worker::Worker
     };
 
     macro_rules! remote_enum {
@@ -148,23 +149,33 @@ mod remote_enum {
             pub(crate) enum $t {
                 Dummy($p<DummyObject>),
                 Root($p<RootObject>),
-                BrowserType($p<BrowserType>),
-                Selectors($p<Selectors>),
+                // Android
+                // AndroidSocket
+                // AndroidDevice
+                Artifact($p<Artifact>),
+                BindingCall($p<BindingCall>),
                 Browser($p<Browser>),
                 BrowserContext($p<BrowserContext>),
-                Page($p<Page>),
+                BrowserType($p<BrowserType>),
+                // CdpSession
+                ConsoleMessage($p<ConsoleMessage>),
+                Dialog($p<Dialog>),
+                // Electron
+                // ElectronApplication
+                ElementHandle($p<ElementHandle>),
                 Frame($p<Frame>),
-                Response($p<Response>),
+                JsHandle($p<JsHandle>),
+                Page($p<Page>),
+                Playwright($p<Playwright>),
                 Request($p<Request>),
+                Response($p<Response>),
                 Route($p<Route>),
+                Stream($p<Stream>),
+                Selectors($p<Selectors>),
                 WebSocket($p<WebSocket>),
                 Worker($p<Worker>),
-                Dialog($p<Dialog>),
-                Download($p<Download>),
-                ConsoleMessage($p<ConsoleMessage>),
-                JsHandle($p<JsHandle>),
-                ElementHandle($p<ElementHandle>),
-                Playwright($p<Playwright>)
+
+                Download($p<Download>)
             }
         };
     }
@@ -233,23 +244,26 @@ mod remote_enum {
         upgrade! {
             Dummy,
             Root,
-            BrowserType,
-            Selectors,
+            Artifact,
+            BindingCall,
             Browser,
             BrowserContext,
-            Page,
+            BrowserType,
+            ConsoleMessage,
+            Dialog,
+            ElementHandle,
             Frame,
-            Response,
+            JsHandle,
+            Page,
+            Playwright,
             Request,
+            Response,
             Route,
+            Stream,
+            Selectors,
             WebSocket,
             Worker,
-            Dialog,
-            Download,
-            ConsoleMessage,
-            JsHandle,
-            ElementHandle,
-            Playwright
+            Download
         }
     }
 
@@ -257,23 +271,26 @@ mod remote_enum {
         methods! {
             Dummy,
             Root,
-            BrowserType,
-            Selectors,
+            Artifact,
+            BindingCall,
             Browser,
             BrowserContext,
-            Page,
+            BrowserType,
+            ConsoleMessage,
+            Dialog,
+            ElementHandle,
             Frame,
-            Response,
+            JsHandle,
+            Page,
+            Playwright,
             Request,
+            Response,
             Route,
+            Stream,
+            Selectors,
             WebSocket,
             Worker,
-            Dialog,
-            Download,
-            ConsoleMessage,
-            JsHandle,
-            ElementHandle,
-            Playwright
+            Download
         }
 
         pub(crate) fn try_new(
@@ -282,27 +299,30 @@ mod remote_enum {
             c: ChannelOwner
         ) -> Result<RemoteArc, Error> {
             let r = match typ.as_str() {
-                "Playwright" => RemoteArc::Playwright(Arc::new(Playwright::try_new(ctx, c)?)),
-                "Selectors" => RemoteArc::Selectors(Arc::new(Selectors::new(c))),
-                "BrowserType" => RemoteArc::BrowserType(Arc::new(BrowserType::try_new(c)?)),
+                "Artifact" => RemoteArc::Artifact(Arc::new(Artifact::new(c))),
+                "BindingCall" => RemoteArc::BindingCall(Arc::new(BindingCall::new(c))),
                 "Browser" => RemoteArc::Browser(Arc::new(Browser::try_new(c)?)),
                 "BrowserContext" => {
                     RemoteArc::BrowserContext(Arc::new(BrowserContext::try_new(c)?))
                 }
-                "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
-                "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(ctx, c)?)),
-                "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
-                "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
-                "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
-                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(c)?)),
-                "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
-                "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
-                "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
+                "BrowserType" => RemoteArc::BrowserType(Arc::new(BrowserType::try_new(c)?)),
                 "ConsoleMessage" => {
                     RemoteArc::ConsoleMessage(Arc::new(ConsoleMessage::try_new(ctx, c)?))
                 }
-                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(c)?)),
+                "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
                 "ElementHandle" => RemoteArc::ElementHandle(Arc::new(ElementHandle::new(c))),
+                "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(ctx, c)?)),
+                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(c)?)),
+                "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
+                "Playwright" => RemoteArc::Playwright(Arc::new(Playwright::try_new(ctx, c)?)),
+                "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
+                "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
+                "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
+                "Stream" => RemoteArc::Stream(Arc::new(Stream::new(c))),
+                "Selectors" => RemoteArc::Selectors(Arc::new(Selectors::new(c))),
+                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(c)?)),
+                "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
+                "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
                 _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
             };
             Ok(r)

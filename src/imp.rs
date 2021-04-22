@@ -95,6 +95,8 @@ pub(crate) mod playwright;
 pub(crate) mod selectors;
 pub(crate) mod utils;
 
+pub(crate) mod artifact;
+pub(crate) mod binding_call;
 pub(crate) mod browser;
 pub(crate) mod browser_context;
 pub(crate) mod console_message;
@@ -107,6 +109,7 @@ pub(crate) mod page;
 pub(crate) mod request;
 pub(crate) mod response;
 pub(crate) mod route;
+pub(crate) mod stream;
 pub(crate) mod websocket;
 pub(crate) mod worker;
 
