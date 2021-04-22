@@ -14,7 +14,7 @@ struct Variable {
 }
 
 impl WebSocket {
-    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { url } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,

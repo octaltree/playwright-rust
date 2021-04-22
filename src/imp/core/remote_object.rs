@@ -294,14 +294,14 @@ mod remote_enum {
                 "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
                 "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
                 "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
-                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(ctx, c)?)),
+                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(c)?)),
                 "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
                 "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
                 "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
                 "ConsoleMessage" => {
                     RemoteArc::ConsoleMessage(Arc::new(ConsoleMessage::try_new(ctx, c)?))
                 }
-                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(ctx, c)?)),
+                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(c)?)),
                 "ElementHandle" => RemoteArc::ElementHandle(Arc::new(ElementHandle::new(c))),
                 _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
             };

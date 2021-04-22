@@ -30,7 +30,7 @@ impl Route {
     }
 
     pub(crate) async fn r#continue(&self, args: ContinueArgs<'_, '_, '_>) -> ArcResult<()> {
-        let _ = send_message!(self, "fulfill", args);
+        let _ = send_message!(self, "continue", args);
         Ok(())
     }
 }

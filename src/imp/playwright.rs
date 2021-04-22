@@ -1,6 +1,9 @@
-use crate::imp::{
-    browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors,
-    utils::Viewport
+use crate::{
+    api::{browser::ContextBuilder, browser_type::PersistentContextLauncher},
+    imp::{
+        browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors,
+        utils::Viewport
+    }
 };
 use serde::Deserialize;
 use std::{sync::TryLockError, time::Instant};
@@ -34,6 +37,10 @@ impl Playwright {
     }
 
     pub(crate) fn devices(&self) -> &[DeviceDescriptor] { &self.devices }
+
+    pub(crate) fn device(&self, name: &str) -> Option<&DeviceDescriptor> {
+        self.devices.iter().find(|d| d.name == name)
+    }
 
     pub(crate) fn chromium(&self) -> Weak<BrowserType> { self.chromium.clone() }
 
@@ -106,11 +113,12 @@ impl Future for WaitInitialObject {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DeviceDescriptor {
     pub name: String,
     pub user_agent: String,
     pub viewport: Viewport,
+    pub screen: Option<Viewport>,
     pub device_scale_factor: f64,
     pub is_mobile: bool,
     pub has_touch: bool,
@@ -132,6 +140,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
         struct Descriptor {
             user_agent: String,
             viewport: Viewport,
+            screen: Option<Viewport>,
             device_scale_factor: f64,
             is_mobile: bool,
             has_touch: bool,
@@ -143,6 +152,7 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
                 Descriptor {
                     user_agent,
                     viewport,
+                    screen,
                     device_scale_factor,
                     is_mobile,
                     has_touch,
@@ -153,10 +163,42 @@ impl<'de> Deserialize<'de> for DeviceDescriptor {
             name,
             user_agent,
             viewport,
+            screen,
             device_scale_factor,
             is_mobile,
             has_touch,
             default_browser_type
         })
+    }
+}
+
+macro_rules! impl_set_device {
+    ($device: expr, $builder:expr) => {
+        (if let Some(screen) = &$device.screen {
+            $builder.screen(screen.clone())
+        } else {
+            $builder
+        })
+        .user_agent(&$device.user_agent)
+        .viewport(Some($device.viewport.clone()))
+        .device_scale_factor($device.device_scale_factor)
+        .is_mobile($device.is_mobile)
+        .has_touch($device.has_touch)
+    };
+}
+
+impl DeviceDescriptor {
+    pub(crate) fn set_persistent_context<'source, 'b, 'c, 'd, 'e, 'g, 'h, 'i, 'j, 'k, 'l>(
+        device: &'source Self,
+        builder: PersistentContextLauncher<'b, 'c, 'd, 'e, 'source, 'g, 'h, 'i, 'j, 'k, 'l>
+    ) -> PersistentContextLauncher<'b, 'c, 'd, 'e, 'source, 'g, 'h, 'i, 'j, 'k, 'l> {
+        impl_set_device!(device, builder)
+    }
+
+    pub(crate) fn set_context<'source, 'c, 'd, 'e, 'f, 'g, 'h>(
+        device: &'source Self,
+        builder: ContextBuilder<'source, 'c, 'd, 'e, 'f, 'g, 'h>
+    ) -> ContextBuilder<'source, 'c, 'd, 'e, 'f, 'g, 'h> {
+        impl_set_device!(device, builder)
     }
 }

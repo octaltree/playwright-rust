@@ -143,6 +143,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     pub(crate) chromium_sandbox: Option<bool>,
     pub(crate) record_video: Option<RecordVideo<'j>>,
     pub(crate) record_har: Option<RecordHar<'k>>,
+
     pub(crate) channel: Option<BrowserChannel>
 }
 

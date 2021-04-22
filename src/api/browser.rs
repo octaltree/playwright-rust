@@ -5,6 +5,7 @@ use crate::{
         self,
         browser::NewContextArgs,
         core::*,
+        playwright::DeviceDescriptor,
         prelude::*,
         utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, StorageState, Viewport}
     },
@@ -95,6 +96,10 @@ impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> ContextBuilder<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
             inner,
             args: NewContextArgs::default()
         }
+    }
+
+    pub fn set_device(self, device: &'e DeviceDescriptor) -> Self {
+        DeviceDescriptor::set_context(&device, self)
     }
 
     setter! {

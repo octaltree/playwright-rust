@@ -13,7 +13,7 @@ struct Var {
 }
 
 impl JsHandle {
-    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
+    pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer { preview } = serde_json::from_value(channel.initializer.clone())?;
         let var = Mutex::new(Var { preview });
         Ok(Self { channel, var })
