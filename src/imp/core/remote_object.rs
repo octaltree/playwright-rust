@@ -133,7 +133,7 @@ pub(crate) trait RemoteObject: Debug {
 }
 
 mod remote_enum {
-    use super::*;
+    use super::{DummyObject as Dummy, RootObject as Root, *};
     use crate::imp::{
         artifact::Artifact, binding_call::BindingCall, browser::Browser,
         browser_context::BrowserContext, browser_type::BrowserType,
@@ -143,46 +143,17 @@ mod remote_enum {
         selectors::Selectors, stream::Stream, websocket::WebSocket, worker::Worker
     };
 
-    macro_rules! remote_enum {
-        ($t:ident, $p: ident) => {
-            #[derive(Debug, Clone)]
-            pub(crate) enum $t {
-                Dummy($p<DummyObject>),
-                Root($p<RootObject>),
-                // Android
-                // AndroidSocket
-                // AndroidDevice
-                Artifact($p<Artifact>),
-                BindingCall($p<BindingCall>),
-                Browser($p<Browser>),
-                BrowserContext($p<BrowserContext>),
-                BrowserType($p<BrowserType>),
-                // CdpSession
-                ConsoleMessage($p<ConsoleMessage>),
-                Dialog($p<Dialog>),
-                // Electron
-                // ElectronApplication
-                ElementHandle($p<ElementHandle>),
-                Frame($p<Frame>),
-                JsHandle($p<JsHandle>),
-                Page($p<Page>),
-                Playwright($p<Playwright>),
-                Request($p<Request>),
-                Response($p<Response>),
-                Route($p<Route>),
-                Stream($p<Stream>),
-                Selectors($p<Selectors>),
-                WebSocket($p<WebSocket>),
-                Worker($p<Worker>),
-
-                Download($p<Download>)
+    macro_rules! upgrade {
+        ($($t:ident),*) => {
+            pub(crate) fn upgrade(&self) -> Option<RemoteArc> {
+                match self {
+                    $(
+                        Self::$t(x) => x.upgrade().map(RemoteArc::$t)
+                    ),*
+                }
             }
-        };
+        }
     }
-
-    remote_enum! {RemoteArc, Arc}
-
-    remote_enum! {RemoteWeak, Weak}
 
     macro_rules! downgrade {
         ($($t:ident),*) => {
@@ -198,7 +169,9 @@ mod remote_enum {
 
     macro_rules! handle_event {
         ($($t:ident),*) => {
-            pub(crate) fn handle_event(&self, ctx: &Context, method: Str<Method>, params: Map<String, Value>) -> Result<(), Error> {
+            pub(crate) fn handle_event(
+                &self, ctx: &Context, method: Str<Method>, params: Map<String, Value>
+            ) -> Result<(), Error> {
                 match self {
                     $(
                         Self::$t(x) => x.handle_event(ctx, method, params)
@@ -220,79 +193,56 @@ mod remote_enum {
         }
     }
 
-    macro_rules! methods {
+    macro_rules! remote_enum {
         ($($t:ident),*) => {
-            downgrade!{$($t),*}
-            handle_event!{$($t),*}
-            channel!{$($t),*}
-        }
-    }
+            #[derive(Debug, Clone)]
+            pub(crate) enum RemoteArc {
+                $($t(Arc<$t>)),*
+            }
 
-    macro_rules! upgrade {
-        ($($t:ident),*) => {
-            pub(crate) fn upgrade(&self) -> Option<RemoteArc> {
-                match self {
-                    $(
-                        Self::$t(x) => x.upgrade().map(RemoteArc::$t)
-                    ),*
-                }
+            #[derive(Debug, Clone)]
+            pub(crate) enum RemoteWeak {
+                $($t(Weak<$t>)),*
+            }
+
+            impl RemoteWeak {
+                upgrade!{$($t),*}
+            }
+
+            impl RemoteArc {
+                downgrade!{$($t),*}
+                handle_event!{$($t),*}
+                channel!{$($t),*}
             }
         }
     }
 
-    impl RemoteWeak {
-        upgrade! {
-            Dummy,
-            Root,
-            Artifact,
-            BindingCall,
-            Browser,
-            BrowserContext,
-            BrowserType,
-            ConsoleMessage,
-            Dialog,
-            ElementHandle,
-            Frame,
-            JsHandle,
-            Page,
-            Playwright,
-            Request,
-            Response,
-            Route,
-            Stream,
-            Selectors,
-            WebSocket,
-            Worker,
-            Download
-        }
+    remote_enum! {
+        Dummy,
+        Root,
+        Artifact,
+        BindingCall,
+        Browser,
+        BrowserContext,
+        BrowserType,
+        ConsoleMessage,
+        Dialog,
+        ElementHandle,
+        Frame,
+        JsHandle,
+        Page,
+        Playwright,
+        Request,
+        Response,
+        Route,
+        Stream,
+        Selectors,
+        WebSocket,
+        Worker,
+        Download
     }
 
     impl RemoteArc {
-        methods! {
-            Dummy,
-            Root,
-            Artifact,
-            BindingCall,
-            Browser,
-            BrowserContext,
-            BrowserType,
-            ConsoleMessage,
-            Dialog,
-            ElementHandle,
-            Frame,
-            JsHandle,
-            Page,
-            Playwright,
-            Request,
-            Response,
-            Route,
-            Stream,
-            Selectors,
-            WebSocket,
-            Worker,
-            Download
-        }
-
         pub(crate) fn try_new(
             typ: &S<ObjectType>,
             ctx: &Context,

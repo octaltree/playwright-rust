@@ -1,4 +1,4 @@
-use crate::imp::{core::*, download::Download as Impl, prelude::*};
+use crate::imp::{download::Download as Impl, prelude::*};
 
 /// `Download` objects are dispatched by page via the [`event: Page.download`] event.
 ///
