@@ -168,8 +168,10 @@ impl Page {
         upgrade(&self.inner)?.set_viewport_size(viewport_size).await
     }
 
-    ///// Video object associated with this page.
-    // fn video(&self) -> Option<Video> { unimplemented!() }
+    /// Video object associated with this page.
+    pub fn video(&self) -> Result<Option<Video>, Error> {
+        Ok(upgrade(&self.inner)?.video().map(Video::new))
+    }
 
     ///// Returns frame matching the specified criteria. Either `name` or `url` must be specified.
     // fn frame(&self) -> Option<Frame> { unimplemented!() }
@@ -421,7 +423,8 @@ pub enum Event {
     /// is `request`, `response` and `requestfinished`.
     Response(Response),
     WebSocket(WebSocket),
-    Worker(Worker)
+    Worker(Worker),
+    Video(Video)
 }
 
 impl From<Evt> for Event {
@@ -445,7 +448,8 @@ impl From<Evt> for Event {
             Evt::Load => Event::Load,
             Evt::Popup(x) => Event::Popup(Page::new(x)),
             Evt::WebSocket(x) => Event::WebSocket(WebSocket::new(x)),
-            Evt::Worker(x) => Event::Worker(Worker::new(x))
+            Evt::Worker(x) => Event::Worker(Worker::new(x)),
+            Evt::Video(x) => Event::Video(Video::new(x))
         }
     }
 }

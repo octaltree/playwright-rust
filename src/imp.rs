@@ -110,6 +110,7 @@ pub(crate) mod request;
 pub(crate) mod response;
 pub(crate) mod route;
 pub(crate) mod stream;
+pub(crate) mod video;
 pub(crate) mod websocket;
 pub(crate) mod worker;
 

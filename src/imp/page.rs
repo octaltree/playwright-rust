@@ -11,6 +11,7 @@ use crate::imp::{
         ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
         ScreenshotType, Viewport
     },
+    video::Video,
     websocket::WebSocket,
     worker::Worker
 };
@@ -30,7 +31,8 @@ pub(crate) struct Variable {
     frames: Vec<Weak<Frame>>,
     timeout: Option<u32>,
     navigation_timeout: Option<u32>,
-    workers: Vec<Weak<Worker>>
+    workers: Vec<Weak<Worker>>,
+    video: Option<Video>
 }
 
 macro_rules! navigation {
@@ -363,6 +365,13 @@ impl Page {
         self.emit_event(Evt::FrameNavigated(f));
     }
 
+    pub(crate) fn set_video(&self, video: Video) -> Result<(), Error> {
+        self.var.lock().unwrap().video = Some(video);
+        Ok(())
+    }
+
+    pub(crate) fn video(&self) -> Option<Video> { self.var.lock().unwrap().video.clone() }
+
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let bc = match self.browser_context().upgrade() {
             None => return Ok(()),
@@ -471,6 +480,16 @@ impl Page {
         self.emit_event(Evt::Download(Arc::new(download)));
         Ok(())
     }
+
+    fn on_video(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        let v = params.into();
+        let guid = only_guid(&v)?;
+        let artifact = get_object!(ctx, &guid, Artifact)?;
+        let video = Video::new(artifact);
+        self.set_video(video.clone())?;
+        self.emit_event(Evt::Video(video));
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -537,7 +556,7 @@ impl RemoteObject for Page {
                 self.on_worker(ctx, worker)?;
             }
             "download" => self.on_download(ctx, params)?,
-
+            "video" => self.on_video(ctx, params)?,
             _ => {}
         }
         Ok(())
@@ -567,7 +586,8 @@ pub(crate) enum Evt {
     Load,
     Popup(Weak<Page>),
     WebSocket(Weak<WebSocket>),
-    Worker(Weak<Worker>)
+    Worker(Weak<Worker>),
+    Video(Video)
 }
 
 impl EventEmitter for Page {
@@ -596,7 +616,8 @@ pub enum EventType {
     Load,
     Popup,
     WebSocket,
-    Worker
+    Worker,
+    Video
 }
 
 impl Event for Evt {
@@ -622,7 +643,8 @@ impl Event for Evt {
             Self::Load => EventType::Load,
             Self::Popup(_) => EventType::Popup,
             Self::WebSocket(_) => EventType::WebSocket,
-            Self::Worker(_) => EventType::Worker
+            Self::Worker(_) => EventType::Worker,
+            Self::Video(_) => EventType::Video
         }
     }
 }
