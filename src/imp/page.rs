@@ -2,6 +2,7 @@ use crate::imp::{
     browser_context::BrowserContext,
     console_message::ConsoleMessage,
     core::*,
+    download::Download,
     frame::Frame,
     prelude::*,
     request::Request,
@@ -10,6 +11,7 @@ use crate::imp::{
         ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
         ScreenshotType, Viewport
     },
+    video::Video,
     websocket::WebSocket,
     worker::Worker
 };
@@ -29,12 +31,8 @@ pub(crate) struct Variable {
     frames: Vec<Weak<Frame>>,
     timeout: Option<u32>,
     navigation_timeout: Option<u32>,
-    workers: Vec<Weak<Worker>>
-}
-
-#[derive(Debug)]
-pub(crate) struct BindingCall {
-    channel: ChannelOwner
+    workers: Vec<Weak<Worker>>,
+    video: Option<Video>
 }
 
 macro_rules! navigation {
@@ -367,6 +365,13 @@ impl Page {
         self.emit_event(Evt::FrameNavigated(f));
     }
 
+    pub(crate) fn set_video(&self, video: Video) -> Result<(), Error> {
+        self.var.lock().unwrap().video = Some(video);
+        Ok(())
+    }
+
+    pub(crate) fn video(&self) -> Option<Video> { self.var.lock().unwrap().video.clone() }
+
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let bc = match self.browser_context().upgrade() {
             None => return Ok(()),
@@ -454,6 +459,37 @@ impl Page {
         self.emit_event(Evt::Worker(worker));
         Ok(())
     }
+
+    fn on_download(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct De {
+            url: String,
+            suggested_filename: String,
+            artifact: OnlyGuid
+        }
+        let De {
+            url,
+            suggested_filename,
+            artifact: OnlyGuid { guid }
+        } = serde_json::from_value(params.into())?;
+        let artifact = get_object!(ctx, &guid, Artifact)?;
+        // TODO: set_is_remote
+        // artifactObject._isRemote = !!this._browserContext._browser && this._browserContext._browser._isRemote;
+        let download = Download::new(artifact, url, suggested_filename);
+        self.emit_event(Evt::Download(Arc::new(download)));
+        Ok(())
+    }
+
+    fn on_video(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        let v = params.into();
+        let guid = only_guid(&v)?;
+        let artifact = get_object!(ctx, &guid, Artifact)?;
+        let video = Video::new(artifact);
+        self.set_video(video.clone())?;
+        self.emit_event(Evt::Video(video));
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -519,6 +555,8 @@ impl RemoteObject for Page {
                 let worker = get_object!(ctx, &guid, Worker)?;
                 self.on_worker(ctx, worker)?;
             }
+            "download" => self.on_download(ctx, params)?,
+            "video" => self.on_video(ctx, params)?,
             _ => {}
         }
         Ok(())
@@ -532,8 +570,7 @@ pub(crate) enum Evt {
     Console(Weak<ConsoleMessage>),
     /// Not Implemented Yet
     Dialog,
-    /// Not Implemented Yet
-    Download,
+    Download(Arc<Download>),
     /// Not Implemented Yet
     FileChooser,
     DomContentLoaded,
@@ -549,7 +586,8 @@ pub(crate) enum Evt {
     Load,
     Popup(Weak<Page>),
     WebSocket(Weak<WebSocket>),
-    Worker(Weak<Worker>)
+    Worker(Weak<Worker>),
+    Video(Video)
 }
 
 impl EventEmitter for Page {
@@ -578,7 +616,8 @@ pub enum EventType {
     Load,
     Popup,
     WebSocket,
-    Worker
+    Worker,
+    Video
 }
 
 impl Event for Evt {
@@ -590,7 +629,7 @@ impl Event for Evt {
             Self::Crash => EventType::Crash,
             Self::Console(_) => EventType::Console,
             Self::Dialog => EventType::Dialog,
-            Self::Download => EventType::Download,
+            Self::Download(_) => EventType::Download,
             Self::FileChooser => EventType::FileChooser,
             Self::DomContentLoaded => EventType::DomContentLoaded,
             Self::PageError => EventType::PageError,
@@ -604,9 +643,18 @@ impl Event for Evt {
             Self::Load => EventType::Load,
             Self::Popup(_) => EventType::Popup,
             Self::WebSocket(_) => EventType::WebSocket,
-            Self::Worker(_) => EventType::Worker
+            Self::Worker(_) => EventType::Worker,
+            Self::Video(_) => EventType::Video
         }
     }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Initializer {
+    main_frame: OnlyGuid,
+    #[serde(rename = "viewportSize")]
+    viewport: Option<Viewport>
 }
 
 #[skip_serializing_none]
@@ -648,23 +696,6 @@ pub struct AccessibilitySnapshoptResponse {
     pub checked: Option<String>, // "checked" / "unchecked"
     pub pressed: Option<String>, // "pressed" / "released"
     pub children: Vec<AccessibilitySnapshoptResponse>
-}
-
-impl BindingCall {
-    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
-}
-
-impl RemoteObject for BindingCall {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Initializer {
-    main_frame: OnlyGuid,
-    #[serde(rename = "viewportSize")]
-    viewport: Option<Viewport>
 }
 
 #[skip_serializing_none]

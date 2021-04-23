@@ -133,45 +133,27 @@ pub(crate) trait RemoteObject: Debug {
 }
 
 mod remote_enum {
-    use super::*;
+    use super::{DummyObject as Dummy, RootObject as Root, *};
     use crate::imp::{
-        browser::Browser, browser_context::BrowserContext, browser_type::BrowserType,
-        console_message::ConsoleMessage, dialog::Dialog, download::Download,
-        element_handle::ElementHandle, frame::Frame, js_handle::JsHandle, page::Page,
-        playwright::Playwright, request::Request, response::Response, route::Route,
-        selectors::Selectors, websocket::WebSocket, worker::Worker
+        artifact::Artifact, binding_call::BindingCall, browser::Browser,
+        browser_context::BrowserContext, browser_type::BrowserType,
+        console_message::ConsoleMessage, dialog::Dialog, element_handle::ElementHandle,
+        frame::Frame, js_handle::JsHandle, page::Page, playwright::Playwright, request::Request,
+        response::Response, route::Route, selectors::Selectors, stream::Stream,
+        websocket::WebSocket, worker::Worker
     };
 
-    macro_rules! remote_enum {
-        ($t:ident, $p: ident) => {
-            #[derive(Debug, Clone)]
-            pub(crate) enum $t {
-                Dummy($p<DummyObject>),
-                Root($p<RootObject>),
-                BrowserType($p<BrowserType>),
-                Selectors($p<Selectors>),
-                Browser($p<Browser>),
-                BrowserContext($p<BrowserContext>),
-                Page($p<Page>),
-                Frame($p<Frame>),
-                Response($p<Response>),
-                Request($p<Request>),
-                Route($p<Route>),
-                WebSocket($p<WebSocket>),
-                Worker($p<Worker>),
-                Dialog($p<Dialog>),
-                Download($p<Download>),
-                ConsoleMessage($p<ConsoleMessage>),
-                JsHandle($p<JsHandle>),
-                ElementHandle($p<ElementHandle>),
-                Playwright($p<Playwright>)
+    macro_rules! upgrade {
+        ($($t:ident),*) => {
+            pub(crate) fn upgrade(&self) -> Option<RemoteArc> {
+                match self {
+                    $(
+                        Self::$t(x) => x.upgrade().map(RemoteArc::$t)
+                    ),*
+                }
             }
-        };
+        }
     }
-
-    remote_enum! {RemoteArc, Arc}
-
-    remote_enum! {RemoteWeak, Weak}
 
     macro_rules! downgrade {
         ($($t:ident),*) => {
@@ -187,7 +169,9 @@ mod remote_enum {
 
     macro_rules! handle_event {
         ($($t:ident),*) => {
-            pub(crate) fn handle_event(&self, ctx: &Context, method: Str<Method>, params: Map<String, Value>) -> Result<(), Error> {
+            pub(crate) fn handle_event(
+                &self, ctx: &Context, method: Str<Method>, params: Map<String, Value>
+            ) -> Result<(), Error> {
                 match self {
                     $(
                         Self::$t(x) => x.handle_event(ctx, method, params)
@@ -209,100 +193,90 @@ mod remote_enum {
         }
     }
 
-    macro_rules! methods {
+    macro_rules! remote_enum {
         ($($t:ident),*) => {
-            downgrade!{$($t),*}
-            handle_event!{$($t),*}
-            channel!{$($t),*}
-        }
-    }
+            #[derive(Debug, Clone)]
+            pub(crate) enum RemoteArc {
+                $($t(Arc<$t>)),*
+            }
 
-    macro_rules! upgrade {
-        ($($t:ident),*) => {
-            pub(crate) fn upgrade(&self) -> Option<RemoteArc> {
-                match self {
-                    $(
-                        Self::$t(x) => x.upgrade().map(RemoteArc::$t)
-                    ),*
-                }
+            #[derive(Debug, Clone)]
+            pub(crate) enum RemoteWeak {
+                $($t(Weak<$t>)),*
+            }
+
+            impl RemoteWeak {
+                upgrade!{$($t),*}
+            }
+
+            impl RemoteArc {
+                downgrade!{$($t),*}
+                handle_event!{$($t),*}
+                channel!{$($t),*}
             }
         }
     }
 
-    impl RemoteWeak {
-        upgrade! {
-            Dummy,
-            Root,
-            BrowserType,
-            Selectors,
-            Browser,
-            BrowserContext,
-            Page,
-            Frame,
-            Response,
-            Request,
-            Route,
-            WebSocket,
-            Worker,
-            Dialog,
-            Download,
-            ConsoleMessage,
-            JsHandle,
-            ElementHandle,
-            Playwright
-        }
+    remote_enum! {
+        Dummy,
+        Root,
+        // Android
+        // AndroidSocket
+        // AndroidDevice
+        Artifact,
+        BindingCall,
+        Browser,
+        BrowserContext,
+        BrowserType,
+        // CdpSession
+        ConsoleMessage,
+        Dialog,
+        // Electron
+        // ElectronApplication
+        ElementHandle,
+        Frame,
+        JsHandle,
+        Page,
+        Playwright,
+        Request,
+        Response,
+        Route,
+        Stream,
+        Selectors,
+        WebSocket,
+        Worker
     }
 
     impl RemoteArc {
-        methods! {
-            Dummy,
-            Root,
-            BrowserType,
-            Selectors,
-            Browser,
-            BrowserContext,
-            Page,
-            Frame,
-            Response,
-            Request,
-            Route,
-            WebSocket,
-            Worker,
-            Dialog,
-            Download,
-            ConsoleMessage,
-            JsHandle,
-            ElementHandle,
-            Playwright
-        }
-
         pub(crate) fn try_new(
             typ: &S<ObjectType>,
             ctx: &Context,
             c: ChannelOwner
         ) -> Result<RemoteArc, Error> {
             let r = match typ.as_str() {
-                "Playwright" => RemoteArc::Playwright(Arc::new(Playwright::try_new(ctx, c)?)),
-                "Selectors" => RemoteArc::Selectors(Arc::new(Selectors::new(c))),
-                "BrowserType" => RemoteArc::BrowserType(Arc::new(BrowserType::try_new(c)?)),
+                "Artifact" => RemoteArc::Artifact(Arc::new(Artifact::try_new(c)?)),
+                "BindingCall" => RemoteArc::BindingCall(Arc::new(BindingCall::new(c))),
                 "Browser" => RemoteArc::Browser(Arc::new(Browser::try_new(c)?)),
                 "BrowserContext" => {
                     RemoteArc::BrowserContext(Arc::new(BrowserContext::try_new(c)?))
                 }
-                "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
-                "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(ctx, c)?)),
-                "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
-                "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
-                "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
-                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(c)?)),
-                "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
-                "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
-                "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
+                "BrowserType" => RemoteArc::BrowserType(Arc::new(BrowserType::try_new(c)?)),
                 "ConsoleMessage" => {
                     RemoteArc::ConsoleMessage(Arc::new(ConsoleMessage::try_new(ctx, c)?))
                 }
-                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(c)?)),
+                "Dialog" => RemoteArc::Dialog(Arc::new(Dialog::new(c))),
                 "ElementHandle" => RemoteArc::ElementHandle(Arc::new(ElementHandle::new(c))),
+                "Frame" => RemoteArc::Frame(Arc::new(Frame::try_new(ctx, c)?)),
+                "JSHandle" => RemoteArc::JsHandle(Arc::new(JsHandle::try_new(c)?)),
+                "Page" => RemoteArc::Page(Arc::new(Page::try_new(ctx, c)?)),
+                "Playwright" => RemoteArc::Playwright(Arc::new(Playwright::try_new(ctx, c)?)),
+                "Request" => RemoteArc::Request(Request::try_new(ctx, c)?),
+                "Response" => RemoteArc::Response(Arc::new(Response::try_new(ctx, c)?)),
+                "Route" => RemoteArc::Route(Arc::new(Route::try_new(ctx, c)?)),
+                "Stream" => RemoteArc::Stream(Arc::new(Stream::new(c))),
+                "Selectors" => RemoteArc::Selectors(Arc::new(Selectors::new(c))),
+                "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(c)?)),
+                "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
                 _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
             };
             Ok(r)

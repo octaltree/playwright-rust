@@ -1,15 +1,36 @@
-use crate::imp::{core::*, prelude::*};
+use crate::imp::{artifact::Artifact, core::*, prelude::*};
 
 #[derive(Debug)]
 pub(crate) struct Download {
-    channel: ChannelOwner
+    url: String,
+    suggested_filename: String,
+    artifact: Weak<Artifact>
 }
 
 impl Download {
-    pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
-}
+    pub(crate) fn new(artifact: Weak<Artifact>, url: String, suggested_filename: String) -> Self {
+        Self {
+            url,
+            suggested_filename,
+            artifact
+        }
+    }
 
-impl RemoteObject for Download {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+    pub(crate) fn url(&self) -> &str { &self.url }
+
+    pub(crate) fn suggested_filename(&self) -> &str { &self.suggested_filename }
+
+    pub(crate) async fn path(&self) -> ArcResult<Option<PathBuf>> {
+        upgrade(&self.artifact)?.path_after_finished().await
+    }
+
+    pub(crate) async fn delete(&self) -> ArcResult<()> { upgrade(&self.artifact)?.delete().await }
+
+    pub(crate) async fn save_as<P: AsRef<Path>>(&self, path: P) -> Result<(), Arc<Error>> {
+        upgrade(&self.artifact)?.save_as(path).await
+    }
+
+    pub(crate) async fn failure(&self) -> ArcResult<Option<String>> {
+        upgrade(&self.artifact)?.failure().await
+    }
 }

@@ -1,15 +1,15 @@
 use crate::imp::core::*;
 
 #[derive(Debug)]
-pub(crate) struct Dialog {
+pub(crate) struct BindingCall {
     channel: ChannelOwner
 }
 
-impl Dialog {
+impl BindingCall {
     pub(crate) fn new(channel: ChannelOwner) -> Self { Self { channel } }
 }
 
-impl RemoteObject for Dialog {
+impl RemoteObject for BindingCall {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
 }

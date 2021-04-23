@@ -75,8 +75,27 @@ async fn playwright_with_driver() -> Playwright {
 
 #[cfg(any(feature = "rt-tokio", feature = "rt-actix"))]
 async fn start_test_server(port: u16) {
-    use warp::Filter;
-    let route = warp::path("static").and(warp::fs::dir("tests/server"));
+    use warp::{
+        http::header::{HeaderMap, HeaderValue},
+        Filter
+    };
+    let headers = {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Content-Type",
+            HeaderValue::from_static("application/octet-stream")
+        );
+        headers.insert(
+            "Content-Disposition",
+            HeaderValue::from_static("attachment")
+        );
+        headers
+    };
+    let r#static = warp::path("static").and(warp::fs::dir("tests/server"));
+    let download = warp::path("download")
+        .and(warp::fs::dir("tests/server"))
+        .with(warp::reply::with::headers(headers));
+    let route = r#static.or(download);
     spawn(async move {
         warp::serve(route).run(([127, 0, 0, 1], port)).await;
     });
@@ -87,6 +106,14 @@ async fn start_test_server(port: u16) {
     use tide::Server;
     let mut app = Server::new();
     app.at("/static").serve_dir("tests/server/").unwrap();
+    app.at("/download")
+        .with(tide::utils::After(|mut res: tide::Response| async move {
+            res.insert_header("Content-Type", "application/octet-stream");
+            res.insert_header("Content-Disposition", "attachment");
+            Ok(res)
+        }))
+        .serve_dir("tests/server/")
+        .unwrap();
     spawn(async move {
         app.listen(format!("127.0.0.1:{}", port)).await.unwrap();
     });
@@ -102,6 +129,10 @@ fn free_local_port() -> Option<u16> {
 
 fn url_static(port: u16, path: &str) -> String {
     format!("http://localhost:{}/static{}", port, path)
+}
+
+fn url_download(port: u16, path: &str) -> String {
+    format!("http://localhost:{}/download{}", port, path)
 }
 
 //    let h = page.eval_handle("() => location.href").await.unwrap();
