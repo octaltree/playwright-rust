@@ -1,9 +1,9 @@
-pub use crate::imp::page::AccessibilitySnapshoptResponse;
+pub use crate::imp::page::{AccessibilitySnapshotResponse as SnapshotResponse, Mixed, Val};
 use crate::{
     api::ElementHandle,
     imp::{
         core::*,
-        page::{AccessibilitySnapshoptArgs, Page as PageImpl},
+        page::{AccessibilitySnapshotArgs as SnapshotArgs, Page as PageImpl},
         prelude::*
     }
 };
@@ -63,23 +63,21 @@ impl Accessibility {
     /// if(focusedNode != null)
     ///  Console.WriteLine(focusedNode.Name);
     /// ```
-    pub async fn snapshot_builder(&self) -> SnapshotBuilder {
-        SnapshotBuilder::new(self.inner.clone())
-    }
+    pub fn snapshot_builder(&self) -> SnapshotBuilder { SnapshotBuilder::new(self.inner.clone()) }
 }
 
 pub struct SnapshotBuilder {
     inner: Weak<PageImpl>,
-    args: AccessibilitySnapshoptArgs
+    args: SnapshotArgs
 }
 
 impl SnapshotBuilder {
     fn new(inner: Weak<PageImpl>) -> Self {
-        let args = AccessibilitySnapshoptArgs::default();
+        let args = SnapshotArgs::default();
         Self { inner, args }
     }
 
-    pub async fn snapshot(self) -> ArcResult<Option<AccessibilitySnapshoptResponse>> {
+    pub async fn snapshot(self) -> ArcResult<Option<SnapshotResponse>> {
         let Self { inner, args } = self;
         upgrade(&inner)?.accessibility_snapshot(args).await
     }

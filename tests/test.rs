@@ -32,6 +32,7 @@ playwright::runtime_test!(firefox_selectors, selectors(Which::Firefox).await);
 
 playwright::runtime_test!(chromium_devices, devices(Which::Chromium).await);
 playwright::runtime_test!(firefox_devices, devices(Which::Chromium).await);
+// playwright::runtime_test!(webkit_devices, devices(Which::Webkit).await);
 
 async fn page(which: Which) {
     std::fs::create_dir_all(temp_dir()).unwrap();

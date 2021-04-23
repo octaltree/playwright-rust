@@ -19,6 +19,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     download(&page, port).await;
     video(&page).await;
     workers_should_work(&page, port, which).await;
+    accessibility(&page).await;
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
@@ -261,4 +262,32 @@ async fn video(p: &Page) {
     // video.save_as(&path).await.unwrap();
     // assert!(path.is_file());
     // video.delete().await.unwrap();
+}
+
+async fn accessibility(p: &Page) {
+    let ac = &p.accessibility;
+    p.set_content_builder(
+        r#"<div>\
+            <span>Hello World</span>\
+            <input placeholder="Empty input" autofocus />\
+        </div>"#
+    )
+    .set_content()
+    .await
+    .unwrap();
+    let span = p.query_selector("span").await.unwrap().unwrap();
+    let input = p.query_selector("input").await.unwrap().unwrap();
+    let snapshot = ac
+        .snapshot_builder()
+        .try_root(span)
+        .unwrap()
+        .clear_root()
+        .try_root(input)
+        .unwrap()
+        .interesting_only(false)
+        .snapshot()
+        .await
+        .unwrap();
+    // TODO: assert_eq
+    dbg!(&snapshot);
 }

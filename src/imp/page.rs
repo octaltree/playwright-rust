@@ -212,14 +212,14 @@ impl Page {
 
     pub(crate) async fn accessibility_snapshot(
         &self,
-        args: AccessibilitySnapshoptArgs
-    ) -> ArcResult<Option<AccessibilitySnapshoptResponse>> {
+        args: AccessibilitySnapshotArgs
+    ) -> ArcResult<Option<AccessibilitySnapshotResponse>> {
         let v = send_message!(self, "accessibilitySnapshot", args);
         let first = match first(&v) {
             None => return Ok(None),
             Some(x) => x
         };
-        let res: AccessibilitySnapshoptResponse =
+        let res: AccessibilitySnapshotResponse =
             serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         Ok(Some(res))
     }
@@ -683,19 +683,52 @@ impl MouseClickArgs {
 #[skip_serializing_none]
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct AccessibilitySnapshoptArgs {
+pub(crate) struct AccessibilitySnapshotArgs {
     pub(crate) interesting_only: Option<bool>,
     pub(crate) root: Option<OnlyGuid>
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AccessibilitySnapshoptResponse {
-    pub value_number: Option<f64>,
-    pub value_string: Option<String>,
-    pub checked: Option<String>, // "checked" / "unchecked"
-    pub pressed: Option<String>, // "pressed" / "released"
-    pub children: Vec<AccessibilitySnapshoptResponse>
+pub struct AccessibilitySnapshotResponse {
+    pub role: String,
+    pub name: String,
+    pub value: Option<Val>,
+    pub description: Option<String>,
+    pub keyshortcuts: Option<String>,
+    pub roledescription: Option<String>,
+    pub valuetext: Option<String>,
+    pub disabled: Option<bool>,
+    pub expanded: Option<bool>,
+    pub focused: Option<bool>,
+    pub modal: Option<bool>,
+    pub multiline: Option<bool>,
+    pub multiselectable: Option<bool>,
+    pub readonly: Option<bool>,
+    pub required: Option<bool>,
+    pub selected: Option<bool>,
+    pub checked: Option<Mixed>,
+    pub pressed: Option<Mixed>,
+    pub level: Option<i64>,
+    pub valuemin: Option<f64>,
+    pub valuemax: Option<f64>,
+    pub autocomplete: Option<String>,
+    pub haspopup: Option<String>,
+    pub invalid: Option<String>,
+    pub orientation: Option<String>,
+    #[serde(default)]
+    pub children: Vec<AccessibilitySnapshotResponse>
+}
+
+#[derive(Debug, Deserialize)]
+pub enum Val {
+    String(String),
+    Number(f64)
+}
+#[derive(Debug, Deserialize)]
+pub enum Mixed {
+    Mixed,
+    Bool(bool)
 }
 
 #[skip_serializing_none]
