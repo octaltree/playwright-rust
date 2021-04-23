@@ -26,6 +26,7 @@ async fn launch(b: &Browser) -> BrowserContext {
     b.context_builder()
         .user_agent("asdf")
         .permissions(&["geolocation".into()])
+        .accept_downloads(true)
         .build()
         .await
         .unwrap()

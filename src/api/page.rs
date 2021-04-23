@@ -6,7 +6,7 @@ pub use crate::{
             SetInputFilesBuilder, TapBuilder, TypeBuilder, UncheckBuilder, WaitForFunctionBuilder,
             WaitForSelectorBuilder
         },
-        JsHandle, Request
+        Download, JsHandle, Request
     },
     imp::page::{EventType, Media}
 };
@@ -373,7 +373,7 @@ pub enum Event {
     /// > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
     /// downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
     /// performed and user has no access to the downloaded files.
-    Download,
+    Download(Download),
     /// Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
     /// respond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.
     ///
@@ -431,7 +431,7 @@ impl From<Evt> for Event {
             Evt::Crash => Event::Crash,
             Evt::Console(x) => Event::Console(ConsoleMessage::new(x)),
             Evt::Dialog => Event::Dialog,
-            Evt::Download => Event::Download,
+            Evt::Download(x) => Event::Download(Download::new(x)),
             Evt::FileChooser => Event::FileChooser,
             Evt::DomContentLoaded => Event::DomContentLoaded,
             Evt::PageError => Event::PageError,

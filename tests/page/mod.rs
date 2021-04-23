@@ -16,6 +16,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         // XXX: go_back response is null on firefox
         navigations(&page, port).await;
     }
+    download(&page, port).await;
     workers_should_work(&page, port, which).await;
 }
 
@@ -221,4 +222,31 @@ async fn viewport(p: &Page) {
     dbg!(p.viewport_size().unwrap());
     p.set_viewport_size(v.clone()).await.unwrap();
     assert_eq!(p.viewport_size().unwrap(), Some(v));
+}
+
+async fn download(p: &Page, port: u16) {
+    p.set_content_builder(&format!(
+        r#"<a href="{}">download</a>"#,
+        super::url_download(port, "/worker.html")
+    ))
+    .set_content()
+    .await
+    .unwrap();
+    let (d, _) = tokio::join!(
+        p.expect_event(page::EventType::Download),
+        p.click_builder("a").click()
+    );
+    let download = match d.unwrap() {
+        page::Event::Download(d) => d,
+        _ => unreachable!()
+    };
+    dbg!(download.url());
+    dbg!(download.suggested_filename());
+    dbg!(download.path().await.unwrap());
+    assert!(!download.url().is_empty());
+    assert!(!download.suggested_filename().is_empty());
+    assert!(download.path().await.unwrap().is_some());
+    let tmp = std::env::temp_dir().join(download.suggested_filename());
+    download.save_as(tmp).await.unwrap();
+    download.delete().await.unwrap();
 }

@@ -137,10 +137,10 @@ mod remote_enum {
     use crate::imp::{
         artifact::Artifact, binding_call::BindingCall, browser::Browser,
         browser_context::BrowserContext, browser_type::BrowserType,
-        console_message::ConsoleMessage, dialog::Dialog, download::Download,
-        element_handle::ElementHandle, frame::Frame, js_handle::JsHandle, page::Page,
-        playwright::Playwright, request::Request, response::Response, route::Route,
-        selectors::Selectors, stream::Stream, websocket::WebSocket, worker::Worker
+        console_message::ConsoleMessage, dialog::Dialog, element_handle::ElementHandle,
+        frame::Frame, js_handle::JsHandle, page::Page, playwright::Playwright, request::Request,
+        response::Response, route::Route, selectors::Selectors, stream::Stream,
+        websocket::WebSocket, worker::Worker
     };
 
     macro_rules! upgrade {
@@ -220,13 +220,19 @@ mod remote_enum {
     remote_enum! {
         Dummy,
         Root,
+        // Android
+        // AndroidSocket
+        // AndroidDevice
         Artifact,
         BindingCall,
         Browser,
         BrowserContext,
         BrowserType,
+        // CdpSession
         ConsoleMessage,
         Dialog,
+        // Electron
+        // ElectronApplication
         ElementHandle,
         Frame,
         JsHandle,
@@ -238,8 +244,7 @@ mod remote_enum {
         Stream,
         Selectors,
         WebSocket,
-        Worker,
-        Download
+        Worker
     }
 
     impl RemoteArc {
@@ -249,7 +254,7 @@ mod remote_enum {
             c: ChannelOwner
         ) -> Result<RemoteArc, Error> {
             let r = match typ.as_str() {
-                "Artifact" => RemoteArc::Artifact(Arc::new(Artifact::new(c))),
+                "Artifact" => RemoteArc::Artifact(Arc::new(Artifact::try_new(c)?)),
                 "BindingCall" => RemoteArc::BindingCall(Arc::new(BindingCall::new(c))),
                 "Browser" => RemoteArc::Browser(Arc::new(Browser::try_new(c)?)),
                 "BrowserContext" => {
@@ -272,7 +277,6 @@ mod remote_enum {
                 "Selectors" => RemoteArc::Selectors(Arc::new(Selectors::new(c))),
                 "WebSocket" => RemoteArc::WebSocket(Arc::new(WebSocket::try_new(c)?)),
                 "Worker" => RemoteArc::Worker(Arc::new(Worker::try_new(c)?)),
-                "Download" => RemoteArc::Download(Arc::new(Download::new(c))),
                 _ => RemoteArc::Dummy(Arc::new(DummyObject::new(c)))
             };
             Ok(r)

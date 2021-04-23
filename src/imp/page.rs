@@ -2,6 +2,7 @@ use crate::imp::{
     browser_context::BrowserContext,
     console_message::ConsoleMessage,
     core::*,
+    download::Download,
     frame::Frame,
     prelude::*,
     request::Request,
@@ -449,6 +450,27 @@ impl Page {
         self.emit_event(Evt::Worker(worker));
         Ok(())
     }
+
+    fn on_download(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct De {
+            url: String,
+            suggested_filename: String,
+            artifact: OnlyGuid
+        }
+        let De {
+            url,
+            suggested_filename,
+            artifact: OnlyGuid { guid }
+        } = serde_json::from_value(params.into())?;
+        let artifact = get_object!(ctx, &guid, Artifact)?;
+        // TODO: set_is_remote
+        // artifactObject._isRemote = !!this._browserContext._browser && this._browserContext._browser._isRemote;
+        let download = Download::new(artifact, url, suggested_filename);
+        self.emit_event(Evt::Download(Arc::new(download)));
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -514,6 +536,8 @@ impl RemoteObject for Page {
                 let worker = get_object!(ctx, &guid, Worker)?;
                 self.on_worker(ctx, worker)?;
             }
+            "download" => self.on_download(ctx, params)?,
+
             _ => {}
         }
         Ok(())
@@ -527,8 +551,7 @@ pub(crate) enum Evt {
     Console(Weak<ConsoleMessage>),
     /// Not Implemented Yet
     Dialog,
-    /// Not Implemented Yet
-    Download,
+    Download(Arc<Download>),
     /// Not Implemented Yet
     FileChooser,
     DomContentLoaded,
@@ -585,7 +608,7 @@ impl Event for Evt {
             Self::Crash => EventType::Crash,
             Self::Console(_) => EventType::Console,
             Self::Dialog => EventType::Dialog,
-            Self::Download => EventType::Download,
+            Self::Download(_) => EventType::Download,
             Self::FileChooser => EventType::FileChooser,
             Self::DomContentLoaded => EventType::DomContentLoaded,
             Self::PageError => EventType::PageError,

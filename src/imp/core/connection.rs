@@ -63,6 +63,10 @@ pub enum Error {
     Arc(#[from] Arc<Error>),
     #[error(transparent)]
     Event(broadcast::error::RecvError),
+    #[error("Path is not available when using BrowserType.connect(). Use save_as() to save a local copy.")]
+    RemoteArtifact,
+    #[error("Failed to resolve path {0:?}")]
+    ResolvePath(PathBuf),
     #[error("Timed out")]
     Timeout
 }
