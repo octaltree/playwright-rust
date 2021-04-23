@@ -29,4 +29,8 @@ impl Download {
     pub(crate) async fn save_as<P: AsRef<Path>>(&self, path: P) -> Result<(), Arc<Error>> {
         upgrade(&self.artifact)?.save_as(path).await
     }
+
+    pub(crate) async fn failure(&self) -> ArcResult<Option<String>> {
+        upgrade(&self.artifact)?.failure().await
+    }
 }

@@ -246,6 +246,7 @@ async fn download(p: &Page, port: u16) {
     assert!(!download.url().is_empty());
     assert!(!download.suggested_filename().is_empty());
     assert!(download.path().await.unwrap().is_some());
+    assert_eq!(download.failure().await.unwrap(), None);
     let tmp = std::env::temp_dir().join(download.suggested_filename());
     download.save_as(tmp).await.unwrap();
     download.delete().await.unwrap();

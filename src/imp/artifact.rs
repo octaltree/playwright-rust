@@ -50,6 +50,12 @@ impl Artifact {
         upgrade(&stream)?.save_as(path).await?;
         Ok(())
     }
+
+    pub(crate) async fn failure(&self) -> ArcResult<Option<String>> {
+        let v = send_message!(self, "failure", Map::new());
+        let msg = maybe_only_str(&v)?;
+        Ok(msg.map(ToOwned::to_owned))
+    }
 }
 
 // mutable
