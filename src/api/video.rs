@@ -10,9 +10,11 @@ impl Video {
 
     pub fn path(&self) -> Result<PathBuf, Error> { self.inner.path() }
 
-    pub async fn save_as<P: AsRef<Path>>(&self, path: P) -> ArcResult<()> {
+    // doesn't work with this version
+    async fn save_as<P: AsRef<Path>>(&self, path: P) -> ArcResult<()> {
         self.inner.save_as(path).await
     }
 
-    pub async fn delete(&self) -> ArcResult<()> { self.inner.delete().await }
+    // doesn't work with this version
+    async fn delete(&self) -> ArcResult<()> { self.inner.delete().await }
 }

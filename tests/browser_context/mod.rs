@@ -1,5 +1,5 @@
 use super::Which;
-use playwright::api::{Browser, BrowserContext, BrowserType};
+use playwright::api::{browser::RecordVideo, Browser, BrowserContext, BrowserType};
 
 pub async fn all(browser: &Browser, persistent: &BrowserContext, _which: Which) -> BrowserContext {
     let c = launch(browser).await;
@@ -27,6 +27,10 @@ async fn launch(b: &Browser) -> BrowserContext {
         .user_agent("asdf")
         .permissions(&["geolocation".into()])
         .accept_downloads(true)
+        .record_video(RecordVideo {
+            dir: &super::temp_dir().join("video"),
+            size: None
+        })
         .build()
         .await
         .unwrap()

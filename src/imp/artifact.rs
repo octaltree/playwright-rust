@@ -41,12 +41,10 @@ impl Artifact {
         let dir = path
             .parent()
             .ok_or_else(|| Error::ResolvePath(path.into()))?;
-        dbg!(&dir);
         let res = send_message!(self, "saveAsStream", Map::new());
         let guid = only_guid(&res)?;
         let stream = get_object!(self.context()?.lock().unwrap(), &guid, Stream)?;
         std::fs::create_dir_all(dir).map_err(Error::from)?;
-        dbg!(&dir);
         upgrade(&stream)?.save_as(path).await?;
         Ok(())
     }

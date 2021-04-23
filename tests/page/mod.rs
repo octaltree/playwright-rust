@@ -17,6 +17,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         navigations(&page, port).await;
     }
     download(&page, port).await;
+    video(&page).await;
     workers_should_work(&page, port, which).await;
 }
 
@@ -247,7 +248,17 @@ async fn download(p: &Page, port: u16) {
     assert!(!download.suggested_filename().is_empty());
     assert!(download.path().await.unwrap().is_some());
     assert_eq!(download.failure().await.unwrap(), None);
-    let tmp = std::env::temp_dir().join(download.suggested_filename());
+    let tmp = super::temp_dir().join(download.suggested_filename());
     download.save_as(tmp).await.unwrap();
     download.delete().await.unwrap();
+}
+
+async fn video(p: &Page) {
+    let video = p.video().unwrap().unwrap();
+    dbg!(video.path().unwrap());
+    // TODO
+    // let path = super::temp_dir().join("video.webm");
+    // video.save_as(&path).await.unwrap();
+    // assert!(path.is_file());
+    // video.delete().await.unwrap();
 }
