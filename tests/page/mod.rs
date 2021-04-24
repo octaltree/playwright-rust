@@ -20,6 +20,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     video(&page).await;
     workers_should_work(&page, port, which).await;
     screenshot(&page).await;
+    // emulate(&page).await;
     accessibility(&page).await;
 }
 
@@ -337,4 +338,34 @@ async fn screenshot(p: &Page) {
         .await
         .unwrap();
     assert!(path.is_file());
+}
+
+async fn emulate(p: &Page) {
+    use playwright::api::page::Media;
+    let screen = || async {
+        p.eval::<bool>("() => matchMedia('screen').matches")
+            .await
+            .unwrap()
+    };
+    let print = || async {
+        p.eval::<bool>("() => matchMedia('print').matches")
+            .await
+            .unwrap()
+    };
+    assert_eq!(screen().await, true);
+    assert_eq!(print().await, false);
+    p.emulate_media_builder()
+        .media(Some(Media::Print))
+        .emulate_media()
+        .await
+        .unwrap();
+    assert_eq!(screen().await, false);
+    assert_eq!(print().await, true);
+    p.emulate_media_builder()
+        .media(None)
+        .emulate_media()
+        .await
+        .unwrap();
+    assert_eq!(screen().await, true);
+    assert_eq!(print().await, false);
 }

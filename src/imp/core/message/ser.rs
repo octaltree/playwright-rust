@@ -564,6 +564,7 @@ impl<'a> ser::SerializeStructVariant for &'a mut StructVariant {
 mod tests {
     use super::*;
 
+    // TODO: kv
     #[test]
     fn r#struct() {
         #[derive(Serialize)]
@@ -580,6 +581,7 @@ mod tests {
                 "value":{"o":{"int":{"n":1},"seq":{"a": [{"s":"a"},{"s":"b"}]}}},
                 "handles":[]}"#;
         let v: Value = serde_json::from_str(expected).unwrap();
+        dbg!(&v);
         assert_eq!(to_value(&test).unwrap(), v);
     }
 

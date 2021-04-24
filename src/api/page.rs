@@ -302,7 +302,7 @@ impl Page {
     /// await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
     ///// → false
     /// ```
-    pub fn emulate_media(&self) -> EmulateMediaBuilder {
+    pub fn emulate_media_builder(&self) -> EmulateMediaBuilder {
         EmulateMediaBuilder::new(self.inner.clone())
     }
 
