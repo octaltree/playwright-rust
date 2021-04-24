@@ -688,7 +688,7 @@ pub(crate) struct AccessibilitySnapshotArgs {
     pub(crate) root: Option<OnlyGuid>
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct AccessibilitySnapshotResponse {
     pub role: String,
@@ -720,12 +720,12 @@ pub struct AccessibilitySnapshotResponse {
     pub children: Vec<AccessibilitySnapshotResponse>
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub enum Val {
     String(String),
     Number(f64)
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub enum Mixed {
     Mixed,
     Bool(bool)

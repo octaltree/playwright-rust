@@ -265,6 +265,7 @@ async fn video(p: &Page) {
 }
 
 async fn accessibility(p: &Page) {
+    use playwright::api::accessibility::SnapshotResponse;
     let ac = &p.accessibility;
     p.set_content_builder(
         r#"<div>\
@@ -279,15 +280,48 @@ async fn accessibility(p: &Page) {
     let input = p.query_selector("input").await.unwrap().unwrap();
     let snapshot = ac
         .snapshot_builder()
+        .try_root(input)
+        .unwrap()
+        .snapshot()
+        .await
+        .unwrap();
+    let input_response = Some(SnapshotResponse {
+        role: "textbox".into(),
+        name: "Empty input".into(),
+        value: None,
+        description: None,
+        keyshortcuts: None,
+        roledescription: None,
+        valuetext: None,
+        disabled: None,
+        expanded: None,
+        focused: Some(true),
+        modal: None,
+        multiline: None,
+        multiselectable: None,
+        readonly: None,
+        required: None,
+        selected: None,
+        checked: None,
+        pressed: None,
+        level: None,
+        valuemin: None,
+        valuemax: None,
+        autocomplete: None,
+        haspopup: None,
+        invalid: None,
+        orientation: None,
+        children: Vec::new()
+    });
+    assert_eq!(snapshot, input_response);
+    let snapshot = ac
+        .snapshot_builder()
         .try_root(span)
         .unwrap()
         .clear_root()
-        .try_root(input)
-        .unwrap()
         .interesting_only(false)
         .snapshot()
         .await
         .unwrap();
-    // TODO: assert_eq
-    dbg!(&snapshot);
+    assert_ne!(snapshot, input_response);
 }
