@@ -21,6 +21,9 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     workers_should_work(&page, port, which).await;
     screenshot(&page).await;
     // emulate(&page).await;
+    if which != Which::Firefox {
+        pdf(&page).await;
+    }
     accessibility(&page).await;
 }
 
@@ -333,10 +336,17 @@ async fn screenshot(p: &Page) {
     let path = super::temp_dir().join("screenshot.jpg");
     p.screenshot_builder()
         .r#type(ScreenshotType::Jpeg)
+        .clear_type()
         .path(path.clone())
         .screenshot()
         .await
         .unwrap();
+    assert!(path.is_file());
+}
+
+async fn pdf(p: &Page) {
+    let path = super::temp_dir().join("pdf.pdf");
+    p.pdf_builder().path(path.clone()).pdf().await.unwrap();
     assert!(path.is_file());
 }
 
@@ -361,11 +371,7 @@ async fn emulate(p: &Page) {
         .unwrap();
     assert_eq!(screen().await, false);
     assert_eq!(print().await, true);
-    p.emulate_media_builder()
-        .media(None)
-        .emulate_media()
-        .await
-        .unwrap();
+    p.emulate_media_builder().emulate_media().await.unwrap();
     assert_eq!(screen().await, true);
     assert_eq!(print().await, false);
 }

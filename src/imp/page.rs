@@ -240,9 +240,11 @@ impl Page {
         &self,
         args: PdfArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
     ) -> ArcResult<Vec<u8>> {
+        let path = args.path.clone();
         let v = send_message!(self, "pdf", args);
         let b64 = only_str(&v)?;
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
 
@@ -263,11 +265,7 @@ impl Page {
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&v)?;
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
-        if let Some(path) = path {
-            use std::io::Write;
-            let mut file = std::fs::File::create(path).map_err(Error::from)?;
-            file.write(&bytes).map_err(Error::from)?;
-        }
+        may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
 
@@ -305,6 +303,17 @@ impl Page {
     pub(crate) async fn expect_event(&self, evt: <Evt as Event>::EventType) -> Result<Evt, Error> {
         expect_event(self.subscribe_event(), evt, self.default_timeout()).await
     }
+}
+
+fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
+    let path = match path {
+        Some(path) => path,
+        None => return Ok(())
+    };
+    use std::io::Write;
+    let mut file = std::fs::File::create(path).map_err(Error::from)?;
+    file.write(&bytes).map_err(Error::from)?;
+    Ok(())
 }
 
 // mutable
