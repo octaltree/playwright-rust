@@ -44,6 +44,8 @@ pub(crate) struct Serializer {
     s: Vec<StructVariant>
 }
 
+// XXX: None
+// XXX: ElementHandle implements JsHandle
 pub(crate) fn to_value<T>(x: &T) -> Result<Value, Error>
 where
     T: Serialize

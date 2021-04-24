@@ -7,24 +7,29 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     eq_context_close(c, &page).await;
     ensure_timeout(&page).await;
     set_timeout(&page).await;
-    check_add_permissions(c, &page, port, which).await;
-    front_should_work(c, &page).await;
-    focus_should_work(&page).await;
-    reload_should_worker(&page).await;
-    viewport(&page).await;
+    permissions(c, &page, port, which).await;
     if which != Which::Firefox {
         // XXX: go_back response is null on firefox
         navigations(&page, port).await;
     }
+    set_extra_http_headers(&page, port).await;
+    front_should_work(c, &page).await;
+    focus_should_work(&page).await;
+    reload_should_worker(&page).await;
+    screenshot_should_work(&page).await;
+    title_should_work(&page).await;
+    check_should_work(&page).await;
+    pointer(&page).await;
+    if which != Which::Firefox {
+        pdf_should_work(&page).await;
+    }
+    viewport(&page).await;
     download(&page, port).await;
     video(&page).await;
-    workers_should_work(&page, port, which).await;
-    screenshot(&page).await;
     // emulate(&page).await;
-    if which != Which::Firefox {
-        pdf(&page).await;
-    }
+    workers_should_work(&page, port, which).await;
     accessibility(&page).await;
+    text(&page).await;
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
@@ -170,7 +175,7 @@ async fn ensure_timeout(page: &Page) {
     }
 }
 
-async fn check_add_permissions(c: &BrowserContext, page: &Page, port: u16, which: Which) {
+async fn permissions(c: &BrowserContext, page: &Page, port: u16, which: Which) {
     const PERMISSION_DENIED: i32 = 1;
     let snippet = "async () => {
         let getCurrentPositionAsync =
@@ -331,7 +336,7 @@ async fn accessibility(p: &Page) {
     assert_ne!(snapshot, input_response);
 }
 
-async fn screenshot(p: &Page) {
+async fn screenshot_should_work(p: &Page) {
     use playwright::api::ScreenshotType;
     let path = super::temp_dir().join("screenshot.jpg");
     p.screenshot_builder()
@@ -344,7 +349,7 @@ async fn screenshot(p: &Page) {
     assert!(path.is_file());
 }
 
-async fn pdf(p: &Page) {
+async fn pdf_should_work(p: &Page) {
     let path = super::temp_dir().join("pdf.pdf");
     p.pdf_builder().path(path.clone()).pdf().await.unwrap();
     assert!(path.is_file());
@@ -374,4 +379,64 @@ async fn emulate(p: &Page) {
     p.emulate_media_builder().emulate_media().await.unwrap();
     assert_eq!(screen().await, true);
     assert_eq!(print().await, false);
+}
+
+async fn check_should_work(p: &Page) {
+    p.set_content_builder(r#"<input type="checkbox" />"#)
+        .set_content()
+        .await
+        .unwrap();
+    p.check_builder("input").check().await.unwrap();
+    let checked = p.is_checked("input", None).await.unwrap();
+    assert_eq!(checked, true);
+    p.uncheck_builder("input").uncheck().await.unwrap();
+    let checked = p.is_checked("input", None).await.unwrap();
+    assert_eq!(checked, false);
+}
+
+async fn title_should_work(p: &Page) {
+    p.eval::<String>(r#"() => document.title = "foo""#)
+        .await
+        .unwrap();
+    assert_eq!(p.title().await.unwrap(), "foo");
+}
+
+async fn pointer(p: &Page) {
+    p.set_content_builder(r#"<input type="checkbox" />"#)
+        .set_content()
+        .await
+        .unwrap();
+    let checked = || async {
+        p.eval::<bool>("() => document.querySelector('input').checked")
+            .await
+            .unwrap()
+    };
+    p.tap_builder("input").tap().await.unwrap();
+    assert_eq!(checked().await, true);
+    p.dblclick_builder("input").dblclick().await.unwrap();
+    assert_eq!(checked().await, true);
+    p.click_builder("input").click().await.unwrap();
+    assert_eq!(checked().await, false);
+}
+
+async fn text(p: &Page) {
+    // TODO
+}
+
+async fn set_extra_http_headers(p: &Page, port: u16) {
+    p.set_extra_http_headers(vec![("hoge".into(), "hoge".into())])
+        .await
+        .unwrap();
+    let url = super::url_static(port, "/empty.html");
+    let (maybe_request, _) = tokio::join!(
+        p.expect_event(page::EventType::Request),
+        p.goto_builder(&url).goto()
+    );
+    let req = match maybe_request.unwrap() {
+        page::Event::Request(req) => req,
+        _ => unreachable!()
+    };
+    let headers = req.headers().unwrap();
+    assert_eq!(headers.get("foo").unwrap(), "bar"); // set by BrowserContext
+    assert_eq!(headers.get("hoge").unwrap(), "hoge");
 }
