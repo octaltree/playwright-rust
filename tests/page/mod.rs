@@ -19,6 +19,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     download(&page, port).await;
     video(&page).await;
     workers_should_work(&page, port, which).await;
+    screenshot(&page).await;
     accessibility(&page).await;
 }
 
@@ -324,4 +325,16 @@ async fn accessibility(p: &Page) {
         .await
         .unwrap();
     assert_ne!(snapshot, input_response);
+}
+
+async fn screenshot(p: &Page) {
+    use playwright::api::ScreenshotType;
+    let path = super::temp_dir().join("screenshot.jpg");
+    p.screenshot_builder()
+        .r#type(ScreenshotType::Jpeg)
+        .path(path.clone())
+        .screenshot()
+        .await
+        .unwrap();
+    assert!(path.is_file());
 }
