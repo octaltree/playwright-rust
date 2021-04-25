@@ -414,7 +414,10 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
         T: ?Sized + Serialize
     {
         let v = value.serialize(&mut self.prime)?;
-        if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" && key == "guid" {
+        if (self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061"
+            || self.name == "fff9ae7f-9070-480f-9a8a-3d4b66923f7d")
+            && key == "guid"
+        {
             let g = match v {
                 Value::Object(m) => {
                     let (_, v) = m.into_iter().next().ok_or(Error::JsHandle)?;
@@ -448,7 +451,9 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" {
+        if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061"
+            || self.name == "fff9ae7f-9070-480f-9a8a-3d4b66923f7d"
+        {
             let handles = &mut self.prime.handles.borrow_mut();
             let guid = self.guid.take().ok_or(Error::JsHandle)?;
             handles.push(OnlyGuid { guid });

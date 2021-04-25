@@ -12,28 +12,31 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         // XXX: go_back response is null on firefox
         navigations(&page, port).await;
     }
-    set_extra_http_headers(&page, port).await;
     front_should_work(c, &page).await;
-    focus_should_work(&page).await;
-    reload_should_worker(&page).await;
-    screenshot_should_work(&page).await;
-    title_should_work(&page).await;
-    check_should_work(&page).await;
-    pointer(&page).await;
+    tokio::join!(
+        set_extra_http_headers(c, port),
+        focus_should_work(c),
+        reload_should_worker(c),
+        screenshot_should_work(&page),
+        title_should_work(&page),
+        check_should_work(c),
+        pointer(c),
+        viewport(c),
+        download(c, port),
+        workers_should_work(c, port, which),
+        accessibility(c)
+    );
+    // query_selector_and_eval(&page).await;
     if which != Which::Firefox {
         pdf_should_work(&page).await;
     }
-    viewport(&page).await;
-    download(&page, port).await;
     video(&page).await;
     // emulate(&page).await;
-    workers_should_work(&page, port, which).await;
-    accessibility(&page).await;
     text(&page).await;
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
-    let p2 = c.new_page().await.unwrap();
+    let p2 = new(c).await;
     assert_ne!(p1, &p2);
     assert_eq!(&p1.context(), c);
     assert_eq!(&p2.context(), c);
@@ -66,7 +69,7 @@ async fn ensure_close(page: &Page) {
 }
 
 async fn front_should_work(c: &BrowserContext, p1: &Page) {
-    let p2 = c.new_page().await.unwrap();
+    let p2 = new(c).await;
     p1.bring_to_front().await.unwrap();
     assert_eq!(
         p1.eval::<String>("document.visibilityState").await.unwrap(),
@@ -76,10 +79,11 @@ async fn front_should_work(c: &BrowserContext, p1: &Page) {
         p2.eval::<String>("document.visibilityState").await.unwrap(),
         "visible"
     );
-    p2.close(None).await.unwrap();
+    close(&p2).await;
 }
 
-async fn focus_should_work(page: &Page) {
+async fn focus_should_work(c: &BrowserContext) {
+    let page = new(c).await;
     page.set_content_builder("<div id=d1 tabIndex=0></div>")
         .set_content()
         .await
@@ -97,15 +101,18 @@ async fn focus_should_work(page: &Page) {
             .unwrap(),
         "d1"
     );
+    close(&page).await;
 }
 
-async fn reload_should_worker(page: &Page) {
+async fn reload_should_worker(c: &BrowserContext) {
+    let page = new(c).await;
     page.evaluate::<i32, i32>("x => window._foo = x", 10)
         .await
         .unwrap();
     page.reload_builder().reload().await.unwrap();
     let x: Option<i32> = page.eval("() => window._foo").await.unwrap();
     assert_eq!(x, None);
+    close(&page).await;
 }
 
 async fn navigations(page: &Page, port: u16) {
@@ -138,7 +145,8 @@ async fn set_timeout(page: &Page) {
     page.set_default_timeout(10000).await.unwrap();
 }
 
-async fn workers_should_work(page: &Page, port: u16, which: Which) {
+async fn workers_should_work(c: &BrowserContext, port: u16, which: Which) {
+    let page = new(c).await;
     let url = super::url_static(port, "/worker.html");
     let js = super::url_static(port, "/worker.js");
     let empty = super::url_static(port, "/empty.html");
@@ -165,6 +173,7 @@ async fn workers_should_work(page: &Page, port: u16, which: Which) {
     );
     page.goto_builder(&empty).goto().await.unwrap();
     assert_eq!(workers().len(), 0);
+    close(&page).await;
 }
 
 async fn ensure_timeout(page: &Page) {
@@ -226,7 +235,8 @@ async fn get_permission(p: &Page, name: &str) -> String {
     .unwrap()
 }
 
-async fn viewport(p: &Page) {
+async fn viewport(c: &BrowserContext) {
+    let p = new(c).await;
     let v = Viewport {
         width: 500,
         height: 500
@@ -234,9 +244,11 @@ async fn viewport(p: &Page) {
     dbg!(p.viewport_size().unwrap());
     p.set_viewport_size(v.clone()).await.unwrap();
     assert_eq!(p.viewport_size().unwrap(), Some(v));
+    close(&p).await;
 }
 
-async fn download(p: &Page, port: u16) {
+async fn download(c: &BrowserContext, port: u16) {
+    let p = new(c).await;
     p.set_content_builder(&format!(
         r#"<a href="{}">download</a>"#,
         super::url_download(port, "/worker.html")
@@ -262,6 +274,7 @@ async fn download(p: &Page, port: u16) {
     let tmp = super::temp_dir().join(download.suggested_filename());
     download.save_as(tmp).await.unwrap();
     download.delete().await.unwrap();
+    close(&p).await;
 }
 
 async fn video(p: &Page) {
@@ -274,7 +287,8 @@ async fn video(p: &Page) {
     // video.delete().await.unwrap();
 }
 
-async fn accessibility(p: &Page) {
+async fn accessibility(c: &BrowserContext) {
+    let p = new(c).await;
     use playwright::api::accessibility::SnapshotResponse;
     let ac = &p.accessibility;
     p.set_content_builder(
@@ -334,6 +348,7 @@ async fn accessibility(p: &Page) {
         .await
         .unwrap();
     assert_ne!(snapshot, input_response);
+    close(&p).await;
 }
 
 async fn screenshot_should_work(p: &Page) {
@@ -381,7 +396,8 @@ async fn emulate(p: &Page) {
     assert_eq!(print().await, false);
 }
 
-async fn check_should_work(p: &Page) {
+async fn check_should_work(c: &BrowserContext) {
+    let p = new(c).await;
     p.set_content_builder(r#"<input type="checkbox" />"#)
         .set_content()
         .await
@@ -392,6 +408,7 @@ async fn check_should_work(p: &Page) {
     p.uncheck_builder("input").uncheck().await.unwrap();
     let checked = p.is_checked("input", None).await.unwrap();
     assert_eq!(checked, false);
+    close(&p).await;
 }
 
 async fn title_should_work(p: &Page) {
@@ -401,7 +418,8 @@ async fn title_should_work(p: &Page) {
     assert_eq!(p.title().await.unwrap(), "foo");
 }
 
-async fn pointer(p: &Page) {
+async fn pointer(c: &BrowserContext) {
+    let p = new(c).await;
     p.set_content_builder(r#"<input type="checkbox" />"#)
         .set_content()
         .await
@@ -417,13 +435,19 @@ async fn pointer(p: &Page) {
     assert_eq!(checked().await, true);
     p.click_builder("input").click().await.unwrap();
     assert_eq!(checked().await, false);
+    close(&p).await;
 }
+
+async fn new(c: &BrowserContext) -> Page { c.new_page().await.unwrap() }
+
+async fn close(p: &Page) { p.close(None).await.unwrap() }
 
 async fn text(p: &Page) {
     // TODO
 }
 
-async fn set_extra_http_headers(p: &Page, port: u16) {
+async fn set_extra_http_headers(c: &BrowserContext, port: u16) {
+    let p = new(c).await;
     p.set_extra_http_headers(vec![("hoge".into(), "hoge".into())])
         .await
         .unwrap();
@@ -439,4 +463,18 @@ async fn set_extra_http_headers(p: &Page, port: u16) {
     let headers = req.headers().unwrap();
     assert_eq!(headers.get("foo").unwrap(), "bar"); // set by BrowserContext
     assert_eq!(headers.get("hoge").unwrap(), "hoge");
+    close(&p).await;
+}
+
+async fn query_selector_and_eval(p: &Page) {
+    p.set_content_builder("").set_content().await.unwrap();
+    let (wait, _) = tokio::join!(
+        p.wait_for_selector_builder("div").wait_for_selector(),
+        p.set_content_builder("<article><h1>foo</h1><div><div></div></div></article>")
+            .set_content()
+    );
+    let found = wait.unwrap().unwrap();
+    let divs = p.query_selector_all("div").await.unwrap();
+    assert_eq!(divs.len(), 2);
+    assert_eq!(&found, &divs[0]);
 }

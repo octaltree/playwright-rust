@@ -9,9 +9,11 @@ pub async fn all(playwright: &Playwright, which: Which) -> BrowserType {
     };
     name_should_work(&t, which);
     executable_should_exist(&t);
-    should_handle_timeout(&t).await;
-    should_fire_close(&t).await;
-    should_be_callable_twice(&t).await;
+    tokio::join!(
+        should_handle_timeout(&t),
+        should_fire_close(&t),
+        should_be_callable_twice(&t)
+    );
     t
 }
 

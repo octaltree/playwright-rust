@@ -36,6 +36,7 @@ use crate::{
 ///
 /// ElementHandle instances can be used as an argument in [`method: Page.evalOnSelector`] and [`method: Page.evaluate`]
 /// methods.
+#[derive(Debug)]
 pub struct ElementHandle {
     inner: Weak<Impl>
 }
@@ -792,5 +793,22 @@ impl SetInputFilesBuilder {
     pub fn clear_files(mut self) -> Self {
         self.args.files = vec![];
         self
+    }
+}
+
+mod ser {
+    use super::*;
+    use serde::{ser, ser::SerializeStruct};
+
+    impl Serialize for ElementHandle {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer
+        {
+            let mut s = serializer.serialize_struct("fff9ae7f-9070-480f-9a8a-3d4b66923f7d", 1)?;
+            let guid = &self.guid().map_err(<S::Error as ser::Error>::custom)?;
+            s.serialize_field("guid", &guid)?;
+            s.end()
+        }
     }
 }

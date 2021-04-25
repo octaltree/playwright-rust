@@ -222,7 +222,7 @@ impl Frame {
         &self,
         args: WaitForSelectorArgs<'_>
     ) -> ArcResult<Option<Weak<ElementHandle>>> {
-        let v = send_message!(self, "WaitForSelector", args);
+        let v = send_message!(self, "waitForSelector", args);
         let guid = match as_only_guid(&v) {
             Some(g) => g,
             None => return Ok(None)
