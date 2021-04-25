@@ -509,8 +509,15 @@ async fn query_selector_and_eval(c: &BrowserContext) {
         )
     );
     let found = wait.unwrap().unwrap();
+    let handle = done!(
+        p.evaluate_element_handle::<()>("() => document.querySelector('div.foo > div')", None)
+    );
     let divs = p.query_selector_all("div").await.unwrap();
     assert_eq!(divs.len(), 3);
+    assert_eq!(
+        handle.inner_html().await.unwrap(),
+        found.inner_html().await.unwrap()
+    );
     assert_eq!(
         divs[2].inner_html().await.unwrap(),
         found.inner_html().await.unwrap()

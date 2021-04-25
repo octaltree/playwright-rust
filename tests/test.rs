@@ -22,12 +22,6 @@ pub enum Which {
     Chromium
 }
 
-macro_rules! done {
-    ($e:expr) => {
-        $e.await.unwrap()
-    };
-}
-
 playwright::runtime_test!(chromium_page, page(Which::Chromium).await);
 playwright::runtime_test!(firefox_page, page(Which::Firefox).await);
 // playwright::runtime_test!(webkit_page, page(Which::Webkit).await);

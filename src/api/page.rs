@@ -499,15 +499,28 @@ impl Page {
             .await
     }
 
-    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
-        self.main_frame().eval_handle(expression).await
-    }
-
-    pub async fn evaluate_handle<T>(&self, expression: &str, arg: T) -> ArcResult<JsHandle>
+    pub async fn evaluate_js_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
-        self.main_frame().evaluate_handle(expression, arg).await
+        self.main_frame().evaluate_js_handle(expression, arg).await
+    }
+
+    pub async fn evaluate_element_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<ElementHandle>
+    where
+        T: Serialize
+    {
+        self.main_frame()
+            .evaluate_element_handle(expression, arg)
+            .await
     }
 
     pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>

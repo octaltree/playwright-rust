@@ -48,6 +48,21 @@ macro_rules! is_checked {
     };
 }
 
+macro_rules! eval_handle {
+    ($name:ident, $variant:ident, $t:ty) => {
+        pub(crate) async fn $name<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<Weak<$t>>
+        where
+            T: Serialize
+        {
+            let handle = match self.evaluate_handle(expression, arg).await? {
+                Handle::$variant(handle) => handle,
+                _ => return Err(Error::ObjectNotFound.into())
+            };
+            Ok(handle)
+        }
+    };
+}
+
 impl Frame {
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         let Initializer {
@@ -331,15 +346,7 @@ impl Frame {
         Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
     }
 
-    pub(crate) async fn eval_handle(&self, expression: &str) -> ArcResult<Weak<JsHandle>> {
-        self.evaluate_handle::<()>(expression, None).await
-    }
-
-    pub(crate) async fn evaluate_handle<T>(
-        &self,
-        expression: &str,
-        arg: Option<T>
-    ) -> ArcResult<Weak<JsHandle>>
+    async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<Handle>
     where
         T: Serialize
     {
@@ -353,9 +360,18 @@ impl Frame {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpressionHandle", args);
         let guid = only_guid(&v)?;
-        let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
+            .ok()
+            .map(Handle::Element);
+        let j = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)
+            .ok()
+            .map(Handle::Js);
+        let h = e.or(j).ok_or(Error::ObjectNotFound)?;
         Ok(h)
     }
+
+    eval_handle! {evaluate_element_handle, Element, ElementHandle}
+    eval_handle! {evaluate_js_handle, Js, JsHandle}
 
     pub(crate) async fn evaluate_on_selector<T, U>(
         &self,
@@ -573,6 +589,11 @@ impl Event for Evt {
             Evt::Navigated(_) => EventType::Navigated
         }
     }
+}
+
+enum Handle {
+    Js(Weak<JsHandle>),
+    Element(Weak<ElementHandle>)
 }
 
 #[skip_serializing_none]
@@ -963,7 +984,14 @@ mod tests {
         let page: Arc<Page> = page.upgrade().unwrap();
         let frame: Weak<Frame> = page.main_frame();
         let frame: Arc<Frame> = frame.upgrade().unwrap();
-        let _handle: Weak<JsHandle> = frame.eval_handle("() => location.href").await.unwrap();
+        let _handle: Weak<JsHandle> = frame
+            .evaluate_js_handle::<()>("() => location.href", None)
+            .await
+            .unwrap();
+        let _handle: Weak<ElementHandle> = frame
+            .evaluate_element_handle::<()>("() => document.body", None)
+            .await
+            .unwrap();
     });
 
     #[test]
