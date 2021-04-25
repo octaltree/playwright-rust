@@ -32,7 +32,7 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         pdf_should_work(&page).await;
     }
     video(&page).await;
-    // emulate(&page).await;
+    emulate_media(&page).await;
 }
 
 macro_rules! done {
@@ -377,7 +377,7 @@ async fn pdf_should_work(p: &Page) {
     assert!(path.is_file());
 }
 
-async fn emulate(p: &Page) {
+async fn emulate_media(p: &Page) {
     use playwright::api::page::Media;
     let screen = || async {
         p.eval::<bool>("() => matchMedia('screen').matches")
@@ -399,8 +399,16 @@ async fn emulate(p: &Page) {
     assert_eq!(screen().await, false);
     assert_eq!(print().await, true);
     p.emulate_media_builder().emulate_media().await.unwrap();
-    assert_eq!(screen().await, true);
-    assert_eq!(print().await, false);
+    assert_eq!(screen().await, false);
+    assert_eq!(print().await, true);
+    // XXX: The driver doesn't accept null
+    // p.emulate_media_builder()
+    //    .media(None)
+    //    .emulate_media()
+    //    .await
+    //    .unwrap();
+    // assert_eq!(screen().await, true);
+    // assert_eq!(print().await, false);
 }
 
 async fn check_should_work(c: &BrowserContext) {
