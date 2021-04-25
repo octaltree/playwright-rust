@@ -1,6 +1,6 @@
 [package]
 name = "playwright"
-version = "0.0.15"
+version = "0.0.16"
 authors = ["octaltree <octaltree@gmail.com>"]
 description = "Playwright port to Rust"
 license = "MIT OR Apache-2.0"
