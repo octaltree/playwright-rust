@@ -2,7 +2,6 @@ use crate::imp::{
     core::{Guid, OnlyGuid},
     prelude::*
 };
-use itertools::Itertools;
 use serde::ser;
 use std::{cell::RefCell, mem, rc::Rc};
 
@@ -154,7 +153,11 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         Err(Error::NotSupported)
     }
 
-    fn serialize_none(self) -> Result<Self::Ok, Self::Error> { self.serialize_unit() }
+    fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
+        let mut m = Map::new();
+        m.insert("v".into(), "null".into());
+        Ok(m.into())
+    }
     fn serialize_some<T>(self, v: &T) -> Result<Self::Ok, Self::Error>
     where
         T: ?Sized + Serialize
@@ -577,7 +580,6 @@ impl<'a> ser::SerializeStructVariant for &'a mut StructVariant {
 mod tests {
     use super::*;
 
-    // TODO: kv
     #[test]
     fn r#struct() {
         #[derive(Serialize)]
@@ -596,6 +598,20 @@ mod tests {
         let v: Value = serde_json::from_str(expected).unwrap();
         dbg!(&v);
         assert_eq!(to_value(&test).unwrap(), v);
+    }
+
+    #[test]
+    fn option() {
+        let expected = r#"{
+            "value":{"n":3},
+            "handles": []}"#;
+        let v: Value = serde_json::from_str(expected).unwrap();
+        assert_eq!(to_value(&Some(3)).unwrap(), v);
+        let expected = r#"{
+            "value":{"v":"null"},
+            "handles": []}"#;
+        let v: Value = serde_json::from_str(expected).unwrap();
+        assert_eq!(to_value(&Option::<i32>::None).unwrap(), v);
     }
 
     #[test]
