@@ -148,7 +148,7 @@ impl Frame {
         timeout: Option<f64>
     ) -> ArcResult<String> {
         let args = SelectorTimeout { selector, timeout };
-        let v = send_message!(self, "innerHtml", args);
+        let v = send_message!(self, "innerHTML", args);
         let s = only_str(&v)?;
         Ok(s.into())
     }
@@ -357,7 +357,7 @@ impl Frame {
         Ok(h)
     }
 
-    pub(crate) async fn eval_on_selector<T, U>(
+    pub(crate) async fn evaluate_on_selector<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -385,7 +385,7 @@ impl Frame {
         Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
     }
 
-    pub(crate) async fn eval_on_selector_all<T, U>(
+    pub(crate) async fn evaluate_on_selector_all<T, U>(
         &self,
         selector: &str,
         expression: &str,

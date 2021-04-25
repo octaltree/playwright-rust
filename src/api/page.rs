@@ -525,7 +525,7 @@ impl Page {
         self.main_frame().evaluate(expression, arg).await
     }
 
-    pub async fn eval_on_selector<T, U>(
+    pub async fn evaluate_on_selector<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -536,11 +536,11 @@ impl Page {
         U: DeserializeOwned
     {
         self.main_frame()
-            .eval_on_selector(selector, expression, arg)
+            .evaluate_on_selector(selector, expression, arg)
             .await
     }
 
-    pub async fn eval_on_selector_all<T, U>(
+    pub async fn evaluate_on_selector_all<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -551,7 +551,7 @@ impl Page {
         U: DeserializeOwned
     {
         self.main_frame()
-            .eval_on_selector_all(selector, expression, arg)
+            .evaluate_on_selector_all(selector, expression, arg)
             .await
     }
 

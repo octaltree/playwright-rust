@@ -487,7 +487,7 @@ impl Frame {
     /// const preloadHref = await frame.$eval('link[rel=preload]', el => el.href);
     /// const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
     /// ```
-    pub async fn eval_on_selector<T, U>(
+    pub async fn evaluate_on_selector<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -498,7 +498,7 @@ impl Frame {
         U: DeserializeOwned
     {
         upgrade(&self.inner)?
-            .eval_on_selector(selector, expression, arg)
+            .evaluate_on_selector(selector, expression, arg)
             .await
     }
 
@@ -515,7 +515,7 @@ impl Frame {
     /// ```js
     /// const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
     /// ```
-    pub async fn eval_on_selector_all<T, U>(
+    pub async fn evaluate_on_selector_all<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -526,7 +526,7 @@ impl Frame {
         U: DeserializeOwned
     {
         upgrade(&self.inner)?
-            .eval_on_selector_all(selector, expression, arg)
+            .evaluate_on_selector_all(selector, expression, arg)
             .await
     }
 

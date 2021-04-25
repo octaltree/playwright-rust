@@ -24,15 +24,21 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         viewport(c),
         download(c, port),
         workers_should_work(c, port, which),
-        accessibility(c)
+        accessibility(c),
+        query_selector_and_eval(c),
+        input(c)
     );
-    // query_selector_and_eval(&page).await;
     if which != Which::Firefox {
         pdf_should_work(&page).await;
     }
     video(&page).await;
     // emulate(&page).await;
-    text(&page).await;
+}
+
+macro_rules! done {
+    ($e:expr) => {
+        $e.await.unwrap()
+    };
 }
 
 async fn eq_context_close(c: &BrowserContext, p1: &Page) {
@@ -70,13 +76,13 @@ async fn ensure_close(page: &Page) {
 
 async fn front_should_work(c: &BrowserContext, p1: &Page) {
     let p2 = new(c).await;
-    p1.bring_to_front().await.unwrap();
+    done!(p1.bring_to_front());
     assert_eq!(
-        p1.eval::<String>("document.visibilityState").await.unwrap(),
+        done!(p1.eval::<String>("document.visibilityState")),
         "visible"
     );
     assert_eq!(
-        p2.eval::<String>("document.visibilityState").await.unwrap(),
+        done!(p2.eval::<String>("document.visibilityState")),
         "visible"
     );
     close(&p2).await;
@@ -294,12 +300,13 @@ async fn accessibility(c: &BrowserContext) {
     p.set_content_builder(
         r#"<div>\
             <span>Hello World</span>\
-            <input placeholder="Empty input" autofocus />\
+            <input placeholder="Empty input" />\
         </div>"#
     )
     .set_content()
     .await
     .unwrap();
+    p.focus("input", None).await.unwrap();
     let span = p.query_selector("span").await.unwrap().unwrap();
     let input = p.query_selector("input").await.unwrap().unwrap();
     let snapshot = ac
@@ -438,12 +445,30 @@ async fn pointer(c: &BrowserContext) {
     close(&p).await;
 }
 
-async fn new(c: &BrowserContext) -> Page { c.new_page().await.unwrap() }
+async fn new(c: &BrowserContext) -> Page {
+    let page = c.new_page().await.unwrap();
+    set_timeout(&page).await;
+    page
+}
 
 async fn close(p: &Page) { p.close(None).await.unwrap() }
 
-async fn text(p: &Page) {
+async fn input(c: &BrowserContext) {
+    let p = new(c).await;
+    done!(p
+        .set_content_builder(r#"<input type="text" value="" />"#)
+        .set_content());
+    assert_eq!(
+        done!(p.get_attribute("input", "type", None)).as_deref(),
+        Some("text")
+    );
+    done!(p.fill_builder("input", "foo").fill());
+    // assert_eq!(
+    //    done!(p.get_attribute("input", "value", None)).as_deref(),
+    //    Some("foo")
+    //);
     // TODO
+    close(&p).await;
 }
 
 async fn set_extra_http_headers(c: &BrowserContext, port: u16) {
@@ -466,15 +491,52 @@ async fn set_extra_http_headers(c: &BrowserContext, port: u16) {
     close(&p).await;
 }
 
-async fn query_selector_and_eval(p: &Page) {
-    p.set_content_builder("").set_content().await.unwrap();
+async fn query_selector_and_eval(c: &BrowserContext) {
+    let p = new(c).await;
+    p.set_content_builder(r#"<div><h1>foo</h1><div class="foo">bar</div></div>"#)
+        .set_content()
+        .await
+        .unwrap();
     let (wait, _) = tokio::join!(
-        p.wait_for_selector_builder("div").wait_for_selector(),
-        p.set_content_builder("<article><h1>foo</h1><div><div></div></div></article>")
-            .set_content()
+        p.wait_for_selector_builder("div.foo > div")
+            .wait_for_selector(),
+        p.eval::<()>(
+            "() => {
+                const div = document.createElement('div');
+                div.innerText = 'not blank';
+                document.querySelector('div.foo').appendChild(div);
+            }"
+        )
     );
     let found = wait.unwrap().unwrap();
     let divs = p.query_selector_all("div").await.unwrap();
-    assert_eq!(divs.len(), 2);
-    assert_eq!(&found, &divs[0]);
+    assert_eq!(divs.len(), 3);
+    assert_eq!(
+        divs[2].inner_html().await.unwrap(),
+        found.inner_html().await.unwrap()
+    );
+    assert_eq!(
+        p.evaluate_on_selector::<(), String>("div.foo > div", "e => e.innerHTML", None)
+            .await
+            .unwrap(),
+        found.inner_html().await.unwrap()
+    );
+    assert_eq!(
+        p.evaluate_on_selector_all::<(), String>("div", "es => es[2].innerHTML", None)
+            .await
+            .unwrap(),
+        found.inner_html().await.unwrap()
+    );
+    assert_eq!(
+        p.inner_html("div.foo > div", None).await.unwrap(),
+        found.inner_html().await.unwrap()
+    );
+    assert_eq!(
+        p.text_content("div.foo > div", None)
+            .await
+            .unwrap()
+            .unwrap(),
+        found.inner_html().await.unwrap()
+    );
+    close(&p).await;
 }

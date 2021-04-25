@@ -70,7 +70,7 @@ impl ElementHandle {
     }
 
     pub(crate) async fn inner_html(&self) -> ArcResult<String> {
-        let v = send_message!(self, "innerHtml", Map::new());
+        let v = send_message!(self, "innerHTML", Map::new());
         let s = only_str(&v)?;
         Ok(s.to_owned())
     }
