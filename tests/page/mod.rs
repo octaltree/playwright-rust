@@ -2,6 +2,16 @@ use super::Which;
 use futures::stream::StreamExt;
 use playwright::api::{page, BrowserContext, Geolocation, Page, Viewport};
 
+macro_rules! concurrent {
+    ($which:expr, $($e:expr),*) => {
+        if $which != Which::Firefox {
+            tokio::join!($($e),*);
+        } else {
+            $($e.await;)*
+        }
+    }
+}
+
 pub async fn all(c: &BrowserContext, port: u16, which: Which) {
     let page = c.new_page().await.unwrap();
     eq_context_close(c, &page).await;
@@ -13,7 +23,8 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         navigations(&page, port).await;
     }
     front_should_work(c, &page).await;
-    tokio::join!(
+    concurrent!(
+        which,
         set_extra_http_headers(c, port),
         focus_should_work(c),
         reload_should_worker(c),
