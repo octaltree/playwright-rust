@@ -392,7 +392,7 @@ async fn emulate_media(p: &Page) {
     assert_eq!(screen().await, true);
     assert_eq!(print().await, false);
     p.emulate_media_builder()
-        .media(Some(Media::Print))
+        .media(Media::Print)
         .emulate_media()
         .await
         .unwrap();
@@ -401,14 +401,13 @@ async fn emulate_media(p: &Page) {
     p.emulate_media_builder().emulate_media().await.unwrap();
     assert_eq!(screen().await, false);
     assert_eq!(print().await, true);
-    // XXX: The driver doesn't accept null
-    // p.emulate_media_builder()
-    //    .media(None)
-    //    .emulate_media()
-    //    .await
-    //    .unwrap();
-    // assert_eq!(screen().await, true);
-    // assert_eq!(print().await, false);
+    p.emulate_media_builder()
+        .media(Media::Null)
+        .emulate_media()
+        .await
+        .unwrap();
+    assert_eq!(screen().await, true);
+    assert_eq!(print().await, false);
 }
 
 async fn check_should_work(c: &BrowserContext) {

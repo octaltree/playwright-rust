@@ -855,11 +855,11 @@ impl EmulateMediaBuilder {
     }
 
     setter! {
-        /// Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-        /// `null` disables color scheme emulation.
-        color_scheme: Option<Option<ColorScheme>>,
+        /// Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+        // NOTE: Not implemented passing `null` disables color scheme emulation
+        color_scheme: Option<ColorScheme>,
         /// Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null`
         /// disables CSS media emulation.
-        media: Option<Option<Media>>
+        media: Option<Media>
     }
 }

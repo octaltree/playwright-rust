@@ -791,13 +791,15 @@ pub(crate) struct ScreenshotArgs {
 #[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct EmulateMediaArgs {
-    pub(crate) media: Option<Option<Media>>,
-    pub(crate) color_scheme: Option<Option<ColorScheme>>
+    pub(crate) media: Option<Media>,
+    pub(crate) color_scheme: Option<ColorScheme>
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Media {
+    /// Reset emulating
+    Null,
     Print,
     Screen
 }
