@@ -1,5 +1,5 @@
 use super::Which;
-use playwright::api::{Browser, BrowserContext, BrowserType};
+use playwright::api::{browser::RecordVideo, Browser, BrowserContext, BrowserType};
 
 pub async fn all(browser: &Browser, persistent: &BrowserContext, _which: Which) -> BrowserContext {
     let c = launch(browser).await;
@@ -23,13 +23,23 @@ pub async fn persistent(t: &BrowserType, _port: u16, which: Which) -> BrowserCon
 }
 
 async fn launch(b: &Browser) -> BrowserContext {
-    b.context_builder()
+    let c = b
+        .context_builder()
         .user_agent("asdf")
         .permissions(&["geolocation".into()])
         .accept_downloads(true)
+        .has_touch(true)
+        .record_video(RecordVideo {
+            dir: &super::temp_dir().join("video"),
+            size: None
+        })
         .build()
         .await
-        .unwrap()
+        .unwrap();
+    c.set_extra_http_headers(vec![("foo".into(), "bar".into())])
+        .await
+        .unwrap();
+    c
 }
 
 async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {

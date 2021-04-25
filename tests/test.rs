@@ -13,6 +13,7 @@ use tokio::task::spawn;
 use tokio::task::spawn;
 
 use playwright::Playwright;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Which {
@@ -31,8 +32,10 @@ playwright::runtime_test!(firefox_selectors, selectors(Which::Firefox).await);
 
 playwright::runtime_test!(chromium_devices, devices(Which::Chromium).await);
 playwright::runtime_test!(firefox_devices, devices(Which::Chromium).await);
+// playwright::runtime_test!(webkit_devices, devices(Which::Webkit).await);
 
 async fn page(which: Which) {
+    std::fs::create_dir_all(temp_dir()).unwrap();
     let port = free_local_port().unwrap();
     start_test_server(port).await;
     let playwright = playwright_with_driver().await;
@@ -42,6 +45,7 @@ async fn page(which: Which) {
     let persistent = browser_context::persistent(&browser_type, port, which).await;
     let browser_context = browser_context::all(&browser, &persistent, which).await;
     page::all(&browser_context, port, which).await;
+    std::fs::remove_dir_all(temp_dir()).unwrap();
 }
 
 async fn selectors(which: Which) {
@@ -134,6 +138,8 @@ fn url_static(port: u16, path: &str) -> String {
 fn url_download(port: u16, path: &str) -> String {
     format!("http://localhost:{}/download{}", port, path)
 }
+
+fn temp_dir() -> PathBuf { std::env::temp_dir().join("test-playwright-rust") }
 
 //    let h = page.eval_handle("() => location.href").await.unwrap();
 //    let s: String = page

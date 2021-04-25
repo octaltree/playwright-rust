@@ -2,7 +2,6 @@ use crate::imp::{
     core::{Guid, OnlyGuid},
     prelude::*
 };
-use itertools::Itertools;
 use serde::ser;
 use std::{cell::RefCell, mem, rc::Rc};
 
@@ -44,6 +43,7 @@ pub(crate) struct Serializer {
     s: Vec<StructVariant>
 }
 
+// XXX: None
 pub(crate) fn to_value<T>(x: &T) -> Result<Value, Error>
 where
     T: Serialize
@@ -61,6 +61,22 @@ where
 
 impl Serializer {
     fn handles(self) -> Vec<OnlyGuid> { self.handles.take() }
+}
+
+fn convert_kv<M: IntoIterator<Item = (String, Value)>>(map: M) -> Map<String, Value> {
+    let entries = Value::Array(
+        map.into_iter()
+            .map(|(k, v)| {
+                let mut entry = Map::new();
+                entry.insert("k".into(), k.into());
+                entry.insert("v".into(), v);
+                Value::from(entry)
+            })
+            .collect()
+    );
+    let mut res = Map::new();
+    res.insert("o".into(), entries);
+    res
 }
 
 impl<'a> ser::Serializer for &'a mut Serializer {
@@ -137,7 +153,11 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         Err(Error::NotSupported)
     }
 
-    fn serialize_none(self) -> Result<Self::Ok, Self::Error> { self.serialize_unit() }
+    fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
+        let mut m = Map::new();
+        m.insert("v".into(), "null".into());
+        Ok(m.into())
+    }
     fn serialize_some<T>(self, v: &T) -> Result<Self::Ok, Self::Error>
     where
         T: ?Sized + Serialize
@@ -183,11 +203,8 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     where
         T: ?Sized + Serialize
     {
-        let mut inner = Map::new();
-        inner.insert(variant.into(), value.serialize(self)?);
-        let mut m = Map::new();
-        m.insert("o".into(), inner.into());
-        Ok(m.into())
+        let map = convert_kv(Some((variant.into(), value.serialize(self)?)));
+        Ok(map.into())
     }
 
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
@@ -352,7 +369,6 @@ impl<'a> ser::SerializeTupleVariant for &'a mut TupleVariant {
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        let mut inner = Map::new();
         let a = {
             let mut a = Map::new();
             let mut vs = Vec::new();
@@ -360,9 +376,7 @@ impl<'a> ser::SerializeTupleVariant for &'a mut TupleVariant {
             a.insert("a".into(), vs.into());
             a
         };
-        inner.insert(self.variant.into(), a.into());
-        let mut o = Map::new();
-        o.insert("o".into(), inner.into());
+        let o = convert_kv(Some((self.variant.into(), a.into())));
         Ok(o.into())
     }
 }
@@ -378,8 +392,10 @@ pub(crate) struct ObjectS {
 
 #[derive(Clone)]
 pub(crate) struct ObjectM {
+    keys: Vec<String>,
     values: Vec<Value>,
-    prime: Serializer
+    prime: Serializer,
+    turn: bool
 }
 
 impl ObjectS {
@@ -398,7 +414,9 @@ impl ObjectM {
     fn new(prime: Serializer) -> Self {
         Self {
             prime,
-            values: Vec::new()
+            keys: Vec::new(),
+            values: Vec::new(),
+            turn: false
         }
     }
 }
@@ -412,7 +430,10 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
         T: ?Sized + Serialize
     {
         let v = value.serialize(&mut self.prime)?;
-        if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" && key == "guid" {
+        if (self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061"
+            || self.name == "fff9ae7f-9070-480f-9a8a-3d4b66923f7d")
+            && key == "guid"
+        {
             let g = match v {
                 Value::Object(m) => {
                     let (_, v) = m.into_iter().next().ok_or(Error::JsHandle)?;
@@ -446,7 +467,9 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061" {
+        if self.name == "4a9c3811-6f00-49e5-8a81-939f932d9061"
+            || self.name == "fff9ae7f-9070-480f-9a8a-3d4b66923f7d"
+        {
             let handles = &mut self.prime.handles.borrow_mut();
             let guid = self.guid.take().ok_or(Error::JsHandle)?;
             handles.push(OnlyGuid { guid });
@@ -460,10 +483,9 @@ impl<'a> ser::SerializeStruct for &'a mut ObjectS {
             m.insert("d".into(), d.into());
             Ok(m.into())
         } else {
-            let mut o = Map::new();
             let mut m = Map::new();
             mem::swap(&mut self.map, &mut m);
-            o.insert("o".into(), m.into());
+            let o = convert_kv(m);
             Ok(o.into())
         }
     }
@@ -477,7 +499,16 @@ impl<'a> ser::SerializeMap for &'a mut ObjectM {
     where
         T: ?Sized + Serialize
     {
-        self.values.push(key.serialize(&mut self.prime)?);
+        if self.turn {
+            return Err(Error::OddMap);
+        }
+        let serialized = key.serialize(&mut self.prime)?;
+        let key = match serialized {
+            Value::String(s) => s,
+            _ => return Err(Error::InvalidKey)
+        };
+        self.keys.push(key);
+        self.turn = true;
         Ok(())
     }
 
@@ -485,33 +516,25 @@ impl<'a> ser::SerializeMap for &'a mut ObjectM {
     where
         T: ?Sized + Serialize
     {
+        if !self.turn {
+            return Err(Error::OddMap);
+        }
         self.values.push(value.serialize(&mut self.prime)?);
+        self.turn = false;
         Ok(())
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        let mut vs = Vec::new();
-        mem::swap(&mut self.values, &mut vs);
-        if vs.len() % 2 == 1 {
+        if self.turn {
             return Err(Error::OddMap);
         }
-        let mut inner = Map::new();
-        vs.into_iter()
-            .chunks(2)
-            .into_iter()
-            .try_for_each(|mut kv| -> Result<(), Self::Error> {
-                let k = kv.next().unwrap();
-                let v = kv.next().unwrap();
-                let key = match k {
-                    Value::String(s) => s,
-                    _ => return Err(Error::InvalidKey)
-                };
-                inner.insert(key, v);
-                Ok(())
-            })?;
-        let mut m = Map::new();
-        m.insert("o".into(), inner.into());
-        Ok(m.into())
+        let mut ks = Vec::new();
+        let mut vs = Vec::new();
+        mem::swap(&mut self.keys, &mut ks);
+        mem::swap(&mut self.values, &mut vs);
+        let entries = ks.into_iter().zip(vs.into_iter());
+        let o = convert_kv(entries);
+        Ok(o.into())
     }
 }
 
@@ -545,18 +568,11 @@ impl<'a> ser::SerializeStructVariant for &'a mut StructVariant {
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        let mut inner = Map::new();
-        let m = {
-            let mut m = Map::new();
-            let mut v = Map::new();
-            mem::swap(&mut self.m, &mut v);
-            m.insert("o".into(), v.into());
-            m
-        };
-        inner.insert(self.variant.into(), m.into());
-        let mut o = Map::new();
-        o.insert("o".into(), inner.into());
-        Ok(o.into())
+        let mut m = Map::new();
+        mem::swap(&mut self.m, &mut m);
+        let inner = convert_kv(m);
+        let external = convert_kv(Some((self.variant.into(), inner.into())));
+        Ok(external.into())
     }
 }
 
@@ -577,10 +593,25 @@ mod tests {
             seq: vec!["a", "b"]
         };
         let expected = r#"{
-                "value":{"o":{"int":{"n":1},"seq":{"a": [{"s":"a"},{"s":"b"}]}}},
+                "value":{"o":[{"k":"int","v":{"n":1}},{"k":"seq","v":{"a": [{"s":"a"},{"s":"b"}]}}]},
                 "handles":[]}"#;
         let v: Value = serde_json::from_str(expected).unwrap();
+        dbg!(&v);
         assert_eq!(to_value(&test).unwrap(), v);
+    }
+
+    #[test]
+    fn option() {
+        let expected = r#"{
+            "value":{"n":3},
+            "handles": []}"#;
+        let v: Value = serde_json::from_str(expected).unwrap();
+        assert_eq!(to_value(&Some(3)).unwrap(), v);
+        let expected = r#"{
+            "value":{"v":"null"},
+            "handles": []}"#;
+        let v: Value = serde_json::from_str(expected).unwrap();
+        assert_eq!(to_value(&Option::<i32>::None).unwrap(), v);
     }
 
     #[test]
@@ -599,17 +630,19 @@ mod tests {
         assert_eq!(to_value(&u).unwrap(), v);
 
         let u = E::Newtype(1);
-        let expected = r#"{"value":{"o":{"Newtype":{"n":1}}}, "handles":[]}"#;
+        let expected = r#"{"value":{"o":[{"k":"Newtype","v":{"n":1}}]}, "handles":[]}"#;
         let v: Value = serde_json::from_str(expected).unwrap();
         assert_eq!(to_value(&u).unwrap(), v);
 
         let u = E::Tuple(1, 2);
-        let expected = r#"{"value": {"o":{"Tuple":{"a":[{"n":1},{"n":2}]}}}, "handles":[]}"#;
+        let expected =
+            r#"{"value": {"o":[{"k":"Tuple","v":{"a":[{"n":1},{"n":2}]}}]}, "handles":[]}"#;
         let v: Value = serde_json::from_str(expected).unwrap();
         assert_eq!(to_value(&u).unwrap(), v);
 
         let u = E::Struct { a: 1 };
-        let expected = r#"{"value":{"o":{"Struct":{"o":{"a":{"n":1}}}}},"handles":[]}"#;
+        let expected =
+            r#"{"value":{"o":[{"k":"Struct","v":{"o":[{"k":"a","v":{"n":1}}]}}]},"handles":[]}"#;
         let v: Value = serde_json::from_str(expected).unwrap();
         assert_eq!(to_value(&u).unwrap(), v);
     }

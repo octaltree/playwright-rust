@@ -302,7 +302,7 @@ impl Page {
     /// await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
     ///// → false
     /// ```
-    pub fn emulate_media(&self) -> EmulateMediaBuilder {
+    pub fn emulate_media_builder(&self) -> EmulateMediaBuilder {
         EmulateMediaBuilder::new(self.inner.clone())
     }
 
@@ -499,15 +499,28 @@ impl Page {
             .await
     }
 
-    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
-        self.main_frame().eval_handle(expression).await
-    }
-
-    pub async fn evaluate_handle<T>(&self, expression: &str, arg: T) -> ArcResult<JsHandle>
+    pub async fn evaluate_js_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
-        self.main_frame().evaluate_handle(expression, arg).await
+        self.main_frame().evaluate_js_handle(expression, arg).await
+    }
+
+    pub async fn evaluate_element_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<ElementHandle>
+    where
+        T: Serialize
+    {
+        self.main_frame()
+            .evaluate_element_handle(expression, arg)
+            .await
     }
 
     pub async fn eval<U>(&self, expression: &str) -> ArcResult<U>
@@ -525,7 +538,7 @@ impl Page {
         self.main_frame().evaluate(expression, arg).await
     }
 
-    pub async fn eval_on_selector<T, U>(
+    pub async fn evaluate_on_selector<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -536,11 +549,11 @@ impl Page {
         U: DeserializeOwned
     {
         self.main_frame()
-            .eval_on_selector(selector, expression, arg)
+            .evaluate_on_selector(selector, expression, arg)
             .await
     }
 
-    pub async fn eval_on_selector_all<T, U>(
+    pub async fn evaluate_on_selector_all<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -551,7 +564,7 @@ impl Page {
         U: DeserializeOwned
     {
         self.main_frame()
-            .eval_on_selector_all(selector, expression, arg)
+            .evaluate_on_selector_all(selector, expression, arg)
             .await
     }
 
@@ -842,11 +855,11 @@ impl EmulateMediaBuilder {
     }
 
     setter! {
-        /// Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-        /// `null` disables color scheme emulation.
-        color_scheme: Option<Option<ColorScheme>>,
+        /// Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+        // NOTE: Not implemented passing `null` disables color scheme emulation
+        color_scheme: Option<ColorScheme>,
         /// Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null`
         /// disables CSS media emulation.
-        media: Option<Option<Media>>
+        media: Option<Media>
     }
 }

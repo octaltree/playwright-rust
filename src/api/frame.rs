@@ -391,11 +391,18 @@ impl Frame {
         AddScriptTagBuilder::new(self.inner.clone(), content)
     }
 
-    pub async fn eval_handle(&self, expression: &str) -> ArcResult<JsHandle> {
+    pub async fn evaluate_element_handle<T>(
+        &self,
+        expression: &str,
+        args: Option<T>
+    ) -> ArcResult<ElementHandle>
+    where
+        T: Serialize
+    {
         upgrade(&self.inner)?
-            .eval_handle(expression)
+            .evaluate_element_handle(expression, args)
             .await
-            .map(JsHandle::new)
+            .map(ElementHandle::new)
     }
 
     /// Returns the return value of `expression` as a `JSHandle`.
@@ -423,12 +430,16 @@ impl Frame {
     /// console.log(await resultHandle.jsonValue());
     /// await resultHandle.dispose();
     /// ```
-    pub async fn evaluate_handle<T>(&self, expression: &str, arg: T) -> ArcResult<JsHandle>
+    pub async fn evaluate_js_handle<T>(
+        &self,
+        expression: &str,
+        arg: Option<T>
+    ) -> ArcResult<JsHandle>
     where
         T: Serialize
     {
         upgrade(&self.inner)?
-            .evaluate_handle(expression, Some(arg))
+            .evaluate_js_handle(expression, arg)
             .await
             .map(JsHandle::new)
     }
@@ -487,7 +498,7 @@ impl Frame {
     /// const preloadHref = await frame.$eval('link[rel=preload]', el => el.href);
     /// const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
     /// ```
-    pub async fn eval_on_selector<T, U>(
+    pub async fn evaluate_on_selector<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -498,7 +509,7 @@ impl Frame {
         U: DeserializeOwned
     {
         upgrade(&self.inner)?
-            .eval_on_selector(selector, expression, arg)
+            .evaluate_on_selector(selector, expression, arg)
             .await
     }
 
@@ -515,7 +526,7 @@ impl Frame {
     /// ```js
     /// const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
     /// ```
-    pub async fn eval_on_selector_all<T, U>(
+    pub async fn evaluate_on_selector_all<T, U>(
         &self,
         selector: &str,
         expression: &str,
@@ -526,7 +537,7 @@ impl Frame {
         U: DeserializeOwned
     {
         upgrade(&self.inner)?
-            .eval_on_selector_all(selector, expression, arg)
+            .evaluate_on_selector_all(selector, expression, arg)
             .await
     }
 
