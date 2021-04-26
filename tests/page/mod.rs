@@ -78,7 +78,7 @@ async fn ensure_close(page: &Page) {
         page.close(None)
     );
     result.unwrap();
-    assert_eq!(received, true);
+    assert!(received);
     match wait_result.unwrap() {
         page::Event::Close => (),
         _ => unreachable!()
@@ -140,7 +140,7 @@ async fn navigations(page: &Page, port: u16) {
     page.goto_builder(&url2).goto().await.unwrap();
     {
         let response = page.go_back_builder().go_back().await.unwrap().unwrap();
-        assert_eq!(response.ok().unwrap(), true);
+        assert!(response.ok().unwrap());
         assert_eq!(response.url().unwrap(), url1);
     }
     {
@@ -150,7 +150,7 @@ async fn navigations(page: &Page, port: u16) {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(response.ok().unwrap(), true);
+        assert!(response.ok().unwrap());
         assert_eq!(response.url().unwrap(), url2);
     }
     let maybe_response = page.go_forward_builder().go_forward().await.unwrap();
@@ -400,25 +400,25 @@ async fn emulate_media(p: &Page) {
             .await
             .unwrap()
     };
-    assert_eq!(screen().await, true);
-    assert_eq!(print().await, false);
+    assert!(screen().await);
+    assert!(!print().await);
     p.emulate_media_builder()
         .media(Media::Print)
         .emulate_media()
         .await
         .unwrap();
-    assert_eq!(screen().await, false);
-    assert_eq!(print().await, true);
+    assert!(!screen().await);
+    assert!(print().await);
     p.emulate_media_builder().emulate_media().await.unwrap();
-    assert_eq!(screen().await, false);
-    assert_eq!(print().await, true);
+    assert!(!screen().await);
+    assert!(print().await);
     p.emulate_media_builder()
         .media(Media::Null)
         .emulate_media()
         .await
         .unwrap();
-    assert_eq!(screen().await, true);
-    assert_eq!(print().await, false);
+    assert!(screen().await);
+    assert!(!print().await);
 }
 
 async fn check_should_work(c: &BrowserContext) {
@@ -429,10 +429,10 @@ async fn check_should_work(c: &BrowserContext) {
         .unwrap();
     p.check_builder("input").check().await.unwrap();
     let checked = p.is_checked("input", None).await.unwrap();
-    assert_eq!(checked, true);
+    assert!(checked);
     p.uncheck_builder("input").uncheck().await.unwrap();
     let checked = p.is_checked("input", None).await.unwrap();
-    assert_eq!(checked, false);
+    assert!(!checked);
     close(&p).await;
 }
 
@@ -455,11 +455,11 @@ async fn pointer(c: &BrowserContext) {
             .unwrap()
     };
     p.tap_builder("input").tap().await.unwrap();
-    assert_eq!(checked().await, true);
+    assert!(checked().await);
     p.dblclick_builder("input").dblclick().await.unwrap();
-    assert_eq!(checked().await, true);
+    assert!(checked().await);
     p.click_builder("input").click().await.unwrap();
-    assert_eq!(checked().await, false);
+    assert!(!checked().await);
     close(&p).await;
 }
 

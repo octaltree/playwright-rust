@@ -28,13 +28,13 @@ fn name_should_work(t: &BrowserType, which: Which) {
 
 fn executable_should_exist(t: &BrowserType) {
     let executable = t.executable().unwrap();
-    assert_eq!(executable.is_file(), true);
+    assert!(executable.is_file());
 }
 
 // 'should handle timeout'
 async fn should_handle_timeout(t: &BrowserType) {
     let result = t.launcher().timeout(0.1).launch().await;
-    assert_eq!(result.is_err(), true);
+    assert!(result.is_err());
     let err = result.err().unwrap();
     match &*err {
         playwright::Error::ErrorResponded(_) => {}

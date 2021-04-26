@@ -4,7 +4,7 @@ use playwright::api::{browser::RecordVideo, Browser, BrowserContext, BrowserType
 pub async fn all(browser: &Browser, persistent: &BrowserContext, _which: Which) -> BrowserContext {
     let c = launch(browser).await;
     assert_ne!(persistent, &c);
-    assert_eq!(c.browser().unwrap().is_some(), true);
+    assert!(c.browser().unwrap().is_some());
     set_timeout(&c).await;
     cookies_should_work(&c).await;
     //
