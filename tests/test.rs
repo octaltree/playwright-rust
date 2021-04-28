@@ -5,6 +5,8 @@ mod devices;
 mod page;
 mod selectors;
 
+mod connect;
+
 #[cfg(feature = "rt-async-std")]
 use async_std::task::spawn;
 #[cfg(feature = "rt-actix")]
@@ -34,6 +36,11 @@ playwright::runtime_test!(chromium_devices, devices(Which::Chromium).await);
 playwright::runtime_test!(firefox_devices, devices(Which::Chromium).await);
 // playwright::runtime_test!(webkit_devices, devices(Which::Webkit).await);
 
+playwright::runtime_test!(
+    connect_over_cdp,
+    connect::connect_over_cdp(Which::Chromium).await
+);
+
 async fn page(which: Which) {
     std::fs::create_dir_all(temp_dir()).unwrap();
     let port = free_local_port().unwrap();
@@ -50,6 +57,7 @@ async fn page(which: Which) {
 
 async fn selectors(which: Which) {
     let playwright = playwright_with_driver().await;
+    install_browser(&playwright, which);
     selectors::all(&playwright, which).await;
 }
 
@@ -57,6 +65,7 @@ async fn devices(which: Which) {
     let port = free_local_port().unwrap();
     start_test_server(port).await;
     let playwright = playwright_with_driver().await;
+    install_browser(&playwright, which);
     devices::all(&playwright, port, which).await;
 }
 

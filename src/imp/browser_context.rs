@@ -9,13 +9,13 @@ use crate::imp::{
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
     channel: ChannelOwner,
-    browser: Option<Weak<Browser>>,
     var: Mutex<Variable>,
     tx: Mutex<Option<broadcast::Sender<Evt>>>
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
+    browser: Option<Weak<Browser>>,
     pages: Vec<Weak<Page>>,
     timeout: Option<u32>,
     navigation_timeout: Option<u32>
@@ -30,10 +30,12 @@ impl BrowserContext {
             Some(RemoteWeak::Browser(b)) => Some(b.clone()),
             _ => None
         };
-        let var = Mutex::new(Variable::default());
+        let var = Mutex::new(Variable {
+            browser,
+            ..Variable::default()
+        });
         Ok(Self {
             channel,
-            browser,
             var,
             tx: Mutex::default()
         })
@@ -162,8 +164,6 @@ impl BrowserContext {
         expect_event(self.subscribe_event(), evt, self.default_timeout()).await
     }
 
-    pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.browser.clone() }
-
     pub(crate) async fn pause(&self) -> ArcResult<()> {
         let _ = send_message!(self, "pause", Map::new());
         Ok(())
@@ -172,6 +172,14 @@ impl BrowserContext {
 
 // mutable
 impl BrowserContext {
+    pub(crate) fn browser(&self) -> Option<Weak<Browser>> {
+        self.var.lock().unwrap().browser.clone()
+    }
+
+    pub(crate) fn set_browser(&self, browser: Weak<Browser>) {
+        self.var.lock().unwrap().browser = Some(browser);
+    }
+
     pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
 
     pub(super) fn push_page(&self, p: Weak<Page>) { self.var.lock().unwrap().pages.push(p); }

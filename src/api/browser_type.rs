@@ -2,7 +2,9 @@ pub use crate::imp::browser_type::{RecordHar, RecordVideo};
 use crate::{
     api::{browser::Browser, browser_context::BrowserContext, playwright::DeviceDescriptor},
     imp::{
-        browser_type::{BrowserType as Impl, LaunchArgs, LaunchPersistentContextArgs},
+        browser_type::{
+            BrowserType as Impl, ConnectOverCdpArgs, LaunchArgs, LaunchPersistentContextArgs
+        },
         core::*,
         prelude::*,
         utils::{
@@ -75,8 +77,18 @@ impl BrowserType {
         PersistentContextLauncher::new(self.inner.clone(), user_data_dir)
     }
 
+    /// This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+    ///
+    /// The default browser context is accessible via [`method: Browser.contexts`].
+    ///
+    /// > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+    /// A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
+    /// `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+    pub fn connect_over_cdp_builder<'a>(&self, endpoint_url: &'a str) -> ConnectOverCdpBuilder<'a> {
+        ConnectOverCdpBuilder::new(self.inner.clone(), endpoint_url)
+    }
+
     // connect
-    // connect_over_cdp
     // launch_server
 }
 
@@ -283,4 +295,33 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
     // record_video_size: Option<NotImplementedYet>,
     //#[doc = "**DEPRECATED** Use `recordVideo` instead."] video_size: Option<NotImplementedYet>,
     //#[doc = "**DEPRECATED** Use `recordVideo` instead."] videos_path: Option<path>,
+}
+
+pub struct ConnectOverCdpBuilder<'a> {
+    inner: Weak<Impl>,
+    args: ConnectOverCdpArgs<'a>
+}
+
+impl<'a> ConnectOverCdpBuilder<'a> {
+    pub async fn connect_over_cdp(self) -> ArcResult<Browser> {
+        let Self { inner, args } = self;
+        let r = upgrade(&inner)?.connect_over_cdp(args).await?;
+        Ok(Browser::new(r))
+    }
+
+    fn new(inner: Weak<Impl>, endpoint_url: &'a str) -> Self {
+        Self {
+            inner,
+            args: ConnectOverCdpArgs::new(endpoint_url)
+        }
+    }
+
+    setter! {
+        /// Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+        /// disable timeout.
+        timeout: Option<f64>,
+        /// Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+        /// Defaults to 0.
+        slowmo: Option<f64>
+    }
 }

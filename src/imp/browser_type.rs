@@ -47,9 +47,9 @@ impl BrowserType {
         Ok(b)
     }
 
-    pub(crate) async fn connect_over_cdp<'a>(
+    pub(crate) async fn connect_over_cdp(
         &self,
-        args: ConnectOverCdpArgs<'a>
+        args: ConnectOverCdpArgs<'_>
     ) -> ArcResult<Weak<Browser>> {
         let res = send_message!(self, "connectOverCDP", args);
         #[derive(Deserialize)]
@@ -68,14 +68,14 @@ impl BrowserType {
         if let Some(OnlyGuid { guid }) = default_context {
             let default_context =
                 get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+            let arc_context = upgrade(&default_context)?;
             arc_browser.push_context(default_context);
-            // TODO
-            // default_context.set_content
+            arc_context.set_browser(browser.clone());
         }
         Ok(browser)
     }
 
-    pub(crate) async fn connect<'a>(&self, args: ConnectArgs<'a>) -> ArcResult<Weak<Browser>> {
+    pub(crate) async fn connect(&self, args: ConnectArgs<'_>) -> ArcResult<Weak<Browser>> {
         todo!()
     }
 }
@@ -265,6 +265,8 @@ impl<'a> ConnectArgs<'a> {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ConnectOverCdpArgs<'a> {
+    sdk_language: &'static str,
+    #[serde(rename = "endpointURL")]
     endpoint_url: &'a str,
     pub(crate) timeout: Option<f64>,
     #[serde(rename = "slowMo")]
@@ -274,6 +276,7 @@ pub(crate) struct ConnectOverCdpArgs<'a> {
 impl<'a> ConnectOverCdpArgs<'a> {
     pub(crate) fn new(endpoint_url: &'a str) -> Self {
         Self {
+            sdk_language: "rust",
             endpoint_url,
             timeout: None,
             slowmo: None
