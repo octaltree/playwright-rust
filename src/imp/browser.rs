@@ -15,7 +15,8 @@ pub(crate) struct Browser {
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
-    contexts: Vec<Weak<BrowserContext>>
+    contexts: Vec<Weak<BrowserContext>>,
+    is_remote: bool
 }
 
 impl Browser {
@@ -25,7 +26,8 @@ impl Browser {
             channel,
             version,
             var: Mutex::new(Variable {
-                contexts: Vec::new()
+                contexts: Vec::new(),
+                is_remote: false
             })
         })
     }
@@ -47,12 +49,18 @@ impl Browser {
         self.var.lock().unwrap().contexts.to_owned()
     }
 
-    fn push_context(&self, c: Weak<BrowserContext>) { self.var.lock().unwrap().contexts.push(c); }
+    pub(crate) fn push_context(&self, c: Weak<BrowserContext>) {
+        self.var.lock().unwrap().contexts.push(c);
+    }
 
     pub(super) fn remove_context(&self, c: &Weak<BrowserContext>) {
         let contexts = &mut self.var.lock().unwrap().contexts;
         contexts.remove_one(|v| v.ptr_eq(c));
     }
+
+    pub(crate) fn is_remote(&self) -> bool { self.var.lock().unwrap().is_remote }
+
+    pub(crate) fn set_is_remote_true(&self) { self.var.lock().unwrap().is_remote = true; }
 
     pub(crate) async fn new_context(
         &self,
