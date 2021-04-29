@@ -46,6 +46,38 @@ impl BrowserType {
         let b = get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
         Ok(b)
     }
+
+    pub(crate) async fn connect_over_cdp(
+        &self,
+        args: ConnectOverCdpArgs<'_>
+    ) -> ArcResult<Weak<Browser>> {
+        let res = send_message!(self, "connectOverCDP", args);
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Response {
+            browser: OnlyGuid,
+            default_context: Option<OnlyGuid>
+        }
+        let Response {
+            browser,
+            default_context
+        } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
+        let browser = get_object!(self.context()?.lock().unwrap(), &browser.guid, Browser)?;
+        let arc_browser = upgrade(&browser)?;
+        arc_browser.set_is_remote_true();
+        if let Some(OnlyGuid { guid }) = default_context {
+            let default_context =
+                get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+            let arc_context = upgrade(&default_context)?;
+            arc_browser.push_context(default_context);
+            arc_context.set_browser(browser.clone());
+        }
+        Ok(browser)
+    }
+
+    pub(crate) async fn connect(&self, args: ConnectArgs<'_>) -> ArcResult<Weak<Browser>> {
+        todo!()
+    }
 }
 
 #[skip_serializing_none]
@@ -205,6 +237,49 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             record_video: None,
             record_har: None,
             channel: None
+        }
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ConnectArgs<'a> {
+    ws_endpoint: &'a str,
+    pub(crate) timeout: Option<f64>,
+    #[serde(rename = "slowMo")]
+    pub(crate) slowmo: Option<f64>
+}
+
+impl<'a> ConnectArgs<'a> {
+    pub(crate) fn new(ws_endpoint: &'a str) -> Self {
+        Self {
+            ws_endpoint,
+            timeout: None,
+            slowmo: None
+        }
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ConnectOverCdpArgs<'a> {
+    sdk_language: &'static str,
+    #[serde(rename = "endpointURL")]
+    endpoint_url: &'a str,
+    pub(crate) timeout: Option<f64>,
+    #[serde(rename = "slowMo")]
+    pub(crate) slowmo: Option<f64>
+}
+
+impl<'a> ConnectOverCdpArgs<'a> {
+    pub(crate) fn new(endpoint_url: &'a str) -> Self {
+        Self {
+            sdk_language: "rust",
+            endpoint_url,
+            timeout: None,
+            slowmo: None
         }
     }
 }
