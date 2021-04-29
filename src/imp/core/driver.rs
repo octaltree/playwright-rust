@@ -7,9 +7,19 @@ pub struct Driver {
     path: PathBuf
 }
 
+#[cfg(not(windows))]
+macro_rules! sep {
+    {} => { "/" }
+}
+
+#[cfg(windows)]
+macro_rules! sep {
+    {} => { "\\" }
+}
+
 impl Driver {
-    const ZIP: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), "/driver.zip"));
-    const PLATFORM: &'static str = include_str!(concat!(env!("OUT_DIR"), "/platform"));
+    const ZIP: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), sep!(), "driver.zip"));
+    const PLATFORM: &'static str = include_str!(concat!(env!("OUT_DIR"), sep!(), "platform"));
 
     pub fn install() -> io::Result<Self> {
         let this = Self::new(Self::default_dest());
