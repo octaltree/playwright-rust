@@ -56,6 +56,8 @@ async fn should_fire_close(t: &BrowserType) {
 // 'should be callable twice'
 async fn should_be_callable_twice(t: &BrowserType) {
     let browser = t.launcher().launch().await.unwrap();
+    let context = browser.context_builder().build().await.unwrap();
+    let _page = context.new_page().await.unwrap();
     let (fst, snd) = tokio::join!(browser.close(), browser.close());
     fst.unwrap();
     snd.unwrap();
