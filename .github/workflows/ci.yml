@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Lint
+        run: cargo clippy --all-targets
+      - name: Prepare driver and browsers
+        run: cargo test hello
+      - name: Test
+        run: cargo test --all-targets
+
+      - name: Run cargo-tarpaulin
+        if: github.ref == 'refs/heads/master'
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          args: '-- --test-threads 1'
+
+      - name: Upload to codecov.io
+        if: github.ref == 'refs/heads/master'
+        uses: codecov/codecov-action@v1.0.2
+        with:
+          token: ${{secrets.CODECOV}}
