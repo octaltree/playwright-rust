@@ -15,7 +15,14 @@ fn main() {
     println!("cargo:rerun-if-changed=src/build.rs");
 }
 
-#[cfg(not(feature = "only-for-docs-rs"))]
+#[cfg(all(not(feature = "only-for-docs-rs"), not(unix)))]
+fn download(url: &str, dest: &Path) {
+    let mut resp = reqwest::blocking::get(url).unwrap();
+    let mut dest = File::create(dest).unwrap();
+    resp.copy_to(&mut dest).unwrap();
+}
+
+#[cfg(all(not(feature = "only-for-docs-rs"), unix))]
 fn download(url: &str, dest: &Path) {
     let cache_dir: &Path = "/tmp/build-playwright-rust".as_ref();
     let cached = cache_dir.join("driver.zip");
