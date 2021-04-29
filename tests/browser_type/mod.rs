@@ -10,7 +10,6 @@ pub async fn all(playwright: &Playwright, which: Which) -> BrowserType {
     name_should_work(&t, which);
     executable_should_exist(&t);
     should_handle_timeout(&t).await;
-    should_be_callable_twice(&t).await;
     should_fire_close(&t).await;
     t
 }
@@ -51,14 +50,4 @@ async fn should_fire_close(t: &BrowserType) {
     let wait = tokio::spawn(async move { context.expect_event(EventType::Close).await });
     browser.close().await.unwrap();
     assert_eq!(wait.await.unwrap().unwrap(), Event::Close);
-}
-
-// 'should be callable twice'
-async fn should_be_callable_twice(t: &BrowserType) {
-    let browser = t.launcher().launch().await.unwrap();
-    let context = browser.context_builder().build().await.unwrap();
-    let _page = context.new_page().await.unwrap();
-    let (fst, snd) = tokio::join!(browser.close(), browser.close());
-    fst.unwrap();
-    snd.unwrap();
 }
