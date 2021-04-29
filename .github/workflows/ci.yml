@@ -27,7 +27,7 @@ jobs:
       - name: Prepare driver and browsers
         run: cargo test hello
       - name: Test
-        run: cargo test --all-targets
+        run: cargo test --all-targets -j1
 
       - name: Run cargo-tarpaulin
         if: github.ref == 'refs/heads/master'
