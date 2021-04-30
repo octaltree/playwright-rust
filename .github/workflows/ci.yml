@@ -12,7 +12,10 @@ env:
 
 jobs:
   test:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
@@ -30,13 +33,13 @@ jobs:
       - name: Test
         run: cargo test --all-targets -j1 -- --nocapture
 
-      - name: Run cargo-tarpaulin
-        if: github.ref == 'refs/heads/master'
+      - name: Coverage
+        if: success() && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master'
         run: |
           cargo install cargo-tarpaulin
           cargo tarpaulin --out Xml --verbose -- --test-threads 1
       - name: Upload to codecov.io
-        if: github.ref == 'refs/heads/master'
+        if: success() && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v1.0.2
         with:
           file: cobertura.xml
