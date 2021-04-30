@@ -116,7 +116,7 @@ pub enum EventType {
     Close
 }
 
-impl Event for Evt {
+impl IsEvent for Evt {
     type EventType = EventType;
 
     fn event_type(&self) -> Self::EventType {

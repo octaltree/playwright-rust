@@ -43,6 +43,7 @@ use crate::{
 ///  }
 /// })();
 /// ```
+#[derive(Clone)]
 pub struct Frame {
     inner: Weak<Impl>
 }

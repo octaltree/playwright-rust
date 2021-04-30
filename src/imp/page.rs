@@ -300,7 +300,10 @@ impl Page {
         Ok(())
     }
 
-    pub(crate) async fn expect_event(&self, evt: <Evt as Event>::EventType) -> Result<Evt, Error> {
+    pub(crate) async fn expect_event(
+        &self,
+        evt: <Evt as IsEvent>::EventType
+    ) -> Result<Evt, Error> {
         expect_event(self.subscribe_event(), evt, self.default_timeout()).await
     }
 }
@@ -635,7 +638,7 @@ pub enum EventType {
     Video
 }
 
-impl Event for Evt {
+impl IsEvent for Evt {
     type EventType = EventType;
 
     fn event_type(&self) -> Self::EventType {

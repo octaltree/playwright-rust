@@ -19,6 +19,7 @@ use crate::imp::{core::*, download::Download as Impl, prelude::*};
 /// > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
 /// downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
 /// performed and user has no access to the downloaded files.
+#[derive(Clone)]
 pub struct Download {
     inner: Arc<Impl>
 }

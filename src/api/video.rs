@@ -1,6 +1,6 @@
 use crate::imp::{core::*, prelude::*, video::Video as Impl};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Video {
     inner: Impl
 }

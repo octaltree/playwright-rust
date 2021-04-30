@@ -30,39 +30,77 @@ pub trait EventEmitter {
     fn emit_event<E: Into<Self::Event>>(&self, e: E) { self.tx().map(|tx| tx.send(e.into()).ok()); }
 }
 
-pub(crate) trait Event: Clone {
+pub(crate) trait IsEvent: Clone {
     type EventType: Clone + Copy + PartialEq;
 
     fn event_type(&self) -> Self::EventType;
 }
 
-pub(crate) async fn expect_event<E: Event>(
+#[cfg(any(feature = "rt-tokio", feature = "rt-actix"))]
+pub(crate) async fn expect_event<E>(
     mut rx: broadcast::Receiver<E>,
     evt: E::EventType,
     timeout: u32
-) -> Result<E, Error> {
-    // consume
+) -> Result<E, Error>
+where
+    E: IsEvent + Send + Sync + 'static,
+    <E as event_emitter::IsEvent>::EventType: Send + Sync
+{
+    consume(&mut rx).await?;
+    let sleep = sleep(Duration::from_millis(timeout as u64));
+    let event = spawn(async move {
+        loop {
+            match rx.recv().await {
+                Ok(x) if x.event_type() == evt => break Ok(x),
+                Ok(_) => continue,
+                Err(e) => break Err(e)
+            }
+        }
+    });
+    tokio::select! {
+        _ = sleep => Err(Error::Timeout),
+        x = event => x?.map_err(Error::Event)
+    }
+}
+
+#[cfg(feature = "rt-async-std")]
+pub(crate) async fn expect_event<E>(
+    mut rx: broadcast::Receiver<E>,
+    evt: E::EventType,
+    timeout: u32
+) -> Result<E, Error>
+where
+    E: IsEvent + Send + Sync + 'static,
+    <E as event_emitter::IsEvent>::EventType: Send + Sync
+{
+    consume(&mut rx).await?;
+    let sleep = sleep(Duration::from_millis(timeout as u64));
+    let event = spawn(async move {
+        loop {
+            match rx.recv().await {
+                Ok(x) if x.event_type() == evt => break Ok(x),
+                Ok(_) => continue,
+                Err(e) => break Err(e)
+            }
+        }
+    });
+    tokio::select! {
+        _ = sleep => Err(Error::Timeout),
+        x = event => x.map_err(Error::Event)
+    }
+}
+
+async fn consume<E>(rx: &mut broadcast::Receiver<E>) -> Result<(), Error>
+where
+    E: IsEvent
+{
     loop {
         match rx.try_recv() {
             Err(TryRecvError::Empty) | Err(TryRecvError::Closed) => break,
             _ => {}
         }
     }
-    let sleep = sleep(Duration::from_millis(timeout as u64));
-    // TODO: Need spawning to prevent lagged?
-    let event = async {
-        loop {
-            match rx.recv().await {
-                Ok(x) if x.event_type() == evt => break Ok(x),
-                Ok(_) => continue,
-                Err(e) => break Err(Error::Event(e))
-            }
-        }
-    };
-    tokio::select! {
-        _ = sleep => Err(Error::Timeout),
-        x = event => x
-    }
+    Ok(())
 }
 
 #[cfg(test)]

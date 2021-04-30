@@ -40,7 +40,7 @@ use crate::imp::{
 ///// on macOS
 /// await page.keyboard.press('Meta+A');
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Keyboard {
     inner: Weak<PageImpl>
 }
@@ -59,14 +59,14 @@ pub struct Keyboard {
 /// await page.mouse.move(0, 0);
 /// await page.mouse.up();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mouse {
     inner: Weak<PageImpl>
 }
 
 /// The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the
 /// touchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TouchScreen {
     inner: Weak<PageImpl>
 }

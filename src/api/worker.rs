@@ -21,6 +21,7 @@ use crate::{
 /// for (const worker of page.workers())
 ///  console.log('  ' + worker.url());
 /// ```
+#[derive(Clone)]
 pub struct Worker {
     inner: Weak<Impl>
 }

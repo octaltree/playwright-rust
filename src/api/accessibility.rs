@@ -21,7 +21,7 @@ use crate::{
 /// Most of the accessibility tree gets filtered out when converting from internal browser AX Tree to Platform-specific
 /// AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing
 /// only the "interesting" nodes of the tree.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Accessibility {
     inner: Weak<PageImpl>
 }

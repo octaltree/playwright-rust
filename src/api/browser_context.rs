@@ -190,10 +190,9 @@ impl BrowserContext {
     // async fn unroute(&mut self) -> Result<(), Error> { unimplemented!() }
 
     pub async fn expect_event(&self, evt: EventType) -> Result<Event, Error> {
-        upgrade(&self.inner)?
-            .expect_event(evt)
-            .await
-            .map(Event::from)
+        let stream = upgrade(&self.inner)?.subscribe_event();
+        let timeout = upgrade(&self.inner)?.default_timeout();
+        expect_event(stream, evt, timeout).await.map(Event::from)
     }
 
     /// Returns storage state for this browser context, contains current cookies and local storage snapshot.

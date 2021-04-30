@@ -4,6 +4,7 @@ use crate::{
 };
 
 /// `ConsoleMessage` objects are dispatched by page via the [page::Event::Console](crate::api::page::Event::Console) event.
+#[derive(Clone)]
 pub struct ConsoleMessage {
     inner: Weak<Impl>
 }

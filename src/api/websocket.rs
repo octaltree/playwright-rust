@@ -5,6 +5,7 @@ use crate::imp::{
     websocket::{Evt, WebSocket as Impl}
 };
 
+#[derive(Clone)]
 pub struct WebSocket {
     inner: Weak<Impl>
 }

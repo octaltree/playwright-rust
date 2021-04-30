@@ -67,7 +67,7 @@ use crate::{
 ///// Sometime later...
 /// page.removeListener('request', logRequest);
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Page {
     inner: Weak<Impl>,
     pub keyboard: Keyboard,
@@ -322,10 +322,9 @@ impl Page {
     }
 
     pub async fn expect_event(&self, evt: EventType) -> Result<Event, Error> {
-        upgrade(&self.inner)?
-            .expect_event(evt)
-            .await
-            .map(Event::from)
+        let stream = upgrade(&self.inner)?.subscribe_event();
+        let timeout = upgrade(&self.inner)?.default_timeout();
+        expect_event(stream, evt, timeout).await.map(Event::from)
     }
 
     subscribe_event! {}
@@ -343,6 +342,7 @@ impl Page {
     }
 }
 
+#[derive(Clone)]
 pub enum Event {
     Close,
     Crash,
@@ -450,6 +450,35 @@ impl From<Evt> for Event {
             Evt::WebSocket(x) => Event::WebSocket(WebSocket::new(x)),
             Evt::Worker(x) => Event::Worker(Worker::new(x)),
             Evt::Video(x) => Event::Video(Video::new(x))
+        }
+    }
+}
+
+impl IsEvent for Event {
+    type EventType = EventType;
+
+    fn event_type(&self) -> Self::EventType {
+        match self {
+            Self::Close => EventType::Close,
+            Self::Crash => EventType::Crash,
+            Self::Console(_) => EventType::Console,
+            Self::Dialog => EventType::Dialog,
+            Self::Download(_) => EventType::Download,
+            Self::FileChooser => EventType::FileChooser,
+            Self::DomContentLoaded => EventType::DomContentLoaded,
+            Self::PageError => EventType::PageError,
+            Self::Request(_) => EventType::Request,
+            Self::Response(_) => EventType::Response,
+            Self::RequestFailed(_) => EventType::RequestFailed,
+            Self::RequestFinished(_) => EventType::RequestFinished,
+            Self::FrameAttached(_) => EventType::FrameAttached,
+            Self::FrameDetached(_) => EventType::FrameDetached,
+            Self::FrameNavigated(_) => EventType::FrameNavigated,
+            Self::Load => EventType::Load,
+            Self::Popup(_) => EventType::Popup,
+            Self::WebSocket(_) => EventType::WebSocket,
+            Self::Worker(_) => EventType::Worker,
+            Self::Video(_) => EventType::Video
         }
     }
 }
