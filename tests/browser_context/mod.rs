@@ -1,5 +1,8 @@
 use super::Which;
-use playwright::api::{browser::RecordVideo, Browser, BrowserContext, BrowserType};
+use playwright::api::{
+    browser::RecordVideo, Browser, BrowserContext, BrowserType, Cookie, LocalStorageEntry,
+    OriginState, StorageState
+};
 
 pub async fn all(
     browser: &Browser,
@@ -10,10 +13,10 @@ pub async fn all(
     let c = launch(browser).await;
     assert_ne!(persistent, &c);
     assert!(c.browser().unwrap().is_some());
-    offline(&c, port).await;
+    storage_state(&c, port).await;
+    set_offline_should_work(browser, port).await;
     set_timeout(&c).await;
     cookies_should_work(&c).await;
-    //
     add_init_script_should_work(&c).await;
     pages_should_work(&c).await;
     c
@@ -39,7 +42,20 @@ async fn launch(b: &Browser) -> BrowserContext {
             dir: &super::temp_dir().join("video"),
             size: None
         })
-        .offline(true)
+        .storage_state(StorageState {
+            cookies: Some(vec![Cookie::with_url(
+                "name1",
+                "value1",
+                "https://example.com"
+            )]),
+            origins: Some(vec![OriginState {
+                origin: "https://example.com".into(),
+                local_storage: vec![LocalStorageEntry {
+                    name: "name1".into(),
+                    value: "value1".into()
+                }]
+            }])
+        })
         .build()
         .await
         .unwrap();
@@ -73,7 +89,6 @@ async fn set_timeout(c: &BrowserContext) {
 }
 
 async fn cookies_should_work(c: &BrowserContext) {
-    use playwright::api::Cookie;
     ensure_cookies_are_cleared(c).await;
     let cookie = Cookie {
         name: "foo".into(),
@@ -127,7 +142,13 @@ async fn add_init_script_should_work(c: &BrowserContext) {
     p.close(None).await.unwrap();
 }
 
-async fn offline(c: &BrowserContext, port: u16) {
+async fn set_offline_should_work(browser: &Browser, port: u16) {
+    let c = browser
+        .context_builder()
+        .offline(true)
+        .build()
+        .await
+        .unwrap();
     let page = c.new_page().await.unwrap();
     let url = super::url_static(port, "/empty.html");
     let err = page.goto_builder(&url).goto().await;
@@ -135,4 +156,39 @@ async fn offline(c: &BrowserContext, port: u16) {
     c.set_offline(false).await.unwrap();
     let response = page.goto_builder(&url).goto().await.unwrap();
     assert_eq!(response.unwrap().status().unwrap(), 200);
+    c.close().await.unwrap();
+}
+
+async fn storage_state(c: &BrowserContext, port: u16) {
+    let page = c.new_page().await.unwrap();
+    let url = super::url_static(port, "/empty.html");
+    page.goto_builder(&url).goto().await.unwrap();
+    page.eval::<()>("() => { localStorage['name2'] = 'value2'; }")
+        .await
+        .unwrap();
+    let storage = c.storage_state().await.unwrap();
+    assert!(storage
+        .cookies
+        .unwrap()
+        .into_iter()
+        .any(|c| c.name == "name1" && c.value == "value1"));
+    assert_eq!(
+        storage.origins.unwrap(),
+        &[
+            OriginState {
+                origin: "https://example.com".into(),
+                local_storage: vec![LocalStorageEntry {
+                    name: "name1".into(),
+                    value: "value1".into()
+                }]
+            },
+            OriginState {
+                origin: super::origin(port),
+                local_storage: vec![LocalStorageEntry {
+                    name: "name2".into(),
+                    value: "value2".into()
+                }]
+            }
+        ]
+    );
 }

@@ -148,6 +148,8 @@ fn url_download(port: u16, path: &str) -> String {
     format!("http://localhost:{}/download{}", port, path)
 }
 
+fn origin(port: u16) -> String { format!("http://localhost:{}", port) }
+
 fn temp_dir() -> PathBuf { std::env::temp_dir().join("test-playwright-rust") }
 
 //    let h = page.eval_handle("() => location.href").await.unwrap();

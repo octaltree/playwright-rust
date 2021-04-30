@@ -66,13 +66,27 @@ pub struct Cookie {
 }
 
 impl Cookie {
-    pub fn new<S: Into<String>>(name: S, value: S) -> Self {
+    pub fn with_url<S: Into<String>>(name: S, value: S, url: S) -> Self {
+        Self {
+            name: name.into(),
+            value: value.into(),
+            url: Some(url.into()),
+            domain: None,
+            path: None,
+            expires: None,
+            http_only: None,
+            secure: None,
+            same_site: None
+        }
+    }
+
+    pub fn with_domain_path<S: Into<String>>(name: S, value: S, domain: S, path: S) -> Self {
         Self {
             name: name.into(),
             value: value.into(),
             url: None,
-            domain: None,
-            path: None,
+            domain: Some(domain.into()),
+            path: Some(path.into()),
             expires: None,
             http_only: None,
             secure: None,
@@ -88,14 +102,14 @@ pub enum SameSite {
     Strict
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct OriginState {
     pub origin: String,
     pub local_storage: Vec<LocalStorageEntry>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LocalStorageEntry {
     pub name: String,
