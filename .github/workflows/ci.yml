@@ -31,13 +31,13 @@ jobs:
       - name: Prepare driver and browsers
         run: cargo test hello
       - name: Test
-        run: cargo test --all-targets -j1 -- --nocapture
+        run: cargo test --all-targets -- --nocapture
 
       - name: Coverage
         if: success() && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master'
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --out Xml --verbose -- --test-threads 1
+          cargo tarpaulin --out Xml --verbose
       - name: Upload to codecov.io
         if: success() && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v1.0.2
