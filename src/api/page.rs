@@ -332,7 +332,6 @@ impl Page {
     // coverage
     // expose_binding
     // expose_function
-    // pause
     // route
     // unroute
     // once_dialog

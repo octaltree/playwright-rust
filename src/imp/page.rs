@@ -299,13 +299,6 @@ impl Page {
         let _ = send_message!(self, "setExtraHTTPHeaders", args);
         Ok(())
     }
-
-    pub(crate) async fn expect_event(
-        &self,
-        evt: <Evt as IsEvent>::EventType
-    ) -> Result<Evt, Error> {
-        expect_event(self.subscribe_event(), evt, self.default_timeout()).await
-    }
 }
 
 fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {

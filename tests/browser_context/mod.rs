@@ -1,10 +1,16 @@
 use super::Which;
 use playwright::api::{browser::RecordVideo, Browser, BrowserContext, BrowserType};
 
-pub async fn all(browser: &Browser, persistent: &BrowserContext, _which: Which) -> BrowserContext {
+pub async fn all(
+    browser: &Browser,
+    persistent: &BrowserContext,
+    port: u16,
+    _which: Which
+) -> BrowserContext {
     let c = launch(browser).await;
     assert_ne!(persistent, &c);
     assert!(c.browser().unwrap().is_some());
+    offline(&c, port).await;
     set_timeout(&c).await;
     cookies_should_work(&c).await;
     //
@@ -33,6 +39,7 @@ async fn launch(b: &Browser) -> BrowserContext {
             dir: &super::temp_dir().join("video"),
             size: None
         })
+        .offline(true)
         .build()
         .await
         .unwrap();
@@ -118,4 +125,14 @@ async fn add_init_script_should_work(c: &BrowserContext) {
     let x: i32 = p.eval("() => HOGE").await.unwrap();
     assert_eq!(x, 2);
     p.close(None).await.unwrap();
+}
+
+async fn offline(c: &BrowserContext, port: u16) {
+    let page = c.new_page().await.unwrap();
+    let url = super::url_static(port, "/empty.html");
+    let err = page.goto_builder(&url).goto().await;
+    assert!(err.is_err());
+    c.set_offline(false).await.unwrap();
+    let response = page.goto_builder(&url).goto().await.unwrap();
+    assert_eq!(response.unwrap().status().unwrap(), 200);
 }

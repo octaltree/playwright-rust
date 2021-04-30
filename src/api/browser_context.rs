@@ -212,8 +212,6 @@ impl BrowserContext {
         inner.close().await
     }
 
-    pub async fn pause(&self) -> ArcResult<()> { upgrade(&self.inner)?.pause().await }
-
     subscribe_event! {}
 
     // background_page for chromium

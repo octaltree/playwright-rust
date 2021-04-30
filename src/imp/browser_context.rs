@@ -160,17 +160,10 @@ impl BrowserContext {
     // async def route(self, url: URLMatch, handler: RouteHandler) -> None:
     // async def unroute(
 
-    pub(crate) async fn expect_event(
-        &self,
-        evt: <Evt as IsEvent>::EventType
-    ) -> Result<Evt, Error> {
-        expect_event(self.subscribe_event(), evt, self.default_timeout()).await
-    }
-
-    pub(crate) async fn pause(&self) -> ArcResult<()> {
-        let _ = send_message!(self, "pause", Map::new());
-        Ok(())
-    }
+    // async fn pause(&self) -> ArcResult<()> {
+    //    let _ = send_message!(self, "pause", Map::new());
+    //    Ok(())
+    //}
 }
 
 // mutable

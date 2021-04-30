@@ -50,7 +50,7 @@ async fn page(which: Which) {
     let browser_type = browser_type::all(&playwright, which).await;
     let browser = browser::all(&browser_type, which).await;
     let persistent = browser_context::persistent(&browser_type, port, which).await;
-    let browser_context = browser_context::all(&browser, &persistent, which).await;
+    let browser_context = browser_context::all(&browser, &persistent, port, which).await;
     page::all(&browser_context, port, which).await;
 }
 
