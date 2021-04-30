@@ -52,10 +52,6 @@ async fn page(which: Which) {
     let persistent = browser_context::persistent(&browser_type, port, which).await;
     let browser_context = browser_context::all(&browser, &persistent, which).await;
     page::all(&browser_context, port, which).await;
-    if !cfg!(windows) {
-        // error because other process uses on windows
-        std::fs::remove_dir_all(temp_dir()).unwrap();
-    }
 }
 
 async fn selectors(which: Which) {
