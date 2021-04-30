@@ -26,9 +26,24 @@ fn download(url: &str, dest: &Path) {
 fn download(url: &str, dest: &Path) {
     let cache_dir: &Path = "/tmp/build-playwright-rust".as_ref();
     let cached = cache_dir.join("driver.zip");
-    if cached.is_file() {
-        fs::copy(cached, dest).unwrap();
-        return;
+    let maybe_metadata = cached.metadata().ok();
+    if cfg!(debug_assertions) {
+        let cache_is_file = || {
+            maybe_metadata
+                .as_ref()
+                .map(fs::Metadata::is_file)
+                .unwrap_or_default()
+        };
+        let cache_size = || {
+            maybe_metadata
+                .as_ref()
+                .map(fs::Metadata::len)
+                .unwrap_or_default()
+        };
+        if cache_is_file() && cache_size() > 10000000 {
+            fs::copy(cached, dest).unwrap();
+            return;
+        }
     }
     let mut resp = reqwest::blocking::get(url).unwrap();
     let mut dest = File::create(dest).unwrap();
