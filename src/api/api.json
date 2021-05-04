@@ -5984,11 +5984,16 @@
                   "spec": [
                     {
                       "type": "text",
-                      "text": "Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: { server: 'per-context' } })`."
+                      "text": "Network proxy settings to use with this context."
+                    },
+                    {
+                      "type": "note",
+                      "noteType": "note",
+                      "text": "For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: { server: 'http://per-context' } })`."
                     }
                   ],
                   "required": false,
-                  "comment": "Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this\noption to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example\n`launch({ proxy: { server: 'per-context' } })`.",
+                  "comment": "Network proxy settings to use with this context.\n\n> NOTE: For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all\ncontexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: {\nserver: 'http://per-context' } })`.",
                   "deprecated": false,
                   "async": false,
                   "alias": "proxy"
@@ -7720,11 +7725,16 @@
                   "spec": [
                     {
                       "type": "text",
-                      "text": "Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: { server: 'per-context' } })`."
+                      "text": "Network proxy settings to use with this context."
+                    },
+                    {
+                      "type": "note",
+                      "noteType": "note",
+                      "text": "For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: { server: 'http://per-context' } })`."
                     }
                   ],
                   "required": false,
-                  "comment": "Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this\noption to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example\n`launch({ proxy: { server: 'per-context' } })`.",
+                  "comment": "Network proxy settings to use with this context.\n\n> NOTE: For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all\ncontexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: {\nserver: 'http://per-context' } })`.",
                   "deprecated": false,
                   "async": false,
                   "alias": "proxy"
@@ -8879,6 +8889,7 @@
         "kind": "method",
         "langs": {
           "only": [
+            "java",
             "js",
             "python"
           ],
@@ -8912,6 +8923,16 @@
           {
             "type": "code",
             "lines": [
+              "browser.startTracing(page, new Browser.StartTracingOptions()",
+              "  .setPath(Paths.get(\"trace.json\")));",
+              "page.goto('https://www.google.com');",
+              "browser.stopTracing();"
+            ],
+            "codeLang": "java"
+          },
+          {
+            "type": "code",
+            "lines": [
               "await browser.start_tracing(page, path=\"trace.json\")",
               "await page.goto(\"https://www.google.com\")",
               "await browser.stop_tracing()"
@@ -8929,7 +8950,7 @@
           }
         ],
         "required": true,
-        "comment": "> NOTE: Tracing is only supported on Chromium-based browsers.\n\nYou can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can be\nopened in Chrome DevTools performance panel.\n\n```js\nawait browser.startTracing(page, {path: 'trace.json'});\nawait page.goto('https://www.google.com');\nawait browser.stopTracing();\n```\n\n```python async\nawait browser.start_tracing(page, path=\"trace.json\")\nawait page.goto(\"https://www.google.com\")\nawait browser.stop_tracing()\n```\n\n```python sync\nbrowser.start_tracing(page, path=\"trace.json\")\npage.goto(\"https://www.google.com\")\nbrowser.stop_tracing()\n```\n",
+        "comment": "> NOTE: Tracing is only supported on Chromium-based browsers.\n\nYou can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can be\nopened in Chrome DevTools performance panel.\n\n```js\nawait browser.startTracing(page, {path: 'trace.json'});\nawait page.goto('https://www.google.com');\nawait browser.stopTracing();\n```\n\n```java\nbrowser.startTracing(page, new Browser.StartTracingOptions()\n  .setPath(Paths.get(\"trace.json\")));\npage.goto('https://www.google.com');\nbrowser.stopTracing();\n```\n\n```python async\nawait browser.start_tracing(page, path=\"trace.json\")\nawait page.goto(\"https://www.google.com\")\nawait browser.stop_tracing()\n```\n\n```python sync\nbrowser.start_tracing(page, path=\"trace.json\")\npage.goto(\"https://www.google.com\")\nbrowser.stop_tracing()\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "startTracing",
@@ -9040,6 +9061,7 @@
         "kind": "method",
         "langs": {
           "only": [
+            "java",
             "js",
             "python"
           ],
@@ -11197,6 +11219,58 @@
           },
           {
             "type": "text",
+            "text": "It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "await context.route('/api/**', route => {",
+              "  if (route.request().postData().includes('my-string'))",
+              "    route.fulfill({ body: 'mocked-data' });",
+              "  else",
+              "    route.continue();",
+              "});"
+            ],
+            "codeLang": "js"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "context.route(\"/api/**\", route -> {",
+              "  if (route.request().postData().contains(\"my-string\"))",
+              "    route.fulfill(new Route.FulfillOptions().setBody(\"mocked-data\"));",
+              "  else",
+              "    route.resume();",
+              "});"
+            ],
+            "codeLang": "java"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "def handle_route(route):",
+              "  if (\"my-string\" in route.request.post_data)",
+              "    route.fulfill(body=\"mocked-data\")",
+              "  else",
+              "    route.continue_()",
+              "await context.route(\"/api/**\", handle_route)"
+            ],
+            "codeLang": "python async"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "def handle_route(route):",
+              "  if (\"my-string\" in route.request.post_data)",
+              "    route.fulfill(body=\"mocked-data\")",
+              "  else",
+              "    route.continue_()",
+              "context.route(\"/api/**\", handle_route)"
+            ],
+            "codeLang": "python sync"
+          },
+          {
+            "type": "text",
             "text": "Page routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both handlers."
           },
           {
@@ -11210,7 +11284,7 @@
           }
         ],
         "required": true,
-        "comment": "Routing provides the capability to modify network requests that are made by any page in the browser context. Once route\nis enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst context = await browser.newContext();\nawait context.route('**/*.{png,jpg,jpeg}', route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst context = await browser.newContext();\nawait context.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"), route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\npage = context.new_page()\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nPage routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both\nhandlers.\n\nTo remove a route with its handler you can use [`method: BrowserContext.unroute`].\n\n> NOTE: Enabling routing disables http cache.",
+        "comment": "Routing provides the capability to modify network requests that are made by any page in the browser context. Once route\nis enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst context = await browser.newContext();\nawait context.route('**/*.{png,jpg,jpeg}', route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst context = await browser.newContext();\nawait context.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"), route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\npage = context.new_page()\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nIt is possible to examine the request to decide the route action. For example, mocking all requests that contain some\npost data, and leaving all other requests as is:\n\n```js\nawait context.route('/api/**', route => {\n  if (route.request().postData().includes('my-string'))\n    route.fulfill({ body: 'mocked-data' });\n  else\n    route.continue();\n});\n```\n\n```java\ncontext.route(\"/api/**\", route -> {\n  if (route.request().postData().contains(\"my-string\"))\n    route.fulfill(new Route.FulfillOptions().setBody(\"mocked-data\"));\n  else\n    route.resume();\n});\n```\n\n```python async\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\nawait context.route(\"/api/**\", handle_route)\n```\n\n```python sync\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\ncontext.route(\"/api/**\", handle_route)\n```\n\nPage routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both\nhandlers.\n\nTo remove a route with its handler you can use [`method: BrowserContext.unroute`].\n\n> NOTE: Enabling routing disables http cache.",
         "deprecated": false,
         "async": true,
         "alias": "route",
@@ -13054,7 +13128,8 @@
         "langs": {
           "only": [
             "js",
-            "java"
+            "java",
+            "python"
           ],
           "aliases": {},
           "types": {},
@@ -13110,6 +13185,34 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "wsEndpoint"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "headers",
+                  "type": {
+                    "name": "Object",
+                    "templates": [
+                      {
+                        "name": "string"
+                      },
+                      {
+                        "name": "string"
+                      }
+                    ],
+                    "expression": "[Object]<[string], [string]>"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Additional HTTP headers to be sent with web socket connect request. Optional."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Additional HTTP headers to be sent with web socket connect request. Optional.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "headers"
                 },
                 {
                   "kind": "property",
@@ -13185,7 +13288,8 @@
             "kind": "property",
             "langs": {
               "only": [
-                "java"
+                "java",
+                "python"
               ],
               "aliases": {},
               "types": {},
@@ -13219,7 +13323,44 @@
                   "kind": "property",
                   "langs": {
                     "only": [
-                      "java"
+                      "java",
+                      "python"
+                    ],
+                    "aliases": {},
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "headers",
+                  "type": {
+                    "name": "Object",
+                    "templates": [
+                      {
+                        "name": "string"
+                      },
+                      {
+                        "name": "string"
+                      }
+                    ],
+                    "expression": "[Object]<[string], [string]>"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Additional HTTP headers to be sent with web socket connect request. Optional."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Additional HTTP headers to be sent with web socket connect request. Optional.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "headers"
+                },
+                {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "java",
+                      "python"
                     ],
                     "aliases": {},
                     "types": {},
@@ -13246,7 +13387,8 @@
                   "kind": "property",
                   "langs": {
                     "only": [
-                      "java"
+                      "java",
+                      "python"
                     ],
                     "aliases": {},
                     "types": {},
@@ -13284,7 +13426,8 @@
         "langs": {
           "only": [
             "java",
-            "js"
+            "js",
+            "python"
           ],
           "aliases": {},
           "types": {},
@@ -13353,6 +13496,34 @@
                 {
                   "kind": "property",
                   "langs": {},
+                  "name": "headers",
+                  "type": {
+                    "name": "Object",
+                    "templates": [
+                      {
+                        "name": "string"
+                      },
+                      {
+                        "name": "string"
+                      }
+                    ],
+                    "expression": "[Object]<[string], [string]>"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Additional HTTP headers to be sent with connect request. Optional."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Additional HTTP headers to be sent with connect request. Optional.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "headers"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
                   "name": "slowMo",
                   "type": {
                     "name": "float",
@@ -13424,7 +13595,8 @@
             "kind": "property",
             "langs": {
               "only": [
-                "java"
+                "java",
+                "python"
               ],
               "aliases": {},
               "types": {},
@@ -13458,7 +13630,44 @@
                   "kind": "property",
                   "langs": {
                     "only": [
-                      "java"
+                      "java",
+                      "python"
+                    ],
+                    "aliases": {},
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "headers",
+                  "type": {
+                    "name": "Object",
+                    "templates": [
+                      {
+                        "name": "string"
+                      },
+                      {
+                        "name": "string"
+                      }
+                    ],
+                    "expression": "[Object]<[string], [string]>"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Additional HTTP headers to be sent with connect request. Optional."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Additional HTTP headers to be sent with connect request. Optional.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "headers"
+                },
+                {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "java",
+                      "python"
                     ],
                     "aliases": {},
                     "types": {},
@@ -13485,7 +13694,8 @@
                   "kind": "property",
                   "langs": {
                     "only": [
-                      "java"
+                      "java",
+                      "python"
                     ],
                     "aliases": {},
                     "types": {},
@@ -13681,9 +13891,12 @@
                       },
                       {
                         "name": "\"msedge-canary\""
+                      },
+                      {
+                        "name": "\"firefox-stable\""
                       }
                     ],
-                    "expression": "[BrowserChannel]<\"chrome\"|\"chrome-beta\"|\"chrome-dev\"|\"chrome-canary\"|\"msedge\"|\"msedge-beta\"|\"msedge-dev\"|\"msedge-canary\">"
+                    "expression": "[BrowserChannel]<\"chrome\"|\"chrome-beta\"|\"chrome-dev\"|\"chrome-canary\"|\"msedge\"|\"msedge-beta\"|\"msedge-dev\"|\"msedge-canary\"|\"firefox-stable\">"
                   },
                   "spec": [
                     {
@@ -14450,18 +14663,21 @@
                       },
                       {
                         "name": "\"msedge-canary\""
+                      },
+                      {
+                        "name": "\"firefox-stable\""
                       }
                     ],
-                    "expression": "[BrowserChannel]<\"chrome\"|\"chrome-beta\"|\"chrome-dev\"|\"chrome-canary\"|\"msedge\"|\"msedge-beta\"|\"msedge-dev\"|\"msedge-canary\">"
+                    "expression": "[BrowserChannel]<\"chrome\"|\"chrome-beta\"|\"chrome-dev\"|\"chrome-canary\"|\"msedge\"|\"msedge-beta\"|\"msedge-dev\"|\"msedge-canary\"|\"firefox-stable\">"
                   },
                   "spec": [
                     {
                       "type": "text",
-                      "text": "Browser distribution channel."
+                      "text": "Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge)."
                     }
                   ],
                   "required": false,
-                  "comment": "Browser distribution channel.",
+                  "comment": "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).",
                   "deprecated": false,
                   "async": false,
                   "alias": "channel"
@@ -16168,6 +16384,55 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "args"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "channel",
+                  "type": {
+                    "name": "BrowserChannel",
+                    "union": [
+                      {
+                        "name": "\"chrome\""
+                      },
+                      {
+                        "name": "\"chrome-beta\""
+                      },
+                      {
+                        "name": "\"chrome-dev\""
+                      },
+                      {
+                        "name": "\"chrome-canary\""
+                      },
+                      {
+                        "name": "\"msedge\""
+                      },
+                      {
+                        "name": "\"msedge-beta\""
+                      },
+                      {
+                        "name": "\"msedge-dev\""
+                      },
+                      {
+                        "name": "\"msedge-canary\""
+                      },
+                      {
+                        "name": "\"firefox-stable\""
+                      }
+                    ],
+                    "expression": "[BrowserChannel]<\"chrome\"|\"chrome-beta\"|\"chrome-dev\"|\"chrome-canary\"|\"msedge\"|\"msedge-beta\"|\"msedge-dev\"|\"msedge-canary\"|\"firefox-stable\">"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Browser distribution channel. Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge)."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "channel"
                 },
                 {
                   "kind": "property",
@@ -17909,7 +18174,8 @@
         "langs": {
           "only": [
             "java",
-            "js"
+            "js",
+            "csharp"
           ],
           "aliases": {},
           "types": {},
@@ -18400,6 +18666,48 @@
         "async": false,
         "alias": "window",
         "args": []
+      },
+      {
+        "kind": "method",
+        "langs": {},
+        "name": "browserWindow",
+        "type": {
+          "name": "JSHandle",
+          "expression": "[JSHandle]"
+        },
+        "spec": [
+          {
+            "type": "text",
+            "text": "Returns the BrowserWindow object that corresponds to the given Playwright page."
+          }
+        ],
+        "required": true,
+        "comment": "Returns the BrowserWindow object that corresponds to the given Playwright page.",
+        "deprecated": false,
+        "async": true,
+        "alias": "browserWindow",
+        "args": [
+          {
+            "kind": "property",
+            "langs": {},
+            "name": "page",
+            "type": {
+              "name": "Page",
+              "expression": "[Page]"
+            },
+            "spec": [
+              {
+                "type": "text",
+                "text": "Page to retrieve the window for."
+              }
+            ],
+            "required": true,
+            "comment": "Page to retrieve the window for.",
+            "deprecated": false,
+            "async": false,
+            "alias": "page"
+          }
+        ]
       },
       {
         "kind": "method",
@@ -19291,6 +19599,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -19587,6 +19915,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -19903,6 +20251,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -20811,6 +21179,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -22699,6 +23087,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -23116,6 +23524,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -23449,6 +23877,95 @@
             "alias": "options"
           }
         ]
+      }
+    ]
+  },
+  {
+    "name": "Error",
+    "spec": [
+      {
+        "type": "li",
+        "text": "extends: [Exception]",
+        "liType": "bullet"
+      },
+      {
+        "type": "text",
+        "text": "Error is raised whenever certain operations are terminated abnormally, e.g. browser closes while [`method: Page.evaluate`] is running. All Playwright exceptions inherit from this class."
+      }
+    ],
+    "extends": "Exception",
+    "langs": {
+      "only": [
+        "python"
+      ],
+      "aliases": {},
+      "types": {},
+      "overrides": {}
+    },
+    "comment": "- extends: [Exception]\n\nError is raised whenever certain operations are terminated abnormally, e.g. browser closes while\n[`method: Page.evaluate`] is running. All Playwright exceptions inherit from this class.",
+    "members": [
+      {
+        "kind": "property",
+        "langs": {},
+        "name": "message",
+        "type": {
+          "name": "str",
+          "expression": "[str]"
+        },
+        "spec": [
+          {
+            "type": "text",
+            "text": "Message of the error."
+          }
+        ],
+        "required": true,
+        "comment": "Message of the error.",
+        "deprecated": false,
+        "async": false,
+        "alias": "message",
+        "args": []
+      },
+      {
+        "kind": "property",
+        "langs": {},
+        "name": "name",
+        "type": {
+          "name": "str",
+          "expression": "[str]"
+        },
+        "spec": [
+          {
+            "type": "text",
+            "text": "Name of the error which got thrown inside the browser. Optional."
+          }
+        ],
+        "required": true,
+        "comment": "Name of the error which got thrown inside the browser. Optional.",
+        "deprecated": false,
+        "async": false,
+        "alias": "name",
+        "args": []
+      },
+      {
+        "kind": "property",
+        "langs": {},
+        "name": "stack",
+        "type": {
+          "name": "str",
+          "expression": "[str]"
+        },
+        "spec": [
+          {
+            "type": "text",
+            "text": "Stack of the error which got thrown inside the browser. Optional."
+          }
+        ],
+        "required": true,
+        "comment": "Stack of the error which got thrown inside the browser. Optional.",
+        "deprecated": false,
+        "async": false,
+        "alias": "stack",
+        "args": []
       }
     ]
   },
@@ -24365,6 +24882,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -24703,6 +25240,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -25032,6 +25589,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -26845,6 +27422,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -29176,6 +29773,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -29673,6 +30290,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -31884,10 +32521,15 @@
             "type": "note",
             "noteType": "note",
             "text": "Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case."
+          },
+          {
+            "type": "note",
+            "noteType": "note",
+            "text": "For characters that are not on a US keyboard, only an `input` event will be sent."
           }
         ],
         "required": true,
-        "comment": "Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.\n\nTo press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].\n\n```js\nawait page.keyboard.type('Hello'); // Types instantly\nawait page.keyboard.type('World', {delay: 100}); // Types slower, like a user\n```\n\n```java\n// Types instantly\npage.keyboard().type(\"Hello\");\n// Types slower, like a user\npage.keyboard().type(\"World\", new Keyboard.TypeOptions().setDelay(100));\n```\n\n```python async\nawait page.keyboard.type(\"Hello\") # types instantly\nawait page.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n```python sync\npage.keyboard.type(\"Hello\") # types instantly\npage.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n> NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.",
+        "comment": "Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.\n\nTo press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].\n\n```js\nawait page.keyboard.type('Hello'); // Types instantly\nawait page.keyboard.type('World', {delay: 100}); // Types slower, like a user\n```\n\n```java\n// Types instantly\npage.keyboard().type(\"Hello\");\n// Types slower, like a user\npage.keyboard().type(\"World\", new Keyboard.TypeOptions().setDelay(100));\n```\n\n```python async\nawait page.keyboard.type(\"Hello\") # types instantly\nawait page.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n```python sync\npage.keyboard.type(\"Hello\") # types instantly\npage.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n> NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.\n> NOTE: For characters that are not on a US keyboard, only an `input` event will be sent.",
         "deprecated": false,
         "async": true,
         "alias": "type",
@@ -33084,11 +33726,11 @@
           {
             "type": "code",
             "lines": [
-              "page.on('console', msg => {",
+              "page.on('console', async msg => {",
               "  for (let i = 0; i < msg.args().length; ++i)",
               "    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);",
               "});",
-              "page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));"
+              "await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));"
             ],
             "codeLang": "js"
           },
@@ -33129,7 +33771,7 @@
           }
         ],
         "required": true,
-        "comment": "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\npage.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n",
+        "comment": "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', async msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\nawait page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n",
         "deprecated": false,
         "async": false,
         "alias": "console",
@@ -34409,6 +35051,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -34730,6 +35392,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -35182,6 +35864,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -35431,6 +36133,10 @@
         },
         "spec": [
           {
+            "type": "text",
+            "text": "This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument."
+          },
+          {
             "type": "code",
             "lines": [
               "await page.evaluate(() => matchMedia('screen').matches);",
@@ -35571,7 +36277,7 @@
           }
         ],
         "required": true,
-        "comment": "```js\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n\nawait page.emulateMedia({ media: 'print' });\nawait page.evaluate(() => matchMedia('screen').matches);\n// → false\nawait page.evaluate(() => matchMedia('print').matches);\n// → true\n\nawait page.emulateMedia({});\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n```\n\n```java\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n\npage.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.PRINT));\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → false\npage.evaluate(\"() => matchMedia('print').matches\");\n// → true\n\npage.emulateMedia(new Page.EmulateMediaOptions());\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n```\n\n```python async\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n\nawait page.emulate_media(media=\"print\")\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → False\nawait page.evaluate(\"matchMedia('print').matches\")\n# → True\n\nawait page.emulate_media()\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```python sync\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n\npage.emulate_media(media=\"print\")\npage.evaluate(\"matchMedia('screen').matches\")\n# → False\npage.evaluate(\"matchMedia('print').matches\")\n# → True\n\npage.emulate_media()\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```js\nawait page.emulateMedia({ colorScheme: 'dark' });\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);\n// → true\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);\n// → false\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);\n// → false\n```\n\n```java\npage.emulateMedia(new Page.EmulateMediaOptions().setColorScheme(ColorScheme.DARK));\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: dark)').matches\");\n// → true\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: light)').matches\");\n// → false\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: no-preference)').matches\");\n// → false\n```\n\n```python async\nawait page.emulate_media(color_scheme=\"dark\")\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n# → False\n```\n\n```python sync\npage.emulate_media(color_scheme=\"dark\")\npage.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\npage.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\npage.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n```\n",
+        "comment": "This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media\nfeature, using the `colorScheme` argument.\n\n```js\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n\nawait page.emulateMedia({ media: 'print' });\nawait page.evaluate(() => matchMedia('screen').matches);\n// → false\nawait page.evaluate(() => matchMedia('print').matches);\n// → true\n\nawait page.emulateMedia({});\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n```\n\n```java\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n\npage.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.PRINT));\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → false\npage.evaluate(\"() => matchMedia('print').matches\");\n// → true\n\npage.emulateMedia(new Page.EmulateMediaOptions());\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n```\n\n```python async\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n\nawait page.emulate_media(media=\"print\")\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → False\nawait page.evaluate(\"matchMedia('print').matches\")\n# → True\n\nawait page.emulate_media()\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```python sync\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n\npage.emulate_media(media=\"print\")\npage.evaluate(\"matchMedia('screen').matches\")\n# → False\npage.evaluate(\"matchMedia('print').matches\")\n# → True\n\npage.emulate_media()\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```js\nawait page.emulateMedia({ colorScheme: 'dark' });\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);\n// → true\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);\n// → false\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);\n// → false\n```\n\n```java\npage.emulateMedia(new Page.EmulateMediaOptions().setColorScheme(ColorScheme.DARK));\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: dark)').matches\");\n// → true\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: light)').matches\");\n// → false\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: no-preference)').matches\");\n// → false\n```\n\n```python async\nawait page.emulate_media(color_scheme=\"dark\")\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n# → False\n```\n\n```python sync\npage.emulate_media(color_scheme=\"dark\")\npage.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\npage.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\npage.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "emulateMedia",
@@ -38327,6 +39033,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -40449,6 +41175,58 @@
           },
           {
             "type": "text",
+            "text": "It is possible to examine the request to decide the route action. For example, mocking all requests that contain some post data, and leaving all other requests as is:"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "await page.route('/api/**', route => {",
+              "  if (route.request().postData().includes('my-string'))",
+              "    route.fulfill({ body: 'mocked-data' });",
+              "  else",
+              "    route.continue();",
+              "});"
+            ],
+            "codeLang": "js"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "page.route(\"/api/**\", route -> {",
+              "  if (route.request().postData().contains(\"my-string\"))",
+              "    route.fulfill(new Route.FulfillOptions().setBody(\"mocked-data\"));",
+              "  else",
+              "    route.resume();",
+              "});"
+            ],
+            "codeLang": "java"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "def handle_route(route):",
+              "  if (\"my-string\" in route.request.post_data)",
+              "    route.fulfill(body=\"mocked-data\")",
+              "  else",
+              "    route.continue_()",
+              "await page.route(\"/api/**\", handle_route)"
+            ],
+            "codeLang": "python async"
+          },
+          {
+            "type": "code",
+            "lines": [
+              "def handle_route(route):",
+              "  if (\"my-string\" in route.request.post_data)",
+              "    route.fulfill(body=\"mocked-data\")",
+              "  else",
+              "    route.continue_()",
+              "page.route(\"/api/**\", handle_route)"
+            ],
+            "codeLang": "python sync"
+          },
+          {
+            "type": "text",
             "text": "Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request matches both handlers."
           },
           {
@@ -40462,7 +41240,7 @@
           }
         ],
         "required": true,
-        "comment": "Routing provides the capability to modify network requests that are made by a page.\n\nOnce routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\n> NOTE: The handler will only be called for the first url if the response is a redirect.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst page = await browser.newPage();\nawait page.route('**/*.{png,jpg,jpeg}', route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst page = await browser.newPage();\nawait page.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"),route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nPage routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request\nmatches both handlers.\n\nTo remove a route with its handler you can use [`method: Page.unroute`].\n\n> NOTE: Enabling routing disables http cache.",
+        "comment": "Routing provides the capability to modify network requests that are made by a page.\n\nOnce routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\n> NOTE: The handler will only be called for the first url if the response is a redirect.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst page = await browser.newPage();\nawait page.route('**/*.{png,jpg,jpeg}', route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst page = await browser.newPage();\nawait page.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"),route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nIt is possible to examine the request to decide the route action. For example, mocking all requests that contain some\npost data, and leaving all other requests as is:\n\n```js\nawait page.route('/api/**', route => {\n  if (route.request().postData().includes('my-string'))\n    route.fulfill({ body: 'mocked-data' });\n  else\n    route.continue();\n});\n```\n\n```java\npage.route(\"/api/**\", route -> {\n  if (route.request().postData().contains(\"my-string\"))\n    route.fulfill(new Route.FulfillOptions().setBody(\"mocked-data\"));\n  else\n    route.resume();\n});\n```\n\n```python async\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\nawait page.route(\"/api/**\", handle_route)\n```\n\n```python sync\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\npage.route(\"/api/**\", handle_route)\n```\n\nPage routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request\nmatches both handlers.\n\nTo remove a route with its handler you can use [`method: Page.unroute`].\n\n> NOTE: Enabling routing disables http cache.",
         "deprecated": false,
         "async": true,
         "alias": "route",
@@ -42539,6 +43317,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -43060,6 +43858,26 @@
                   "deprecated": false,
                   "async": false,
                   "alias": "timeout"
+                },
+                {
+                  "kind": "property",
+                  "langs": {},
+                  "name": "trial",
+                  "type": {
+                    "name": "boolean",
+                    "expression": "[boolean]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "trial"
                 }
               ]
             },
@@ -45002,24 +45820,44 @@
         "spec": [
           {
             "type": "text",
-            "text": "Waits for the matching request and returns it."
+            "text": "Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details about events."
           },
           {
             "type": "code",
             "lines": [
-              "const firstRequest = await page.waitForRequest('http://example.com/resource');",
-              "const finalRequest = await page.waitForRequest(request => request.url() === 'http://example.com' && request.method() === 'GET');",
-              "return firstRequest.url();"
+              "// Note that Promise.all prevents a race condition",
+              "// between clicking and waiting for the request.",
+              "const [request] = await Promise.all([",
+              "  // Waits for the next request with the specified url",
+              "  page.waitForRequest('https://example.com/resource'),",
+              "  // Triggers the request",
+              "  page.click('button.triggers-request'),",
+              "]);",
+              "",
+              "// Alternative way with a predicate.",
+              "const [request] = await Promise.all([",
+              "  // Waits for the next request matching some conditions",
+              "  page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),",
+              "  // Triggers the request",
+              "  page.click('button.triggers-request'),",
+              "]);"
             ],
             "codeLang": "js"
           },
           {
             "type": "code",
             "lines": [
-              "Request firstRequest = page.waitForRequest(\"http://example.com/resource\");",
-              "Object finalRequest = page.waitForRequest(",
-              "  request -> \"http://example.com\".equals(request.url()) && \"GET\".equals(request.method()), () -> {});",
-              "return firstRequest.url();"
+              "// Waits for the next response with the specified url",
+              "Request request = page.waitForRequest(\"https://example.com/resource\", () -> {",
+              "  // Triggers the request",
+              "  page.click(\"button.triggers-request\");",
+              "});",
+              "",
+              "// Waits for the next request matching some conditions",
+              "Request request = page.waitForRequest(request -> \"https://example.com\".equals(request.url()) && \"GET\".equals(request.method()), () -> {",
+              "  // Triggers the request",
+              "  page.click(\"button.triggers-request\");",
+              "});"
             ],
             "codeLang": "java"
           },
@@ -45030,6 +45868,7 @@
               "    await page.click('button')",
               "first_request = await first.value",
               "",
+              "# or with a lambda",
               "async with page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:",
               "    await page.click('img')",
               "second_request = await second.value"
@@ -45043,6 +45882,7 @@
               "    page.click('button')",
               "first_request = first.value",
               "",
+              "# or with a lambda",
               "with page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:",
               "    page.click('img')",
               "second_request = second.value"
@@ -45058,14 +45898,79 @@
           }
         ],
         "required": true,
-        "comment": "Waits for the matching request and returns it.\n\n```js\nconst firstRequest = await page.waitForRequest('http://example.com/resource');\nconst finalRequest = await page.waitForRequest(request => request.url() === 'http://example.com' && request.method() === 'GET');\nreturn firstRequest.url();\n```\n\n```java\nRequest firstRequest = page.waitForRequest(\"http://example.com/resource\");\nObject finalRequest = page.waitForRequest(\n  request -> \"http://example.com\".equals(request.url()) && \"GET\".equals(request.method()), () -> {});\nreturn firstRequest.url();\n```\n\n```python async\nasync with page.expect_request(\"http://example.com/resource\") as first:\n    await page.click('button')\nfirst_request = await first.value\n\nasync with page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    await page.click('img')\nsecond_request = await second.value\n```\n\n```python sync\nwith page.expect_request(\"http://example.com/resource\") as first:\n    page.click('button')\nfirst_request = first.value\n\nwith page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    page.click('img')\nsecond_request = second.value\n```\n\n```js\nawait page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');\n```\n",
+        "comment": "Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details\nabout events.\n\n```js\n// Note that Promise.all prevents a race condition\n// between clicking and waiting for the request.\nconst [request] = await Promise.all([\n  // Waits for the next request with the specified url\n  page.waitForRequest('https://example.com/resource'),\n  // Triggers the request\n  page.click('button.triggers-request'),\n]);\n\n// Alternative way with a predicate.\nconst [request] = await Promise.all([\n  // Waits for the next request matching some conditions\n  page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),\n  // Triggers the request\n  page.click('button.triggers-request'),\n]);\n```\n\n```java\n// Waits for the next response with the specified url\nRequest request = page.waitForRequest(\"https://example.com/resource\", () -> {\n  // Triggers the request\n  page.click(\"button.triggers-request\");\n});\n\n// Waits for the next request matching some conditions\nRequest request = page.waitForRequest(request -> \"https://example.com\".equals(request.url()) && \"GET\".equals(request.method()), () -> {\n  // Triggers the request\n  page.click(\"button.triggers-request\");\n});\n```\n\n```python async\nasync with page.expect_request(\"http://example.com/resource\") as first:\n    await page.click('button')\nfirst_request = await first.value\n\n# or with a lambda\nasync with page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    await page.click('img')\nsecond_request = await second.value\n```\n\n```python sync\nwith page.expect_request(\"http://example.com/resource\") as first:\n    page.click('button')\nfirst_request = first.value\n\n# or with a lambda\nwith page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    page.click('img')\nsecond_request = second.value\n```\n\n```js\nawait page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "waitForRequest",
         "args": [
           {
             "kind": "property",
-            "langs": {},
+            "langs": {
+              "overrides": {
+                "js": {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "js"
+                    ],
+                    "aliases": {},
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "urlOrPredicate",
+                  "type": {
+                    "name": "",
+                    "union": [
+                      {
+                        "name": "string"
+                      },
+                      {
+                        "name": "RegExp"
+                      },
+                      {
+                        "name": "function",
+                        "args": [
+                          {
+                            "name": "Request"
+                          }
+                        ],
+                        "returnType": {
+                          "name": "",
+                          "union": [
+                            {
+                              "name": "boolean"
+                            },
+                            {
+                              "name": "Promise",
+                              "templates": [
+                                {
+                                  "name": "boolean"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "expression": "[string]|[RegExp]|[function]([Request]):[boolean]|[Promise]<[boolean]>"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Request URL string, regex or predicate receiving [Request] object."
+                    }
+                  ],
+                  "argsArray": [],
+                  "required": true,
+                  "comment": "",
+                  "args": {},
+                  "clazz": null,
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "urlOrPredicate"
+                }
+              }
+            },
             "name": "urlOrPredicate",
             "type": {
               "name": "",
@@ -45193,23 +46098,44 @@
         "spec": [
           {
             "type": "text",
-            "text": "Returns the matched response."
+            "text": "Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events."
           },
           {
             "type": "code",
             "lines": [
-              "const firstResponse = await page.waitForResponse('https://example.com/resource');",
-              "const finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);",
-              "return finalResponse.ok();"
+              "// Note that Promise.all prevents a race condition",
+              "// between clicking and waiting for the response.",
+              "const [response] = await Promise.all([",
+              "  // Waits for the next response with the specified url",
+              "  page.waitForResponse('https://example.com/resource'),",
+              "  // Triggers the response",
+              "  page.click('button.triggers-response'),",
+              "]);",
+              "",
+              "// Alternative way with a predicate.",
+              "const [response] = await Promise.all([",
+              "  // Waits for the next response matching some conditions",
+              "  page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),",
+              "  // Triggers the response",
+              "  page.click('button.triggers-response'),",
+              "]);"
             ],
             "codeLang": "js"
           },
           {
             "type": "code",
             "lines": [
-              "Response firstResponse = page.waitForResponse(\"https://example.com/resource\", () -> {});",
-              "Response finalResponse = page.waitForResponse(response -> \"https://example.com\".equals(response.url()) && response.status() == 200, () -> {});",
-              "return finalResponse.ok();"
+              "// Waits for the next response with the specified url",
+              "Response response = page.waitForResponse(\"https://example.com/resource\", () -> {",
+              "  // Triggers the response",
+              "  page.click(\"button.triggers-response\");",
+              "});",
+              "",
+              "// Waits for the next response matching some conditions",
+              "Response response = page.waitForResponse(response -> \"https://example.com\".equals(response.url()) && response.status() == 200, () -> {",
+              "  // Triggers the response",
+              "  page.click(\"button.triggers-response\");",
+              "});"
             ],
             "codeLang": "java"
           },
@@ -45247,14 +46173,79 @@
           }
         ],
         "required": true,
-        "comment": "Returns the matched response.\n\n```js\nconst firstResponse = await page.waitForResponse('https://example.com/resource');\nconst finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);\nreturn finalResponse.ok();\n```\n\n```java\nResponse firstResponse = page.waitForResponse(\"https://example.com/resource\", () -> {});\nResponse finalResponse = page.waitForResponse(response -> \"https://example.com\".equals(response.url()) && response.status() == 200, () -> {});\nreturn finalResponse.ok();\n```\n\n```python async\nasync with page.expect_response(\"https://example.com/resource\") as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nasync with page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n\n```python sync\nwith page.expect_response(\"https://example.com/resource\") as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nwith page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n",
+        "comment": "Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.\n\n```js\n// Note that Promise.all prevents a race condition\n// between clicking and waiting for the response.\nconst [response] = await Promise.all([\n  // Waits for the next response with the specified url\n  page.waitForResponse('https://example.com/resource'),\n  // Triggers the response\n  page.click('button.triggers-response'),\n]);\n\n// Alternative way with a predicate.\nconst [response] = await Promise.all([\n  // Waits for the next response matching some conditions\n  page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),\n  // Triggers the response\n  page.click('button.triggers-response'),\n]);\n```\n\n```java\n// Waits for the next response with the specified url\nResponse response = page.waitForResponse(\"https://example.com/resource\", () -> {\n  // Triggers the response\n  page.click(\"button.triggers-response\");\n});\n\n// Waits for the next response matching some conditions\nResponse response = page.waitForResponse(response -> \"https://example.com\".equals(response.url()) && response.status() == 200, () -> {\n  // Triggers the response\n  page.click(\"button.triggers-response\");\n});\n```\n\n```python async\nasync with page.expect_response(\"https://example.com/resource\") as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nasync with page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n\n```python sync\nwith page.expect_response(\"https://example.com/resource\") as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nwith page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "waitForResponse",
         "args": [
           {
             "kind": "property",
-            "langs": {},
+            "langs": {
+              "overrides": {
+                "js": {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "js"
+                    ],
+                    "aliases": {},
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "urlOrPredicate",
+                  "type": {
+                    "name": "",
+                    "union": [
+                      {
+                        "name": "string"
+                      },
+                      {
+                        "name": "RegExp"
+                      },
+                      {
+                        "name": "function",
+                        "args": [
+                          {
+                            "name": "Response"
+                          }
+                        ],
+                        "returnType": {
+                          "name": "",
+                          "union": [
+                            {
+                              "name": "boolean"
+                            },
+                            {
+                              "name": "Promise",
+                              "templates": [
+                                {
+                                  "name": "boolean"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "expression": "[string]|[RegExp]|[function]([Response]):[boolean]|[Promise]<[boolean]>"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Request URL string, regex or predicate receiving [Response] object."
+                    }
+                  ],
+                  "argsArray": [],
+                  "required": true,
+                  "comment": "",
+                  "args": {},
+                  "clazz": null,
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "urlOrPredicate"
+                }
+              }
+            },
             "name": "urlOrPredicate",
             "type": {
               "name": "",
@@ -48229,7 +49220,7 @@
               "        \"foo\": \"bar\" # set \"foo\" header",
               "        \"origin\": None # remove \"origin\" header",
               "    }",
-              "    await route.continue(headers=headers)",
+              "    await route.continue_(headers=headers)",
               "}",
               "await page.route(\"**/*\", handle)"
             ],
@@ -48245,7 +49236,7 @@
               "        \"foo\": \"bar\" # set \"foo\" header",
               "        \"origin\": None # remove \"origin\" header",
               "    }",
-              "    route.continue(headers=headers)",
+              "    route.continue_(headers=headers)",
               "}",
               "page.route(\"**/*\", handle)"
             ],
@@ -48253,7 +49244,7 @@
           }
         ],
         "required": true,
-        "comment": "Continues route's request with optional overrides.\n\n```js\nawait page.route('**/*', (route, request) => {\n  // Override headers\n  const headers = {\n    ...request.headers(),\n    foo: 'bar', // set \"foo\" header\n    origin: undefined, // remove \"origin\" header\n  };\n  route.continue({headers});\n});\n```\n\n```java\npage.route(\"**/*\", route -> {\n  // Override headers\n  Map<String, String> headers = new HashMap<>(route.request().headers());\n  headers.put(\"foo\", \"bar\"); // set \"foo\" header\n  headers.remove(\"origin\"); // remove \"origin\" header\n  route.resume(new Route.ResumeOptions().setHeaders(headers));\n});\n```\n\n```python async\nasync def handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    await route.continue(headers=headers)\n}\nawait page.route(\"**/*\", handle)\n```\n\n```python sync\ndef handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    route.continue(headers=headers)\n}\npage.route(\"**/*\", handle)\n```\n",
+        "comment": "Continues route's request with optional overrides.\n\n```js\nawait page.route('**/*', (route, request) => {\n  // Override headers\n  const headers = {\n    ...request.headers(),\n    foo: 'bar', // set \"foo\" header\n    origin: undefined, // remove \"origin\" header\n  };\n  route.continue({headers});\n});\n```\n\n```java\npage.route(\"**/*\", route -> {\n  // Override headers\n  Map<String, String> headers = new HashMap<>(route.request().headers());\n  headers.put(\"foo\", \"bar\"); // set \"foo\" header\n  headers.remove(\"origin\"); // remove \"origin\" header\n  route.resume(new Route.ResumeOptions().setHeaders(headers));\n});\n```\n\n```python async\nasync def handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    await route.continue_(headers=headers)\n}\nawait page.route(\"**/*\", handle)\n```\n\n```python sync\ndef handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    route.continue_(headers=headers)\n}\npage.route(\"**/*\", handle)\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "continue",
@@ -49037,7 +50028,7 @@
     "spec": [
       {
         "type": "li",
-        "text": "extends: [Error]",
+        "text": "extends: `Error`",
         "liType": "bullet"
       },
       {
@@ -49047,7 +50038,7 @@
     ],
     "extends": "Error",
     "langs": {},
-    "comment": "- extends: [Error]\n\nTimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Page.waitForSelector`]\nor [`method: BrowserType.launch`].",
+    "comment": "- extends: `Error`\n\nTimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Page.waitForSelector`]\nor [`method: BrowserType.launch`].",
     "members": []
   },
   {

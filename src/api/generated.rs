@@ -500,7 +500,7 @@ impl Browser {
         >,
         #[doc = "A list of permissions to grant to all pages in this context. See [`method: BrowserContext.grantPermissions`] for more\ndetails."]
         permissions: Option<Vec<String>>,
-        #[doc = "Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this\noption to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example\n`launch({ proxy: { server: 'per-context' } })`."]
+        #[doc = "Network proxy settings to use with this context.\n\n> NOTE: For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all\ncontexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: {\nserver: 'http://per-context' } })`."]
         proxy: Option<NotImplementedYet>,
         #[doc = "Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not\nspecified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved."]
         record_har: Option<NotImplementedYet>,
@@ -567,7 +567,7 @@ impl Browser {
         >,
         #[doc = "A list of permissions to grant to all pages in this context. See [`method: BrowserContext.grantPermissions`] for more\ndetails."]
         permissions: Option<Vec<String>>,
-        #[doc = "Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this\noption to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example\n`launch({ proxy: { server: 'per-context' } })`."]
+        #[doc = "Network proxy settings to use with this context.\n\n> NOTE: For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all\ncontexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: {\nserver: 'http://per-context' } })`."]
         proxy: Option<NotImplementedYet>,
         #[doc = "Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not\nspecified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved."]
         record_har: Option<NotImplementedYet>,
@@ -601,7 +601,7 @@ impl Browser {
     ) -> Result<Page, Arc<Error>> {
         todo!()
     }
-    #[doc = "> NOTE: Tracing is only supported on Chromium-based browsers.\n\nYou can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can be\nopened in Chrome DevTools performance panel.\n\n```js\nawait browser.startTracing(page, {path: 'trace.json'});\nawait page.goto('https://www.google.com');\nawait browser.stopTracing();\n```\n\n```python async\nawait browser.start_tracing(page, path=\"trace.json\")\nawait page.goto(\"https://www.google.com\")\nawait browser.stop_tracing()\n```\n\n```python sync\nbrowser.start_tracing(page, path=\"trace.json\")\npage.goto(\"https://www.google.com\")\nbrowser.stop_tracing()\n```\n"]
+    #[doc = "> NOTE: Tracing is only supported on Chromium-based browsers.\n\nYou can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can be\nopened in Chrome DevTools performance panel.\n\n```js\nawait browser.startTracing(page, {path: 'trace.json'});\nawait page.goto('https://www.google.com');\nawait browser.stopTracing();\n```\n\n```java\nbrowser.startTracing(page, new Browser.StartTracingOptions()\n  .setPath(Paths.get(\"trace.json\")));\npage.goto('https://www.google.com');\nbrowser.stopTracing();\n```\n\n```python async\nawait browser.start_tracing(page, path=\"trace.json\")\nawait page.goto(\"https://www.google.com\")\nawait browser.stop_tracing()\n```\n\n```python sync\nbrowser.start_tracing(page, path=\"trace.json\")\npage.goto(\"https://www.google.com\")\nbrowser.stop_tracing()\n```\n"]
     fn start_tracing(
         &self,
         page : Option < Page >,
@@ -704,7 +704,7 @@ impl BrowserContext {
     fn new_page(&self) -> Result<Page, Arc<Error>> { todo!() }
     #[doc = "Returns all open pages in the context."]
     fn pages(&self) -> Result<Vec<Page>, Error> { todo!() }
-    #[doc = "Routing provides the capability to modify network requests that are made by any page in the browser context. Once route\nis enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst context = await browser.newContext();\nawait context.route('**/*.{png,jpg,jpeg}', route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst context = await browser.newContext();\nawait context.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"), route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\npage = context.new_page()\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nPage routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both\nhandlers.\n\nTo remove a route with its handler you can use [`method: BrowserContext.unroute`].\n\n> NOTE: Enabling routing disables http cache."]
+    #[doc = "Routing provides the capability to modify network requests that are made by any page in the browser context. Once route\nis enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst context = await browser.newContext();\nawait context.route('**/*.{png,jpg,jpeg}', route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst context = await browser.newContext();\nawait context.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nconst page = await context.newPage();\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nBrowserContext context = browser.newContext();\ncontext.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"), route -> route.abort());\nPage page = context.newPage();\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\ncontext = await browser.new_context()\npage = await context.new_page()\nawait context.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\ncontext = browser.new_context()\npage = context.new_page()\ncontext.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage = await context.new_page()\npage = context.new_page()\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nIt is possible to examine the request to decide the route action. For example, mocking all requests that contain some\npost data, and leaving all other requests as is:\n\n```js\nawait context.route('/api/**', route => {\n  if (route.request().postData().includes('my-string'))\n    route.fulfill({ body: 'mocked-data' });\n  else\n    route.continue();\n});\n```\n\n```java\ncontext.route(\"/api/**\", route -> {\n  if (route.request().postData().contains(\"my-string\"))\n    route.fulfill(new Route.FulfillOptions().setBody(\"mocked-data\"));\n  else\n    route.resume();\n});\n```\n\n```python async\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\nawait context.route(\"/api/**\", handle_route)\n```\n\n```python sync\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\ncontext.route(\"/api/**\", handle_route)\n```\n\nPage routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both\nhandlers.\n\nTo remove a route with its handler you can use [`method: BrowserContext.unroute`].\n\n> NOTE: Enabling routing disables http cache."]
     fn route(
         &self,
         #[doc = "A glob pattern, regex pattern or predicate receiving [URL] to match while routing."]
@@ -911,6 +911,8 @@ impl BrowserType {
         #[doc = ""] params: NotImplementedYet,
         #[doc = "A browser websocket endpoint to connect to."] ws_endpoint: String,
         #[doc = "options"]
+        #[doc = "Additional HTTP headers to be sent with web socket connect request. Optional."]
+        headers: Option<Map<String, String>>,
         #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
         slow_mo: Option<f64>,
         #[doc = "Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
@@ -925,6 +927,8 @@ impl BrowserType {
         #[doc = "A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or\n`ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`."]
         endpoint_u_r_l: String,
         #[doc = "options"]
+        #[doc = "Additional HTTP headers to be sent with connect request. Optional."]
+        headers: Option<Map<String, String>>,
         #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
         slow_mo: Option<f64>,
         #[doc = "Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to\ndisable timeout."]
@@ -988,7 +992,8 @@ impl BrowserType {
         #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
         args: Option<Vec<String>>,
         #[doc = "Toggles bypassing page's Content-Security-Policy."] bypass_c_s_p: Option<bool>,
-        #[doc = "Browser distribution channel."] channel: Option<BrowserChannel>,
+        #[doc = "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge)."]
+        channel: Option<BrowserChannel>,
         #[doc = "Enable Chromium sandboxing. Defaults to `true`."] chromium_sandbox: Option<bool>,
         #[doc = "Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See\n[`method: Page.emulateMedia`] for more details. Defaults to `'light'`."]
         color_scheme: Option<ColorScheme>,
@@ -1074,6 +1079,8 @@ impl BrowserType {
         #[doc = "options"]
         #[doc = "Additional arguments to pass to the browser instance. The list of Chromium flags can be found\n[here](http://peter.sh/experiments/chromium-command-line-switches/)."]
         args: Option<Vec<String>>,
+        #[doc = "Browser distribution channel. Read more about using\n[Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge)."]
+        channel: Option<BrowserChannel>,
         #[doc = "Enable Chromium sandboxing. Defaults to `true`."] chromium_sandbox: Option<bool>,
         #[doc = "**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`\noption will be set `false`."]
         devtools: Option<bool>,
@@ -1107,6 +1114,8 @@ impl BrowserType {
 struct NotImplementedYetparams {
     #[doc = "A browser websocket endpoint to connect to."]
     ws_endpoint: String,
+    #[doc = "Additional HTTP headers to be sent with web socket connect request. Optional."]
+    headers: Option<Map<String, String>>,
     #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
     slow_mo: Option<f64>,
     #[doc = "Logger sink for Playwright logging. Optional."]
@@ -1117,6 +1126,8 @@ struct NotImplementedYetparams {
 struct NotImplementedYetparams {
     #[doc = "A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or\n`ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`."]
     endpoint_u_r_l: String,
+    #[doc = "Additional HTTP headers to be sent with connect request. Optional."]
+    headers: Option<Map<String, String>>,
     #[doc = "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.\nDefaults to 0."]
     slow_mo: Option<f64>,
     #[doc = "Logger sink for Playwright logging. Optional."]
@@ -1246,6 +1257,13 @@ impl Electron {
 }
 #[doc = "Electron application representation. You can use [`method: Electron.launch`] to obtain the application instance. This\ninstance you can control main electron process as well as work with Electron windows:\n\n```js\nconst { _electron: electron } = require('playwright');\n\n(async () => {\n  // Launch Electron app.\n  const electronApp = await electron.launch({ args: ['main.js'] });\n\n  // Evaluation expression in the Electron context.\n  const appPath = await electronApp.evaluate(async ({ app }) => {\n    // This runs in the main Electron process, parameter here is always\n    // the result of the require('electron') in the main app script.\n    return app.getAppPath();\n  });\n  console.log(appPath);\n\n  // Get the first window that the app opens, wait if necessary.\n  const window = await electronApp.firstWindow();\n  // Print the title.\n  console.log(await window.title());\n  // Capture a screenshot.\n  await window.screenshot({ path: 'intro.png' });\n  // Direct Electron console to Node terminal.\n  window.on('console', console.log);\n  // Click button.\n  await window.click('text=Click me');\n  // Exit app.\n  await electronApp.close();\n})();\n```\n"]
 impl ElectronApplication {
+    #[doc = "Returns the BrowserWindow object that corresponds to the given Playwright page."]
+    fn browser_window(
+        &self,
+        #[doc = "Page to retrieve the window for."] page: Page
+    ) -> Result<JsHandle, Arc<Error>> {
+        todo!()
+    }
     #[doc = "Closes Electron application."]
     fn close(&self) -> Result<(), Arc<Error>> { todo!() }
     #[doc = "This method returns browser context that can be used for setting up context-wide routing, etc."]
@@ -1320,7 +1338,9 @@ impl ElementHandle {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1342,7 +1362,9 @@ impl ElementHandle {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1365,7 +1387,9 @@ impl ElementHandle {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1434,7 +1458,9 @@ impl ElementHandle {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1566,7 +1592,9 @@ impl ElementHandle {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1597,7 +1625,9 @@ impl ElementHandle {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1679,6 +1709,16 @@ enum NotImplementedYetstate {
     NotImplementedYet(disabled),
     NotImplementedYet(editable)
 }
+#[doc = "- extends: [Exception]\n\nError is raised whenever certain operations are terminated abnormally, e.g. browser closes while\n[`method: Page.evaluate`] is running. All Playwright exceptions inherit from this class."]
+#[doc = "Extends Exception"]
+impl Error {
+    #[doc = "Message of the error."]
+    pub fn message(&self) -> str {}
+    #[doc = "Name of the error which got thrown inside the browser. Optional."]
+    pub fn name(&self) -> str {}
+    #[doc = "Stack of the error which got thrown inside the browser. Optional."]
+    pub fn stack(&self) -> str {}
+}
 #[doc = "`FileChooser` objects are dispatched by the page in the [`event: Page.fileChooser`] event.\n\n```js\nconst [fileChooser] = await Promise.all([\n  page.waitForEvent('filechooser'),\n  page.click('upload')\n]);\nawait fileChooser.setFiles('myfile.pdf');\n```\n\n```java\nFileChooser fileChooser = page.waitForFileChooser(() -> page.click(\"upload\"));\nfileChooser.setFiles(Paths.get(\"myfile.pdf\"));\n```\n\n```python async\nasync with page.expect_file_chooser() as fc_info:\n    await page.click(\"upload\")\nfile_chooser = await fc_info.value\nawait file_chooser.set_files(\"myfile.pdf\")\n```\n\n```python sync\nwith page.expect_file_chooser() as fc_info:\n    page.click(\"upload\")\nfile_chooser = fc_info.value\nfile_chooser.set_files(\"myfile.pdf\")\n```\n"]
 impl FileChooser {
     #[doc = "Returns input element associated with this file chooser."]
@@ -1755,7 +1795,9 @@ impl Frame {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1781,7 +1823,9 @@ impl Frame {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1806,7 +1850,9 @@ impl Frame {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -1932,7 +1978,9 @@ impl Frame {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -2129,7 +2177,9 @@ impl Frame {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -2175,7 +2225,9 @@ impl Frame {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -2376,7 +2428,7 @@ impl Keyboard {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.\n\nTo press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].\n\n```js\nawait page.keyboard.type('Hello'); // Types instantly\nawait page.keyboard.type('World', {delay: 100}); // Types slower, like a user\n```\n\n```java\n// Types instantly\npage.keyboard().type(\"Hello\");\n// Types slower, like a user\npage.keyboard().type(\"World\", new Keyboard.TypeOptions().setDelay(100));\n```\n\n```python async\nawait page.keyboard.type(\"Hello\") # types instantly\nawait page.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n```python sync\npage.keyboard.type(\"Hello\") # types instantly\npage.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n> NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case."]
+    #[doc = "Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.\n\nTo press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].\n\n```js\nawait page.keyboard.type('Hello'); // Types instantly\nawait page.keyboard.type('World', {delay: 100}); // Types slower, like a user\n```\n\n```java\n// Types instantly\npage.keyboard().type(\"Hello\");\n// Types slower, like a user\npage.keyboard().type(\"World\", new Keyboard.TypeOptions().setDelay(100));\n```\n\n```python async\nawait page.keyboard.type(\"Hello\") # types instantly\nawait page.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n```python sync\npage.keyboard.type(\"Hello\") # types instantly\npage.keyboard.type(\"World\", delay=100) # types slower, like a user\n```\n\n> NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.\n> NOTE: For characters that are not on a US keyboard, only an `input` event will be sent."]
     fn r#type(
         &self,
         #[doc = "A text to type into a focused element."] text: String,
@@ -2565,7 +2617,9 @@ impl Page {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -2589,7 +2643,9 @@ impl Page {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -2625,7 +2681,9 @@ impl Page {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -2644,7 +2702,7 @@ impl Page {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "```js\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n\nawait page.emulateMedia({ media: 'print' });\nawait page.evaluate(() => matchMedia('screen').matches);\n// → false\nawait page.evaluate(() => matchMedia('print').matches);\n// → true\n\nawait page.emulateMedia({});\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n```\n\n```java\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n\npage.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.PRINT));\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → false\npage.evaluate(\"() => matchMedia('print').matches\");\n// → true\n\npage.emulateMedia(new Page.EmulateMediaOptions());\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n```\n\n```python async\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n\nawait page.emulate_media(media=\"print\")\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → False\nawait page.evaluate(\"matchMedia('print').matches\")\n# → True\n\nawait page.emulate_media()\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```python sync\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n\npage.emulate_media(media=\"print\")\npage.evaluate(\"matchMedia('screen').matches\")\n# → False\npage.evaluate(\"matchMedia('print').matches\")\n# → True\n\npage.emulate_media()\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```js\nawait page.emulateMedia({ colorScheme: 'dark' });\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);\n// → true\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);\n// → false\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);\n// → false\n```\n\n```java\npage.emulateMedia(new Page.EmulateMediaOptions().setColorScheme(ColorScheme.DARK));\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: dark)').matches\");\n// → true\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: light)').matches\");\n// → false\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: no-preference)').matches\");\n// → false\n```\n\n```python async\nawait page.emulate_media(color_scheme=\"dark\")\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n# → False\n```\n\n```python sync\npage.emulate_media(color_scheme=\"dark\")\npage.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\npage.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\npage.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n```\n"]
+    #[doc = "This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media\nfeature, using the `colorScheme` argument.\n\n```js\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n\nawait page.emulateMedia({ media: 'print' });\nawait page.evaluate(() => matchMedia('screen').matches);\n// → false\nawait page.evaluate(() => matchMedia('print').matches);\n// → true\n\nawait page.emulateMedia({});\nawait page.evaluate(() => matchMedia('screen').matches);\n// → true\nawait page.evaluate(() => matchMedia('print').matches);\n// → false\n```\n\n```java\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n\npage.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.PRINT));\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → false\npage.evaluate(\"() => matchMedia('print').matches\");\n// → true\n\npage.emulateMedia(new Page.EmulateMediaOptions());\npage.evaluate(\"() => matchMedia('screen').matches\");\n// → true\npage.evaluate(\"() => matchMedia('print').matches\");\n// → false\n```\n\n```python async\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n\nawait page.emulate_media(media=\"print\")\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → False\nawait page.evaluate(\"matchMedia('print').matches\")\n# → True\n\nawait page.emulate_media()\nawait page.evaluate(\"matchMedia('screen').matches\")\n# → True\nawait page.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```python sync\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n\npage.emulate_media(media=\"print\")\npage.evaluate(\"matchMedia('screen').matches\")\n# → False\npage.evaluate(\"matchMedia('print').matches\")\n# → True\n\npage.emulate_media()\npage.evaluate(\"matchMedia('screen').matches\")\n# → True\npage.evaluate(\"matchMedia('print').matches\")\n# → False\n```\n\n```js\nawait page.emulateMedia({ colorScheme: 'dark' });\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);\n// → true\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);\n// → false\nawait page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);\n// → false\n```\n\n```java\npage.emulateMedia(new Page.EmulateMediaOptions().setColorScheme(ColorScheme.DARK));\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: dark)').matches\");\n// → true\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: light)').matches\");\n// → false\npage.evaluate(\"() => matchMedia('(prefers-color-scheme: no-preference)').matches\");\n// → false\n```\n\n```python async\nawait page.emulate_media(color_scheme=\"dark\")\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\nawait page.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n# → False\n```\n\n```python sync\npage.emulate_media(color_scheme=\"dark\")\npage.evaluate(\"matchMedia('(prefers-color-scheme: dark)').matches\")\n# → True\npage.evaluate(\"matchMedia('(prefers-color-scheme: light)').matches\")\n# → False\npage.evaluate(\"matchMedia('(prefers-color-scheme: no-preference)').matches\")\n```\n"]
     fn emulate_media(
         &self,
         #[doc = "options"]
@@ -2824,7 +2882,9 @@ impl Page {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -3001,7 +3061,7 @@ impl Page {
     ) -> Result<Option<Response>, Arc<Error>> {
         todo!()
     }
-    #[doc = "Routing provides the capability to modify network requests that are made by a page.\n\nOnce routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\n> NOTE: The handler will only be called for the first url if the response is a redirect.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst page = await browser.newPage();\nawait page.route('**/*.{png,jpg,jpeg}', route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst page = await browser.newPage();\nawait page.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"),route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nPage routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request\nmatches both handlers.\n\nTo remove a route with its handler you can use [`method: Page.unroute`].\n\n> NOTE: Enabling routing disables http cache."]
+    #[doc = "Routing provides the capability to modify network requests that are made by a page.\n\nOnce routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.\n\n> NOTE: The handler will only be called for the first url if the response is a redirect.\n\nAn example of a naive handler that aborts all image requests:\n\n```js\nconst page = await browser.newPage();\nawait page.route('**/*.{png,jpg,jpeg}', route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(\"**/*.{png,jpg,jpeg}\", route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(\"**/*.{png,jpg,jpeg}\", lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nor the same snippet using a regex pattern instead:\n\n```js\nconst page = await browser.newPage();\nawait page.route(/(\\.png$)|(\\.jpg$)/, route => route.abort());\nawait page.goto('https://example.com');\nawait browser.close();\n```\n\n```java\nPage page = browser.newPage();\npage.route(Pattern.compile(\"(\\\\.png$)|(\\\\.jpg$)\"),route -> route.abort());\npage.navigate(\"https://example.com\");\nbrowser.close();\n```\n\n```python async\npage = await browser.new_page()\nawait page.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\nawait page.goto(\"https://example.com\")\nawait browser.close()\n```\n\n```python sync\npage = browser.new_page()\npage.route(re.compile(r\"(\\.png$)|(\\.jpg$)\"), lambda route: route.abort())\npage.goto(\"https://example.com\")\nbrowser.close()\n```\n\nIt is possible to examine the request to decide the route action. For example, mocking all requests that contain some\npost data, and leaving all other requests as is:\n\n```js\nawait page.route('/api/**', route => {\n  if (route.request().postData().includes('my-string'))\n    route.fulfill({ body: 'mocked-data' });\n  else\n    route.continue();\n});\n```\n\n```java\npage.route(\"/api/**\", route -> {\n  if (route.request().postData().contains(\"my-string\"))\n    route.fulfill(new Route.FulfillOptions().setBody(\"mocked-data\"));\n  else\n    route.resume();\n});\n```\n\n```python async\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\nawait page.route(\"/api/**\", handle_route)\n```\n\n```python sync\ndef handle_route(route):\n  if (\"my-string\" in route.request.post_data)\n    route.fulfill(body=\"mocked-data\")\n  else\n    route.continue_()\npage.route(\"/api/**\", handle_route)\n```\n\nPage routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request\nmatches both handlers.\n\nTo remove a route with its handler you can use [`method: Page.unroute`].\n\n> NOTE: Enabling routing disables http cache."]
     fn route(
         &self,
         #[doc = "A glob pattern, regex pattern or predicate receiving [URL] to match while routing."]
@@ -3125,7 +3185,9 @@ impl Page {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -3171,7 +3233,9 @@ impl Page {
         #[doc = "A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the\nelement."]
         position: Option<NotImplementedYet>,
         #[doc = "Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by\nusing the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods."]
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        #[doc = "When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to\n`false`. Useful to wait until the element is ready for the action without performing it."]
+        trial: Option<bool>
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
@@ -3304,7 +3368,7 @@ impl Page {
     ) -> Result<Page, Arc<Error>> {
         todo!()
     }
-    #[doc = "Waits for the matching request and returns it.\n\n```js\nconst firstRequest = await page.waitForRequest('http://example.com/resource');\nconst finalRequest = await page.waitForRequest(request => request.url() === 'http://example.com' && request.method() === 'GET');\nreturn firstRequest.url();\n```\n\n```java\nRequest firstRequest = page.waitForRequest(\"http://example.com/resource\");\nObject finalRequest = page.waitForRequest(\n  request -> \"http://example.com\".equals(request.url()) && \"GET\".equals(request.method()), () -> {});\nreturn firstRequest.url();\n```\n\n```python async\nasync with page.expect_request(\"http://example.com/resource\") as first:\n    await page.click('button')\nfirst_request = await first.value\n\nasync with page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    await page.click('img')\nsecond_request = await second.value\n```\n\n```python sync\nwith page.expect_request(\"http://example.com/resource\") as first:\n    page.click('button')\nfirst_request = first.value\n\nwith page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    page.click('img')\nsecond_request = second.value\n```\n\n```js\nawait page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');\n```\n"]
+    #[doc = "Waits for the matching request and returns it.  See [waiting for event](./events.md#waiting-for-event) for more details\nabout events.\n\n```js\n// Note that Promise.all prevents a race condition\n// between clicking and waiting for the request.\nconst [request] = await Promise.all([\n  // Waits for the next request with the specified url\n  page.waitForRequest('https://example.com/resource'),\n  // Triggers the request\n  page.click('button.triggers-request'),\n]);\n\n// Alternative way with a predicate.\nconst [request] = await Promise.all([\n  // Waits for the next request matching some conditions\n  page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),\n  // Triggers the request\n  page.click('button.triggers-request'),\n]);\n```\n\n```java\n// Waits for the next response with the specified url\nRequest request = page.waitForRequest(\"https://example.com/resource\", () -> {\n  // Triggers the request\n  page.click(\"button.triggers-request\");\n});\n\n// Waits for the next request matching some conditions\nRequest request = page.waitForRequest(request -> \"https://example.com\".equals(request.url()) && \"GET\".equals(request.method()), () -> {\n  // Triggers the request\n  page.click(\"button.triggers-request\");\n});\n```\n\n```python async\nasync with page.expect_request(\"http://example.com/resource\") as first:\n    await page.click('button')\nfirst_request = await first.value\n\n# or with a lambda\nasync with page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    await page.click('img')\nsecond_request = await second.value\n```\n\n```python sync\nwith page.expect_request(\"http://example.com/resource\") as first:\n    page.click('button')\nfirst_request = first.value\n\n# or with a lambda\nwith page.expect_request(lambda request: request.url == \"http://example.com\" and request.method == \"get\") as second:\n    page.click('img')\nsecond_request = second.value\n```\n\n```js\nawait page.waitForRequest(request => request.url().searchParams.get('foo') === 'bar' && request.url().searchParams.get('foo2') === 'bar2');\n```\n"]
     fn wait_for_request(
         &self,
         #[doc = "Request URL string, regex or predicate receiving `Request` object."]
@@ -3316,7 +3380,7 @@ impl Page {
     ) -> Result<Request, Arc<Error>> {
         todo!()
     }
-    #[doc = "Returns the matched response.\n\n```js\nconst firstResponse = await page.waitForResponse('https://example.com/resource');\nconst finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);\nreturn finalResponse.ok();\n```\n\n```java\nResponse firstResponse = page.waitForResponse(\"https://example.com/resource\", () -> {});\nResponse finalResponse = page.waitForResponse(response -> \"https://example.com\".equals(response.url()) && response.status() == 200, () -> {});\nreturn finalResponse.ok();\n```\n\n```python async\nasync with page.expect_response(\"https://example.com/resource\") as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nasync with page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n\n```python sync\nwith page.expect_response(\"https://example.com/resource\") as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nwith page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n"]
+    #[doc = "Returns the matched response. See [waiting for event](./events.md#waiting-for-event) for more details about events.\n\n```js\n// Note that Promise.all prevents a race condition\n// between clicking and waiting for the response.\nconst [response] = await Promise.all([\n  // Waits for the next response with the specified url\n  page.waitForResponse('https://example.com/resource'),\n  // Triggers the response\n  page.click('button.triggers-response'),\n]);\n\n// Alternative way with a predicate.\nconst [response] = await Promise.all([\n  // Waits for the next response matching some conditions\n  page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),\n  // Triggers the response\n  page.click('button.triggers-response'),\n]);\n```\n\n```java\n// Waits for the next response with the specified url\nResponse response = page.waitForResponse(\"https://example.com/resource\", () -> {\n  // Triggers the response\n  page.click(\"button.triggers-response\");\n});\n\n// Waits for the next response matching some conditions\nResponse response = page.waitForResponse(response -> \"https://example.com\".equals(response.url()) && response.status() == 200, () -> {\n  // Triggers the response\n  page.click(\"button.triggers-response\");\n});\n```\n\n```python async\nasync with page.expect_response(\"https://example.com/resource\") as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nasync with page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    await page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n\n```python sync\nwith page.expect_response(\"https://example.com/resource\") as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n\n# or with a lambda\nwith page.expect_response(lambda response: response.url == \"https://example.com\" and response.status === 200) as response_info:\n    page.click(\"input\")\nresponse = response_info.value\nreturn response.ok\n```\n"]
     fn wait_for_response(
         &self,
         #[doc = "Request URL string, regex or predicate receiving `Response` object."]
@@ -3538,7 +3602,7 @@ enum NotImplementedYeturl {
 enum PageEventType {
     #[doc = "Emitted when the page closes."]
     Close,
-    #[doc = "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\npage.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n"]
+    #[doc = "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', async msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\nawait page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n"]
     Console,
     #[doc = "Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,\nongoing and subsequent operations will throw.\n\nThe most common way to deal with crashes is to catch an exception:\n\n```js\ntry {\n  // Crash might happen during a click.\n  await page.click('button');\n  // Or while waiting for an event.\n  await page.waitForEvent('popup');\n} catch (e) {\n  // When the page crashes, exception message contains 'crash'.\n}\n```\n\n```java\ntry {\n  // Crash might happen during a click.\n  page.click(\"button\");\n  // Or while waiting for an event.\n  page.waitForPopup(() -> {});\n} catch (PlaywrightException e) {\n  // When the page crashes, exception message contains \"crash\".\n}\n```\n\n```python async\ntry:\n    # crash might happen during a click.\n    await page.click(\"button\")\n    # or while waiting for an event.\n    await page.wait_for_event(\"popup\")\nexcept Error as e:\n    # when the page crashes, exception message contains \"crash\".\n```\n\n```python sync\ntry:\n    # crash might happen during a click.\n    page.click(\"button\")\n    # or while waiting for an event.\n    page.wait_for_event(\"popup\")\nexcept Error as e:\n    # when the page crashes, exception message contains \"crash\".\n```\n"]
     Crash,
@@ -3578,7 +3642,7 @@ enum PageEventType {
 enum PageEvent {
     #[doc = "Emitted when the page closes."]
     Close(Page),
-    #[doc = "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\npage.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n"]
+    #[doc = "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', async msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\nawait page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n"]
     Console(ConsoleMessage),
     #[doc = "Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,\nongoing and subsequent operations will throw.\n\nThe most common way to deal with crashes is to catch an exception:\n\n```js\ntry {\n  // Crash might happen during a click.\n  await page.click('button');\n  // Or while waiting for an event.\n  await page.waitForEvent('popup');\n} catch (e) {\n  // When the page crashes, exception message contains 'crash'.\n}\n```\n\n```java\ntry {\n  // Crash might happen during a click.\n  page.click(\"button\");\n  // Or while waiting for an event.\n  page.waitForPopup(() -> {});\n} catch (PlaywrightException e) {\n  // When the page crashes, exception message contains \"crash\".\n}\n```\n\n```python async\ntry:\n    # crash might happen during a click.\n    await page.click(\"button\")\n    # or while waiting for an event.\n    await page.wait_for_event(\"popup\")\nexcept Error as e:\n    # when the page crashes, exception message contains \"crash\".\n```\n\n```python sync\ntry:\n    # crash might happen during a click.\n    page.click(\"button\")\n    # or while waiting for an event.\n    page.wait_for_event(\"popup\")\nexcept Error as e:\n    # when the page crashes, exception message contains \"crash\".\n```\n"]
     Crash(Page),
@@ -3740,7 +3804,7 @@ impl Route {
     ) -> Result<(), Arc<Error>> {
         todo!()
     }
-    #[doc = "Continues route's request with optional overrides.\n\n```js\nawait page.route('**/*', (route, request) => {\n  // Override headers\n  const headers = {\n    ...request.headers(),\n    foo: 'bar', // set \"foo\" header\n    origin: undefined, // remove \"origin\" header\n  };\n  route.continue({headers});\n});\n```\n\n```java\npage.route(\"**/*\", route -> {\n  // Override headers\n  Map<String, String> headers = new HashMap<>(route.request().headers());\n  headers.put(\"foo\", \"bar\"); // set \"foo\" header\n  headers.remove(\"origin\"); // remove \"origin\" header\n  route.resume(new Route.ResumeOptions().setHeaders(headers));\n});\n```\n\n```python async\nasync def handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    await route.continue(headers=headers)\n}\nawait page.route(\"**/*\", handle)\n```\n\n```python sync\ndef handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    route.continue(headers=headers)\n}\npage.route(\"**/*\", handle)\n```\n"]
+    #[doc = "Continues route's request with optional overrides.\n\n```js\nawait page.route('**/*', (route, request) => {\n  // Override headers\n  const headers = {\n    ...request.headers(),\n    foo: 'bar', // set \"foo\" header\n    origin: undefined, // remove \"origin\" header\n  };\n  route.continue({headers});\n});\n```\n\n```java\npage.route(\"**/*\", route -> {\n  // Override headers\n  Map<String, String> headers = new HashMap<>(route.request().headers());\n  headers.put(\"foo\", \"bar\"); // set \"foo\" header\n  headers.remove(\"origin\"); // remove \"origin\" header\n  route.resume(new Route.ResumeOptions().setHeaders(headers));\n});\n```\n\n```python async\nasync def handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    await route.continue_(headers=headers)\n}\nawait page.route(\"**/*\", handle)\n```\n\n```python sync\ndef handle(route, request):\n    # override headers\n    headers = {\n        **request.headers,\n        \"foo\": \"bar\" # set \"foo\" header\n        \"origin\": None # remove \"origin\" header\n    }\n    route.continue_(headers=headers)\n}\npage.route(\"**/*\", handle)\n```\n"]
     fn r#continue(
         &self,
         #[doc = "options"]
@@ -3810,7 +3874,7 @@ enum NotImplementedYetscript {
     NotImplementedYet(String),
     NotImplementedYet(path)
 }
-#[doc = "- extends: [Error]\n\nTimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Page.waitForSelector`]\nor [`method: BrowserType.launch`]."]
+#[doc = "- extends: `Error`\n\nTimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Page.waitForSelector`]\nor [`method: BrowserType.launch`]."]
 #[doc = "Extends Error"]
 impl TimeoutError {}
 #[doc = "The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the\ntouchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true."]
