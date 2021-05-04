@@ -728,7 +728,8 @@ impl<'a> HoverArgs<'a> {
             modifiers: None,
             position: None,
             timeout: None,
-            force: None
+            force: None,
+            trial: None
         }
     }
 }

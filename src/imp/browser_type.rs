@@ -279,6 +279,7 @@ impl<'a> ConnectOverCdpArgs<'a> {
         Self {
             sdk_language: "rust",
             endpoint_url,
+            headers: None,
             timeout: None,
             slowmo: None
         }

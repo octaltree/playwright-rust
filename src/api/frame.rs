@@ -720,7 +720,7 @@ macro_rules! clicker {
                 /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
                 /// element.
                 position: Option<Position>,
-                timeout: Option<f64>
+                timeout: Option<f64>,
                 /// When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to
                 /// `false`. Useful to wait until the element is ready for the action without performing it.
                 trial: Option<bool>
@@ -816,7 +816,7 @@ impl<'a> HoverBuilder<'a> {
         /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
         /// element.
         position: Option<Position>,
-        timeout: Option<f64>
+        timeout: Option<f64>,
         /// When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to
         /// `false`. Useful to wait until the element is ready for the action without performing it.
         trial: Option<bool>
