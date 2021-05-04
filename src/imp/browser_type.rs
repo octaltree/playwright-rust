@@ -268,6 +268,7 @@ pub(crate) struct ConnectOverCdpArgs<'a> {
     sdk_language: &'static str,
     #[serde(rename = "endpointURL")]
     endpoint_url: &'a str,
+    pub(crate) headers: Option<HashMap<String, String>>,
     pub(crate) timeout: Option<f64>,
     #[serde(rename = "slowMo")]
     pub(crate) slowmo: Option<f64>
@@ -278,6 +279,7 @@ impl<'a> ConnectOverCdpArgs<'a> {
         Self {
             sdk_language: "rust",
             endpoint_url,
+            headers: None,
             timeout: None,
             slowmo: None
         }

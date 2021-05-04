@@ -280,6 +280,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         /// Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
         /// specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be saved.
         record_har: Option<RecordHar<'k>>,
+
         channel: Option<BrowserChannel>
     }
     //#[doc = "If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. Dangerous option;\nuse with care."]
@@ -317,6 +318,8 @@ impl<'a> ConnectOverCdpBuilder<'a> {
     }
 
     setter! {
+        /// Additional HTTP headers to be sent with web socket connect request. Optional.
+        headers: Option<HashMap<String, String>>,
         /// Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
         /// disable timeout.
         timeout: Option<f64>,

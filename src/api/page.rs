@@ -277,6 +277,9 @@ impl Page {
         ScreenshotBuilder::new(self.inner.clone())
     }
 
+    /// This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media
+    /// feature, using the `colorScheme` argument.
+    ///
     /// ```js
     /// await page.evaluate(() => matchMedia('screen').matches);
     ///// → true
@@ -353,11 +356,11 @@ pub enum Event {
     /// An example of handling `console` event:
     ///
     /// ```js
-    /// page.on('console', msg => {
+    /// page.on('console', async msg => {
     ///  for (let i = 0; i < msg.args().length; ++i)
     ///    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
     /// });
-    /// page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+    /// await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
     /// ```
     Console(ConsoleMessage),
     /// Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**

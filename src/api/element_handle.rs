@@ -421,7 +421,10 @@ impl HoverBuilder {
         /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
         /// element.
         position: Option<Position>,
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        /// When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to
+        /// `false`. Useful to wait until the element is ready for the action without performing it.
+        trial: Option<bool>
     }
 }
 
@@ -461,7 +464,10 @@ macro_rules! clicker {
                 /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
                 /// element.
                 position: Option<Position>,
-                timeout: Option<f64>
+                timeout: Option<f64>,
+                /// When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to
+                /// `false`. Useful to wait until the element is ready for the action without performing it.
+                trial: Option<bool>
             }
         }
     };
@@ -498,7 +504,10 @@ macro_rules! check_builder {
                 /// opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
                 /// inaccessible pages. Defaults to `false`.
                 no_wait_after: Option<bool>,
-                timeout: Option<f64>
+                timeout: Option<f64>,
+                /// When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to
+                /// `false`. Useful to wait until the element is ready for the action without performing it.
+                trial: Option<bool>
             }
         }
     };
@@ -537,7 +546,10 @@ impl TapBuilder {
         /// A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
         /// element.
         position: Option<Position>,
-        timeout: Option<f64>
+        timeout: Option<f64>,
+        /// When set, this method only performs the [actionability](https://playwright.dev/docs/actionability/) checks and skips the action. Defaults to
+        /// `false`. Useful to wait until the element is ready for the action without performing it.
+        trial: Option<bool>
     }
 }
 
