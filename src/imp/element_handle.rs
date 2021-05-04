@@ -283,7 +283,8 @@ pub(crate) struct HoverArgs {
     pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
-    pub(crate) force: Option<bool>
+    pub(crate) force: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 #[skip_serializing_none]
@@ -298,7 +299,8 @@ pub(crate) struct ClickArgs {
     pub(crate) click_count: Option<i32>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 #[skip_serializing_none]
@@ -308,7 +310,8 @@ pub(crate) struct CheckArgs {
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 #[skip_serializing_none]
@@ -319,7 +322,8 @@ pub(crate) struct TapArgs {
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 #[skip_serializing_none]

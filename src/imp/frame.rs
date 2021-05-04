@@ -630,7 +630,8 @@ pub(crate) struct ClickArgs<'a> {
     pub(crate) click_count: Option<i32>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 impl<'a> ClickArgs<'a> {
@@ -645,7 +646,8 @@ impl<'a> ClickArgs<'a> {
             click_count: None,
             timeout: None,
             force: None,
-            no_wait_after: None
+            no_wait_after: None,
+            trial: None
         }
     }
 }
@@ -715,7 +717,8 @@ pub(crate) struct HoverArgs<'a> {
     pub(crate) modifiers: Option<Vec<KeyboardModifier>>,
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
-    pub(crate) force: Option<bool>
+    pub(crate) force: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 impl<'a> HoverArgs<'a> {
@@ -758,7 +761,8 @@ pub(crate) struct TapArgs<'a> {
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 impl<'a> TapArgs<'a> {
@@ -769,7 +773,8 @@ impl<'a> TapArgs<'a> {
             position: None,
             timeout: None,
             force: None,
-            no_wait_after: None
+            no_wait_after: None,
+            trial: None
         }
     }
 }
@@ -811,7 +816,8 @@ pub(crate) struct CheckArgs<'a> {
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+    pub(crate) trial: Option<bool>
 }
 
 impl<'a> CheckArgs<'a> {
@@ -821,7 +827,8 @@ impl<'a> CheckArgs<'a> {
             position: None,
             timeout: None,
             force: None,
-            no_wait_after: None
+            no_wait_after: None,
+            trial: None
         }
     }
 }

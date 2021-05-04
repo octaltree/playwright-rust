@@ -121,7 +121,17 @@ impl Keyboard {
         inner.key_input_text(text).await
     }
 
+    /// Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+    ///
+    /// To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
+    ///
+    /// ```js
+    /// await page.keyboard.type('Hello'); // Types instantly
+    /// await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
+    /// ```
+    ///
     /// > NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+    /// > NOTE: For characters that are not on a US keyboard, only an `input` event will be sent.
     pub async fn r#type(&self, text: &str, delay: Option<f64>) -> Result<(), Arc<Error>> {
         let inner = upgrade(&self.inner)?;
         inner.key_type(text, delay).await

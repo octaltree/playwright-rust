@@ -238,10 +238,10 @@ impl File {
         Self { name, mime, buffer }
     }
 }
-/// Browser distribution channel. Read more about using
-/// [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
+/// Browser distribution channel.
+// TODO: kebab case
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum BrowserChannel {
     Chrome,
     ChromeBeta,
@@ -250,7 +250,8 @@ pub enum BrowserChannel {
     Msedge,
     MsedgeBeta,
     MsedgeDev,
-    MsedgeCanary
+    MsedgeCanary,
+    FirefoxStable
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
