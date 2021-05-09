@@ -12,8 +12,8 @@ pub use crate::{
 };
 use crate::{
     api::{
-        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, Frame,
-        Keyboard, Response, TouchScreen, Video, WebSocket, Worker
+        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, FileChooser,
+        Frame, Keyboard, Response, TouchScreen, Video, WebSocket, Worker
     },
     imp::{
         core::*,
@@ -386,7 +386,7 @@ pub enum Event {
     ///  await fileChooser.setFiles('/tmp/myfile.pdf');
     /// });
     /// ```
-    FileChooser,
+    // FileChooser(FileChooser),
     FrameAttached(Frame),
     FrameDetached(Frame),
     FrameNavigated(Frame),
@@ -437,7 +437,7 @@ impl From<Evt> for Event {
             Evt::Console(x) => Event::Console(ConsoleMessage::new(x)),
             Evt::Dialog => Event::Dialog,
             Evt::Download(x) => Event::Download(Download::new(x)),
-            Evt::FileChooser => Event::FileChooser,
+            // Evt::FileChooser(x) => Event::FileChooser(x),
             Evt::DomContentLoaded => Event::DomContentLoaded,
             Evt::PageError => Event::PageError,
             Evt::Request(x) => Event::Request(Request::new(x)),
@@ -466,7 +466,7 @@ impl IsEvent for Event {
             Self::Console(_) => EventType::Console,
             Self::Dialog => EventType::Dialog,
             Self::Download(_) => EventType::Download,
-            Self::FileChooser => EventType::FileChooser,
+            // Self::FileChooser(_) => EventType::FileChooser,
             Self::DomContentLoaded => EventType::DomContentLoaded,
             Self::PageError => EventType::PageError,
             Self::Request(_) => EventType::Request,

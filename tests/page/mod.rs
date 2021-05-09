@@ -1,6 +1,6 @@
 use super::Which;
 use futures::stream::StreamExt;
-use playwright::api::{page, BrowserContext, Geolocation, Page, Viewport};
+use playwright::api::{page, BrowserContext, File, Geolocation, Page, Viewport};
 
 macro_rules! concurrent {
     ($which:expr, $($e:expr),*) => {
@@ -39,6 +39,8 @@ pub async fn all(c: &BrowserContext, port: u16, which: Which) {
         query_selector_and_eval(c),
         input(c)
     );
+    // TODO
+    // file_chooser(c, port).await;
     if which != Which::Firefox {
         pdf_should_work(&page).await;
     }
@@ -565,3 +567,39 @@ async fn query_selector_and_eval(c: &BrowserContext) {
     );
     close(&p).await;
 }
+
+// async fn file_chooser(c: &BrowserContext, port: u16) {
+//    let p = new(c).await;
+//    let url = super::url_static(port, "/form.html");
+//    p.goto_builder(&url).goto().await.unwrap();
+//    let (maybe_file_chooser, _) = tokio::join!(
+//        p.expect_event(page::EventType::FileChooser),
+//        p.click_builder("input[type=file]").click()
+//    );
+//    let file_chooser = match maybe_file_chooser.unwrap() {
+//        page::Event::FileChooser(file_chooser) => file_chooser,
+//        _ => unreachable!()
+//    };
+//    assert_eq!(file_chooser.page(), p);
+//    assert!(file_chooser.is_multiple());
+//    assert_eq!(
+//        file_chooser.element(),
+//        p.query_selector("input[type=file]").await.unwrap().unwrap()
+//    );
+//    file_chooser
+//        .set_input_files_builder(File {
+//            name: "a".into(),
+//            mime: "text/plain".into(),
+//            buffer: "a\n".into()
+//        })
+//        .add_file(File {
+//            name: "b".into(),
+//            mime: "text/plain".into(),
+//            buffer: "b\n".into()
+//        })
+//        .set_input_files()
+//        .await
+//        .unwrap();
+//    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+//    close(&p).await;
+//}

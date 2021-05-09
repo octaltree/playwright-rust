@@ -70,8 +70,8 @@ impl RemoteObject for WebSocket {
         params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
-            "frameSent" => self.on_frame_sent(params)?,
-            "frameReceived" => self.on_frame_received(params)?,
+            "framesent" => self.on_frame_sent(params)?,
+            "framereceived" => self.on_frame_received(params)?,
             "error" => {
                 let error: Value = params.get("error").cloned().unwrap_or_default();
                 self.emit_event(Evt::Error(error));

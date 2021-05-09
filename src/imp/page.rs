@@ -3,6 +3,7 @@ use crate::imp::{
     console_message::ConsoleMessage,
     core::*,
     download::Download,
+    file_hooser::FileChooser,
     frame::Frame,
     prelude::*,
     request::Request,
@@ -501,6 +502,24 @@ impl Page {
         self.emit_event(Evt::Video(video));
         Ok(())
     }
+
+    fn on_file_chooser(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct De {
+            element: OnlyGuid,
+            is_multiple: bool
+        }
+        let De {
+            element: OnlyGuid { guid },
+            is_multiple
+        } = serde_json::from_value(params.into())?;
+        let element = get_object!(ctx, &guid, ElementHandle)?;
+        let this = get_object!(ctx, &self.guid(), Page)?;
+        let file_chooser = FileChooser::new(this, element, is_multiple);
+        // self.emit_event(Evt::FileChooser(file_chooser));
+        Ok(())
+    }
 }
 
 impl RemoteObject for Page {
@@ -515,12 +534,12 @@ impl RemoteObject for Page {
     ) -> Result<(), Error> {
         match method.as_str() {
             "close" => self.on_close(ctx)?,
-            "frameAttached" => {
+            "frameattached" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 self.on_frame_attached(ctx, guid)?;
             }
-            "frameDetached" => {
+            "framedetached" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
                 self.on_frame_detached(ctx, guid)?;
@@ -540,8 +559,8 @@ impl RemoteObject for Page {
                 let request = get_object!(ctx, &guid, Request)?;
                 self.emit_event(Evt::Request(request));
             }
-            "requestFailed" => self.on_request_failed(ctx, params)?,
-            "requestFinished" => self.on_request_finished(ctx, params)?,
+            "requestfailed" => self.on_request_failed(ctx, params)?,
+            "requestfinished" => self.on_request_finished(ctx, params)?,
             "response" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
@@ -568,6 +587,7 @@ impl RemoteObject for Page {
             }
             "download" => self.on_download(ctx, params)?,
             "video" => self.on_video(ctx, params)?,
+            "filechooser" => self.on_file_chooser(ctx, params)?,
             _ => {}
         }
         Ok(())
@@ -583,7 +603,7 @@ pub(crate) enum Evt {
     Dialog,
     Download(Arc<Download>),
     /// Not Implemented Yet
-    FileChooser,
+    // FileChooser(FileChooser),
     DomContentLoaded,
     /// Not Implemented Yet
     PageError,
@@ -614,7 +634,7 @@ pub enum EventType {
     Console,
     Dialog,
     Download,
-    FileChooser,
+    // FileChooser,
     DomContentLoaded,
     PageError,
     Request,
@@ -641,7 +661,7 @@ impl IsEvent for Evt {
             Self::Console(_) => EventType::Console,
             Self::Dialog => EventType::Dialog,
             Self::Download(_) => EventType::Download,
-            Self::FileChooser => EventType::FileChooser,
+            // Self::FileChooser(_) => EventType::FileChooser,
             Self::DomContentLoaded => EventType::DomContentLoaded,
             Self::PageError => EventType::PageError,
             Self::Request(_) => EventType::Request,

@@ -106,6 +106,7 @@ pub(crate) mod console_message;
 pub(crate) mod dialog;
 pub(crate) mod download;
 pub(crate) mod element_handle;
+pub(crate) mod file_hooser;
 pub(crate) mod frame;
 pub(crate) mod js_handle;
 pub(crate) mod page;
@@ -122,7 +123,6 @@ pub(crate) mod worker;
 //_api_types.py
 //_element_handle.py
 //_event_context_manager.py
-//_file_chooser.py
 //_helper.py
 //_impl_to_api_mapping.py
 //_input.py
