@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf}
 };
 
-const DRIVER_VERSION: &str = "1.11.0-next-1620085974000";
+const DRIVER_VERSION: &str = "1.11.0-1620331022000";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();
@@ -74,10 +74,11 @@ fn check_size(p: &Path) {
 fn download(_url: &str, dest: &Path) { File::create(dest).unwrap(); }
 
 fn url(platform: PlaywrightPlatform) -> String {
-    let next = DRIVER_VERSION
-        .contains("next")
-        .then(|| "/next")
-        .unwrap_or_default();
+    // let next = DRIVER_VERSION
+    //    .contains("next")
+    //    .then(|| "/next")
+    //    .unwrap_or_default();
+    let next = "/next";
     format!(
         "https://playwright.azureedge.net/builds/driver{}/playwright-{}-{}.zip",
         next, DRIVER_VERSION, platform

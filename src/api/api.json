@@ -2660,12 +2660,10 @@
                   "langs": {
                     "only": [
                       "js",
-                      "java",
-                      "csharp"
+                      "java"
                     ],
                     "aliases": {
-                      "java": "viewportSize",
-                      "csharp": "viewportSize"
+                      "java": "viewportSize"
                     },
                     "types": {},
                     "overrides": {}
@@ -2733,6 +2731,85 @@
                   ],
                   "required": false,
                   "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "viewport"
+                },
+                {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "csharp"
+                    ],
+                    "aliases": {
+                      "csharp": "viewportSize"
+                    },
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "viewport",
+                  "type": {
+                    "name": "",
+                    "union": [
+                      {
+                        "name": "null"
+                      },
+                      {
+                        "name": "Object",
+                        "properties": [
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "width",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page width in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page width in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "width"
+                          },
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "height",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page height in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page height in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "height"
+                          }
+                        ]
+                      }
+                    ],
+                    "expression": "[null]|[Object]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable\nthe default viewport.",
                   "deprecated": false,
                   "async": false,
                   "alias": "viewport"
@@ -6980,12 +7057,10 @@
                   "langs": {
                     "only": [
                       "js",
-                      "java",
-                      "csharp"
+                      "java"
                     ],
                     "aliases": {
-                      "java": "viewportSize",
-                      "csharp": "viewportSize"
+                      "java": "viewportSize"
                     },
                     "types": {},
                     "overrides": {}
@@ -7053,6 +7128,85 @@
                   ],
                   "required": false,
                   "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "viewport"
+                },
+                {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "csharp"
+                    ],
+                    "aliases": {
+                      "csharp": "viewportSize"
+                    },
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "viewport",
+                  "type": {
+                    "name": "",
+                    "union": [
+                      {
+                        "name": "null"
+                      },
+                      {
+                        "name": "Object",
+                        "properties": [
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "width",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page width in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page width in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "width"
+                          },
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "height",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page height in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page height in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "height"
+                          }
+                        ]
+                      }
+                    ],
+                    "expression": "[null]|[Object]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable\nthe default viewport.",
                   "deprecated": false,
                   "async": false,
                   "alias": "viewport"
@@ -8721,12 +8875,10 @@
                   "langs": {
                     "only": [
                       "js",
-                      "java",
-                      "csharp"
+                      "java"
                     ],
                     "aliases": {
-                      "java": "viewportSize",
-                      "csharp": "viewportSize"
+                      "java": "viewportSize"
                     },
                     "types": {},
                     "overrides": {}
@@ -8794,6 +8946,85 @@
                   ],
                   "required": false,
                   "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "viewport"
+                },
+                {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "csharp"
+                    ],
+                    "aliases": {
+                      "csharp": "viewportSize"
+                    },
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "viewport",
+                  "type": {
+                    "name": "",
+                    "union": [
+                      {
+                        "name": "null"
+                      },
+                      {
+                        "name": "Object",
+                        "properties": [
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "width",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page width in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page width in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "width"
+                          },
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "height",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page height in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page height in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "height"
+                          }
+                        ]
+                      }
+                    ],
+                    "expression": "[null]|[Object]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable\nthe default viewport.",
                   "deprecated": false,
                   "async": false,
                   "alias": "viewport"
@@ -16142,12 +16373,10 @@
                   "langs": {
                     "only": [
                       "js",
-                      "java",
-                      "csharp"
+                      "java"
                     ],
                     "aliases": {
-                      "java": "viewportSize",
-                      "csharp": "viewportSize"
+                      "java": "viewportSize"
                     },
                     "types": {},
                     "overrides": {}
@@ -16215,6 +16444,85 @@
                   ],
                   "required": false,
                   "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.",
+                  "deprecated": false,
+                  "async": false,
+                  "alias": "viewport"
+                },
+                {
+                  "kind": "property",
+                  "langs": {
+                    "only": [
+                      "csharp"
+                    ],
+                    "aliases": {
+                      "csharp": "viewportSize"
+                    },
+                    "types": {},
+                    "overrides": {}
+                  },
+                  "name": "viewport",
+                  "type": {
+                    "name": "",
+                    "union": [
+                      {
+                        "name": "null"
+                      },
+                      {
+                        "name": "Object",
+                        "properties": [
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "width",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page width in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page width in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "width"
+                          },
+                          {
+                            "kind": "property",
+                            "langs": {},
+                            "name": "height",
+                            "type": {
+                              "name": "int",
+                              "expression": "[int]"
+                            },
+                            "spec": [
+                              {
+                                "type": "text",
+                                "text": "page height in pixels."
+                              }
+                            ],
+                            "required": true,
+                            "comment": "page height in pixels.",
+                            "deprecated": false,
+                            "async": false,
+                            "alias": "height"
+                          }
+                        ]
+                      }
+                    ],
+                    "expression": "[null]|[Object]"
+                  },
+                  "spec": [
+                    {
+                      "type": "text",
+                      "text": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport."
+                    }
+                  ],
+                  "required": false,
+                  "comment": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable\nthe default viewport.",
                   "deprecated": false,
                   "async": false,
                   "alias": "viewport"
@@ -17117,9 +17425,14 @@
           ],
           "expression": "[Array]<[JSHandle]>"
         },
-        "spec": [],
+        "spec": [
+          {
+            "type": "text",
+            "text": "List of arguments passed to a `console` function call. See also [`event: Page.console`]."
+          }
+        ],
         "required": true,
-        "comment": "",
+        "comment": "List of arguments passed to a `console` function call. See also [`event: Page.console`].",
         "deprecated": false,
         "async": false,
         "alias": "args",
@@ -17248,9 +17561,14 @@
           "name": "string",
           "expression": "[string]"
         },
-        "spec": [],
+        "spec": [
+          {
+            "type": "text",
+            "text": "The text of the console message."
+          }
+        ],
         "required": true,
-        "comment": "",
+        "comment": "The text of the console message.",
         "deprecated": false,
         "async": false,
         "alias": "text",
@@ -20829,11 +21147,19 @@
         "spec": [
           {
             "type": "text",
-            "text": "This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to clear the input field."
+            "text": "This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field."
+          },
+          {
+            "type": "text",
+            "text": "If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead."
+          },
+          {
+            "type": "text",
+            "text": "To send fine-grained keyboard events, use [`method: ElementHandle.type`]."
           }
         ],
         "required": true,
-        "comment": "This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input`\nevent after filling. If the element is inside the `<label>` element that has associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled\ninstead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method\nthrows an error. Note that you can pass an empty string to clear the input field.",
+        "comment": "This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input`\nevent after filling. Note that you can pass an empty string to clear the input field.\n\nIf the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.\nHowever, if the element is inside the `<label>` element that has an associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled\ninstead.\n\nTo send fine-grained keyboard events, use [`method: ElementHandle.type`].",
         "deprecated": false,
         "async": true,
         "alias": "fill",
@@ -21883,15 +22209,19 @@
         "spec": [
           {
             "type": "text",
+            "text": "This method waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options."
+          },
+          {
+            "type": "text",
+            "text": "If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead."
+          },
+          {
+            "type": "text",
             "text": "Returns the array of option values that have been successfully selected."
           },
           {
             "type": "text",
-            "text": "Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>` element, the method throws an error."
-          },
-          {
-            "type": "text",
-            "text": "Will wait until all specified options are present in the `<select>` element."
+            "text": "Triggers a `change` and `input` event once all the provided options have been selected."
           },
           {
             "type": "code",
@@ -21959,7 +22289,7 @@
           }
         ],
         "required": true,
-        "comment": "Returns the array of option values that have been successfully selected.\n\nTriggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`\nelement, the method throws an error.\n\nWill wait until all specified options are present in the `<select>` element.\n\n```js\n// single selection matching the value\nhandle.selectOption('blue');\n\n// single selection matching the label\nhandle.selectOption({ label: 'Blue' });\n\n// multiple selection\nhandle.selectOption(['red', 'green', 'blue']);\n```\n\n```java\n// single selection matching the value\nhandle.selectOption(\"blue\");\n// single selection matching the label\nhandle.selectOption(new SelectOption().setLabel(\"Blue\"));\n// multiple selection\nhandle.selectOption(new String[] {\"red\", \"green\", \"blue\"});\n```\n\n```python async\n# single selection matching the value\nawait handle.select_option(\"blue\")\n# single selection matching the label\nawait handle.select_option(label=\"blue\")\n# multiple selection\nawait handle.select_option(value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\nhandle.select_option(\"blue\")\n# single selection matching both the label\nhandle.select_option(label=\"blue\")\n# multiple selection\nhandle.select_option(value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\nhandle.select_option(\"blue\")\n# single selection matching both the value and the label\nhandle.select_option(label=\"blue\")\n# multiple selection\nhandle.select_option(\"red\", \"green\", \"blue\")\n# multiple selection for blue, red and second option\nhandle.select_option(value=\"blue\", { index: 2 }, \"red\")\n```\n",
+        "comment": "This method waits for [actionability](./actionability.md) checks, waits until all specified options are present in the\n`<select>` element and selects these options.\n\nIf the target element is not a `<select>` element, this method throws an error. However, if the element is inside the\n`<label>` element that has an associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.\n\nReturns the array of option values that have been successfully selected.\n\nTriggers a `change` and `input` event once all the provided options have been selected.\n\n```js\n// single selection matching the value\nhandle.selectOption('blue');\n\n// single selection matching the label\nhandle.selectOption({ label: 'Blue' });\n\n// multiple selection\nhandle.selectOption(['red', 'green', 'blue']);\n```\n\n```java\n// single selection matching the value\nhandle.selectOption(\"blue\");\n// single selection matching the label\nhandle.selectOption(new SelectOption().setLabel(\"Blue\"));\n// multiple selection\nhandle.selectOption(new String[] {\"red\", \"green\", \"blue\"});\n```\n\n```python async\n# single selection matching the value\nawait handle.select_option(\"blue\")\n# single selection matching the label\nawait handle.select_option(label=\"blue\")\n# multiple selection\nawait handle.select_option(value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\nhandle.select_option(\"blue\")\n# single selection matching both the label\nhandle.select_option(label=\"blue\")\n# multiple selection\nhandle.select_option(value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\nhandle.select_option(\"blue\")\n# single selection matching both the value and the label\nhandle.select_option(label=\"blue\")\n# multiple selection\nhandle.select_option(\"red\", \"green\", \"blue\")\n# multiple selection for blue, red and second option\nhandle.select_option(value=\"blue\", { index: 2 }, \"red\")\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "selectOption",
@@ -26650,7 +26980,11 @@
         "spec": [
           {
             "type": "text",
-            "text": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to clear the input field."
+            "text": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field."
+          },
+          {
+            "type": "text",
+            "text": "If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead."
           },
           {
             "type": "text",
@@ -26658,7 +26992,7 @@
           }
         ],
         "required": true,
-        "comment": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the\nelement, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has\nassociated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be\nfilled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this\nmethod throws an error. Note that you can pass an empty string to clear the input field.\n\nTo send fine-grained keyboard events, use [`method: Frame.type`].",
+        "comment": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the\nelement, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input\nfield.\n\nIf the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.\nHowever, if the element is inside the `<label>` element that has an associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled\ninstead.\n\nTo send fine-grained keyboard events, use [`method: Frame.type`].",
         "deprecated": false,
         "async": true,
         "alias": "fill",
@@ -28461,15 +28795,19 @@
         "spec": [
           {
             "type": "text",
+            "text": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options."
+          },
+          {
+            "type": "text",
+            "text": "If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead."
+          },
+          {
+            "type": "text",
             "text": "Returns the array of option values that have been successfully selected."
           },
           {
             "type": "text",
-            "text": "Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element matching `selector`, the method throws an error."
-          },
-          {
-            "type": "text",
-            "text": "Will wait until all specified options are present in the `<select>` element."
+            "text": "Triggers a `change` and `input` event once all the provided options have been selected."
           },
           {
             "type": "code",
@@ -28523,7 +28861,7 @@
           }
         ],
         "required": true,
-        "comment": "Returns the array of option values that have been successfully selected.\n\nTriggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element\nmatching `selector`, the method throws an error.\n\nWill wait until all specified options are present in the `<select>` element.\n\n```js\n// single selection matching the value\nframe.selectOption('select#colors', 'blue');\n\n// single selection matching both the value and the label\nframe.selectOption('select#colors', { label: 'Blue' });\n\n// multiple selection\nframe.selectOption('select#colors', 'red', 'green', 'blue');\n```\n\n```java\n// single selection matching the value\nframe.selectOption(\"select#colors\", \"blue\");\n// single selection matching both the value and the label\nframe.selectOption(\"select#colors\", new SelectOption().setLabel(\"Blue\"));\n// multiple selection\nframe.selectOption(\"select#colors\", new String[] {\"red\", \"green\", \"blue\"});\n```\n\n```python async\n# single selection matching the value\nawait frame.select_option(\"select#colors\", \"blue\")\n# single selection matching the label\nawait frame.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\nawait frame.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\nframe.select_option(\"select#colors\", \"blue\")\n# single selection matching both the label\nframe.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\nframe.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n",
+        "comment": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, waits until\nall specified options are present in the `<select>` element and selects these options.\n\nIf the target element is not a `<select>` element, this method throws an error. However, if the element is inside the\n`<label>` element that has an associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.\n\nReturns the array of option values that have been successfully selected.\n\nTriggers a `change` and `input` event once all the provided options have been selected.\n\n```js\n// single selection matching the value\nframe.selectOption('select#colors', 'blue');\n\n// single selection matching both the value and the label\nframe.selectOption('select#colors', { label: 'Blue' });\n\n// multiple selection\nframe.selectOption('select#colors', 'red', 'green', 'blue');\n```\n\n```java\n// single selection matching the value\nframe.selectOption(\"select#colors\", \"blue\");\n// single selection matching both the value and the label\nframe.selectOption(\"select#colors\", new SelectOption().setLabel(\"Blue\"));\n// multiple selection\nframe.selectOption(\"select#colors\", new String[] {\"red\", \"green\", \"blue\"});\n```\n\n```python async\n# single selection matching the value\nawait frame.select_option(\"select#colors\", \"blue\")\n# single selection matching the label\nawait frame.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\nawait frame.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\nframe.select_option(\"select#colors\", \"blue\")\n# single selection matching both the label\nframe.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\nframe.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n",
         "deprecated": false,
         "async": true,
         "alias": "selectOption",
@@ -33737,7 +34075,7 @@
           {
             "type": "code",
             "lines": [
-              "page.onConsole(msg -> {",
+              "page.onConsoleMessage(msg -> {",
               "  for (int i = 0; i < msg.args().size(); ++i)",
               "    System.out.println(i + \": \" + msg.args().get(i).jsonValue());",
               "});",
@@ -33771,7 +34109,7 @@
           }
         ],
         "required": true,
-        "comment": "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', async msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\nawait page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsole(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n",
+        "comment": "Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also\nemitted if the page throws an error or a warning.\n\nThe arguments passed into `console.log` appear as arguments on the event handler.\n\nAn example of handling `console` event:\n\n```js\npage.on('console', async msg => {\n  for (let i = 0; i < msg.args().length; ++i)\n    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);\n});\nawait page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));\n```\n\n```java\npage.onConsoleMessage(msg -> {\n  for (int i = 0; i < msg.args().size(); ++i)\n    System.out.println(i + \": \" + msg.args().get(i).jsonValue());\n});\npage.evaluate(\"() => console.log('hello', 5, {foo: 'bar'})\");\n```\n\n```python async\nasync def print_args(msg):\n    for arg in msg.args:\n        print(await arg.json_value())\n\npage.on(\"console\", print_args)\nawait page.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n\n```python sync\ndef print_args(msg):\n    for arg in msg.args:\n        print(arg.json_value())\n\npage.on(\"console\", print_args)\npage.evaluate(\"console.log('hello', 5, {foo: 'bar'})\")\n```\n",
         "deprecated": false,
         "async": false,
         "alias": "console",
@@ -37685,7 +38023,11 @@
         "spec": [
           {
             "type": "text",
-            "text": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to clear the input field."
+            "text": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field."
+          },
+          {
+            "type": "text",
+            "text": "If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead."
           },
           {
             "type": "text",
@@ -37693,11 +38035,11 @@
           },
           {
             "type": "text",
-            "text": "Shortcut for main frame's [`method: Frame.fill`]"
+            "text": "Shortcut for main frame's [`method: Frame.fill`]."
           }
         ],
         "required": true,
-        "comment": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the\nelement, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has\nassociated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be\nfilled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this\nmethod throws an error. Note that you can pass an empty string to clear the input field.\n\nTo send fine-grained keyboard events, use [`method: Page.type`].\n\nShortcut for main frame's [`method: Frame.fill`]",
+        "comment": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the\nelement, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input\nfield.\n\nIf the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.\nHowever, if the element is inside the `<label>` element that has an associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled\ninstead.\n\nTo send fine-grained keyboard events, use [`method: Page.type`].\n\nShortcut for main frame's [`method: Frame.fill`].",
         "deprecated": false,
         "async": true,
         "alias": "fill",
@@ -41640,15 +41982,19 @@
         "spec": [
           {
             "type": "text",
+            "text": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options."
+          },
+          {
+            "type": "text",
+            "text": "If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead."
+          },
+          {
+            "type": "text",
             "text": "Returns the array of option values that have been successfully selected."
           },
           {
             "type": "text",
-            "text": "Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element matching `selector`, the method throws an error."
-          },
-          {
-            "type": "text",
-            "text": "Will wait until all specified options are present in the `<select>` element."
+            "text": "Triggers a `change` and `input` event once all the provided options have been selected."
           },
           {
             "type": "code",
@@ -41703,11 +42049,11 @@
           },
           {
             "type": "text",
-            "text": "Shortcut for main frame's [`method: Frame.selectOption`]"
+            "text": "Shortcut for main frame's [`method: Frame.selectOption`]."
           }
         ],
         "required": true,
-        "comment": "Returns the array of option values that have been successfully selected.\n\nTriggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element\nmatching `selector`, the method throws an error.\n\nWill wait until all specified options are present in the `<select>` element.\n\n```js\n// single selection matching the value\npage.selectOption('select#colors', 'blue');\n\n// single selection matching the label\npage.selectOption('select#colors', { label: 'Blue' });\n\n// multiple selection\npage.selectOption('select#colors', ['red', 'green', 'blue']);\n\n```\n\n```java\n// single selection matching the value\npage.selectOption(\"select#colors\", \"blue\");\n// single selection matching both the value and the label\npage.selectOption(\"select#colors\", new SelectOption().setLabel(\"Blue\"));\n// multiple selection\npage.selectOption(\"select#colors\", new String[] {\"red\", \"green\", \"blue\"});\n```\n\n```python async\n# single selection matching the value\nawait page.select_option(\"select#colors\", \"blue\")\n# single selection matching the label\nawait page.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\nawait page.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\npage.select_option(\"select#colors\", \"blue\")\n# single selection matching both the label\npage.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\npage.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n\nShortcut for main frame's [`method: Frame.selectOption`]",
+        "comment": "This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, waits until\nall specified options are present in the `<select>` element and selects these options.\n\nIf the target element is not a `<select>` element, this method throws an error. However, if the element is inside the\n`<label>` element that has an associated\n[control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.\n\nReturns the array of option values that have been successfully selected.\n\nTriggers a `change` and `input` event once all the provided options have been selected.\n\n```js\n// single selection matching the value\npage.selectOption('select#colors', 'blue');\n\n// single selection matching the label\npage.selectOption('select#colors', { label: 'Blue' });\n\n// multiple selection\npage.selectOption('select#colors', ['red', 'green', 'blue']);\n\n```\n\n```java\n// single selection matching the value\npage.selectOption(\"select#colors\", \"blue\");\n// single selection matching both the value and the label\npage.selectOption(\"select#colors\", new SelectOption().setLabel(\"Blue\"));\n// multiple selection\npage.selectOption(\"select#colors\", new String[] {\"red\", \"green\", \"blue\"});\n```\n\n```python async\n# single selection matching the value\nawait page.select_option(\"select#colors\", \"blue\")\n# single selection matching the label\nawait page.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\nawait page.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n\n```python sync\n# single selection matching the value\npage.select_option(\"select#colors\", \"blue\")\n# single selection matching both the label\npage.select_option(\"select#colors\", label=\"blue\")\n# multiple selection\npage.select_option(\"select#colors\", value=[\"red\", \"green\", \"blue\"])\n```\n\nShortcut for main frame's [`method: Frame.selectOption`].",
         "deprecated": false,
         "async": true,
         "alias": "selectOption",
