@@ -186,11 +186,15 @@ impl ElementHandle {
     /// > NOTE: `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
     pub fn tap_builder(&self) -> TapBuilder { TapBuilder::new(self.inner.clone()) }
 
-    /// This method waits for actionability checks, focuses the element, fills it and triggers an `input`
-    /// event after filling. If the element is inside the `<label>` element that has associated
-    /// [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled
-    /// instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method
-    /// throws an error. Note that you can pass an empty string to clear the input field.
+    /// This method waits for [actionability](https://playwright.dev/docs/actionability/) checks, focuses the element, fills it and triggers an `input`
+    /// event after filling. Note that you can pass an empty string to clear the input field.
+    ///
+    /// If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+    /// However, if the element is inside the `<label>` element that has an associated
+    /// [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled
+    /// instead.
+    ///
+    /// To send fine-grained keyboard events, use [ElementHandle::type_builder](ElementHandle::type_builder)
     pub fn fill_builder<'a>(&self, value: &'a str) -> FillBuilder<'a> {
         FillBuilder::new(self.inner.clone(), value)
     }
@@ -361,12 +365,16 @@ impl ElementHandle {
             .await
     }
 
+    /// This method waits for [actionability](https://playwright.dev/docs/actionability/) checks, waits until all specified options are present in the
+    /// `<select>` element and selects these options.
+    ///
+    /// If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the
+    /// `<label>` element that has an associated
+    /// [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
+    ///
     /// Returns the array of option values that have been successfully selected.
     ///
-    /// Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`
-    /// element, the method throws an error.
-    ///
-    /// Will wait until all specified options are present in the `<select>` element.
+    /// Triggers a `change` and `input` event once all the provided options have been selected.
     ///
     /// ```js
     ///// single selection matching the value
