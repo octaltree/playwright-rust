@@ -17,6 +17,7 @@ impl ConsoleMessage {
     /// `'count'`, `'timeEnd'`.
     pub fn r#type(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.r#type().into()) }
 
+    /// The text of the console message.
     pub fn text(&self) -> Result<String, Error> { Ok(upgrade(&self.inner)?.text().into()) }
 
     /// URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`.
@@ -24,6 +25,7 @@ impl ConsoleMessage {
         Ok(upgrade(&self.inner)?.location().to_owned())
     }
 
+    /// List of arguments passed to a `console` function call.
     pub fn args(&self) -> Result<Vec<JsHandle>, Error> {
         Ok(upgrade(&self.inner)?
             .args()

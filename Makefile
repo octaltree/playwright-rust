@@ -1,4 +1,5 @@
 all: format lint test doc
+	cargo build --release
 
 dev:
 	cargo fmt
