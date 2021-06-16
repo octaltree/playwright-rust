@@ -44,7 +44,7 @@ impl BrowserContext {
     pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
         let res = send_message!(self, "newPage", Map::new());
         let guid = only_guid(&res)?;
-        let p = get_object!(self.context()?.lock().unwrap(), &guid, Page)?;
+        let p = get_object!(self.context()?.lock().unwrap(), guid, Page)?;
         Ok(p)
     }
 
@@ -222,7 +222,7 @@ impl BrowserContext {
             None => return Ok(()),
             Some(b) => b
         };
-        let this = get_object!(ctx, &self.guid(), BrowserContext)?;
+        let this = get_object!(ctx, self.guid(), BrowserContext)?;
         browser.remove_context(&this);
         self.emit_event(Evt::Close);
         Ok(())

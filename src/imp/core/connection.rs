@@ -287,7 +287,7 @@ impl Context {
             guid.to_owned(),
             initializer
         );
-        let r = RemoteArc::try_new(&typ, &self, c)?;
+        let r = RemoteArc::try_new(&typ, self, c)?;
         parent.channel().push_child(r.downgrade());
         self.objects.insert(guid, r.clone());
         match r {

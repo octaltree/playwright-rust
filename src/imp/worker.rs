@@ -51,7 +51,7 @@ impl Worker {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpression", args);
         let first = first(&v).ok_or(Error::ObjectNotFound)?;
-        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+        Ok(de::from_value(first).map_err(Error::DeserializationPwJson)?)
     }
 
     pub(crate) async fn eval_handle(&self, expression: &str) -> ArcResult<Weak<JsHandle>> {
@@ -76,7 +76,7 @@ impl Worker {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpressionHandle", args);
         let guid = only_guid(&v)?;
-        let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        let h = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)?;
         Ok(h)
     }
 }
