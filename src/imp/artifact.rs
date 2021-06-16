@@ -43,7 +43,7 @@ impl Artifact {
             .ok_or_else(|| Error::ResolvePath(path.into()))?;
         let res = send_message!(self, "saveAsStream", Map::new());
         let guid = only_guid(&res)?;
-        let stream = get_object!(self.context()?.lock().unwrap(), &guid, Stream)?;
+        let stream = get_object!(self.context()?.lock().unwrap(), guid, Stream)?;
         std::fs::create_dir_all(dir).map_err(Error::from)?;
         upgrade(&stream)?.save_as(path).await?;
         Ok(())

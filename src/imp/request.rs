@@ -105,7 +105,7 @@ impl Request {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+        let r = get_object!(self.context()?.lock().unwrap(), guid, Response)?;
         Ok(Some(r))
     }
 }

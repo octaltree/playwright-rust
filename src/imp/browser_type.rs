@@ -33,7 +33,7 @@ impl BrowserType {
     ) -> Result<Weak<Browser>, Arc<Error>> {
         let res = send_message!(self, "launch", args);
         let guid = only_guid(&res)?;
-        let b = get_object!(self.context()?.lock().unwrap(), &guid, Browser)?;
+        let b = get_object!(self.context()?.lock().unwrap(), guid, Browser)?;
         Ok(b)
     }
 
@@ -43,7 +43,7 @@ impl BrowserType {
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "launchPersistentContext", args);
         let guid = only_guid(&res)?;
-        let b = get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+        let b = get_object!(self.context()?.lock().unwrap(), guid, BrowserContext)?;
         Ok(b)
     }
 

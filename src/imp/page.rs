@@ -281,7 +281,7 @@ impl Page {
             Some(g) => g,
             None => return Ok(None)
         };
-        let p = get_object!(self.context()?.lock().unwrap(), &guid, Page)?;
+        let p = get_object!(self.context()?.lock().unwrap(), guid, Page)?;
         Ok(Some(p))
     }
 
@@ -309,7 +309,7 @@ fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
     };
     use std::io::Write;
     let mut file = std::fs::File::create(path).map_err(Error::from)?;
-    file.write(&bytes).map_err(Error::from)?;
+    file.write(bytes).map_err(Error::from)?;
     Ok(())
 }
 
@@ -389,7 +389,7 @@ impl Page {
             None => return Ok(()),
             Some(b) => b
         };
-        let this = get_object!(ctx, &self.guid(), Page)?;
+        let this = get_object!(ctx, self.guid(), Page)?;
         bc.remove_page(&this);
         self.emit_event(Evt::Close);
         Ok(())
@@ -461,12 +461,12 @@ impl Page {
 
     pub(crate) fn remove_worker(&self, worker: &Weak<Worker>) {
         let workers = &mut self.var.lock().unwrap().workers;
-        workers.remove_one(|w| w.ptr_eq(&worker));
+        workers.remove_one(|w| w.ptr_eq(worker));
     }
 
     fn on_worker(&self, ctx: &Context, worker: Weak<Worker>) -> Result<(), Error> {
         self.push_worker(worker.clone());
-        let this = get_object!(ctx, &self.guid(), Page)?;
+        let this = get_object!(ctx, self.guid(), Page)?;
         upgrade(&worker)?.set_page(this);
         self.emit_event(Evt::Worker(worker));
         Ok(())
@@ -496,7 +496,7 @@ impl Page {
     fn on_video(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
         let v = params.into();
         let guid = only_guid(&v)?;
-        let artifact = get_object!(ctx, &guid, Artifact)?;
+        let artifact = get_object!(ctx, guid, Artifact)?;
         let video = Video::new(artifact);
         self.set_video(video.clone())?;
         self.emit_event(Evt::Video(video));
@@ -515,7 +515,7 @@ impl Page {
             is_multiple
         } = serde_json::from_value(params.into())?;
         let element = get_object!(ctx, &guid, ElementHandle)?;
-        let this = get_object!(ctx, &self.guid(), Page)?;
+        let this = get_object!(ctx, self.guid(), Page)?;
         let file_chooser = FileChooser::new(this, element, is_multiple);
         // self.emit_event(Evt::FileChooser(file_chooser));
         Ok(())

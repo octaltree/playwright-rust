@@ -99,7 +99,7 @@ impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> ContextBuilder<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     }
 
     pub fn set_device(self, device: &'e DeviceDescriptor) -> Self {
-        DeviceDescriptor::set_context(&device, self)
+        DeviceDescriptor::set_context(device, self)
     }
 
     setter! {

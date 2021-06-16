@@ -2,8 +2,8 @@ use super::Which;
 use playwright::api::{Browser, BrowserType};
 
 pub async fn all(t: &BrowserType, which: Which) -> Browser {
-    launch_close_browser(&t).await;
-    let b = launch(&t).await;
+    launch_close_browser(t).await;
+    let b = launch(t).await;
     assert!(b.exists());
     version_should_work(&b, which);
     contexts_should_work(&b).await;
@@ -20,7 +20,7 @@ async fn launch(t: &BrowserType) -> Browser {
 }
 
 async fn launch_close_browser(t: &BrowserType) {
-    let (b1, b2) = tokio::join!(launch(&t), launch(&t));
+    let (b1, b2) = tokio::join!(launch(t), launch(t));
     assert_ne!(b1, b2);
     b1.close().await.unwrap();
     b2.close().await.unwrap();

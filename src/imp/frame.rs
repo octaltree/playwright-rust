@@ -105,7 +105,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+        let r = get_object!(self.context()?.lock().unwrap(), guid, Response)?;
         Ok(Some(r))
     }
 
@@ -203,7 +203,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -229,7 +229,7 @@ impl Frame {
     pub(crate) async fn frame_element(&self) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "frameElement", Map::new());
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -242,7 +242,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -301,7 +301,7 @@ impl Frame {
     ) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "addScriptTag", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -317,7 +317,7 @@ impl Frame {
         }
         let v = send_message!(self, "addStyleTag", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -343,7 +343,7 @@ impl Frame {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpression", args);
         let first = first(&v).ok_or(Error::ObjectNotFound)?;
-        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+        Ok(de::from_value(first).map_err(Error::DeserializationPwJson)?)
     }
 
     async fn evaluate_handle<T>(&self, expression: &str, arg: Option<T>) -> ArcResult<Handle>
@@ -360,10 +360,10 @@ impl Frame {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpressionHandle", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)
             .ok()
             .map(Handle::Element);
-        let j = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)
+        let j = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)
             .ok()
             .map(Handle::Js);
         let h = e.or(j).ok_or(Error::ObjectNotFound)?;
@@ -398,7 +398,7 @@ impl Frame {
         };
         let v = send_message!(self, "evalOnSelector", args);
         let first = first(&v).ok_or(Error::ObjectNotFound)?;
-        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+        Ok(de::from_value(first).map_err(Error::DeserializationPwJson)?)
     }
 
     pub(crate) async fn evaluate_on_selector_all<T, U>(
@@ -426,7 +426,7 @@ impl Frame {
         };
         let v = send_message!(self, "evalOnSelectorAll", args);
         let first = first(&v).ok_or(Error::ObjectNotFound)?;
-        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+        Ok(de::from_value(first).map_err(Error::DeserializationPwJson)?)
     }
 
     pub(crate) async fn dispatch_event<T>(
@@ -479,7 +479,7 @@ impl Frame {
     ) -> ArcResult<Weak<JsHandle>> {
         let v = send_message!(self, "waitForFunction", args);
         let guid = only_guid(&v)?;
-        let h = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        let h = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)?;
         Ok(h)
     }
 }
@@ -513,7 +513,7 @@ impl Frame {
         }
         self.emit_event(Evt::Navigated(payload));
         if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
-            let this = get_object!(ctx, &self.guid(), Frame)?;
+            let this = get_object!(ctx, self.guid(), Frame)?;
             page.on_frame_navigated(this);
         }
         Ok(())

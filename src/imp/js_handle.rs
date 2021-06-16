@@ -24,7 +24,7 @@ impl JsHandle {
         args.insert("name", name);
         let v = send_message!(self, "getProperty", args);
         let guid = only_guid(&v)?;
-        let j = get_object!(self.context()?.lock().unwrap(), &guid, JsHandle)?;
+        let j = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)?;
         Ok(j)
     }
 
@@ -58,7 +58,7 @@ impl JsHandle {
     {
         let v = send_message!(self, "jsonValue", Map::new());
         let first = first(&v).ok_or(Error::ObjectNotFound)?;
-        Ok(de::from_value(&first).map_err(Error::DeserializationPwJson)?)
+        Ok(de::from_value(first).map_err(Error::DeserializationPwJson)?)
     }
 }
 

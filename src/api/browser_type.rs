@@ -187,7 +187,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
     }
 
     pub fn set_device(self, device: &'e DeviceDescriptor) -> Self {
-        DeviceDescriptor::set_persistent_context(&device, self)
+        DeviceDescriptor::set_persistent_context(device, self)
     }
 
     setter! {

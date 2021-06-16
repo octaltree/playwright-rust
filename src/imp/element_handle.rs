@@ -40,7 +40,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -88,7 +88,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let f = get_object!(self.context()?.lock().unwrap(), &guid, Frame)?;
+        let f = get_object!(self.context()?.lock().unwrap(), guid, Frame)?;
         Ok(Some(f))
     }
 
@@ -98,7 +98,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let f = get_object!(self.context()?.lock().unwrap(), &guid, Frame)?;
+        let f = get_object!(self.context()?.lock().unwrap(), guid, Frame)?;
         Ok(Some(f))
     }
 
@@ -202,7 +202,7 @@ impl ElementHandle {
 
     pub(crate) async fn screenshot(&self, args: ScreenshotArgs<'_>) -> ArcResult<Vec<u8>> {
         let v = send_message!(self, "screenshot", args);
-        let b64 = only_str(&&v)?;
+        let b64 = only_str(&v)?;
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
         Ok(bytes)
     }
@@ -233,7 +233,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 

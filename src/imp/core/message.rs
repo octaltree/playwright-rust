@@ -157,7 +157,7 @@ pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
 }
 
 pub(crate) fn only_str(v: &Value) -> Result<&str, Error> {
-    let s = first(&v)
+    let s = first(v)
         .ok_or(Error::InvalidParams)?
         .as_str()
         .ok_or(Error::InvalidParams)?;
@@ -165,7 +165,7 @@ pub(crate) fn only_str(v: &Value) -> Result<&str, Error> {
 }
 
 pub(crate) fn maybe_only_str(v: &Value) -> Result<Option<&str>, Error> {
-    let s = match first(&v) {
+    let s = match first(v) {
         Some(s) => s.as_str().ok_or(Error::InvalidParams)?,
         None => return Ok(None)
     };
