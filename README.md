@@ -68,6 +68,7 @@ available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/b
 - [atroche/rust-headless-chrome](https://github.com/atroche/rust-headless-chrome)
 - [saresend/selenium-rs](https://github.com/saresend/selenium-rs)
 - [https://crates.io/crates/webdriver](https://crates.io/crates/webdriver)
+- [mattsse/chromiumoxide](https://github.com/mattsse/chromiumoxide)
 
 ## Other languages
 - [microsoft/playwright](https://github.com/microsoft/playwright)
