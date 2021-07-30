@@ -1,7 +1,7 @@
 use std::{
     env, fmt, fs,
     fs::File,
-    path::{Path, PathBuf}
+    path::{Path, PathBuf, MAIN_SEPARATOR}
 };
 
 const DRIVER_VERSION: &str = "1.11.0-1620331022000";
@@ -13,6 +13,7 @@ fn main() {
     fs::write(out_dir.join("platform"), platform.to_string()).unwrap();
     download(&url(platform), &dest);
     println!("cargo:rerun-if-changed=src/build.rs");
+    println!("cargo:rustc-env=SEP={}", MAIN_SEPARATOR);
 }
 
 #[cfg(all(not(feature = "only-for-docs-rs"), not(unix)))]
