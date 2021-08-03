@@ -107,17 +107,18 @@ impl fmt::Display for PlaywrightPlatform {
 
 impl Default for PlaywrightPlatform {
     fn default() -> Self {
-        if cfg!(target_os = "linux") {
-            PlaywrightPlatform::Linux
-        } else if cfg!(target_os = "macos") {
-            PlaywrightPlatform::Mac
-        } else if cfg!(windows) {
-            if cfg!(target_pointer_width = "64") {
+        match env::var("CARGO_CFG_TARGET_OS").as_deref() {
+            Ok("linux") => return PlaywrightPlatform::Linux,
+            Ok("macos") => return PlaywrightPlatform::Mac,
+            _ => ()
+        };
+        if env::var("CARGO_CFG_WINDOWS").is_ok() {
+            if env::var("CARGO_CFG_TARGET_POINTER_WIDTH").as_deref() == Ok("64") {
                 PlaywrightPlatform::Win32x64
             } else {
                 PlaywrightPlatform::Win32
             }
-        } else if cfg!(unix) {
+        } else if env::var("CARGO_CFG_UNIX").is_ok() {
             PlaywrightPlatform::Linux
         } else {
             panic!("Unsupported plaform");
