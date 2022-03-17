@@ -4,7 +4,9 @@ use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR}
 };
 
-const DRIVER_VERSION: &str = "1.11.0-1620331022000";
+// const DRIVER_VERSION: &str = "1.11.0-1620331022000";
+const DRIVER_VERSION: &str = "1.12.2";
+const NEXT: &str = "";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();
@@ -79,10 +81,9 @@ fn url(platform: PlaywrightPlatform) -> String {
     //    .contains("next")
     //    .then(|| "/next")
     //    .unwrap_or_default();
-    let next = "/next";
     format!(
         "https://playwright.azureedge.net/builds/driver{}/playwright-{}-{}.zip",
-        next, DRIVER_VERSION, platform
+        NEXT, DRIVER_VERSION, platform
     )
 }
 
