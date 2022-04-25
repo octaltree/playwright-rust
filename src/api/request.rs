@@ -16,7 +16,7 @@ use crate::{
 ///
 /// If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
 /// request is  issued to a redirected url.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Request {
     inner: Weak<Impl>
 }
