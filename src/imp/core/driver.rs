@@ -1,5 +1,5 @@
 use crate::imp::prelude::*;
-use std::{env, fs, io};
+use std::{env, fmt, fs, io, str::FromStr};
 use zip::{result::ZipError, ZipArchive};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -41,32 +41,58 @@ impl Driver {
         dir
     }
 
-    pub fn platform(&self) -> Platform {
-        match Self::PLATFORM {
-            "linux" => Platform::Linux,
-            "mac" => Platform::Mac,
-            "win32" => Platform::Win32,
-            "win32_x64" => Platform::Win32x64,
-            _ => unreachable!()
-        }
-    }
+    pub fn platform(&self) -> Platform { Platform::from_str(Self::PLATFORM).unwrap() }
 
     pub fn executable(&self) -> PathBuf {
         match self.platform() {
             Platform::Linux => self.path.join("playwright.sh"),
+            Platform::LinuxArm64 => self.path.join("playwright.sh"),
             Platform::Mac => self.path.join("playwright.sh"),
-            Platform::Win32 => self.path.join("playwright.cmd"),
-            Platform::Win32x64 => self.path.join("playwright.cmd")
+            Platform::MacArm64 => self.path.join("playwright.sh"),
+            Platform::Win32X64 => self.path.join("playwright.cmd")
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Platform {
+    Mac,
+    MacArm64,
     Linux,
-    Win32,
-    Win32x64,
-    Mac
+    LinuxArm64,
+    Win32X64
+}
+
+const LABEL: &[(Platform, &str)] = &[
+    (Platform::Mac, "mac"),
+    (Platform::MacArm64, "mac-arm64"),
+    (Platform::Linux, "linux"),
+    (Platform::LinuxArm64, "linux-arm64"),
+    (Platform::Win32X64, "win32_x64")
+];
+
+impl fmt::Display for Platform {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let hit = LABEL
+            .into_iter()
+            .find(|(a, _)| a == self)
+            .map(|(_, s)| s)
+            .unwrap();
+        write!(f, "{}", hit)
+    }
+}
+
+impl FromStr for Platform {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let hit = LABEL
+            .into_iter()
+            .find(|&(_, b)| *b == s)
+            .map(|&(a, _)| a)
+            .ok_or(())?;
+        Ok(hit)
+    }
 }
 
 #[cfg(test)]
