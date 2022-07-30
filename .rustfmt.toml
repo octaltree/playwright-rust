@@ -1,4 +1,4 @@
-edition = "2018"
+edition = "2021"
 unstable_features = true
 fn_single_line = true
 trailing_comma = "Never"
