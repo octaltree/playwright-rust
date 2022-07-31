@@ -332,7 +332,8 @@ impl ToTokens for Type {
             tokens.extend(match self.name.as_str() {
                 "Array" => self.array(),
                 "Object" | "Map" => self.map(),
-                _ => unreachable!()
+                "Func" => todo!("{:?}", self),
+                _ => unreachable!("{:?}", self)
             });
             return;
         }
