@@ -153,11 +153,23 @@ mod tests {
         let s = s.replace("null", r#""null""#);
         let protocol: Protocol = serde_yaml::from_str(&s).unwrap();
         let mut types = Vec::new();
+        fn add<'a>(dest: &mut Vec<&'a Type>, t: &'a Type) {
+            match t {
+                Type::Name(_) => dest.push(t),
+                Type::Items { items, .. } => add(dest, &items),
+                Type::Literals { .. } => {}
+                Type::Properties { properties, .. } => {
+                    for (_, t) in properties.iter() {
+                        add(dest, t);
+                    }
+                }
+            }
+        }
         for (_, node) in protocol.0.iter() {
             match node {
                 Node::Object(Object { properties }) | Node::Mixin(Mixin { properties }) => {
                     for (_, t) in properties {
-                        types.push(t);
+                        add(&mut types, t);
                     }
                 }
                 Node::Interface(Interface {
@@ -168,7 +180,7 @@ mod tests {
                 }) => {
                     fn append<'a>(dest: &mut Vec<&'a Type>, props: &'a Option<Properties>) {
                         for (_, t) in props.iter().flat_map(|m| m.iter()) {
-                            dest.push(t);
+                            add(dest, t);
                         }
                     }
                     for (_, c) in commands.iter().flat_map(|m| m.iter()) {
@@ -187,7 +199,7 @@ mod tests {
                             e.as_ref().unwrap()
                         };
                         for (_, t) in e.parameters.iter() {
-                            types.push(t);
+                            add(&mut types, t);
                         }
                     }
                     append(&mut types, initializer);
