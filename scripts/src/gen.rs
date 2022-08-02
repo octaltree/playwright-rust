@@ -31,6 +31,7 @@ fn escape(s: &str) -> String {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(transparent)]
 struct Api(Vec<Interface>);
 
 #[derive(Debug, Deserialize)]
@@ -44,7 +45,7 @@ struct Interface {
     extends: Option<String>
 }
 
-/// Ex. {"name": "toMatchSnapshot#2", "alias": "toMatchSnapshot", "overloadIndex": 1}
+/// ex. {"name": "toMatchSnapshot#2", "alias": "toMatchSnapshot", "overloadIndex": 1}
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Member {
