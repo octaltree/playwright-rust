@@ -1,9 +1,11 @@
-use serde::Deserialize;
+use proc_macro2::{Ident, TokenStream};
+use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 fn main() {
     let protocol: Protocol = serde_yaml::from_reader(std::io::stdin()).unwrap();
-    let t = "";
+    let t = protocol.into_token_stream();
     println!("{}\n// vim: foldnestmax=0 ft=rust", t);
 }
 
@@ -116,7 +118,7 @@ struct Event {
     parameters: Properties
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(untagged)]
 enum Type {
     Name(String),
@@ -134,43 +136,65 @@ enum Type {
     }
 }
 
+impl ToTokens for Protocol {
+    fn to_tokens(&self, tokens: &mut TokenStream) { todo!() }
+}
+
+fn node((name, node): (&str, &Node)) { todo!() }
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+
     #[test]
-    fn parse() {
-        let x: Properties = serde_yaml::from_str("n: number?").unwrap();
-        let x: Type = serde_yaml::from_str(
-            r#"
-      type: enum?
-      literals:
-      - "null"
-      - undefined
-      - NaN
-      - Infinity
-      - -Infinity
-      - "-0""#
-        )
-        .unwrap();
-        let x: HashMap<String, Node> = serde_yaml::from_str(
-            r#"
-    SerializedValue:
-      type: object
-      # Exactly one of the properties must be present.
-      properties:
-        n: number?
-        b: boolean?
-        s: string?
-        v:
-          type: enum?
-          literals:
-          - "null"
-          - undefined
-          - NaN
-          - Infinity
-          - -Infinity
-          - "-0""#
-        )
-        .unwrap();
+    fn all_types() {
+        let s = fs::read_to_string("../src/protocol/protocol.yml").unwrap();
+        let s = s.replace("null", r#""null""#);
+        let protocol: Protocol = serde_yaml::from_str(&s).unwrap();
+        let mut types = Vec::new();
+        for (_, node) in protocol.0.iter() {
+            match node {
+                Node::Object(Object { properties }) | Node::Mixin(Mixin { properties }) => {
+                    for (_, t) in properties {
+                        types.push(t);
+                    }
+                }
+                Node::Interface(Interface {
+                    commands,
+                    events,
+                    extends: _,
+                    initializer
+                }) => {
+                    fn append<'a>(dest: &mut Vec<&'a Type>, props: &'a Option<Properties>) {
+                        for (_, t) in props.iter().flat_map(|m| m.iter()) {
+                            dest.push(t);
+                        }
+                    }
+                    for (_, c) in commands.iter().flat_map(|m| m.iter()) {
+                        let c = if c.is_none() {
+                            continue;
+                        } else {
+                            c.as_ref().unwrap()
+                        };
+                        append(&mut types, &c.parameters);
+                        append(&mut types, &c.returns);
+                    }
+                    for (_, e) in events.iter().flat_map(|m| m.iter()) {
+                        let e = if e.is_none() {
+                            continue;
+                        } else {
+                            e.as_ref().unwrap()
+                        };
+                        for (_, t) in e.parameters.iter() {
+                            types.push(t);
+                        }
+                    }
+                    append(&mut types, initializer);
+                }
+                _ => {}
+            }
+        }
+        println!("{}", serde_json::to_string(&types).unwrap());
     }
 }
