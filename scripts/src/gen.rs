@@ -37,28 +37,34 @@ struct Api(Vec<Interface>);
 struct Interface {
     name: String,
     // langs
-    // spec
+    // spec: Vec<SpecNode>,
     #[serde(default)]
     comment: String,
     members: Vec<Member>,
     extends: Option<String>
 }
 
+/// Ex. {"name": "toMatchSnapshot#2", "alias": "toMatchSnapshot", "overloadIndex": 1}
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Member {
     kind: Kind,
     name: String,
-    // langs
-    // alias
-    r#type: Type,
-    // spec
-    #[serde(default)]
-    comment: String,
+    alias: String,
+    experimental: bool,
+    since: String,
+    overload_index: usize,
     required: bool,
-    deprecated: bool,
     #[serde(rename = "async")]
     is_async: bool,
-    args: Vec<Arg>
+    args: Vec<Arg>,
+    r#type: Type,
+    // langs
+    // paramOrOption null
+    deprecated: bool,
+    // spec: Vec<SpecNode>,
+    #[serde(default)]
+    comment: String
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
@@ -71,27 +77,7 @@ enum Kind {
 
 #[derive(Debug, Deserialize)]
 struct Type {
-    // 30 ('event', dict_keys(['name', 'expression']))
-    //  2 ('event', dict_keys(['name', 'properties', 'expression']))
-    //  4 ('event', dict_keys(['name']))
-    // 151 ('method', dict_keys(['name', 'expression']))
-    //  3 ('method', dict_keys(['name', 'properties', 'expression']))
-    // 23 ('method', dict_keys(['name', 'templates', 'expression']))
-    // 44 ('method', dict_keys(['name', 'union', 'expression']))
-    // 132 ('method', dict_keys(['name']))
-    // 10 ('property', dict_keys(['name', 'expression']))
-    //  1 ('property', dict_keys(['name', 'properties', 'expression']))
-    //  1 ('property', dict_keys(['name', 'union', 'expression']))
-
-    //  9 dict_keys(['name', 'args', 'returnType', 'expression'])
-    // 220 dict_keys(['name', 'expression'])
-    // 10 dict_keys(['name', 'properties', 'expression'])
-    // 150 dict_keys(['name', 'properties'])
-    //  9 dict_keys(['name', 'templates', 'expression'])
-    // 54 dict_keys(['name', 'union', 'expression'])
     name: String,
-    #[serde(default)]
-    return_type: Option<Box<Type>>,
     #[serde(default)]
     expression: Option<String>,
     #[serde(default)]
@@ -103,13 +89,18 @@ struct Type {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Arg {
     name: String,
     kind: ArgKind,
-    // langs
-    // alias
+    alias: String,
     r#type: Type,
+    // langs
     // spec
+    // experimental
+    // paramOrOption
+    since: String,
+    overload_index: usize,
     comment: String,
     required: bool,
     deprecated: bool,
@@ -324,10 +315,7 @@ impl Property<'_, '_> {
 
 impl ToTokens for Type {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.return_type.is_some() {
-            tokens.extend(self.function());
-            return;
-        }
+        todo!();
         if !self.templates.is_empty() {
             tokens.extend(match self.name.as_str() {
                 "Array" => self.array(),
@@ -411,12 +399,7 @@ impl ToTokens for Type {
 }
 
 impl Type {
-    fn function(&self) -> TokenStream {
-        let ret = self.return_type.as_ref().unwrap();
-        quote! {
-            impl Fn(NotImplementedYet) ->  #ret
-        }
-    }
+    fn function(&self) -> TokenStream { todo!() }
 
     fn array(&self) -> TokenStream {
         let t = self.templates.iter().next().unwrap();
