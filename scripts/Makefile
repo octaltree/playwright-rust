@@ -6,7 +6,8 @@ clean_driver:
 	rm -r ~/.cache/ms-playwright/playwright-rust
 
 ../src/api/generated.rs: ../src/api/api.json src/gen.rs
-	rustfmt --config-path ../.rustfmt.toml --emit stdout <(cargo run --bin gen < $<)| tail +3 > $@
+	cargo run --bin gen < $< > $@
+	rustfmt +nightly --config-path ../.rustfmt.toml $@
 
 ../src/api/api.json: ../src/build.rs
 	cd .. && cargo run print-api-json |jq > src/api/api.json
@@ -20,4 +21,4 @@ diff:
 
 ../src/protocol/generated.rs: ../src/protocol/protocol.yml src/generate_protocol.rs
 	cat $<| sed 's#null#"null"#'| cargo run --bin generate_protocol > $@
-	rustfmt --config-path ../.rustfmt.toml $@
+	rustfmt +nightly --config-path ../.rustfmt.toml $@
