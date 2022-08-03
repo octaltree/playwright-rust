@@ -138,10 +138,12 @@ impl ToTokens for Protocol {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let mut xs = self.0.iter().collect::<Vec<_>>();
         xs.sort_by_key(|(_, n)| match n {
-            Node::Enum(_) => 2,
-            Node::Object(_) => 4,
+            Node::Interface(_) => 1,
+            Node::Object(_) => 2,
+            // partial type of object
             Node::Mixin(_) => 3,
-            Node::Interface(_) => 1
+            // sum type is compound but literals is primitive
+            Node::Enum(_) => 4
         });
         tokens.append_all(xs.into_iter().map(|(name, node)| node_tokens(name, node)));
     }
@@ -151,7 +153,7 @@ fn node_tokens(name: &str, node: &Node) -> TokenStream {
     match node {
         Node::Enum(x) => enum_tokens(name, x, true),
         Node::Object(x) | Node::Mixin(x) => object_tokens(name, x),
-        Node::Interface(_) => quote!()
+        Node::Interface(x) => interface_tokens(name, x)
     }
 }
 
@@ -159,22 +161,29 @@ fn enum_tokens(name: &str, x: &Enum, camel: bool) -> TokenStream {
     let variants = x
         .literals
         .iter()
-        .map(|label| {
-            let orig = camel.then(|| quote!(#[rename=#label])).unwrap_or_default();
-            let label = format_ident!("{}", label.to_camel());
+        .map(|s| {
+            let (variant, is_normalized) = {
+                let u = s.replace("-", "_");
+                let snake = if u.starts_with("_") {
+                    format!("neg{}", u)
+                } else {
+                    u
+                };
+                let raw = if camel { snake.to_camel() } else { snake };
+                (format_ident!("{}", raw), s != &raw)
+            };
+            let orig = is_normalized
+                .then(|| quote!(#[rename=#s]))
+                .unwrap_or_default();
             quote! {
                 #orig
-                #label
+                #variant
             }
         })
         .collect::<Vec<_>>();
-    let ignore_warn = (!camel)
-        .then(|| quote!(#[allow(non_camel_case_types)]))
-        .unwrap_or_default();
     let name = format_ident!("{}", name);
     quote! {
         #[derive(Debug, Serialize, Deserialize)]
-        #ignore_warn
         pub enum #name {
             #(#variants),*
         }
@@ -182,8 +191,29 @@ fn enum_tokens(name: &str, x: &Enum, camel: bool) -> TokenStream {
 }
 
 fn object_tokens(name: &str, x: &Object) -> TokenStream {
-    let nodes = collect_unnamed_by_properties(vec![name], &x.properties);
-    quote! {}
+    let nodes = collect_unnamed_by_properties(vec![], &x.properties);
+    let mut once = nodes
+        .iter()
+        .map(|(name, node)| node_tokens(name, node))
+        .peekable();
+    let struct_name = format_ident!("{}", name);
+    let sub = if once.peek().is_some() {
+        let mod_name = format_ident!("{}", name.to_snake());
+        quote! {
+            pub mod #mod_name {
+                #(#once)*
+            }
+        }
+    } else {
+        Default::default()
+    };
+    quote! {
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct #struct_name {
+        }
+
+        #sub
+    }
 }
 
 fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
@@ -193,7 +223,24 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
         extends,
         initializer
     } = x;
-    quote! {}
+    let mod_name = format_ident!(
+        "{}",
+        match name {
+            "CDPSession" => "cdp_session".into(),
+            "APIRequestContext" => "api_request_context".into(),
+            "JSHandle" => "js_handle".into(),
+            x => x.to_snake()
+        }
+    );
+    let initializer_tokens = initializer
+        .clone()
+        .map(|properties| object_tokens("initializer", &Object { properties }))
+        .unwrap_or_default();
+    quote! {
+        pub mod #mod_name {
+            #initializer_tokens
+        }
+    }
 }
 
 fn collect_unnamed_by_properties<'a>(
@@ -264,6 +311,12 @@ fn collect_unnamed<'a>(prefix: &[&str], name: &str, ty: &'a Type) -> HashMap<Str
     res
 }
 
+// ex. c_d_p_session :-> cdp_session
+fn fix_loud_snake(s: &str) -> String { todo!() }
+
+// ex. CDPSession :-> CdpSession
+fn fix_loud_camel(s: &str) -> String { fix_loud_snake(&s.to_snake()).to_camel() }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -330,5 +383,71 @@ mod tests {
             }
         }
         println!("{}", serde_json::to_string(&types).unwrap());
+    }
+
+    #[test]
+    fn foo() {
+        let name = "deviceDescriptors";
+        let ty: Type = serde_json::from_str(
+            r#"
+            {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": "string",
+                        "descriptor": {
+                            "type": "object",
+                            "properties": {
+                                "userAgent": "string",
+                                "viewport": {
+                                    "type": "object",
+                                    "properties": {
+                                        "width": "number",
+                                        "height": "number"
+                                    }
+                                },
+                                "screen": {
+                                    "type": "object?",
+                                    "properties": {
+                                        "width": "number",
+                                        "height": "number"
+                                    }
+                                },
+                                "deviceScaleFactor": "number",
+                                "isMobile": "boolean",
+                                "hasTouch": "boolean",
+                                "defaultBrowserType": {
+                                    "type": "enum",
+                                    "literals": [
+                                        "chromium",
+                                        "firefox",
+                                        "webkit"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            "#
+        )
+        .unwrap();
+        println!("{:?}", collect_unnamed(&[], name, &ty));
+    }
+
+    #[test]
+    fn test_fix_loud_snake() {
+        assert_eq!(fix_loud_snake("c_d_p_session"), "cdp_session".to_string());
+        assert_eq!(fix_loud_snake("j_s_handle"), "js_handle".to_string());
+        assert_eq!(
+            fix_loud_snake("a_p_i_request_context"),
+            "api_request_context".to_string()
+        );
+        assert_eq!(fix_loud_snake("a_x_node"), "ax_node".to_string());
+        assert_eq!(fix_loud_snake("_a_x_node"), "_ax_node".to_string());
+        assert_eq!(fix_loud_snake("a__x_node"), "ax_node".to_string());
+        assert_eq!(fix_loud_snake("foo__bar"), "foo_bar".to_string());
+        assert_eq!(fix_loud_snake("axis_x_a_dog"), "axis_xa_dog".to_string());
     }
 }
