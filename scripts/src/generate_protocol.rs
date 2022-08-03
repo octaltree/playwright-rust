@@ -232,6 +232,7 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
             x => x.to_snake()
         }
     );
+    // FIXME: duplicated
     let initializer_tokens = initializer
         .clone()
         .map(|properties| object_tokens("initializer", &Object { properties }))
