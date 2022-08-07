@@ -1,6 +1,6 @@
 use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote, TokenStreamExt};
+use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 use scripts::{api::*, utils};
 
 fn main() {
@@ -12,29 +12,92 @@ fn main() {
 fn to_tokens(api: &Api) -> TokenStream {
     let mut tokens = TokenStream::default();
     tokens.append_all(api.0.iter().map(body));
-    tokens.extend(collect_types(&api.0));
     tokens
 }
 
 fn body(x: &Interface) -> TokenStream {
-    let name = format_ident!("{}", utils::fix_loud_camel(&x.name));
-    let mod_name = format_ident!("{}", utils::fix_loud_camel(&x.name).to_snake());
+    let name = format_ident!("{}", utils::loud_to_camel(&x.name));
+    let mod_name = format_ident!("{}", utils::loud_to_camel(&x.name).to_snake());
     let extends = x.extends.as_deref().map(|e| {
         let e = format!("Extends {}", e);
         quote! { #[doc=#e] }
     });
+    let sub = collect_types(x);
     // let properties = self.properties();
     quote! {
         mod #mod_name {
             #extends
             impl #name {
             }
+            #sub
         }
     }
 }
 
-fn collect_types(xs: &[Interface]) -> TokenStream {
-    quote! {}
+fn collect_types(x: &Interface) -> TokenStream {
+    let mut types = Vec::new();
+    fn add<'a>(dest: &mut Vec<&'a Type>, t: &'a Type) {
+        let Type {
+            name,
+            expression: _,
+            properties,
+            templates,
+            union
+        }: &Type = t;
+        if !name.is_empty() {
+            dest.push(t);
+        }
+        for arg in properties {
+            add(dest, &arg.ty);
+        }
+        for ty in templates {
+            add(dest, ty);
+        }
+        for ty in union {
+            add(dest, ty);
+        }
+    }
+    for member in &x.members {
+        for arg in &member.args {
+            add(&mut types, &arg.ty);
+        }
+        add(&mut types, &member.ty);
+    }
+    let mut ret = TokenStream::default();
+    ret.append_all(types.into_iter().map(Declare));
+    ret
+}
+
+struct Declare<'a>(&'a Type);
+
+struct Use<'a>(&'a Type);
+
+impl<'a> ToTokens for Declare<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let ty = &self.0;
+        if ty.union.is_empty() {
+            tokens.extend(quote! {});
+        } else {
+            let name = format_ident!("{}", &ty.name);
+            let variants = ty.union.iter().map(|t| {
+                let name = t.name.replace("\"", "");
+                let label = format_ident!("{}", utils::kebab_to_camel(&name));
+                quote! {
+                    #[serde(rename = #name)]
+                    #label
+                }
+            });
+            tokens.extend(quote! {
+                enum #name {
+                    #(#variants),*
+                }
+            });
+        }
+    }
+}
+
+impl<'a> ToTokens for Use<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {}
 }
 
 // impl Interface {

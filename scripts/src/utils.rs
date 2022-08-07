@@ -1,3 +1,5 @@
+use case::CaseExt;
+
 pub fn escape(s: &str) -> String {
     match s {
         // keywords https://doc.rust-lang.org/book/appendix-01-keywords.html
@@ -18,7 +20,7 @@ pub fn escape(s: &str) -> String {
 }
 
 // ex. CDPSessionSTORE :-> CdpSessionStore
-pub fn fix_loud_camel(s: &str) -> String {
+pub fn loud_to_camel(s: &str) -> String {
     let us = s
         .chars()
         .map(|c| c.is_ascii_uppercase())
@@ -66,20 +68,32 @@ pub fn fix_loud_camel(s: &str) -> String {
         .collect()
 }
 
+pub fn kebab_to_snake(s: &str) -> String {
+    let u = s.replace("-", "_");
+    let snake = if u.starts_with("_") {
+        format!("neg{}", u)
+    } else {
+        u
+    };
+    snake
+}
+
+pub fn kebab_to_camel(s: &str) -> String { kebab_to_snake(s).to_camel() }
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn can_fix_loud_camel() {
-        assert_eq!(fix_loud_camel("CDPSession"), "CdpSession".to_string());
-        assert_eq!(fix_loud_camel("JSHandle"), "JsHandle".to_string());
+    fn can_loud_to_camel() {
+        assert_eq!(loud_to_camel("CDPSession"), "CdpSession".to_string());
+        assert_eq!(loud_to_camel("JSHandle"), "JsHandle".to_string());
         assert_eq!(
-            fix_loud_camel("APIRequestContext"),
+            loud_to_camel("APIRequestContext"),
             "ApiRequestContext".to_string()
         );
-        assert_eq!(fix_loud_camel("AXNode"), "AxNode".to_string());
-        assert_eq!(fix_loud_camel("AxisXADog"), "AxisXaDog".to_string());
-        assert_eq!(fix_loud_camel("AXIS"), "Axis".to_string()); // if last
+        assert_eq!(loud_to_camel("AXNode"), "AxNode".to_string());
+        assert_eq!(loud_to_camel("AxisXADog"), "AxisXaDog".to_string());
+        assert_eq!(loud_to_camel("AXIS"), "Axis".to_string()); // if last
     }
 }

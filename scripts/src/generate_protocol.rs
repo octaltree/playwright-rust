@@ -39,13 +39,11 @@ fn enum_tokens(name: &str, x: &Enum, camel: bool) -> TokenStream {
         .iter()
         .map(|s| {
             let (variant, is_normalized) = {
-                let u = s.replace("-", "_");
-                let snake = if u.starts_with("_") {
-                    format!("neg{}", u)
+                let raw = if camel {
+                    utils::kebab_to_camel(s)
                 } else {
-                    u
+                    utils::kebab_to_snake(s)
                 };
-                let raw = if camel { snake.to_camel() } else { snake };
                 (format_ident!("{}", raw), s != &raw)
             };
             let orig = is_normalized
@@ -99,7 +97,7 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
         extends,
         initializer
     } = x;
-    let mod_name = format_ident!("{}", utils::fix_loud_camel(name).to_snake());
+    let mod_name = format_ident!("{}", utils::loud_to_camel(name).to_snake());
     // FIXME: duplicated
     let initializer_tokens = initializer
         .clone()

@@ -47,7 +47,7 @@ pub enum Kind {
     Property
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Type {
     pub name: String,
     #[serde(default)]
@@ -60,7 +60,7 @@ pub struct Type {
     pub union: Vec<Type>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Arg {
     pub name: String,
