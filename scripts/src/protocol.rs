@@ -1,3 +1,4 @@
+use case::CaseExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -243,4 +244,72 @@ mod tests {
         .unwrap();
         println!("{:?}", collect_unnamed(&[], name, &ty));
     }
+}
+
+pub fn collect_unnamed_by_properties<'a>(
+    prefix: Vec<&str>,
+    props: &'a Properties
+) -> HashMap<String, Node> {
+    let mut res = HashMap::new();
+    for (name, t) in props.iter() {
+        res.extend(collect_unnamed(&prefix, name, t));
+    }
+    res
+}
+
+pub fn collect_unnamed<'a>(prefix: &[&str], name: &str, ty: &'a Type) -> HashMap<String, Node> {
+    let mut res = HashMap::new();
+    match ty {
+        Type::Name(_) => {}
+        Type::Items { r#type, item_type } => {
+            assert!(
+                r#type == "array" || r#type == "array?",
+                "Not match Type::Items"
+            );
+            res.extend(collect_unnamed(prefix, name, &item_type));
+        }
+        Type::Literals { r#type, literals } => {
+            assert!(
+                r#type == "enum" || r#type == "enum?",
+                "Not match Type::Literals"
+            );
+            res.insert(
+                prefix
+                    .iter()
+                    .map(|s| -> &str { s })
+                    .chain(std::iter::once(&name as &str))
+                    .map(|s| s.to_camel())
+                    .collect(),
+                Node::Enum(Enum {
+                    literals: literals.clone()
+                })
+            );
+        }
+        Type::Properties { r#type, properties } => {
+            assert!(
+                r#type == "object" || r#type == "object?",
+                "Not match Type::Properties"
+            );
+            res.insert(
+                prefix
+                    .iter()
+                    .map(|s| -> &str { s })
+                    .chain(std::iter::once(&name as &str))
+                    .map(|s| s.to_camel())
+                    .collect(),
+                Node::Object(Object {
+                    properties: properties.clone()
+                })
+            );
+            res.extend(collect_unnamed_by_properties(
+                {
+                    let mut p = prefix.to_vec();
+                    p.push(name);
+                    p
+                },
+                properties
+            ));
+        }
+    }
+    res
 }
