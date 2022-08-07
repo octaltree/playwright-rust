@@ -1,10 +1,10 @@
+use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 use scripts::{api::*, utils};
 
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
-    // let t = api.into_token_stream();
     let t = to_tokens(&api);
     println!("{}\n// vim: foldnestmax=0 ft=rust", t);
 }
@@ -17,20 +17,21 @@ fn to_tokens(api: &Api) -> TokenStream {
 }
 
 fn body(x: &Interface) -> TokenStream {
-    let name = ident_camel(&x.name);
+    let name = format_ident!("{}", utils::fix_loud_camel(&x.name));
+    let mod_name = format_ident!("{}", utils::fix_loud_camel(&x.name).to_snake());
     let extends = x.extends.as_deref().map(|e| {
         let e = format!("Extends {}", e);
         quote! { #[doc=#e] }
     });
     // let properties = self.properties();
     quote! {
-        #extends
-        impl #name {
+        mod #mod_name {
+            #extends
+            impl #name {
+            }
         }
     }
 }
-
-fn ident_camel(s: &str) -> Ident { format_ident!("{}", utils::fix_loud_camel(s)) }
 
 fn collect_types(xs: &[Interface]) -> TokenStream {
     quote! {}

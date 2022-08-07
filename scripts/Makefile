@@ -11,11 +11,11 @@ clean_driver:
 ../src/protocol/protocol.yml: ../src/api/api.json
 	cp ~/.cache/ms-playwright/playwright-rust/driver/package/protocol.yml $@
 
-../src/api/generated.rs: ../src/api/api.json
+../src/api/generated.rs: ../src/api/api.json src
 	cargo run --bin generate_api < $< > $@
 	rustfmt +nightly --config-path ../.rustfmt.toml $@
 
-../src/protocol/generated.rs: ../src/protocol/protocol.yml
+../src/protocol/generated.rs: ../src/protocol/protocol.yml src
 	cat $<| sed 's#null#"null"#'| cargo run --bin generate_protocol > $@
 	rustfmt +nightly --config-path ../.rustfmt.toml $@
 
