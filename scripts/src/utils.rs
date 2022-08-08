@@ -19,6 +19,8 @@ pub fn escape(s: &str) -> String {
     }
 }
 
+pub fn snake(s: &str) -> String { escape(s).to_snake() }
+
 // ex. CDPSessionSTORE :-> CdpSessionStore
 pub fn loud_to_camel(s: &str) -> String {
     let us = s
