@@ -22,6 +22,7 @@ fn body(x: &Interface) -> TokenStream {
         let e = format!("Extends {}", e);
         quote! { #[doc=#e] }
     });
+    eprintln!("\n");
     let sub = collect_types(x);
     // let properties = self.properties();
     quote! {
@@ -35,50 +36,92 @@ fn body(x: &Interface) -> TokenStream {
 }
 
 fn collect_types(x: &Interface) -> TokenStream {
-    let mut types = Vec::new();
-    fn add<'a>(dest: &mut Vec<&'a Type>, t: &'a Type) {
+    fn add<'a>(dest: &mut Vec<(String, &'a Type)>, prefix: String, t: &'a Type) {
         let Type {
             name,
             expression: _,
             properties,
             templates,
-            union
+            union: _
         }: &Type = t;
         if !name.is_empty() {
-            dest.push(t);
+            dest.push((prefix, t));
+            return;
         }
         for arg in properties {
-            add(dest, &arg.ty);
+            add(dest, prefix.clone(), &arg.ty);
         }
         for ty in templates {
-            add(dest, ty);
+            add(dest, prefix.clone(), ty);
         }
-        for ty in union {
-            add(dest, ty);
-        }
-    }
-    for member in &x.members {
-        for arg in &member.args {
-            add(&mut types, &arg.ty);
-        }
-        add(&mut types, &member.ty);
     }
     let mut ret = TokenStream::default();
-    ret.append_all(types.into_iter().map(Declare));
+    for member in &x.members {
+        let mut types = Vec::new();
+        for arg in &member.args {
+            let name = format!("{}{}", &member.name.to_camel(), &arg.name.to_camel());
+            add(&mut types, name, &arg.ty);
+        }
+        add(&mut types, member.name.to_camel(), &member.ty);
+        let mod_name = format_ident!(
+            "{}",
+            utils::snake(&utils::loud_to_camel(&member.name.replace("#", "")))
+        );
+        eprintln!("{:?}", &types);
+        let mut types = types
+            .into_iter()
+            .map(|(prefix, ty)| Declare { prefix, ty })
+            .peekable();
+        eprintln!(
+            "{}",
+            utils::snake(&utils::loud_to_camel(&member.name.replace("#", "")))
+        );
+        if types.peek().is_some() {
+            ret.extend(quote! {
+                pub mod #mod_name {
+                    #(#types)*
+                }
+            });
+        }
+    }
     ret
 }
 
-struct Declare<'a>(&'a Type);
+#[derive(Debug)]
+struct Declare<'a> {
+    prefix: String,
+    ty: &'a Type
+}
 
 struct Use<'a>(&'a Type);
 
 impl<'a> ToTokens for Declare<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let ty = &self.0;
+        let Declare { prefix, ty } = self;
         if ty.union.is_empty() {
-            tokens.extend(quote! {});
+            if ty.properties.is_empty() && ty.templates.is_empty() {
+                return;
+            }
+            let name = format_ident!("{}", prefix.replace("#", ""));
+            match (ty.properties.is_empty(), ty.templates.is_empty()) {
+                (true, true) => return,
+                (false, false) => {
+                    assert_eq!(ty.name, "Object");
+                }
+                (false, true) => {
+                    assert_eq!(ty.name, "Object");
+                    tokens.extend(quote! {
+                        #[derive(Debug, Serialize, Deserialize)]
+                        struct #name {
+                        }
+                    });
+                }
+                (true, false) => {}
+            }
         } else {
-            let name = format_ident!("{}", &ty.name);
+            // let name = format_ident!("{}", &ty.name);
+            let name = format_ident!("{}", prefix.replace("#", ""));
+            eprintln!("{} {}", &ty.name, prefix.replace("#", ""));
             let variants = ty.union.iter().map(|t| {
                 let name = t.name.replace("\"", "");
                 let label = format_ident!("{}", utils::kebab_to_camel(&name));
