@@ -22,7 +22,6 @@ fn body(x: &Interface) -> TokenStream {
         let e = format!("Extends {}", e);
         quote! { #[doc=#e] }
     });
-    eprintln!("\n");
     let sub = collect_types(x);
     // let properties = self.properties();
     quote! {
@@ -63,19 +62,11 @@ fn collect_types(x: &Interface) -> TokenStream {
             add(&mut types, name, &arg.ty);
         }
         add(&mut types, member.name.to_camel(), &member.ty);
-        let mod_name = format_ident!(
-            "{}",
-            utils::snake(&utils::loud_to_camel(&member.name.replace("#", "")))
-        );
-        eprintln!("{:?}", &types);
+        let mod_name = format_ident!("{}", utils::loud_to_snake(&member.name.replace("#", "")));
         let mut types = types
             .into_iter()
             .map(|(prefix, ty)| Declare { prefix, ty })
             .peekable();
-        eprintln!(
-            "{}",
-            utils::snake(&utils::loud_to_camel(&member.name.replace("#", "")))
-        );
         if types.peek().is_some() {
             ret.extend(quote! {
                 pub mod #mod_name {
@@ -110,9 +101,33 @@ impl<'a> ToTokens for Declare<'a> {
                 }
                 (false, true) => {
                     assert_eq!(ty.name, "Object");
+                    let properties = ty.properties.iter().map(|p| {
+                        let deprecated = p
+                            .deprecated
+                            .then(|| quote!(#[deprecated]))
+                            .unwrap_or_default();
+                        let name = format_ident!("{}", utils::loud_to_snake(&p.name));
+                        let orig = &p.name;
+                        let doc = &p.comment;
+                        let use_ty = {
+                            let a = Use(&p.ty);
+                            if p.required {
+                                quote!(#a)
+                            } else {
+                                quote!(Option<#a>)
+                            }
+                        };
+                        quote! {
+                            #deprecated
+                            #[doc = #doc]
+                            #[serde(rename = #orig)]
+                            #name: #use_ty
+                        }
+                    });
                     tokens.extend(quote! {
                         #[derive(Debug, Serialize, Deserialize)]
                         struct #name {
+                            #(#properties),*
                         }
                     });
                 }
@@ -121,7 +136,6 @@ impl<'a> ToTokens for Declare<'a> {
         } else {
             // let name = format_ident!("{}", &ty.name);
             let name = format_ident!("{}", prefix.replace("#", ""));
-            eprintln!("{} {}", &ty.name, prefix.replace("#", ""));
             let variants = ty.union.iter().map(|t| {
                 let name = t.name.replace("\"", "");
                 let label = format_ident!("{}", utils::kebab_to_camel(&name));
@@ -140,7 +154,11 @@ impl<'a> ToTokens for Declare<'a> {
 }
 
 impl<'a> ToTokens for Use<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {}
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(quote! {
+            ()
+        });
+    }
 }
 
 // impl Interface {
