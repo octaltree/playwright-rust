@@ -8,9 +8,9 @@ pub struct Api(pub Vec<Interface>);
 pub struct Interface {
     pub name: String,
     // langs
-    // spec: Vec<SpecNode>,
-    #[serde(default)]
-    pub comment: String,
+    //#[serde(default)]
+    // pub comment: String,
+    pub spec: Vec<SpecNode>,
     pub members: Vec<Member>,
     pub extends: Option<String>
 }
@@ -34,9 +34,9 @@ pub struct Member {
     // langs
     // paramOrOption null
     pub deprecated: bool,
-    // spec: Vec<SpecNode>,
-    #[serde(default)]
-    pub comment: String
+    //#[serde(default)]
+    // pub comment: String,
+    pub spec: Vec<SpecNode>
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
@@ -69,12 +69,13 @@ pub struct Arg {
     #[serde(rename = "type")]
     pub ty: Type,
     // langs
-    // spec
     // experimental
     // paramOrOption
     pub since: String,
     pub overload_index: usize,
-    pub comment: String,
+    // pub comment: String,
+    #[serde(default)]
+    pub spec: Vec<SpecNode>,
     pub required: bool,
     pub deprecated: bool,
     #[serde(rename = "async")]
@@ -85,6 +86,47 @@ pub struct Arg {
 #[serde(rename_all = "camelCase")]
 pub enum ArgKind {
     Property
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[serde(tag = "type")]
+#[serde(rename_all = "camelCase")]
+pub enum SpecNode {
+    Text {
+        text: String
+    },
+    Code {
+        #[serde(rename = "codeLang")]
+        lang: String,
+        lines: Vec<String>
+    },
+    Li {
+        #[serde(rename = "liType")]
+        li_type: LiType,
+        text: String
+    },
+    Note {
+        #[serde(rename = "noteType")]
+        note_type: NoteType,
+        text: String
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum LiType {
+    Bullet,
+    Ordinal
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum NoteType {
+    #[serde(rename = "caution Discouraged")]
+    CautionDiscouraged,
+    Caution,
+    Note,
+    Warning
 }
 
 #[cfg(test)]
@@ -103,9 +145,7 @@ mod tests {
                 templates,
                 union
             }: &Type = t;
-            if !name.is_empty() {
-                dest.push(t);
-            }
+            dest.push(t);
             for arg in properties {
                 add(dest, &arg.ty);
             }
@@ -127,5 +167,24 @@ mod tests {
             }
         }
         println!("{}", serde_json::to_string(&types).unwrap());
+    }
+
+    #[test]
+    fn parse() {
+        let xs:Vec<SpecNode> = serde_json::from_str(r#"
+            [{
+            "type": "text",
+            "text": "Captures the current state of the accessibility tree. The returned object represents the root accessible node of the page."
+          },
+          {
+            "type": "note",
+            "noteType": "note",
+            "text": "The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers. Playwright will discard them as well for an easier to process tree, unless `interestingOnly` is set to `false`."
+          },
+          {
+            "type": "text",
+            "text": "An example of dumping the entire accessibility tree:"
+          }]
+            "#).unwrap();
     }
 }
