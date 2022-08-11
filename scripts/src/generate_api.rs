@@ -22,15 +22,107 @@ fn body(x: &Interface) -> TokenStream {
         let e = format!("Extends {}", e);
         quote! { #[doc=#e] }
     });
-    let sub = collect_types(x);
+    // TODO: doc_comment
+    let methods = x
+        .members
+        .iter()
+        .filter(|m| matches!(m.kind, Kind::Property | Kind::Method))
+        .map(Method);
+    // let sub = collect_types(x);
     // let properties = self.properties();
     quote! {
         mod #mod_name {
             #extends
             impl #name {
+                #(#methods)*
             }
-            #sub
         }
+    }
+}
+
+#[derive(Debug)]
+struct Method<'a>(&'a Member);
+
+impl<'a> ToTokens for Method<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let Method(Member {
+            kind: _,
+            name,
+            alias,
+            experimental,
+            since,
+            overload_index,
+            required,
+            is_async,
+            args,
+            ty,
+            deprecated,
+            spec
+        }) = self;
+        let rety = Use(ty);
+        let arg_fields = args.iter().filter(|a| a.required).map(arg_field);
+        let is_builder = {
+            // two or more optional values
+            let mut xs = args.iter().filter(|a| !a.required).chain(
+                args.iter()
+                    .filter(|a| a.name == "options" && !a.ty.properties.is_empty())
+                    .flat_map(|a| a.ty.properties.iter())
+            );
+            xs.next().and(xs.next()).is_some()
+        };
+        let fn_name = format_ident!(
+            "{}{}",
+            utils::loud_to_snake(&name.replace("#", "")),
+            if is_builder { "_builder" } else { "" }
+        );
+        let mark_async = (!is_builder && *is_async)
+            .then(|| quote!(async))
+            .unwrap_or_default();
+        // TODO: doc_comment
+        let doc_unnecessary = (!required)
+            .then(|| quote!(#[doc="unnecessary"]))
+            .unwrap_or_default();
+        let doc_experimental = experimental
+            .then(|| quote!(#[doc="experimental"]))
+            .unwrap_or_default();
+        let mark_deprecated = deprecated
+            .then(|| quote!(#[deprecated]))
+            .unwrap_or_default();
+        tokens.extend(quote! {
+            #doc_unnecessary
+            #doc_experimental
+            #mark_deprecated
+            #mark_async fn #fn_name(#(#arg_fields),*) -> #rety {
+                todo!()
+            }
+        })
+    }
+}
+
+fn arg_field(a: &Arg) -> TokenStream {
+    let Arg {
+        name,
+        kind: _,
+        alias,
+        ty,
+        since,
+        overload_index,
+        spec,
+        required,
+        deprecated,
+        is_async
+    } = a;
+    assert_eq!(*is_async, false);
+    let field_name = format_ident!("{}", utils::loud_to_snake(name));
+    let use_ty = Use(ty);
+    let doc_deprecated = deprecated
+        .then(|| quote!(#[doc="deprecated"]))
+        .unwrap_or_default();
+    // TODO: doc_comment
+    // TODO: deprecated
+    // TODO: required
+    quote! {
+        #field_name: #use_ty
     }
 }
 
@@ -41,16 +133,20 @@ fn collect_types(x: &Interface) -> TokenStream {
             expression: _,
             properties,
             templates,
-            union: _
+            union
         }: &Type = t;
-        if !name.is_empty() {
-            dest.push((prefix, t));
-            return;
-        }
+        dest.push((prefix.clone(), t));
         for arg in properties {
-            add(dest, prefix.clone(), &arg.ty);
+            add(
+                dest,
+                format!("{}{}", &prefix, &arg.name.to_camel()),
+                &arg.ty
+            );
         }
         for ty in templates {
+            add(dest, prefix.clone(), ty);
+        }
+        for ty in union {
             add(dest, prefix.clone(), ty);
         }
     }
@@ -108,7 +204,7 @@ impl<'a> ToTokens for Declare<'a> {
                             .unwrap_or_default();
                         let name = format_ident!("{}", utils::loud_to_snake(&p.name));
                         let orig = &p.name;
-                        let doc = &p.comment;
+                        // TODO: doc_comment
                         let use_ty = {
                             let a = Use(&p.ty);
                             if p.required {
@@ -119,7 +215,6 @@ impl<'a> ToTokens for Declare<'a> {
                         };
                         quote! {
                             #deprecated
-                            #[doc = #doc]
                             #[serde(rename = #orig)]
                             #name: #use_ty
                         }
@@ -137,11 +232,21 @@ impl<'a> ToTokens for Declare<'a> {
             // let name = format_ident!("{}", &ty.name);
             let name = format_ident!("{}", prefix.replace("#", ""));
             let variants = ty.union.iter().map(|t| {
-                let name = t.name.replace("\"", "");
-                let label = format_ident!("{}", utils::kebab_to_camel(&name));
-                quote! {
-                    #[serde(rename = #name)]
-                    #label
+                if t.name.contains("\"") {
+                    let name = t.name.replace("\"", "");
+                    let label = format_ident!("{}", utils::kebab_to_camel(&name));
+                    quote! {
+                        #[serde(rename = #name)]
+                        #label
+                    }
+                } else {
+                    let name = &t.name;
+                    let label = format_ident!("{}", utils::kebab_to_camel(&name));
+                    let use_ty = Use(t);
+                    quote! {
+                            #[serde(rename = #name)]
+                            #label(#use_ty)
+                    }
                 }
             });
             tokens.extend(quote! {
