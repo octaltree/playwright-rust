@@ -72,6 +72,8 @@ pub fn loud_to_camel(s: &str) -> String {
 
 pub fn loud_to_snake(s: &str) -> String { snake(&loud_to_camel(s)) }
 
+pub fn lower_loud_to_camel(s: &str) -> String { loud_to_camel(&s).to_camel() }
+
 pub fn kebab_to_snake(s: &str) -> String {
     let u = s.replace("-", "_");
     let snake = if u.starts_with("_") {

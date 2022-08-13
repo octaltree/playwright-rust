@@ -59,22 +59,25 @@ impl<'a> ToTokens for Method<'a> {
             deprecated,
             spec
         }) = self;
-        let rety = Use(ty);
-        let arg_fields = args.iter().filter(|a| a.required).map(arg_field);
-        let is_builder = {
-            // two or more optional values
-            let mut xs = args.iter().filter(|a| !a.required).chain(
-                args.iter()
-                    .filter(|a| a.name == "options" && !a.ty.properties.is_empty())
-                    .flat_map(|a| a.ty.properties.iter())
-            );
-            xs.next().and(xs.next()).is_some()
+        let is_builder = self.is_builder();
+        let rety: Box<dyn ToTokens> = if is_builder {
+            Box::new(format_ident!(
+                "{}{}",
+                utils::loud_to_camel(&name.to_camel().replace("#", "")),
+                "Builder"
+            ))
+        } else {
+            Box::new(Use(ty))
         };
-        let fn_name = format_ident!(
-            "{}{}",
-            utils::loud_to_snake(&name.replace("#", "")),
-            if is_builder { "_builder" } else { "" }
-        );
+        let arg_fields = args.iter().filter(|a| a.required).map(arg_field);
+        let fn_name = if is_builder {
+            format_ident!(
+                "{}_builder",
+                utils::loud_to_camel(&name.replace("#", "")).to_snake()
+            )
+        } else {
+            format_ident!("{}", utils::loud_to_snake(&name.replace("#", "")))
+        };
         let mark_async = (!is_builder && *is_async)
             .then(|| quote!(async))
             .unwrap_or_default();
@@ -96,6 +99,19 @@ impl<'a> ToTokens for Method<'a> {
                 todo!()
             }
         })
+    }
+}
+
+impl<'a> Method<'a> {
+    /// has two or more optional values
+    fn is_builder(&self) -> bool {
+        let args = &self.0.args;
+        let mut xs = args.iter().filter(|a| !a.required).chain(
+            args.iter()
+                .filter(|a| a.name == "options" && !a.ty.properties.is_empty())
+                .flat_map(|a| a.ty.properties.iter())
+        );
+        xs.next().and(xs.next()).is_some()
     }
 }
 
@@ -260,6 +276,7 @@ impl<'a> ToTokens for Declare<'a> {
 
 impl<'a> ToTokens for Use<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let ty = &self.0;
         tokens.extend(quote! {
             ()
         });

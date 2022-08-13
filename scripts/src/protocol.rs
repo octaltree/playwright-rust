@@ -104,6 +104,7 @@ pub struct Tracing {
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct Event {
+    /// response
     pub parameters: Properties
 }
 
