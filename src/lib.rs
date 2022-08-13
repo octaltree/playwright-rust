@@ -39,3 +39,7 @@ macro_rules! runtime_test {
         }
     };
 }
+
+mod protocol {
+    mod generated;
+}

@@ -7,7 +7,6 @@ fn main() {
     let protocol: Protocol = serde_yaml::from_reader(std::io::stdin()).unwrap();
     let t = to_tokens(&protocol);
     let g = quote! {
-        use serde::{Deserialize, Serialize};
         #[derive(Debug, Deserialize, Serialize)]
         #[serde(transparent)]
         pub struct Guid(String);
@@ -224,7 +223,6 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
     quote! {
         #doc_extends
         pub mod #mod_name {
-            use serde::{Deserialize, Serialize};
             #initializer_tokens
 
             #events_tokens
@@ -278,7 +276,6 @@ fn commands_tokens(commands: &Option<Commands>) -> TokenStream {
     });
     quote! {
         pub mod commands {
-            use serde::{Deserialize, Serialize};
             #(#declares)*
         }
     }
@@ -318,7 +315,6 @@ fn events_tokens(events: &Option<Events>) -> TokenStream {
     });
     quote! {
         pub mod events {
-            use serde::{Deserialize, Serialize};
             #[derive(Debug, Deserialize, Serialize)]
             pub enum Events {
                 #(#variants),*
