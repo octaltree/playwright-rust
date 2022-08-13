@@ -7,11 +7,13 @@ fn main() {
     let protocol: Protocol = serde_yaml::from_reader(std::io::stdin()).unwrap();
     let t = to_tokens(&protocol);
     let g = quote! {
+        use serde::{Deserialize, Serialize};
         #[derive(Debug, Deserialize, Serialize)]
         #[serde(transparent)]
         pub struct Guid(String);
+        pub type Channel = Guid;
     };
-    println!("{}\n{}\n// vim: foldnestmax=0 ft=rust", t, g);
+    println!("{}\n{}\n// vim: foldnestmax=0 ft=rust", g, t);
 }
 
 fn to_tokens(protocol: &Protocol) -> TokenStream {
@@ -47,7 +49,7 @@ fn enum_tokens(name: &str, x: &Enum) -> TokenStream {
                 (format_ident!("{}", raw), s != &raw)
             };
             let orig = is_normalized
-                .then(|| quote!(#[rename=#s]))
+                .then(|| quote!(#[serde(rename=#s)]))
                 .unwrap_or_default();
             quote! {
                 #orig
@@ -129,7 +131,7 @@ fn use_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
                 "boolean" => quote!(bool),
                 x => {
                     let ident = format_ident!("{}", utils::loud_to_camel(x));
-                    quote!(#ident)
+                    quote!(crate::protocol::generated::#ident)
                 }
             };
             if opt {
@@ -152,7 +154,14 @@ fn use_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
                 utils::loud_to_camel(scope),
                 utils::lower_loud_to_camel(name)
             );
-            if r#type.ends_with("?") {
+            if scope == "AndroidSelector"
+                && (name == "hasChild" || name == "hasDescendant")
+                && r#type.ends_with("?")
+            {
+                quote! {
+                    Option<Box<#label>>
+                }
+            } else if r#type.ends_with("?") {
                 quote!(Option<#label>)
             } else {
                 quote!(#label)
@@ -215,6 +224,7 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
     quote! {
         #doc_extends
         pub mod #mod_name {
+            use serde::{Deserialize, Serialize};
             #initializer_tokens
 
             #events_tokens
@@ -268,6 +278,7 @@ fn commands_tokens(commands: &Option<Commands>) -> TokenStream {
     });
     quote! {
         pub mod commands {
+            use serde::{Deserialize, Serialize};
             #(#declares)*
         }
     }
@@ -307,6 +318,8 @@ fn events_tokens(events: &Option<Events>) -> TokenStream {
     });
     quote! {
         pub mod events {
+            use serde::{Deserialize, Serialize};
+            #[derive(Debug, Deserialize, Serialize)]
             pub enum Events {
                 #(#variants),*
             }
