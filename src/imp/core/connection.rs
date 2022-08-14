@@ -121,6 +121,16 @@ impl Connection {
             log::trace!("succcess starting connection");
             let status = (|| -> Result<(), Error> {
                 loop {
+                    {
+                        let s = match s.upgrade() {
+                            Some(x) => x,
+                            None => break
+                        };
+                        let should_stop = s.load(Ordering::Relaxed);
+                        if should_stop {
+                            break;
+                        }
+                    }
                     let response = {
                         let r = match r.upgrade() {
                             Some(x) => x,
@@ -136,16 +146,6 @@ impl Connection {
                             None => continue
                         }
                     };
-                    {
-                        let s = match s.upgrade() {
-                            Some(x) => x,
-                            None => break
-                        };
-                        let should_stop = s.load(Ordering::Relaxed);
-                        if should_stop {
-                            break;
-                        }
-                    }
                     // dispatch
                     {
                         let c = match c.upgrade() {
