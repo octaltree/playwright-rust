@@ -14,7 +14,18 @@ pub(crate) struct Req<'a, 'b> {
     #[serde(default)]
     pub(crate) method: &'b S<Method>,
     #[serde(default)]
-    pub(crate) params: Map<String, Value>
+    pub(crate) params: Map<String, Value>,
+    pub(crate) metadata: crate::protocol::generated::Metadata
+}
+
+impl Default for crate::protocol::generated::Metadata {
+    fn default() -> Self {
+        Self {
+            api_name: None,
+            stack: None,
+            internal: None
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]

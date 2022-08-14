@@ -45,9 +45,9 @@ impl ChannelOwner {
         }
     }
 
-    pub(crate) fn new_root() -> Self {
+    pub(crate) fn new_root(ctx: Weak<Mutex<Context>>) -> Self {
         Self {
-            ctx: Weak::new(),
+            ctx,
             parent: None,
             typ: Str::validate("".into()).unwrap(),
             guid: Str::validate("".into()).unwrap(),
@@ -99,15 +99,11 @@ pub(crate) struct RootObject {
 }
 
 impl RootObject {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(ctx: Weak<Mutex<Context>>) -> Self {
         Self {
-            channel: ChannelOwner::new_root()
+            channel: ChannelOwner::new_root(ctx)
         }
     }
-}
-
-impl Default for RootObject {
-    fn default() -> Self { Self::new() }
 }
 
 impl RemoteObject for RootObject {
@@ -290,15 +286,20 @@ pub(crate) struct RequestBody {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
     pub(crate) params: Map<String, Value>,
+    pub(crate) metadata: crate::protocol::generated::Metadata,
     pub(crate) place: WaitPlaces<WaitMessageResult>
 }
 
 impl RequestBody {
     pub(crate) fn new(guid: Str<Guid>, method: Str<Method>) -> RequestBody {
+        let mut metadata: crate::protocol::generated::Metadata = Default::default();
+        metadata.stack = Some(vec![]);
+        metadata.api_name = Some("".into());
         RequestBody {
             guid,
             method,
             params: Map::default(),
+            metadata,
             place: WaitPlaces::new_empty()
         }
     }

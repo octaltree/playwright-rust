@@ -1,3 +1,4 @@
+#![feature(arc_unwrap_or_clone)]
 #[macro_use]
 extern crate serde;
 #[macro_use]

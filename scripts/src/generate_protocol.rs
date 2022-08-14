@@ -9,6 +9,9 @@ fn main() {
     let g = quote! {
         use crate::imp::core::OnlyGuid;
         pub(crate) type Channel = OnlyGuid;
+        fn is_default<T> (v: &T) -> bool where T: PartialEq + Default {
+            T::default().eq(v)
+        }
     };
     println!("{}\n{}\n// vim: foldnestmax=0 ft=rust", g, t);
 }
@@ -106,9 +109,15 @@ fn declare_object(name: &str, x: &Properties, borrow: bool) -> TokenStream {
         let serde_borrow = serde_borrow
             .then(|| quote!(#[serde(borrow)]))
             .unwrap_or_default();
+        let skip_serializing = if name == "Metadata" && *field_name == "internal" {
+            quote!(#[serde(skip_serializing_if = "is_default")])
+        } else {
+            quote!()
+        };
         quote! {
             #flatten
             #serde_borrow
+            #skip_serializing
             #[serde(rename = #field_name)]
             pub(crate) #label: #use_ty
         }

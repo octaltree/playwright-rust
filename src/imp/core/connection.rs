@@ -88,7 +88,7 @@ impl Connection {
             .args(&["run-driver"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
+            .stderr(Stdio::inherit())
             .spawn()?;
         // TODO: env "NODE_OPTIONS"
         let stdin = child.stdin.take().unwrap();
@@ -181,22 +181,21 @@ impl Connection {
 
 impl Context {
     fn new(writer: Writer) -> Am<Context> {
-        let objects = {
-            let mut d = HashMap::new();
-            let root = RootObject::new();
-            d.insert(root.guid().to_owned(), RemoteArc::Root(Arc::new(root)));
-            d
-        };
-        let ctx = Context {
-            objects,
-            ctx: Weak::new(),
-            id: 0,
-            callbacks: HashMap::new(),
-            writer
-        };
-        let am = Arc::new(Mutex::new(ctx));
-        am.lock().unwrap().ctx = Arc::downgrade(&am);
-        am
+        Arc::new_cyclic(|w| {
+            let objects = {
+                let mut d = HashMap::new();
+                let root = RootObject::new(w.clone());
+                d.insert(root.guid().to_owned(), RemoteArc::Root(Arc::new(root)));
+                d
+            };
+            Mutex::new(Context {
+                objects,
+                ctx: w.clone(),
+                id: 0,
+                callbacks: HashMap::new(),
+                writer
+            })
+        })
     }
 
     fn notify_closed(&mut self, e: Error) {
@@ -314,6 +313,7 @@ impl Context {
             guid,
             method,
             params,
+            metadata,
             place
         } = r;
         self.callbacks.insert(self.id, place);
@@ -321,6 +321,7 @@ impl Context {
             guid: &guid,
             method: &method,
             params,
+            metadata,
             id: self.id
         };
         self.writer.send(&req)?;
