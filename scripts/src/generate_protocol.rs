@@ -7,10 +7,8 @@ fn main() {
     let protocol: Protocol = serde_yaml::from_reader(std::io::stdin()).unwrap();
     let t = to_tokens(&protocol);
     let g = quote! {
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(transparent)]
-        pub struct Guid(String);
-        pub type Channel = Guid;
+        use crate::imp::core::OnlyGuid;
+        pub(crate) type Channel = OnlyGuid;
     };
     println!("{}\n{}\n// vim: foldnestmax=0 ft=rust", g, t);
 }
@@ -66,12 +64,14 @@ fn enum_tokens(name: &str, x: &Enum) -> TokenStream {
 }
 
 /// for rooted named object
-fn object_tokens(name: &str, x: &Object) -> TokenStream { child_object_tokens(name, &x.properties) }
+fn object_tokens(name: &str, x: &Object) -> TokenStream {
+    child_object_tokens(name, &x.properties, false)
+}
 
 /// for inner unnamed object
 /// recursion of declare_object
-fn child_object_tokens(name: &str, x: &Properties) -> TokenStream {
-    let declare = declare_object(name, x);
+fn child_object_tokens(name: &str, x: &Properties, borrow: bool) -> TokenStream {
+    let declare = declare_object(name, x, borrow);
     let x = {
         let mut x = x.iter().collect::<Vec<_>>();
         x.sort_by_cached_key(|&(name, _)| name);
@@ -79,21 +79,21 @@ fn child_object_tokens(name: &str, x: &Properties) -> TokenStream {
     };
     let sub = x
         .iter()
-        .map(|&(field_name, ty)| declare_ty(name, field_name, ty));
+        .map(|&(field_name, ty)| declare_ty(name, field_name, ty, borrow));
     quote! {
         #declare
         #(#sub)*
     }
 }
 
-fn declare_object(name: &str, x: &Properties) -> TokenStream {
-    let x = {
+fn declare_object(name: &str, x: &Properties, borrow: bool) -> TokenStream {
+    let sorted = {
         let mut x = x.iter().collect::<Vec<_>>();
         x.sort_by_cached_key(|&(name, _)| name);
         x
     };
     let struct_name = format_ident!("{}", utils::loud_to_camel(name));
-    let fields = x.iter().map(|(field_name, ty)| {
+    let fields = sorted.iter().map(|(field_name, ty)| {
         let label = format_ident!(
             "{}",
             utils::loud_to_snake(&field_name.replace("$mixin", "mixin"))
@@ -102,52 +102,83 @@ fn declare_object(name: &str, x: &Properties) -> TokenStream {
             .contains("$mixin")
             .then(|| quote!(#[serde(flatten)]))
             .unwrap_or_default();
-        let use_ty = use_ty(name, field_name, ty);
+        let (use_ty, serde_borrow) = use_ty(name, field_name, ty, borrow);
+        let serde_borrow = serde_borrow
+            .then(|| quote!(#[serde(borrow)]))
+            .unwrap_or_default();
         quote! {
             #flatten
+            #serde_borrow
             #[serde(rename = #field_name)]
             #label: #use_ty
         }
     });
+    let lifetime = (borrow && _has_reference(x))
+        .then(|| quote!(<'a>))
+        .unwrap_or_default();
     quote! {
         #[derive(Debug, Serialize, Deserialize)]
-        pub struct #struct_name {
+        pub struct #struct_name #lifetime {
             #(#fields),*
         }
     }
 }
 
-fn use_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
+fn use_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> (TokenStream, bool) {
     match ty {
         Type::Name(s) => {
             let opt = s.ends_with("?");
             let s = s.replace("?", "");
-            let label = match &*s {
-                "binary" => quote!(Vec<u8>),
-                "number" => quote!(serde_json::Number),
-                "json" => quote!(String),
-                "string" => quote!(String),
-                "boolean" => quote!(bool),
+            let (label, serde_borrow) = match &*s {
+                "binary" if borrow => (quote!(&'a [u8]), true),
+                "binary" => (quote!(Vec<u8>), false),
+                "number" => (quote!(serde_json::Number), false),
+                "json" if borrow => (quote!(&'a str), true),
+                "json" => (quote!(String), false),
+                "string" if borrow => (quote!(&'a str), true),
+                "string" => (quote!(String), false),
+                "boolean" => (quote!(bool), false),
                 x => {
                     let ident = format_ident!("{}", utils::loud_to_camel(x));
-                    quote!(crate::protocol::generated::#ident)
+                    (quote!(crate::protocol::generated::#ident), false)
                 }
             };
-            if opt {
-                quote!(Option<#label>)
-            } else {
-                quote!(#label)
-            }
+            (
+                if opt {
+                    quote!(Option<#label>)
+                } else {
+                    quote!(#label)
+                },
+                serde_borrow
+            )
         }
         Type::Items { r#type, item_type } => {
-            let l = use_ty(scope, name, item_type);
-            if r#type.ends_with("?") {
-                quote!(Option<Vec<#l>>)
-            } else {
-                quote!(Vec<#l>)
-            }
+            let (l, serde_borrow) = use_ty(scope, name, item_type, borrow);
+            (
+                if r#type.ends_with("?") {
+                    quote!(Option<Vec<#l>>)
+                } else {
+                    quote!(Vec<#l>)
+                },
+                serde_borrow
+            )
         }
-        Type::Literals { r#type, .. } | Type::Properties { r#type, .. } => {
+        Type::Literals { r#type, .. } => {
+            let label = format_ident!(
+                "{}{}",
+                utils::loud_to_camel(scope),
+                utils::lower_loud_to_camel(name)
+            );
+            (
+                if r#type.ends_with("?") {
+                    quote!(Option<#label>)
+                } else {
+                    quote!(#label)
+                },
+                false
+            )
+        }
+        Type::Properties { r#type, .. } => {
             let label = format_ident!(
                 "{}{}",
                 utils::loud_to_camel(scope),
@@ -157,19 +188,24 @@ fn use_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
                 && (name == "hasChild" || name == "hasDescendant")
                 && r#type.ends_with("?")
             {
-                quote! {
-                    Option<Box<#label>>
-                }
-            } else if r#type.ends_with("?") {
-                quote!(Option<#label>)
-            } else {
-                quote!(#label)
+                return (
+                    quote! {
+                        Option<Box<#label>>
+                    },
+                    false
+                );
+            }
+            match (r#type.ends_with("?"), borrow && has_reference(ty)) {
+                (true, true) => (quote!(Option<#label<'a>>), true),
+                (true, false) => (quote!(Option<#label>), false),
+                (false, true) => (quote!(#label<'a>), true),
+                (false, false) => (quote!(#label), false)
             }
         }
     }
 }
 
-fn declare_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
+fn declare_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
     let label = format!(
         "{}{}",
         utils::loud_to_camel(scope),
@@ -179,7 +215,7 @@ fn declare_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
         Type::Name(_) => quote! {},
         Type::Items { r#type, item_type } => {
             assert!(r#type == "array" || r#type == "array?", "{}", &r#type);
-            declare_ty(scope, name, item_type)
+            declare_ty(scope, name, item_type, borrow)
         }
         Type::Literals { r#type, literals } => {
             assert!(r#type == "enum" || r#type == "enum?", "{}", &r#type);
@@ -192,9 +228,29 @@ fn declare_ty(scope: &str, name: &str, ty: &Type) -> TokenStream {
         }
         Type::Properties { r#type, properties } => {
             assert!(r#type == "object" || r#type == "object?", "{}", &r#type);
-            child_object_tokens(&label, properties)
+            child_object_tokens(&label, properties, borrow)
         }
     }
+}
+
+fn has_reference(ty: &Type) -> bool {
+    match ty {
+        Type::Name(s) => {
+            let s: &str = if s.ends_with("?") {
+                &s[0..s.len() - 1]
+            } else {
+                s
+            };
+            ["binary", "string", "json"].contains(&s)
+        }
+        Type::Items { r#type, item_type } => has_reference(item_type),
+        Type::Literals { r#type, literals } => false,
+        Type::Properties { r#type, properties } => _has_reference(properties)
+    }
+}
+
+fn _has_reference(properties: &Properties) -> bool {
+    properties.iter().any(|(_, t)| has_reference(t))
 }
 
 fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
@@ -207,7 +263,7 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
     let mod_name = format_ident!("{}", utils::loud_to_camel(name).to_snake());
     let initializer_tokens = initializer
         .as_ref()
-        .map(|properties| child_object_tokens("Initializer", &properties))
+        .map(|properties| child_object_tokens("Initializer", &properties, false))
         .unwrap_or_default();
     let commands_tokens = commands_tokens(commands);
     let events_tokens = events_tokens(events);
@@ -221,6 +277,8 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
         .unwrap_or_default();
     let struct_name = format_ident!("{}", utils::loud_to_camel(name));
     quote! {
+        pub(crate) type #struct_name = OnlyGuid;
+
         #doc_extends
         pub mod #mod_name {
             #initializer_tokens
@@ -228,8 +286,6 @@ fn interface_tokens(name: &str, x: &Interface) -> TokenStream {
             #events_tokens
             #commands_tokens
         }
-
-        pub type #struct_name = Guid;
     }
 }
 
@@ -256,14 +312,14 @@ fn commands_tokens(commands: &Option<Commands>) -> TokenStream {
             Some(c) => c
         };
         let declare_rety = if let Some(returns) = &c.returns {
-            child_object_tokens(&camel, returns)
+            child_object_tokens(&camel, returns, false)
         } else {
             quote! {
                 pub type #rety = ();
             }
         };
         let declare_args = if let Some(parameters) = &c.parameters {
-            child_object_tokens(&format!("{camel}Args"), parameters)
+            child_object_tokens(&format!("{camel}Args"), parameters, true)
         } else {
             quote! {
                 pub type #args = ();
@@ -308,7 +364,7 @@ fn events_tokens(events: &Option<Events>) -> TokenStream {
     let sub = events.iter().filter_map(|(name, e)| -> Option<_> {
         let e = e.as_ref()?;
         let camel = utils::lower_loud_to_camel(name);
-        let declare = child_object_tokens(&camel, &e.parameters);
+        let declare = child_object_tokens(&camel, &e.parameters, false);
         Some(quote! {
             #declare
         })
