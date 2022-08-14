@@ -67,56 +67,33 @@ impl Playwright {
 
     pub(crate) fn selectors(&self) -> Weak<Selectors> { self.selectors.clone() }
 
-    pub(crate) fn wait_initial_object(conn: &Connection) -> WaitInitialObject {
-        WaitInitialObject::new(conn.context())
+    pub(crate) async fn wait_initial_object(conn: &Connection) -> Result<Weak<Self>, Error> {
+        let ctx = upgrade(&conn.context())?;
+        let ctx = ctx.lock().unwrap();
+        let root = get_object!(ctx, &S::validate("").unwrap(), Root)?;
+        let root = upgrade(&root)?;
+        std::mem::drop(ctx);
+        let v = send_message!(
+            root,
+            "initialize",
+            crate::protocol::generated::root::commands::InitializeArgs {
+                sdk_language: "python"
+            }
+        );
+        let v = Arc::unwrap_or_clone(v);
+        let crate::protocol::generated::root::commands::Initialize {
+            playwright: crate::protocol::generated::Playwright { guid }
+        } = serde_json::from_value(v)?;
+        let ctx = upgrade(&conn.context())?;
+        let ctx = ctx.lock().unwrap();
+        let p = get_object!(ctx, &guid, Playwright)?;
+        Ok(p)
     }
 }
 
 impl RemoteObject for Playwright {
     fn channel(&self) -> &ChannelOwner { &self.channel }
     fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
-}
-
-pub(crate) struct WaitInitialObject {
-    ctx: Wm<Context>,
-    started: Instant
-}
-
-impl WaitInitialObject {
-    fn new(ctx: Wm<Context>) -> Self {
-        Self {
-            ctx,
-            started: Instant::now()
-        }
-    }
-}
-
-impl Future for WaitInitialObject {
-    type Output = Result<Weak<Playwright>, Error>;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
-        let i: &S<Guid> = S::validate("Playwright").unwrap();
-        let this = self.get_mut();
-        macro_rules! pending {
-            () => {{
-                cx.waker().wake_by_ref();
-                if this.started.elapsed().as_secs() > 10 {
-                    return Poll::Ready(Err(Error::InitializationError));
-                }
-                return Poll::Pending;
-            }};
-        }
-        let rc = upgrade(&this.ctx)?;
-        let c = match rc.try_lock() {
-            Ok(x) => x,
-            Err(TryLockError::WouldBlock) => pending!(),
-            Err(e) => Err(e).unwrap()
-        };
-        match get_object!(c, i, Playwright) {
-            Ok(p) => Poll::Ready(Ok(p)),
-            Err(_) => pending!()
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

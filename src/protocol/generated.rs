@@ -1,5 +1,11 @@
 use crate::imp::core::OnlyGuid;
 pub(crate) type Channel = OnlyGuid;
+fn is_default<T>(v: &T) -> bool
+where
+    T: PartialEq + Default
+{
+    T::default().eq(v)
+}
 pub(crate) type ApiRequestContext = OnlyGuid;
 pub mod api_request_context {
     #[derive(Debug, Serialize, Deserialize)]
@@ -4311,6 +4317,7 @@ pub struct FormFieldFile {
 pub struct Metadata {
     #[serde(rename = "apiName")]
     pub(crate) api_name: Option<String>,
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(rename = "internal")]
     pub(crate) internal: Option<bool>,
     #[serde(rename = "stack")]

@@ -111,12 +111,7 @@ impl Playwright {
 mod tests {
     use super::*;
 
-    crate::runtime_test!(failure_status_code, {
-        let mut p = Playwright::initialize().await.unwrap();
-        let err = run(p.driver(), &["nonExistentArg"]);
-        assert!(err.is_err());
-        if let Some(e) = err.err() {
-            assert_eq!(e.kind(), io::ErrorKind::Other);
-        }
+    crate::runtime_test!(initialize, {
+        let _ = Playwright::initialize().await.unwrap();
     });
 }
