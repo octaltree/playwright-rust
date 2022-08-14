@@ -56,7 +56,7 @@ fn enum_tokens(name: &str, x: &Enum) -> TokenStream {
         .collect::<Vec<_>>();
     let name = format_ident!("{}", name);
     quote! {
-        #[derive(Debug, Serialize, Deserialize)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
         pub enum #name {
             #(#variants),*
         }
@@ -110,7 +110,7 @@ fn declare_object(name: &str, x: &Properties, borrow: bool) -> TokenStream {
             #flatten
             #serde_borrow
             #[serde(rename = #field_name)]
-            #label: #use_ty
+            pub(crate) #label: #use_ty
         }
     });
     let lifetime = (borrow && _has_reference(x))

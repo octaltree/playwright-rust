@@ -118,7 +118,7 @@ impl Connection {
             let c = c2;
             let r = r2;
             let s = s2;
-            log::trace!("succcess starting connection");
+            log::trace!("success starting connection");
             let status = (|| -> Result<(), Error> {
                 loop {
                     {

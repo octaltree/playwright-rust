@@ -1,9 +1,14 @@
-use crate::imp::{
-    browser::Browser,
-    browser_context::BrowserContext,
-    core::*,
-    prelude::*,
-    utils::{BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
+use crate::{
+    imp::{
+        browser::Browser,
+        browser_context::BrowserContext,
+        core::*,
+        prelude::*,
+        utils::{
+            BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport
+        }
+    },
+    protocol::generated::browser_type as protocol
 };
 
 #[derive(Debug)]
@@ -15,11 +20,14 @@ pub(crate) struct BrowserType {
 
 impl BrowserType {
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
-        let Initializer { name, executable } = serde_json::from_value(channel.initializer.clone())?;
+        let protocol::Initializer {
+            name,
+            executable_path
+        } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,
             name,
-            executable
+            executable: PathBuf::from(executable_path)
         })
     }
 
