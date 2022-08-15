@@ -3,6 +3,7 @@ use crate::imp::{
     console_message::ConsoleMessage,
     core::*,
     download::Download,
+    element_handle::may_save,
     file_hooser::FileChooser,
     frame::Frame,
     prelude::*,
@@ -300,17 +301,6 @@ impl Page {
         let _ = send_message!(self, "setExtraHTTPHeaders", args);
         Ok(())
     }
-}
-
-fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
-    let path = match path {
-        Some(path) => path,
-        None => return Ok(())
-    };
-    use std::io::Write;
-    let mut file = std::fs::File::create(path).map_err(Error::from)?;
-    file.write(bytes).map_err(Error::from)?;
-    Ok(())
 }
 
 // mutable
