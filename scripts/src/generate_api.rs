@@ -27,9 +27,8 @@ fn body(x: &Interface) -> TokenStream {
         .members
         .iter()
         .filter(|m| matches!(m.kind, Kind::Property | Kind::Method))
-        .map(Method);
+        .map(method_tokens);
     // let sub = collect_types(x);
-    // let properties = self.properties();
     quote! {
         mod #mod_name {
             #extends
@@ -40,82 +39,80 @@ fn body(x: &Interface) -> TokenStream {
     }
 }
 
-#[derive(Debug)]
-struct Method<'a>(&'a Member);
-
-impl<'a> ToTokens for Method<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let Method(Member {
-            kind: _,
-            name,
-            alias,
-            experimental,
-            since,
-            overload_index,
-            required,
-            is_async,
-            args,
-            ty,
-            deprecated,
-            spec
-        }) = self;
-        let is_builder = self.is_builder();
-        let rety: Box<dyn ToTokens> = if is_builder {
-            Box::new(format_ident!(
-                "{}{}",
-                utils::loud_to_camel(&name.to_camel().replace("#", "")),
-                "Builder"
-            ))
-        } else {
-            Box::new(Use(ty))
-        };
-        let arg_fields = args.iter().filter(|a| a.required).map(arg_field);
-        let fn_name = if is_builder {
-            format_ident!(
-                "{}_builder",
-                utils::loud_to_camel(&name.replace("#", "")).to_snake()
-            )
-        } else {
-            format_ident!("{}", utils::loud_to_snake(&name.replace("#", "")))
-        };
-        let mark_async = (!is_builder && *is_async)
-            .then(|| quote!(async))
-            .unwrap_or_default();
-        // TODO: doc_comment
-        let doc_unnecessary = (!required)
-            .then(|| quote!(#[doc="unnecessary"]))
-            .unwrap_or_default();
-        let doc_experimental = experimental
-            .then(|| quote!(#[doc="experimental"]))
-            .unwrap_or_default();
-        let mark_deprecated = deprecated
-            .then(|| quote!(#[deprecated]))
-            .unwrap_or_default();
-        tokens.extend(quote! {
-            #doc_unnecessary
-            #doc_experimental
-            #mark_deprecated
-            #mark_async fn #fn_name(#(#arg_fields),*) -> #rety {
-                todo!()
-            }
-        })
-    }
+fn method_tokens(member: &Member) -> TokenStream {
+    let mut tokens: TokenStream = Default::default();
+    let Member {
+        kind: _,
+        name,
+        alias,
+        experimental,
+        since,
+        overload_index,
+        required,
+        is_async,
+        args,
+        ty,
+        deprecated,
+        spec
+    } = member;
+    let is_builder = needs_builder(member);
+    let rety: Box<dyn ToTokens> = if is_builder {
+        Box::new(format_ident!(
+            "{}{}",
+            utils::loud_to_camel(&name.to_camel().replace("#", "")),
+            "Builder"
+        ))
+    } else {
+        Box::new(use_ty(ty, false))
+    };
+    let arg_fields = args
+        .iter()
+        .filter(|a| a.required)
+        .map(|a| arg_field(a, true));
+    let fn_name = if is_builder {
+        format_ident!(
+            "{}_builder",
+            utils::loud_to_camel(&name.replace("#", "")).to_snake()
+        )
+    } else {
+        format_ident!("{}", utils::loud_to_snake(&name.replace("#", "")))
+    };
+    let mark_async = (!is_builder && *is_async)
+        .then(|| quote!(async))
+        .unwrap_or_default();
+    // TODO: doc_comment
+    let doc_unnecessary = (!required)
+        .then(|| quote!(#[doc="unnecessary"]))
+        .unwrap_or_default();
+    let doc_experimental = experimental
+        .then(|| quote!(#[doc="experimental"]))
+        .unwrap_or_default();
+    let mark_deprecated = deprecated
+        .then(|| quote!(#[deprecated]))
+        .unwrap_or_default();
+    tokens.extend(quote! {
+        #doc_unnecessary
+        #doc_experimental
+        #mark_deprecated
+        #mark_async fn #fn_name(#(#arg_fields),*) -> #rety {
+            todo!()
+        }
+    });
+    tokens
 }
 
-impl<'a> Method<'a> {
-    /// has two or more optional values
-    fn is_builder(&self) -> bool {
-        let args = &self.0.args;
-        let mut xs = args.iter().filter(|a| !a.required).chain(
-            args.iter()
-                .filter(|a| a.name == "options" && !a.ty.properties.is_empty())
-                .flat_map(|a| a.ty.properties.iter())
-        );
-        xs.next().and(xs.next()).is_some()
-    }
+/// has two or more optional values
+fn needs_builder(member: &Member) -> bool {
+    let args = &member.args;
+    let mut xs = args.iter().filter(|a| !a.required).chain(
+        args.iter()
+            .filter(|a| a.name == "options" && !a.ty.properties.is_empty())
+            .flat_map(|a| a.ty.properties.iter())
+    );
+    xs.next().and(xs.next()).is_some()
 }
 
-fn arg_field(a: &Arg) -> TokenStream {
+fn arg_field(a: &Arg, borrow: bool) -> TokenStream {
     let Arg {
         name,
         kind: _,
@@ -130,15 +127,20 @@ fn arg_field(a: &Arg) -> TokenStream {
     } = a;
     assert_eq!(*is_async, false);
     let field_name = format_ident!("{}", utils::loud_to_snake(name));
-    let use_ty = Use(ty);
+    let use_ty = use_ty(ty, borrow);
     let doc_deprecated = deprecated
         .then(|| quote!(#[doc="deprecated"]))
         .unwrap_or_default();
     // TODO: doc_comment
     // TODO: deprecated
-    // TODO: required
     quote! {
         #field_name: #use_ty
+    }
+}
+
+fn use_ty(ty: &Type, borrow: bool) -> TokenStream {
+    quote! {
+        ()
     }
 }
 
@@ -177,7 +179,7 @@ fn collect_types(x: &Interface) -> TokenStream {
         let mod_name = format_ident!("{}", utils::loud_to_snake(&member.name.replace("#", "")));
         let mut types = types
             .into_iter()
-            .map(|(prefix, ty)| Declare { prefix, ty })
+            .map(|(prefix, ty)| declare_ty(prefix, ty, todo!()))
             .peekable();
         if types.peek().is_some() {
             ret.extend(quote! {
@@ -190,97 +192,79 @@ fn collect_types(x: &Interface) -> TokenStream {
     ret
 }
 
-#[derive(Debug)]
-struct Declare<'a> {
-    prefix: String,
-    ty: &'a Type
-}
-
-struct Use<'a>(&'a Type);
-
-impl<'a> ToTokens for Declare<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let Declare { prefix, ty } = self;
-        if ty.union.is_empty() {
-            if ty.properties.is_empty() && ty.templates.is_empty() {
-                return;
-            }
-            let name = format_ident!("{}", prefix.replace("#", ""));
-            match (ty.properties.is_empty(), ty.templates.is_empty()) {
-                (true, true) => return,
-                (false, false) => {
-                    assert_eq!(ty.name, "Object");
-                }
-                (false, true) => {
-                    assert_eq!(ty.name, "Object");
-                    let properties = ty.properties.iter().map(|p| {
-                        let deprecated = p
-                            .deprecated
-                            .then(|| quote!(#[deprecated]))
-                            .unwrap_or_default();
-                        let name = format_ident!("{}", utils::loud_to_snake(&p.name));
-                        let orig = &p.name;
-                        // TODO: doc_comment
-                        let use_ty = {
-                            let a = Use(&p.ty);
-                            if p.required {
-                                quote!(#a)
-                            } else {
-                                quote!(Option<#a>)
-                            }
-                        };
-                        quote! {
-                            #deprecated
-                            #[serde(rename = #orig)]
-                            #name: #use_ty
-                        }
-                    });
-                    tokens.extend(quote! {
-                        #[derive(Debug, Serialize, Deserialize)]
-                        struct #name {
-                            #(#properties),*
-                        }
-                    });
-                }
-                (true, false) => {}
-            }
-        } else {
-            // let name = format_ident!("{}", &ty.name);
-            let name = format_ident!("{}", prefix.replace("#", ""));
-            let variants = ty.union.iter().map(|t| {
-                if t.name.contains("\"") {
-                    let name = t.name.replace("\"", "");
-                    let label = format_ident!("{}", utils::kebab_to_camel(&name));
-                    quote! {
-                        #[serde(rename = #name)]
-                        #label
-                    }
-                } else {
-                    let name = &t.name;
-                    let label = format_ident!("{}", utils::kebab_to_camel(&name));
-                    let use_ty = Use(t);
-                    quote! {
-                            #[serde(rename = #name)]
-                            #label(#use_ty)
-                    }
-                }
-            });
-            tokens.extend(quote! {
-                enum #name {
-                    #(#variants),*
-                }
-            });
+fn declare_ty(prefix: String, ty: &Type, borrow: bool) -> TokenStream {
+    let mut tokens = Default::default();
+    if ty.union.is_empty() {
+        if ty.properties.is_empty() && ty.templates.is_empty() {
+            return tokens;
         }
-    }
-}
-
-impl<'a> ToTokens for Use<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let ty = &self.0;
-        tokens.extend(quote! {
-            ()
+        let name = format_ident!("{}", prefix.replace("#", ""));
+        match (ty.properties.is_empty(), ty.templates.is_empty()) {
+            (true, true) => return tokens,
+            (false, false) => {
+                assert_eq!(ty.name, "Object");
+            }
+            (false, true) => {
+                assert_eq!(ty.name, "Object");
+                let properties = ty.properties.iter().map(|p| {
+                    let deprecated = p
+                        .deprecated
+                        .then(|| quote!(#[deprecated]))
+                        .unwrap_or_default();
+                    let name = format_ident!("{}", utils::loud_to_snake(&p.name));
+                    let orig = &p.name;
+                    // TODO: doc_comment
+                    let use_ty = {
+                        let a = use_ty(&p.ty, borrow);
+                        if p.required {
+                            quote!(#a)
+                        } else {
+                            quote!(Option<#a>)
+                        }
+                    };
+                    quote! {
+                        #deprecated
+                        #[serde(rename = #orig)]
+                        #name: #use_ty
+                    }
+                });
+                tokens.extend(quote! {
+                    #[derive(Debug, Serialize, Deserialize)]
+                    struct #name {
+                        #(#properties),*
+                    }
+                });
+            }
+            (true, false) => {}
+        }
+    } else {
+        // let name = format_ident!("{}", &ty.name);
+        let name = format_ident!("{}", prefix.replace("#", ""));
+        let variants = ty.union.iter().map(|t| {
+            if t.name.contains("\"") {
+                let name = t.name.replace("\"", "");
+                let label = format_ident!("{}", utils::kebab_to_camel(&name));
+                quote! {
+                    #[serde(rename = #name)]
+                    #label
+                }
+            } else {
+                let name = &t.name;
+                let label = format_ident!("{}", utils::kebab_to_camel(&name));
+                let use_ty = use_ty(t, false);
+                quote! {
+                        #[serde(rename = #name)]
+                        #label(#use_ty)
+                }
+            }
         });
-    }
+        tokens.extend(quote! {
+            enum #name {
+                #(#variants),*
+            }
+        });
+    };
+    tokens
 }
 
 // impl Interface {
