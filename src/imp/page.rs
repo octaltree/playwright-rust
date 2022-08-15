@@ -302,7 +302,7 @@ impl Page {
     }
 }
 
-fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
+pub(crate) fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
     let path = match path {
         Some(path) => path,
         None => return Ok(())

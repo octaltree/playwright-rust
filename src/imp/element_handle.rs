@@ -7,6 +7,7 @@ use crate::imp::{
         WaitForSelectorState
     }
 };
+use crate::imp::page::may_save;
 
 #[derive(Debug)]
 pub(crate) struct ElementHandle {
@@ -201,9 +202,11 @@ impl ElementHandle {
     }
 
     pub(crate) async fn screenshot(&self, args: ScreenshotArgs<'_>) -> ArcResult<Vec<u8>> {
+        let path = args.path.clone();
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&v)?;
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
 
