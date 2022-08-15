@@ -37,7 +37,7 @@ jobs:
         if: success() && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master'
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --out Xml --verbose
+          cargo tarpaulin --out Xml --verbose --exclude-files scripts/ tests/ src/build.rs src/main.rs src/generated.rs
       - name: Upload to codecov.io
         if: success() && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v1.0.2
