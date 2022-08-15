@@ -7,7 +7,6 @@ use crate::imp::{
         WaitForSelectorState
     }
 };
-use crate::imp::page::may_save;
 
 #[derive(Debug)]
 pub(crate) struct ElementHandle {
@@ -277,6 +276,17 @@ impl ElementHandle {
         let _ = send_message!(self, "setInputFiles", args);
         Ok(())
     }
+}
+
+pub(super) fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
+    let path = match path {
+        Some(path) => path,
+        None => return Ok(())
+    };
+    use std::io::Write;
+    let mut file = std::fs::File::create(path).map_err(Error::from)?;
+    file.write(bytes).map_err(Error::from)?;
+    Ok(())
 }
 
 #[skip_serializing_none]

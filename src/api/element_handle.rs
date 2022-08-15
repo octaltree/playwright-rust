@@ -633,7 +633,7 @@ impl<'a> ScreenshotBuilder<'a> {
         Self { inner, args }
     }
 
-    pub async fn screenshot(self) -> ArcResult<Vec<u8>>{
+    pub async fn screenshot(self) -> ArcResult<Vec<u8>> {
         let Self { inner, args } = self;
         upgrade(&inner)?.screenshot(args).await
     }
