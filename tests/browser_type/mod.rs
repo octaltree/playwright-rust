@@ -47,7 +47,10 @@ async fn should_fire_close(t: &BrowserType) {
     use playwright::api::browser_context::{Event, EventType};
     let browser = t.launcher().launch().await.unwrap();
     let context = browser.context_builder().build().await.unwrap();
-    let (wait, close) = tokio::join!(context.expect_event(EventType::Close), browser.close());
+    let (wait, close) = tokio::join!(
+        context.expect_event(EventType::Close),
+        browser.close()
+    );
     close.unwrap();
     assert_eq!(wait.unwrap(), Event::Close);
 }

@@ -122,7 +122,6 @@ pub enum DocumentLoadState {
     DomContentLoaded,
     Load,
     NetworkIdle,
-    Commit
 }
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]

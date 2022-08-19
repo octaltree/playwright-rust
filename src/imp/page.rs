@@ -16,6 +16,7 @@ use crate::imp::{
     websocket::WebSocket,
     worker::Worker
 };
+use crate::protocol::generated::LifecycleEvent;
 
 #[derive(Debug)]
 pub(crate) struct Page {
@@ -767,7 +768,7 @@ pub enum Mixed {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ReloadArgs {
     pub(crate) timeout: Option<f64>,
-    pub(crate) wait_until: Option<DocumentLoadState>
+    pub(crate) wait_until: Option<LifecycleEvent>
 }
 
 #[skip_serializing_none]
