@@ -10,6 +10,7 @@ pub use crate::{
     },
     imp::page::{EventType, Media}
 };
+use crate::protocol::generated::LifecycleEvent;
 use crate::{
     api::{
         input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, FileChooser,
@@ -758,7 +759,7 @@ macro_rules! navigation {
                 /// - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
                 /// - `'load'` - consider operation to be finished when the `load` event is fired.
                 /// - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-                wait_until: Option<DocumentLoadState>
+                wait_until: Option<LifecycleEvent>
             }
         }
     };
