@@ -3,7 +3,8 @@ use crate::imp::{
     core::*,
     page::Page,
     prelude::*,
-    utils::{Cookie, Geolocation, Header, StorageState}
+    utils::{Cookie, Geolocation, Header, StorageState},
+    request::Request,
 };
 
 #[derive(Debug)]
@@ -244,6 +245,7 @@ impl RemoteObject for BrowserContext {
         method: Str<Method>,
         params: Map<String, Value>
     ) -> Result<(), Error> {
+        println!("BrowserContext method: {}", method.as_str()); //DEBUG!!
         match method.as_str() {
             "page" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
@@ -255,6 +257,12 @@ impl RemoteObject for BrowserContext {
             "close" => self.on_close(ctx)?,
             "bindingCall" => {}
             "route" => self.on_route(ctx, params)?,
+            "request" => {
+                let last = params.get("request").ok_or(Error::InvalidParams)?;
+                let OnlyGuid { guid } = serde_json::from_value((*last).clone())?;
+                let request = get_object!(ctx, &guid, Request)?;
+                self.emit_event(Evt::Request(request));
+            }
             _ => {}
         }
         Ok(())
@@ -264,7 +272,8 @@ impl RemoteObject for BrowserContext {
 #[derive(Debug, Clone)]
 pub(crate) enum Evt {
     Close,
-    Page(Weak<Page>)
+    Page(Weak<Page>),
+    Request(Weak<Request>),
 }
 
 impl EventEmitter for BrowserContext {
@@ -278,7 +287,8 @@ impl EventEmitter for BrowserContext {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EventType {
     Close,
-    Page
+    Page,
+    Request
 }
 
 impl IsEvent for Evt {
@@ -287,7 +297,8 @@ impl IsEvent for Evt {
     fn event_type(&self) -> Self::EventType {
         match self {
             Self::Close => EventType::Close,
-            Self::Page(_) => EventType::Page
+            Self::Page(_) => EventType::Page,
+            Self::Request(_) => EventType::Request,
         }
     }
 }
