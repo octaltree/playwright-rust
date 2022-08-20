@@ -228,14 +228,14 @@ pub struct PdfMargins<'a, 'b, 'c, 'd> {
 #[derive(Debug, Serialize, PartialEq)]
 pub struct File {
     pub name: String,
-    pub mime: String,
+    pub mimeType: String,
     pub buffer: String
 }
 
 impl File {
-    pub fn new(name: String, mime: String, body: &[u8]) -> Self {
+    pub fn new(name: String, mimeType: String, body: &[u8]) -> Self {
         let buffer = base64::encode(body);
-        Self { name, mime, buffer }
+        Self { name, mimeType, buffer }
     }
 }
 /// Browser distribution channel.
