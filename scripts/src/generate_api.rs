@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
@@ -23,52 +25,80 @@ fn body(x: &Interface) -> TokenStream {
         quote! { #[doc=#e] }
     });
     // TODO: doc_comment
+    let mut overload_targets: HashMap<&str, Vec<&Member>> = x
+        .members
+        .iter()
+        .filter(|m| m.overload_index > 0)
+        .filter(|m| matches!(m.kind, Kind::Property | Kind::Method))
+        .fold(HashMap::new(), |mut a, b| {
+            a.entry(&*b.alias)
+                .and_modify(|xs| xs.push(b))
+                .or_insert(vec![b]);
+            a
+        });
     let methods = x
         .members
         .iter()
         .filter(|m| matches!(m.kind, Kind::Property | Kind::Method))
-        .map(method_tokens);
-    // let sub = collect_types(x);
+        .filter(|m| m.overload_index == 0)
+        .map(|m| {
+            let overloads = overload_targets.remove(&*m.alias);
+            method_tokens(m, overloads)
+        });
+    let events = {
+        let xs = x
+            .members
+            .iter()
+            .filter(|m| matches!(m.kind, Kind::Event))
+            .collect::<Vec<_>>();
+        if xs.is_empty() {
+            quote! {}
+        } else {
+            event_tokens(xs)
+        }
+    };
+    let sub = collect_types(x);
     quote! {
         mod #mod_name {
             #extends
             impl #name {
                 #(#methods)*
             }
+            #events
+            #sub
         }
     }
 }
 
-fn method_tokens(member: &Member) -> TokenStream {
+fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStream {
     let mut tokens: TokenStream = Default::default();
     let Member {
         kind: _,
         name,
         alias,
         experimental,
-        since,
-        overload_index,
+        since: _,
+        overload_index: _,
         required,
         is_async,
         args,
         ty,
         deprecated,
-        spec
+        spec // TODO
     } = member;
+    assert!(name == alias || name.starts_with(alias), "{}", name);
     let is_builder = needs_builder(member);
     let rety: Box<dyn ToTokens> = if is_builder {
-        Box::new(format_ident!(
-            "{}{}",
-            utils::loud_to_camel(&name.to_camel().replace("#", "")),
-            "Builder"
-        ))
+        let name = format!("{}{}", &name.replace("#", ""), "Builder");
+        // TODO: make type for builder
+        Box::new(use_ty("", &name, ty, false))
     } else {
-        Box::new(use_ty(ty, false))
+        Box::new(use_ty("", name, ty, false))
     };
     let arg_fields = args
         .iter()
         .filter(|a| a.required)
-        .map(|a| arg_field(a, true));
+        .map(|a| arg_field(alias, a, true));
     let fn_name = if is_builder {
         format_ident!(
             "{}_builder",
@@ -80,7 +110,6 @@ fn method_tokens(member: &Member) -> TokenStream {
     let mark_async = (!is_builder && *is_async)
         .then(|| quote!(async))
         .unwrap_or_default();
-    // TODO: doc_comment
     let doc_unnecessary = (!required)
         .then(|| quote!(#[doc="unnecessary"]))
         .unwrap_or_default();
@@ -112,540 +141,260 @@ fn needs_builder(member: &Member) -> bool {
     xs.next().and(xs.next()).is_some()
 }
 
-fn arg_field(a: &Arg, borrow: bool) -> TokenStream {
+fn arg_field(scope: &str, a: &Arg, borrow: bool) -> TokenStream {
     let Arg {
         name,
         kind: _,
         alias,
         ty,
-        since,
+        since: _,
         overload_index,
-        spec,
+        spec, // TODO
         required,
         deprecated,
         is_async
     } = a;
     assert_eq!(*is_async, false);
+    assert_eq!(*overload_index, 0);
+    assert_eq!(alias, name);
     let field_name = format_ident!("{}", utils::loud_to_snake(name));
-    let use_ty = use_ty(ty, borrow);
-    let doc_deprecated = deprecated
-        .then(|| quote!(#[doc="deprecated"]))
-        .unwrap_or_default();
-    // TODO: doc_comment
-    // TODO: deprecated
+    let use_ty = {
+        let t = use_ty(scope, name, ty, borrow);
+        if *required {
+            quote!(#t)
+        } else {
+            quote!(Option<#t>)
+        }
+    };
     quote! {
         #field_name: #use_ty
     }
 }
 
-fn use_ty(ty: &Type, borrow: bool) -> TokenStream {
-    quote! {
-        ()
+fn use_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
+    let opt = ty.name.ends_with("?");
+    let s = ty.name.replace("?", "");
+    if ty.union.is_empty() {
+        match (ty.properties.is_empty(), ty.templates.is_empty()) {
+            (true, true) => {
+                let label = match &*s {
+                    "binary" if borrow => quote!(&'a [u8]),
+                    "binary" => quote!(Vec<u8>),
+                    "number" => quote!(serde_json::Number),
+                    "float" => quote!(f64),
+                    "json" if borrow => quote!(&'a str),
+                    "json" => quote!(String),
+                    "string" if borrow => quote!(&'a str),
+                    "string" => quote!(String),
+                    "boolean" => quote!(bool),
+                    "void" => quote!(()),
+                    x => {
+                        let ident = format_ident!("{}", utils::loud_to_camel(x));
+                        quote!(#ident)
+                    }
+                };
+                if opt {
+                    quote!(Option<#label>)
+                } else {
+                    quote!(#label)
+                }
+            }
+            (false, true) => {
+                assert_eq!(ty.name, "Object");
+                let ident = format_ident!(
+                    "{}{}",
+                    utils::loud_to_camel(&scope.to_camel()),
+                    utils::loud_to_camel(&name.to_camel())
+                );
+                quote! {
+                    #ident
+                }
+            }
+            (true, false) if ty.name == "Array" => {
+                assert_eq!(ty.templates.len(), 1);
+                let inner = use_ty(scope, name, &ty.templates[0], borrow);
+                if borrow {
+                    quote! {
+                        &[#inner]
+                    }
+                } else {
+                    quote! {
+                        Vec<#inner>
+                    }
+                }
+            }
+            (true, false) => {
+                // 148 Array
+                // 12 Func
+                //  1 IReadOnlyDictionary
+                //  1 Map
+                // 56 Object
+                let ident = format_ident!(
+                    "{}{}",
+                    utils::loud_to_camel(&scope.to_camel()),
+                    utils::loud_to_camel(&name.to_camel())
+                );
+                quote! {
+                    #ident
+                }
+            }
+            (false, false) => {
+                assert_eq!(ty.name, "Object");
+                todo!()
+            }
+        }
+    } else {
+        assert_eq!(ty.properties, &[]);
+        assert_eq!(ty.templates, &[]);
+        let opt = ty.union.iter().any(|t| t.name == "null");
+        let ident = format_ident!(
+            "{}{}",
+            utils::loud_to_camel(&scope.to_camel()),
+            utils::loud_to_camel(&name.to_camel())
+        );
+        if opt {
+            quote!(Option<#ident>)
+        } else {
+            quote!(#ident)
+        }
     }
 }
 
+fn has_reference(ty: &Type) -> bool { todo!() }
+
 fn collect_types(x: &Interface) -> TokenStream {
-    fn add<'a>(dest: &mut Vec<(String, &'a Type)>, prefix: String, t: &'a Type) {
-        let Type {
-            name,
-            expression: _,
-            properties,
-            templates,
-            union
-        }: &Type = t;
-        dest.push((prefix.clone(), t));
-        for arg in properties {
-            add(
-                dest,
-                format!("{}{}", &prefix, &arg.name.to_camel()),
-                &arg.ty
-            );
-        }
-        for ty in templates {
-            add(dest, prefix.clone(), ty);
-        }
-        for ty in union {
-            add(dest, prefix.clone(), ty);
-        }
-    }
     let mut ret = TokenStream::default();
     for member in &x.members {
-        let mut types = Vec::new();
         for arg in &member.args {
-            let name = format!("{}{}", &member.name.to_camel(), &arg.name.to_camel());
-            add(&mut types, name, &arg.ty);
+            ret.extend(declare_ty("", &arg.name, &arg.ty, true));
         }
-        add(&mut types, member.name.to_camel(), &member.ty);
-        let mod_name = format_ident!("{}", utils::loud_to_snake(&member.name.replace("#", "")));
-        let mut types = types
-            .into_iter()
-            .map(|(prefix, ty)| declare_ty(prefix, ty, todo!()))
-            .peekable();
-        if types.peek().is_some() {
-            ret.extend(quote! {
-                pub mod #mod_name {
-                    #(#types)*
-                }
-            });
-        }
+        ret.extend(declare_ty("", "", &member.ty, false));
     }
     ret
 }
 
-fn declare_ty(prefix: String, ty: &Type, borrow: bool) -> TokenStream {
-    let mut tokens = Default::default();
+fn declare_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
     if ty.union.is_empty() {
-        if ty.properties.is_empty() && ty.templates.is_empty() {
-            return tokens;
-        }
-        let name = format_ident!("{}", prefix.replace("#", ""));
         match (ty.properties.is_empty(), ty.templates.is_empty()) {
-            (true, true) => return tokens,
-            (false, false) => {
-                assert_eq!(ty.name, "Object");
+            (true, true) => {
+                todo!()
+            }
+            (true, false) => {
+                todo!()
             }
             (false, true) => {
-                assert_eq!(ty.name, "Object");
-                let properties = ty.properties.iter().map(|p| {
-                    let deprecated = p
-                        .deprecated
-                        .then(|| quote!(#[deprecated]))
-                        .unwrap_or_default();
-                    let name = format_ident!("{}", utils::loud_to_snake(&p.name));
-                    let orig = &p.name;
-                    // TODO: doc_comment
-                    let use_ty = {
-                        let a = use_ty(&p.ty, borrow);
-                        if p.required {
-                            quote!(#a)
-                        } else {
-                            quote!(Option<#a>)
-                        }
-                    };
-                    quote! {
-                        #deprecated
-                        #[serde(rename = #orig)]
-                        #name: #use_ty
-                    }
-                });
-                tokens.extend(quote! {
-                    #[derive(Debug, Serialize, Deserialize)]
-                    struct #name {
-                        #(#properties),*
-                    }
-                });
+                todo!()
             }
-            (true, false) => {}
+            (false, false) => {
+                todo!()
+            }
         }
     } else {
-        // let name = format_ident!("{}", &ty.name);
-        let name = format_ident!("{}", prefix.replace("#", ""));
-        let variants = ty.union.iter().map(|t| {
-            if t.name.contains("\"") {
-                let name = t.name.replace("\"", "");
-                let label = format_ident!("{}", utils::kebab_to_camel(&name));
-                quote! {
-                    #[serde(rename = #name)]
-                    #label
-                }
-            } else {
-                let name = &t.name;
-                let label = format_ident!("{}", utils::kebab_to_camel(&name));
-                let use_ty = use_ty(t, false);
-                quote! {
-                        #[serde(rename = #name)]
-                        #label(#use_ty)
-                }
-            }
-        });
-        tokens.extend(quote! {
-            enum #name {
-                #(#variants),*
-            }
-        });
-    };
-    tokens
+        enum_tokens(&format!("{}{}", scope, name), ty)
+    }
+
+    // let mut tokens = Default::default();
+    // if ty.union.is_empty() {
+    //    if ty.properties.is_empty() && ty.templates.is_empty() {
+    //        return tokens;
+    //    }
+    //    let name = format_ident!("{}", prefix.replace("#", ""));
+    //    match (ty.properties.is_empty(), ty.templates.is_empty()) {
+    //        (true, true) => return tokens,
+    //        (false, false) => {
+    //            assert_eq!(ty.name, "Object");
+    //        }
+    //        (false, true) => {
+    //            assert_eq!(ty.name, "Object");
+    //            let properties = ty.properties.iter().map(|p| {
+    //                let deprecated = p
+    //                    .deprecated
+    //                    .then(|| quote!(#[deprecated]))
+    //                    .unwrap_or_default();
+    //                let name = format_ident!("{}", utils::loud_to_snake(&p.name));
+    //                let orig = &p.name;
+    //                // TODO: doc_comment
+    //                let use_ty = {
+    //                    let a = use_ty("", "", &p.ty, borrow);
+    //                    if p.required {
+    //                        quote!(#a)
+    //                    } else {
+    //                        quote!(Option<#a>)
+    //                    }
+    //                };
+    //                quote! {
+    //                    #deprecated
+    //                    #[serde(rename = #orig)]
+    //                    #name: #use_ty
+    //                }
+    //            });
+    //            tokens.extend(quote! {
+    //                #[derive(Debug, Serialize, Deserialize)]
+    //                struct #name {
+    //                    #(#properties),*
+    //                }
+    //            });
+    //        }
+    //        (true, false) => {}
+    //    }
+    //};
 }
 
-// impl Interface {
-//     fn body(&self) -> TokenStream {
-//        let name = self.name();
-//        let extends = self.extends.as_deref().map(|e| {
-//            let e = format!("Extends {}", e);
-//            quote! { #[doc=#e] }
-//        });
-//        let comment = &self.comment;
-//        let methods = self.methods();
-//        let properties = self.properties();
-//        let events = self.events();
-//        let declares = self.collect_declares();
-//        quote! {
-//            #[doc = #comment]
-//            #extends
-//            impl #name {
-//                #properties
-//                #methods
-//            }
-//            #declares
-//            #events
-//        }
-//    }
+fn enum_tokens(name: &str, ty: &Type) -> TokenStream {
+    assert_eq!(ty.properties, &[]);
+    assert_eq!(ty.templates, &[]);
+    let name = format_ident!("{}", name);
+    let variants = ty.union.iter().filter(|t| t.name != "null").map(|t| {
+        if t.name.contains("\"") {
+            let name = t.name.replace("\"", "");
+            let label = format_ident!("{}", utils::kebab_to_camel(&name));
+            quote! {
+                #[serde(rename = #name)]
+                #label
+            }
+        } else {
+            let name = &t.name;
+            let label = format_ident!("{}", utils::kebab_to_camel(&name));
+            let use_ty = use_ty("", "", t, false);
+            quote! {
+                    #[serde(rename = #name)]
+                    #label(#use_ty)
+            }
+        }
+    });
+    quote! {
+        enum #name {
+            #(#variants),*
+        }
+    }
+}
 
-//     fn name(&self) -> Ident { format_ident!("{}", fix_loud_camel(&self.name)) }
-
-//     fn extends(&self) -> Option<TokenStream> {
-//        self.extends.as_ref().map(|e| {
-//            let e = format_ident!("{}", e);
-//            quote! { :#e }
-//        })
-//     }
-
-//     fn properties(&self) -> TokenStream {
-//        let ps = self
-//            .members
-//            .iter()
-//            .filter(|m| m.kind == Kind::Property)
-//            .map(|m| Property {
-//                name: &self.name,
-//                body: m
-//            });
-//        quote! {
-//            #(#ps)*
-//        }
-//    }
-
-//     fn methods(&self) -> TokenStream {
-//        let ms = self
-//            .members
-//            .iter()
-//            .filter(|m| m.kind == Kind::Method)
-//            .map(|m| Method {
-//                name: &self.name,
-//                body: m
-//            });
-//        quote! {
-//            #(#ms)*
-//        }
-//    }
-
-//     fn events(&self) -> TokenStream {
-//        let es = self
-//            .members
-//            .iter()
-//            .filter(|x| x.kind == Kind::Event)
-//            .map(|x| Event {
-//                name: &self.name,
-//                body: x
-//            });
-//        if es.clone().next().is_none() {
-//            return quote! {};
-//        }
-//        let labels = es.clone().map(|e| {
-//            let label = format_ident!("{}", e.body.name.to_camel());
-//            let comment = &e.body.comment;
-//            quote! {
-//                #[doc=#comment]
-//                #label
-//            }
-//        });
-//        let bodies = es.map(|e| {
-//            let label = format_ident!("{}", e.body.name.to_camel());
-//            let t = &e.body.ty;
-//            let comment = &e.body.comment;
-//            quote! {
-//                #[doc=#comment]
-//                #label(#t)
-//            }
-//        });
-//        let et = format_ident!("{}EventType", self.name);
-//        let e = format_ident!("{}Event", self.name);
-//        quote! {
-//            enum #et {
-//                #(#labels),*
-//            }
-//            enum #e {
-//                #(#bodies),*
-//            }
-//        }
-//    }
-
-//     fn collect_declares(&self) -> TokenStream {
-//        let mut res: TokenStream = quote! {};
-//        for member in &self.members {
-//            res.extend(member.ty.declare(&member.name));
-//            for arg in member.args.iter().filter(|a| a.name != "options") {
-//                res.extend(arg.ty.declare(&arg.name));
-//            }
-//        }
-//        res
-//    }
-//}
-
-// struct Event<'a, 'b> {
-//    name: &'a str,
-//    body: &'b Member
-//}
-// struct Method<'a, 'b> {
-//    name: &'a str,
-//    body: &'b Member
-//}
-// struct Property<'a, 'b> {
-//    name: &'a str,
-//    body: &'b Member
-//}
-
-// impl ToTokens for Method<'_, '_> {
-//    fn to_tokens(&self, tokens: &mut TokenStream) {
-//        let name = self.name();
-//        let comment = &self.body.comment;
-//        let ty = &self.body.ty;
-//        let err = if self.body.is_async {
-//            quote! {Arc<Error>}
-//        } else {
-//            quote! {Error}
-//        };
-//        let required = self
-//            .body
-//            .args
-//            .iter()
-//            .filter(|a| a.required)
-//            .map(|a| a.with_colon());
-//        let opts = self
-//            .body
-//            .args
-//            .iter()
-//            .filter(|a| !a.required && a.name != "options")
-//            .map(|a| a.with_colon_option());
-//        let options = self
-//            .body
-//            .args
-//            .iter()
-//            .filter(|a| !a.required && a.name == "options")
-//            .map(|a| {
-//                let xs = a.ty.properties.iter().map(|a| a.with_colon_option());
-//                quote! { #[doc = "options"] #(#xs),* }
-//            });
-//        let all = required.chain(opts).chain(options);
-//        tokens.extend(quote! {
-//            #[doc = #comment]
-//            fn #name(&self, #(#all),*) -> Result<#ty, #err> { todo!() }
-//        });
-//    }
-//}
-
-// impl Method<'_, '_> {
-//    fn name(&self) -> Ident { format_ident!("{}", escape(&self.body.name.to_snake())) }
-//}
-
-// impl ToTokens for Property<'_, '_> {
-//    fn to_tokens(&self, tokens: &mut TokenStream) {
-//        let name = ident_snake(&self.body.name);
-//        let comment = &self.body.comment;
-//        let ty = &self.body.ty;
-//        tokens.extend(quote! {
-//            #[doc = #comment]
-//            pub fn #name(&self) {}
-//        });
-//    }
-//}
-
-// fn ident_snake(name: &str) -> Ident { format_ident!("{}", escape(&name.to_snake())) }
-
-// impl ToTokens for Type {
-//    fn to_tokens(&self, tokens: &mut TokenStream) {
-//        if !self.templates.is_empty() {
-//            tokens.extend(match self.name.as_str() {
-//                "Array" => self.array(),
-//                "Object" | "Map" => self.map(),
-//                "Func" => todo!("{:?}", self),
-//                _ => unreachable!("{:?}", self)
-//            });
-//            return;
-//        }
-//        if !self.properties.is_empty() {
-//            if self.name.is_empty() || self.name == "Object" {
-//                tokens.extend(quote! { NotImplementedYet });
-//            } else {
-//                unreachable!();
-//            }
-//            return;
-//        }
-//        if !self.union.is_empty() {
-//            let optional = self.union.iter().find(|u| u.name == "null");
-//            if self.name.is_empty() {
-//                let t = self.r#enum();
-//                tokens.extend(optional.map(|_| quote! { Option<#t> }).unwrap_or(t));
-//            } else {
-//                let name = format_ident!("{}", self.name);
-//                let name = quote! { #name };
-//                tokens.extend(optional.map(|_| quote! { Option<#name> }).unwrap_or(name));
-//            }
-//            return;
-//        }
-//        match self.name.as_str() {
-//            "" => {
-//                unreachable!()
-//            }
-//            "Object" => {
-//                tokens.extend(quote! { Object });
-//                return;
-//            }
-//            "void" => {
-//                tokens.extend(quote! { () });
-//                return;
-//            }
-//            "string" => {
-//                tokens.extend(quote! { String });
-//                return;
-//            }
-//            "boolean" => {
-//                tokens.extend(quote! { bool });
-//                return;
-//            }
-//            "JSHandle" => {
-//                tokens.extend(quote! { JsHandle });
-//                return;
-//            }
-//            "int" => {
-//                tokens.extend(quote! { i64 });
-//                return;
-//            }
-//            "float" => {
-//                tokens.extend(quote! { f64 });
-//                return;
-//            }
-//            // any Any Serializable path
-//            n => {
-//                let name = if n == "System.Net.HttpStatusCode" {
-//                    format_ident!("u16")
-//                } else if n == r#""gone""# {
-//                    format_ident!("Gone")
-//                } else if n.starts_with('"') && n.ends_with('"') {
-//                    // TODO
-//                    format_ident!("{}", n[1..(n.len() - 1)])
-//                } else {
-//                    format_ident!("{}", n)
-//                };
-//                tokens.extend(quote! {
-//                    #name
-//                });
-//                return;
-//            }
-//        }
-//    }
-//}
-
-// impl Type {
-//    fn function(&self) -> TokenStream { todo!() }
-
-//    fn array(&self) -> TokenStream {
-//        let t = self.templates.iter().next().unwrap();
-//        quote! {
-//            Vec<#t>
-//        }
-//    }
-
-//    fn map(&self) -> TokenStream {
-//        let fst = self.templates.iter().next().unwrap();
-//        let snd = self.templates.iter().next().unwrap();
-//        quote! {
-//            Map<#fst, #snd>
-//        }
-//    }
-
-//    fn r#enum(&self) -> TokenStream {
-//        let mut entries = self.union.iter().filter(|u| u.name != "null");
-//        let num = entries.clone().count();
-//        match num {
-//            0 => unreachable!(),
-//            1 => {
-//                let first = entries.next().unwrap();
-//                quote! { #first }
-//            }
-//            _ => {
-//                quote! {
-//                    NotImplementedYet
-//                }
-//            }
-//        }
-//    }
-
-//    // TODO: recursive
-//    fn declare(&self, hint: &str) -> Option<TokenStream> {
-//        if !self.properties.is_empty() && self.name != "function" {
-//            let name = format_ident!("NotImplementedYet{}", hint);
-//            let required = self
-//                .properties
-//                .iter()
-//                .filter(|a| a.required)
-//                .map(|a| a.with_colon());
-//            let opts = self
-//                .properties
-//                .iter()
-//                .filter(|a| !a.required)
-//                .map(|a| a.with_colon_option());
-//            let all = required.chain(opts);
-//            let nested = self
-//                .properties
-//                .iter()
-//                .map(|a| a.ty.declare(&a.name))
-//                .fold(quote! {}, |mut a, b| {
-//                    a.extend(b);
-//                    a
-//                });
-//            return Some(quote! {
-//                struct #name {
-//                    #(#all),*
-//                }
-//                #nested
-//            });
-//        } else if !self.union.is_empty() {
-//            let name = format_ident!("NotImplementedYet{}", hint);
-//            let not_null = self.union.iter().filter(|u| u.name != "null");
-//            if not_null.clone().count() <= 1 {
-//                return None;
-//            }
-//            let nested = not_null
-//                .clone()
-//                .map(|t| t.declare(""))
-//                .fold(quote! {}, |mut a, b| {
-//                    a.extend(b);
-//                    a
-//                });
-//            let xs = not_null.map(|t| {
-//                quote! { NotImplementedYet(#t) }
-//            });
-//            return Some(quote! {
-//                enum #name {
-//                    #(#xs),*
-//                }
-//                #nested
-//            });
-//        }
-//        None
-//    }
-//}
-
-// impl Arg {
-//    fn with_colon(&self) -> TokenStream {
-//        let name = self.name();
-//        let ty = &self.ty;
-//        let comment = &self.comment;
-//        quote! {
-//            #[doc = #comment]
-//            #name: #ty
-//        }
-//    }
-
-//    fn with_colon_option(&self) -> TokenStream {
-//        let name = self.name();
-//        let ty = &self.ty;
-//        let comment = &self.comment;
-//        quote! {
-//            #[doc = #comment]
-//            #name: Option<#ty>
-//        }
-//    }
-
-//    fn name(&self) -> Ident { format_ident!("{}", escape(&self.name.to_snake())) }
-//}
+fn event_tokens(member: Vec<&Member>) -> TokenStream {
+    let variants = member.iter().map(|e| {
+        assert_eq!(e.args, &[]);
+        assert_eq!(e.deprecated, false);
+        assert_eq!(e.is_async, false);
+        assert_eq!(e.name, e.alias);
+        assert_eq!(e.experimental, false);
+        assert_eq!(e.overload_index, 0);
+        assert_eq!(e.required, true);
+        // TODO: spec
+        let label = format_ident!("{}", utils::loud_to_camel(&e.name.to_camel()));
+        if e.ty.name == "void" {
+            quote! {
+                #label
+            }
+        } else {
+            let ty = use_ty("", &e.name, &e.ty, false); // TODO
+            quote! {
+                #label(#ty)
+            }
+        }
+    });
+    quote! {
+        #[derive(Debug, Clone)]
+        pub enum Event {
+            #(#variants),*
+        }
+    }
+}
