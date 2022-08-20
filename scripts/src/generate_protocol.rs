@@ -112,6 +112,9 @@ fn declare_object(name: &str, x: &Properties, borrow: bool) -> TokenStream {
         let skip_serializing = if name == "Metadata" && *field_name == "internal" {
             quote!(#[serde(skip_serializing_if = "is_default")])
         } else {
+            // FIXME: There are FIELDS that use skip and explicit null.
+            // TODO: union null to Option
+            // Option<Option<T>>
             quote!()
         };
         quote! {
