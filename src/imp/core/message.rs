@@ -1,6 +1,7 @@
 pub(crate) mod de;
 pub(crate) mod ser;
 
+use std::fmt::Debug;
 use crate::imp::core::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::{map::Map, value::Value};
@@ -74,6 +75,7 @@ impl<'de> Deserialize<'de> for ResResult {
 pub(crate) struct ResInitial {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
+    #[serde(default)]
     pub(crate) params: Map<String, Value>
 }
 
