@@ -378,6 +378,25 @@ impl Page {
         self.emit_event(Evt::FrameNavigated(f));
     }
 
+
+    pub(crate) fn on_request(&self, request: Weak<Request>) -> Result<(), Error>{
+        self.emit_event(Evt::Request(request));
+        Ok(())
+    }
+
+    pub(crate) fn on_response(&self, response: Weak<Response>) -> Result<(), Error>{
+        self.emit_event(Evt::Response(response));
+        Ok(())
+    }
+
+    pub(crate) fn on_page_load(&self) {
+        self.emit_event(Evt::Load);
+    }
+
+    pub(crate) fn on_dom_content_loaded(&self) {
+        self.emit_event(Evt::DomContentLoaded);
+    }
+
     pub(crate) fn set_video(&self, video: Video) -> Result<(), Error> {
         self.var.lock().unwrap().video = Some(video);
         Ok(())
@@ -533,6 +552,7 @@ impl RemoteObject for Page {
         method: Str<Method>,
         params: Map<String, Value>
     ) -> Result<(), Error> {
+        dbg!(&method);
         match method.as_str() {
             "close" => self.on_close(ctx)?,
             "frameattached" => {
