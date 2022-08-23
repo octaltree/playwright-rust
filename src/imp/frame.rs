@@ -1,13 +1,5 @@
 pub(crate) use crate::imp::element_handle::Opt;
-use crate::imp::{
-    core::*,
-    element_handle::ElementHandle,
-    js_handle::JsHandle,
-    page::Page,
-    prelude::*,
-    response::Response,
-    utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
-};
+use crate::imp::{core::*, element_handle::ElementHandle, js_handle::JsHandle, page, page::Page, prelude::*, response::Response, utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}};
 use std::{collections::HashSet, iter::FromIterator};
 use crate::protocol::generated::LifecycleEvent;
 
@@ -528,11 +520,24 @@ impl Frame {
             Remove(LifecycleEvent)
         }
         let op: Op = serde_json::from_value(params.into())?;
-        let load_states = &mut self.var.lock().unwrap().load_states;
+        let var = &mut self.var.lock().unwrap();
+        let load_states = &mut var.load_states;
         match op {
             Op::Add(x) => {
                 load_states.insert(x);
                 self.emit_event(Evt::LoadState(x));
+                if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
+                    match x {
+                        LifecycleEvent::Load => {
+                            page.on_page_load();
+                        }
+                        LifecycleEvent::Domcontentloaded => {
+                            page.on_dom_content_loaded();
+                        }
+                        LifecycleEvent::Networkidle => {}
+                        LifecycleEvent::Commit => {}
+                    }
+                }
             }
             Op::Remove(x) => {
                 load_states.remove(&x);
