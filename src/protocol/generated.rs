@@ -4792,7 +4792,7 @@ pub struct LaunchOptionsProxy {
     #[serde(rename = "username")]
     pub(crate) username: Option<String>
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Copy)]
 pub enum LifecycleEvent {
     #[serde(rename = "load")]
     Load,

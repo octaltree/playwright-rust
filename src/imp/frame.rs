@@ -1,14 +1,7 @@
 pub(crate) use crate::imp::element_handle::Opt;
-use crate::imp::{
-    core::*,
-    element_handle::ElementHandle,
-    js_handle::JsHandle,
-    page::Page,
-    prelude::*,
-    response::Response,
-    utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
-};
+use crate::imp::{core::*, element_handle::ElementHandle, js_handle::JsHandle, page, page::Page, prelude::*, response::Response, utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}};
 use std::{collections::HashSet, iter::FromIterator};
+use crate::protocol::generated::LifecycleEvent;
 
 #[derive(Debug)]
 pub(crate) struct Frame {
@@ -24,7 +17,7 @@ struct Variable {
     name: String,
     page: Option<Weak<Page>>,
     child_frames: Vec<Weak<Frame>>,
-    load_states: HashSet<DocumentLoadState>
+    load_states: HashSet<LifecycleEvent>
 }
 
 macro_rules! is_checked {
@@ -523,15 +516,28 @@ impl Frame {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         enum Op {
-            Add(DocumentLoadState),
-            Remove(DocumentLoadState)
+            Add(LifecycleEvent),
+            Remove(LifecycleEvent)
         }
         let op: Op = serde_json::from_value(params.into())?;
-        let load_states = &mut self.var.lock().unwrap().load_states;
+        let var = &mut self.var.lock().unwrap();
+        let load_states = &mut var.load_states;
         match op {
             Op::Add(x) => {
                 load_states.insert(x);
                 self.emit_event(Evt::LoadState(x));
+                if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
+                    match x {
+                        LifecycleEvent::Load => {
+                            page.on_page_load();
+                        }
+                        LifecycleEvent::Domcontentloaded => {
+                            page.on_dom_content_loaded();
+                        }
+                        LifecycleEvent::Networkidle => {}
+                        LifecycleEvent::Commit => {}
+                    }
+                }
             }
             Op::Remove(x) => {
                 load_states.remove(&x);
@@ -562,7 +568,7 @@ impl RemoteObject for Frame {
 
 #[derive(Debug, Clone)]
 pub(crate) enum Evt {
-    LoadState(DocumentLoadState),
+    LoadState(LifecycleEvent),
     Navigated(FrameNavigatedEvent)
 }
 
@@ -945,7 +951,7 @@ struct Initializer {
     name: String,
     url: String,
     parent_frame: Option<OnlyGuid>,
-    load_states: Vec<DocumentLoadState>
+    load_states: Vec<LifecycleEvent>
 }
 
 #[derive(Debug, Deserialize, Clone)]

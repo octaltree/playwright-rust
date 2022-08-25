@@ -121,7 +121,7 @@ pub struct LocalStorageEntry {
 pub enum DocumentLoadState {
     DomContentLoaded,
     Load,
-    NetworkIdle
+    NetworkIdle,
 }
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]

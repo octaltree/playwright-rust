@@ -245,6 +245,22 @@ impl RemoteObject for BrowserContext {
         params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
+            "request" => {
+                if let Some(page) = self.pages().last() {
+                    let first = guid_from_params(params.get("request").unwrap())?;
+                    let page = page.upgrade().unwrap();
+                    let request = get_object!(ctx, first, Request)?;
+                    page.on_request(request)?;
+                }
+            }
+            "response" => {
+                if let Some(page) = self.pages().last() {
+                    let first = guid_from_params(params.get("response").unwrap())?;
+                    let page = page.upgrade().unwrap();
+                    let response = get_object!(ctx, first, Response)?;
+                    page.on_response(response)?;
+                }
+            }
             "page" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
