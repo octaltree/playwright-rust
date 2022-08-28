@@ -70,6 +70,44 @@ fn body(x: &Interface) -> TokenStream {
     }
 }
 
+fn event_tokens(member: Vec<&Member>) -> TokenStream {
+    let variants = member.iter().map(|e| {
+        assert_eq!(e.args, &[]);
+        assert_eq!(e.deprecated, false);
+        assert_eq!(e.is_async, false);
+        assert_eq!(e.name, e.alias);
+        assert_eq!(e.experimental, false);
+        assert_eq!(e.overload_index, 0);
+        assert_eq!(e.required, true);
+        // TODO: spec
+        let label = format_ident!("{}", utils::loud_to_camel(&e.name.to_camel()));
+        if e.ty.name == "void" {
+            quote! {
+                #label
+            }
+        } else {
+            let ty = use_ty("", &e.name, &e.ty, false); // TODO
+            quote! {
+                #label(#ty)
+            }
+        }
+    });
+    let labels = member
+        .iter()
+        .map(|e| format_ident!("{}", utils::loud_to_camel(&e.name.to_camel())));
+    quote! {
+        #[derive(Debug, Clone)]
+        pub enum Event {
+            #(#variants),*
+        }
+        #[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
+        pub enum EventType {
+            #(#labels),*
+        }
+    }
+}
+
+// TODO
 fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStream {
     let mut tokens: TokenStream = Default::default();
     let Member {
@@ -91,7 +129,7 @@ fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStrea
     let rety: Box<dyn ToTokens> = if is_builder {
         let name = format!("{}{}", &name.replace("#", ""), "Builder");
         // TODO: make type for builder
-        Box::new(use_ty("", &name, ty, false))
+        Box::new(use_ty("", &name, ty, true))
     } else {
         Box::new(use_ty("", name, ty, false))
     };
@@ -171,6 +209,18 @@ fn arg_field(scope: &str, a: &Arg, borrow: bool) -> TokenStream {
     }
 }
 
+fn collect_types(x: &Interface) -> TokenStream {
+    let mut ret = TokenStream::default();
+    for member in &x.members {
+        for arg in &member.args {
+            ret.extend(declare_ty(&member.name, &arg.name, &arg.ty, true));
+        }
+        ret.extend(declare_ty(&member.name, "", &member.ty, false));
+    }
+    ret
+}
+
+// TODO
 fn use_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
     let opt = ty.name.ends_with("?");
     let s = ty.name.replace("?", "");
@@ -246,51 +296,88 @@ fn use_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
     } else {
         assert_eq!(ty.properties, &[]);
         assert_eq!(ty.templates, &[]);
-        let opt = ty.union.iter().any(|t| t.name == "null");
-        let ident = format_ident!(
-            "{}{}",
-            utils::loud_to_camel(&scope.to_camel()),
-            utils::loud_to_camel(&name.to_camel())
-        );
-        if opt {
-            quote!(Option<#ident>)
-        } else {
-            quote!(#ident)
+        let variants = ty.union.iter().filter(|t| t.name != "null");
+        let num_variants = variants.clone().count();
+        let opt = ty.union.len() != num_variants;
+        match num_variants {
+            0 => unreachable!(),
+            1 => {
+                let mut vs = variants;
+                let t = vs.next().unwrap();
+                let t = use_ty(scope, name, t, borrow);
+                if opt {
+                    quote!(Opiton<#t>)
+                } else {
+                    quote!(#t)
+                }
+            }
+            _ => {
+                let ident = format_ident!(
+                    "{}{}",
+                    utils::loud_to_camel(&scope.to_camel()),
+                    utils::loud_to_camel(&name.to_camel())
+                );
+                if opt {
+                    quote!(Option<#ident>)
+                } else {
+                    quote!(#ident)
+                }
+            }
         }
     }
 }
 
+// TODO
 fn has_reference(ty: &Type) -> bool { todo!() }
 
-fn collect_types(x: &Interface) -> TokenStream {
-    let mut ret = TokenStream::default();
-    for member in &x.members {
-        for arg in &member.args {
-            ret.extend(declare_ty("", &arg.name, &arg.ty, true));
-        }
-        ret.extend(declare_ty("", "", &member.ty, false));
-    }
-    ret
-}
-
+// TODO
 fn declare_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
     if ty.union.is_empty() {
         match (ty.properties.is_empty(), ty.templates.is_empty()) {
             (true, true) => {
-                todo!()
+                quote! {}
             }
             (true, false) => {
-                todo!()
+                let ident = format_ident!(
+                    "{}{}",
+                    utils::loud_to_camel(&scope.to_camel().replace("#", "")),
+                    utils::loud_to_camel(&name.to_camel())
+                );
+                quote! {
+                    pub struct #ident {}
+                }
+            }
+            (false, true) if ty.name == "Array" => {
+                assert_eq!(ty.templates.len(), 1);
+                let t = &ty.templates[0];
+                declare_ty(scope, name, t, borrow)
             }
             (false, true) => {
-                todo!()
+                quote! {}
             }
             (false, false) => {
-                todo!()
+                quote! {}
             }
         }
     } else {
-        enum_tokens(&format!("{}{}", scope, name), ty)
+        let variants = ty.union.iter().filter(|t| t.name != "null");
+        let num_variants = variants.clone().count();
+        match num_variants {
+            0 => unreachable!(),
+            1 => {
+                let mut vs = variants;
+                let t = vs.next().unwrap();
+                declare_ty(scope, name, t, borrow)
+            }
+            _ => {
+                let s = format!(
+                    "{}{}",
+                    utils::loud_to_camel(&scope.to_camel().replace("#", "")),
+                    utils::loud_to_camel(&name.to_camel())
+                );
+                enum_tokens(&s, ty)
+            }
+        }
     }
 
     // let mut tokens = Default::default();
@@ -343,7 +430,7 @@ fn declare_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
 fn enum_tokens(name: &str, ty: &Type) -> TokenStream {
     assert_eq!(ty.properties, &[]);
     assert_eq!(ty.templates, &[]);
-    let name = format_ident!("{}", name);
+    let enum_name = format_ident!("{}", name);
     let variants = ty.union.iter().filter(|t| t.name != "null").map(|t| {
         if t.name.contains("\"") {
             let name = t.name.replace("\"", "");
@@ -353,9 +440,10 @@ fn enum_tokens(name: &str, ty: &Type) -> TokenStream {
                 #label
             }
         } else {
+            // TODO
             let name = &t.name;
             let label = format_ident!("{}", utils::kebab_to_camel(&name));
-            let use_ty = use_ty("", "", t, false);
+            let use_ty = use_ty(name, &t.name, t, false);
             quote! {
                     #[serde(rename = #name)]
                     #label(#use_ty)
@@ -363,37 +451,8 @@ fn enum_tokens(name: &str, ty: &Type) -> TokenStream {
         }
     });
     quote! {
-        enum #name {
-            #(#variants),*
-        }
-    }
-}
-
-fn event_tokens(member: Vec<&Member>) -> TokenStream {
-    let variants = member.iter().map(|e| {
-        assert_eq!(e.args, &[]);
-        assert_eq!(e.deprecated, false);
-        assert_eq!(e.is_async, false);
-        assert_eq!(e.name, e.alias);
-        assert_eq!(e.experimental, false);
-        assert_eq!(e.overload_index, 0);
-        assert_eq!(e.required, true);
-        // TODO: spec
-        let label = format_ident!("{}", utils::loud_to_camel(&e.name.to_camel()));
-        if e.ty.name == "void" {
-            quote! {
-                #label
-            }
-        } else {
-            let ty = use_ty("", &e.name, &e.ty, false); // TODO
-            quote! {
-                #label(#ty)
-            }
-        }
-    });
-    quote! {
-        #[derive(Debug, Clone)]
-        pub enum Event {
+        #[derive(Debug)]
+        pub enum #enum_name {
             #(#variants),*
         }
     }
