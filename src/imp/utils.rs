@@ -231,7 +231,7 @@ pub struct File {
     pub name: String,
     pub mime: String,
     pub buffer: String,
-    pub mime_type: String, 
+    pub mime_type: String,
 }
 
 impl File {
