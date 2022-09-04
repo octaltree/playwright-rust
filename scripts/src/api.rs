@@ -68,7 +68,7 @@ pub struct Arg {
     pub alias: String,
     #[serde(rename = "type")]
     pub ty: Type,
-    // langs
+    pub langs: Langs,
     // experimental
     // paramOrOption
     pub since: String,
@@ -127,6 +127,12 @@ pub enum NoteType {
     Caution,
     Note,
     Warning
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Langs {
+    pub only: Option<Vec<String>>
 }
 
 #[cfg(test)]

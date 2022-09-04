@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
@@ -136,6 +136,7 @@ fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStrea
     let arg_fields = args
         .iter()
         .filter(|a| a.required)
+        .filter(|a| !is_action_csharp(&a))
         .map(|a| arg_field(alias, a, true));
     let fn_name = if is_builder {
         format_ident!(
@@ -190,7 +191,8 @@ fn arg_field(scope: &str, a: &Arg, borrow: bool) -> TokenStream {
         spec, // TODO
         required,
         deprecated,
-        is_async
+        is_async,
+        langs: _
     } = a;
     assert_eq!(*is_async, false);
     assert_eq!(*overload_index, 0);
@@ -209,10 +211,22 @@ fn arg_field(scope: &str, a: &Arg, borrow: bool) -> TokenStream {
     }
 }
 
+fn is_action_csharp(a: &Arg) -> bool {
+    let for_csharp = if let Some(only) = &a.langs.only {
+        only.len() == 1 && only[0] == "csharp"
+    } else {
+        false
+    };
+    a.name == "action" && for_csharp
+}
+
 fn collect_types(x: &Interface) -> TokenStream {
     let mut ret = TokenStream::default();
     for member in &x.members {
         for arg in &member.args {
+            if is_action_csharp(arg) {
+                continue;
+            }
             ret.extend(declare_ty(&member.name, &arg.name, &arg.ty, true));
         }
         ret.extend(declare_ty(&member.name, "", &member.ty, false));
@@ -260,6 +274,7 @@ fn use_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
                     #ident
                 }
             }
+            (true, false) if ty.name == "Func" => unreachable!(),
             (true, false) if ty.name == "Array" => {
                 assert_eq!(ty.templates.len(), 1);
                 let inner = use_ty(scope, name, &ty.templates[0], borrow);
@@ -337,25 +352,78 @@ fn declare_ty(scope: &str, name: &str, ty: &Type, borrow: bool) -> TokenStream {
             (true, true) => {
                 quote! {}
             }
+            (false, true) => {
+                let name = format!(
+                    "{}{}",
+                    utils::loud_to_camel(&scope.to_camel().replace("#", "")),
+                    utils::loud_to_camel(&name.to_camel())
+                );
+                let ident = format_ident!("{}", &name);
+                let fields = ty.properties.iter().map(|p| {
+                    let field_name = format_ident!("{}", utils::loud_to_snake(&p.name));
+                    let use_ty = {
+                        let t = use_ty(&name, &p.name, ty, borrow);
+                        if p.required {
+                            quote!(#t)
+                        } else {
+                            quote!(Option<#t>)
+                        }
+                    };
+                    quote! {
+                        #field_name: #use_ty
+                    }
+                });
+                quote! {
+                    pub struct #ident {
+                        #(#fields),*
+                    }
+                }
+            }
+            (true, false) if ty.name == "Func" => unreachable!(),
+            (true, false) if ty.name == "Array" => {
+                assert_eq!(ty.templates.len(), 1);
+                let t = &ty.templates[0];
+                declare_ty(scope, name, t, borrow)
+            }
+            (true, false) => {
+                assert!(
+                    ty.expression.as_deref()
+                        == Some("[IReadOnlyDictionary<string, BrowserNewContextOptions>]")
+                        || ty.expression.as_deref() == Some("[Map]<[string], [JSHandle]>")
+                        || ty.expression.as_deref() == Some("[Object]<[string], [string]>"),
+                    "{:?}",
+                    &ty
+                );
+                let it = ty
+                    .templates
+                    .iter()
+                    .map(|t| declare_ty(scope, name, t, borrow));
+                quote! {
+                    #(#it)*
+                }
+            }
             (true, false) => {
                 let ident = format_ident!(
                     "{}{}",
                     utils::loud_to_camel(&scope.to_camel().replace("#", "")),
                     utils::loud_to_camel(&name.to_camel())
                 );
+                let vars = ty.templates.iter().enumerate().map(|(i, t)| {
+                    let c = format_ident!("{}", char::from_u32('A' as u32 + i as u32).unwrap());
+                    quote! {
+                        #c
+                    }
+                });
                 quote! {
-                    pub struct #ident {}
+                    struct #ident<#(#vars),*> {
+                    }
                 }
             }
-            (false, true) if ty.name == "Array" => {
-                assert_eq!(ty.templates.len(), 1);
-                let t = &ty.templates[0];
-                declare_ty(scope, name, t, borrow)
-            }
-            (false, true) => {
-                quote! {}
-            }
             (false, false) => {
+                assert_eq!(
+                    ty.expression.as_deref(),
+                    Some("[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>")
+                );
                 quote! {}
             }
         }
@@ -456,4 +524,48 @@ fn enum_tokens(name: &str, ty: &Type) -> TokenStream {
             #(#variants),*
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Model {
+    Struct {},
+    Enum {}
+}
+
+struct QueueFrame<'a> {
+    scope: Vec<&'a str>,
+    ty: &'a Type,
+    borrow: bool
+}
+
+fn _collect_types(x: &Interface) -> TokenStream {
+    let mut que: VecDeque<QueueFrame> = VecDeque::new();
+    let mut xs: Vec<(String, &str, Model)> = Vec::new();
+    for member in &x.members {
+        for arg in &member.args {
+            if is_action_csharp(&arg) {
+                continue;
+            }
+            que.push_back(QueueFrame {
+                scope: vec![&member.name, &arg.name],
+                ty: &arg.ty,
+                borrow: true
+            });
+        }
+        que.push_back(QueueFrame {
+            scope: vec![&member.name],
+            ty: &member.ty,
+            borrow: false
+        });
+    }
+    while let Some(frame) = que.pop_front() {
+        let o: &str = &frame.ty.name;
+        let (name, model) = _declare_ty(&mut que, frame);
+        xs.push((name, o, model));
+    }
+    todo!()
+}
+
+fn _declare_ty<'a>(que: &mut VecDeque<QueueFrame<'a>>, frame: QueueFrame<'a>) -> (String, Model) {
+    todo!()
 }
