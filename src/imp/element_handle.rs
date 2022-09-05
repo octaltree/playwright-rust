@@ -1,16 +1,20 @@
+use std::fs;
+use itertools::Itertools;
 use crate::imp::{
     core::*,
     frame::Frame,
     prelude::*,
     utils::{
         ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
-        WaitForSelectorState
-    }
+        WaitForSelectorState,
+    },
 };
+use crate::imp::browser_context::BrowserContext;
+use crate::protocol::generated::WritableStream;
 
 #[derive(Debug)]
 pub(crate) struct ElementHandle {
-    channel: ChannelOwner
+    channel: ChannelOwner,
 }
 
 macro_rules! is_checked {
@@ -31,7 +35,7 @@ impl ElementHandle {
 
     pub(crate) async fn query_selector(
         &self,
-        selector: &str
+        selector: &str,
     ) -> ArcResult<Option<Weak<ElementHandle>>> {
         let mut args = HashMap::new();
         args.insert("selector", selector);
@@ -46,7 +50,7 @@ impl ElementHandle {
 
     pub(crate) async fn query_selector_all(
         &self,
-        selector: &str
+        selector: &str,
     ) -> ArcResult<Vec<Weak<ElementHandle>>> {
         let mut args = HashMap::new();
         args.insert("selector", selector);
@@ -171,7 +175,7 @@ impl ElementHandle {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args {
-            timeout: Option<f64>
+            timeout: Option<f64>,
         }
         let args = Args { timeout };
         let _ = send_message!(self, "scrollIntoViewIfNeeded", args);
@@ -183,7 +187,7 @@ impl ElementHandle {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args {
-            timeout: Option<f64>
+            timeout: Option<f64>,
         }
         let args = Args { timeout };
         let _ = send_message!(self, "selectText", args);
@@ -210,14 +214,14 @@ impl ElementHandle {
     pub(crate) async fn wait_for_element_state(
         &self,
         state: ElementState,
-        timeout: Option<f64>
+        timeout: Option<f64>,
     ) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args {
             state: ElementState,
-            timeout: Option<f64>
+            timeout: Option<f64>,
         }
         let args = Args { state, timeout };
         let _ = send_message!(self, "waitForElementState", args);
@@ -226,7 +230,7 @@ impl ElementHandle {
 
     pub(crate) async fn wait_for_selector(
         &self,
-        args: WaitForSelectorArgs<'_>
+        args: WaitForSelectorArgs<'_>,
     ) -> ArcResult<Option<Weak<ElementHandle>>> {
         let v = send_message!(self, "waitForSelector", args);
         let guid = match as_only_guid(&v) {
@@ -240,16 +244,16 @@ impl ElementHandle {
     pub(crate) async fn dispatch_event<T>(
         &self,
         r#type: &str,
-        event_init: Option<T>
+        event_init: Option<T>,
     ) -> ArcResult<()>
-    where
-        T: Serialize
+        where
+            T: Serialize
     {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args<'a> {
             r#type: &'a str,
-            event_init: Value
+            event_init: Value,
         }
         let event_init = ser::to_value(&event_init).map_err(Error::SerializationPwJson)?;
         let args = Args { r#type, event_init };
@@ -274,6 +278,34 @@ impl ElementHandle {
         let _ = send_message!(self, "setInputFiles", args);
         Ok(())
     }
+
+    async fn browser_context(&self) -> ArcResult<Arc<BrowserContext>> {
+        Ok(self.owner_frame().await.unwrap().unwrap()
+            .upgrade().unwrap()
+            .page().unwrap().upgrade().unwrap()
+            .browser_context()
+            .upgrade().unwrap())
+    }
+
+    /// # stages:
+    /// * create temp files using browser
+    /// * create streams
+    /// * assign each files to a stream
+    /// * send setInputFilesPaths message
+    pub(crate) async fn set_input_file_paths(&self, args: SetInputFilePathsArgs) -> ArcResult<()> {
+        let browser_context = self.browser_context().await?;
+        if browser_context.browser().unwrap().upgrade().unwrap().is_remote() {
+            panic!("Not implemented yet");
+            // for local_path in &args.local_paths {
+            //     let guid = browser_context.create_temp_file(local_path).await?;
+            //     args.streams.as_mut().unwrap().push(guid);
+            //     let f = fs::File::open(local_path).unwrap();
+            //     guid.
+            // }
+        }
+        let _ = send_message!(self, "setInputFilePaths", args);
+        Ok(())
+    }
 }
 
 #[skip_serializing_none]
@@ -284,7 +316,7 @@ pub(crate) struct HoverArgs {
     pub(crate) position: Option<Position>,
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
-    pub(crate) trial: Option<bool>
+    pub(crate) trial: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -300,7 +332,7 @@ pub(crate) struct ClickArgs {
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
     pub(crate) no_wait_after: Option<bool>,
-    pub(crate) trial: Option<bool>
+    pub(crate) trial: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -311,7 +343,7 @@ pub(crate) struct CheckArgs {
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
     pub(crate) no_wait_after: Option<bool>,
-    pub(crate) trial: Option<bool>
+    pub(crate) trial: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -323,7 +355,7 @@ pub(crate) struct TapArgs {
     pub(crate) timeout: Option<f64>,
     pub(crate) force: Option<bool>,
     pub(crate) no_wait_after: Option<bool>,
-    pub(crate) trial: Option<bool>
+    pub(crate) trial: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -332,7 +364,7 @@ pub(crate) struct TapArgs {
 pub(crate) struct FillArgs<'a> {
     value: &'a str,
     pub(crate) timeout: Option<f64>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
 }
 
 impl<'a> FillArgs<'a> {
@@ -340,7 +372,7 @@ impl<'a> FillArgs<'a> {
         Self {
             value,
             timeout: None,
-            no_wait_after: None
+            no_wait_after: None,
         }
     }
 }
@@ -381,7 +413,7 @@ pub(crate) struct ScreenshotArgs<'a> {
     pub(crate) timeout: Option<f64>,
     pub(crate) r#type: Option<ScreenshotType>,
     pub(crate) quality: Option<i64>,
-    pub(crate) omit_background: Option<bool>
+    pub(crate) omit_background: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -390,7 +422,7 @@ pub(crate) struct ScreenshotArgs<'a> {
 pub(crate) struct WaitForSelectorArgs<'a> {
     selector: &'a str,
     pub(crate) state: Option<WaitForSelectorState>,
-    pub(crate) timeout: Option<f64>
+    pub(crate) timeout: Option<f64>,
 }
 
 impl<'a> WaitForSelectorArgs<'a> {
@@ -398,7 +430,7 @@ impl<'a> WaitForSelectorArgs<'a> {
         Self {
             selector,
             state: None,
-            timeout: None
+            timeout: None,
         }
     }
 }
@@ -416,14 +448,14 @@ pub(crate) struct SelectOptionArgs {
     pub(crate) elements: Option<Vec<OnlyGuid>>,
 
     pub(crate) timeout: Option<f64>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
 }
 
 #[derive(Serialize)]
 pub(crate) enum Opt {
     Value(String),
     Index(usize),
-    Label(String)
+    Label(String),
 }
 
 #[skip_serializing_none]
@@ -432,5 +464,15 @@ pub(crate) enum Opt {
 pub(crate) struct SetInputFilesArgs {
     pub(crate) files: Vec<File>,
     pub(crate) timeout: Option<f64>,
-    pub(crate) no_wait_after: Option<bool>
+    pub(crate) no_wait_after: Option<bool>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SetInputFilePathsArgs {
+    pub(crate) local_paths: Option<Vec<PathBuf>>,
+    pub(crate) stream: Option<Vec<WritableStream>>,
+    pub(crate) timeout: Option<f64>,
+    pub(crate) no_wait_after: Option<bool>,
 }

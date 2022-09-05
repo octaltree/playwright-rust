@@ -1,19 +1,19 @@
-use crate::{
-    api::Frame,
-    imp::{
-        core::*,
-        element_handle::{
-            CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, Opt, PressArgs,
-            ScreenshotArgs, SelectOptionArgs, SetInputFilesArgs, TapArgs, TypeArgs,
-            WaitForSelectorArgs
-        },
-        prelude::*,
-        utils::{
-            ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
-            WaitForSelectorState
-        }
-    }
-};
+use std::borrow::Borrow;
+use std::fs;
+use crate::{api::Frame, imp::{
+    core::*,
+    element_handle::{
+        CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, Opt, PressArgs,
+        ScreenshotArgs, SelectOptionArgs, SetInputFilesArgs, TapArgs, TypeArgs,
+        WaitForSelectorArgs, SetInputFilePathsArgs
+    },
+    prelude::*,
+    utils::{
+        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
+        WaitForSelectorState,
+    },
+}};
+
 
 /// ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`]
 /// method.
@@ -38,7 +38,7 @@ use crate::{
 /// methods.
 #[derive(Debug)]
 pub struct ElementHandle {
-    inner: Weak<Impl>
+    inner: Weak<Impl>,
 }
 
 impl PartialEq for ElementHandle {
@@ -295,7 +295,7 @@ impl ElementHandle {
     pub async fn wait_for_element_state(
         &self,
         state: ElementState,
-        timeout: Option<f64>
+        timeout: Option<f64>,
     ) -> ArcResult<()> {
         upgrade(&self.inner)?
             .wait_for_element_state(state, timeout)
@@ -357,8 +357,8 @@ impl ElementHandle {
     /// await elementHandle.dispatchEvent('dragstart', { dataTransfer });
     /// ```
     pub async fn dispatch_event<T>(&self, r#type: &str, event_init: Option<T>) -> ArcResult<()>
-    where
-        T: Serialize
+        where
+            T: Serialize
     {
         upgrade(&self.inner)?
             .dispatch_event(r#type, event_init)
@@ -397,6 +397,9 @@ impl ElementHandle {
         SetInputFilesBuilder::new(self.inner.clone(), file)
     }
 
+    pub fn set_input_large_files_builder(&self, file: &str) -> SetLargeInputFilesBuilder {
+        SetLargeInputFilesBuilder::new(self.inner.clone(), file)
+    }
     // eval_on_selector
     // eval_on_selector_all
 }
@@ -406,7 +409,7 @@ impl ElementHandle {}
 
 pub struct HoverBuilder {
     inner: Weak<Impl>,
-    args: HoverArgs
+    args: HoverArgs,
 }
 
 impl HoverBuilder {
@@ -526,7 +529,7 @@ check_builder!(UncheckBuilder, uncheck);
 
 pub struct TapBuilder {
     inner: Weak<Impl>,
-    args: TapArgs
+    args: TapArgs,
 }
 
 impl TapBuilder {
@@ -563,7 +566,7 @@ impl TapBuilder {
 
 pub struct FillBuilder<'a> {
     inner: Weak<Impl>,
-    args: FillArgs<'a>
+    args: FillArgs<'a>,
 }
 
 impl<'a> FillBuilder<'a> {
@@ -624,7 +627,7 @@ type_builder!(PressBuilder, PressArgs, key, press);
 
 pub struct ScreenshotBuilder<'a> {
     inner: Weak<Impl>,
-    args: ScreenshotArgs<'a>
+    args: ScreenshotArgs<'a>,
 }
 
 impl<'a> ScreenshotBuilder<'a> {
@@ -665,7 +668,7 @@ impl<'a> ScreenshotBuilder<'a> {
 
 pub struct WaitForSelectorBuilder<'a> {
     inner: Weak<Impl>,
-    args: WaitForSelectorArgs<'a>
+    args: WaitForSelectorArgs<'a>,
 }
 
 impl<'a> WaitForSelectorBuilder<'a> {
@@ -689,7 +692,7 @@ impl<'a> WaitForSelectorBuilder<'a> {
 pub struct SelectOptionBuilder {
     inner: Weak<Impl>,
     args: SelectOptionArgs,
-    err: Option<Error>
+    err: Option<Error>,
 }
 
 impl SelectOptionBuilder {
@@ -698,7 +701,7 @@ impl SelectOptionBuilder {
         Self {
             inner,
             args,
-            err: None
+            err: None,
         }
     }
 
@@ -780,7 +783,7 @@ impl SelectOptionBuilder {
 
 pub struct SetInputFilesBuilder {
     inner: Weak<Impl>,
-    args: SetInputFilesArgs
+    args: SetInputFilesArgs,
 }
 
 impl SetInputFilesBuilder {
@@ -816,14 +819,52 @@ impl SetInputFilesBuilder {
     }
 }
 
+
+pub struct SetLargeInputFilesBuilder {
+    inner: Weak<Impl>,
+    args: SetInputFilePathsArgs,
+}
+
+impl SetLargeInputFilesBuilder {
+    pub(crate) fn new(inner: Weak<Impl>, filepath: &str) -> Self {
+        let f = fs::canonicalize(filepath).unwrap();
+        let args = SetInputFilePathsArgs {
+            local_paths: Some(vec![f]),
+            ..SetInputFilePathsArgs::default()
+        };
+        Self { inner, args }
+    }
+
+    pub async fn set_input_file_paths(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.set_input_file_paths(args).await
+    }
+
+    pub fn add_file(mut self, x: &str) -> Self {
+        let mut local_paths = self.args.local_paths.as_mut().unwrap();
+        local_paths.push(fs::canonicalize(x).unwrap());
+        self
+    }
+
+    setter! {
+        no_wait_after: Option<bool>,
+        timeout: Option<f64>
+    }
+
+    pub fn clear_files(mut self) -> Self {
+        self.args.local_paths = Some(vec![]);
+        self
+    }
+}
+
 mod ser {
     use super::*;
     use serde::{ser, ser::SerializeStruct};
 
     impl Serialize for ElementHandle {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer
+            where
+                S: ser::Serializer
         {
             let mut s = serializer.serialize_struct("fff9ae7f-9070-480f-9a8a-3d4b66923f7d", 1)?;
             let guid = &self.guid().map_err(<S::Error as ser::Error>::custom)?;

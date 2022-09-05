@@ -1669,7 +1669,7 @@ pub mod element_handle {
             pub(crate) timeout: Option<serde_json::Number>
         }
         pub type SetInputFilePaths = ();
-        #[derive(Debug, Serialize, Deserialize)]
+        #[derive(Debug, Serialize, Deserialize, Default)]
         pub struct SetInputFilePathsArgs<'a> {
             #[serde(borrow)]
             #[serde(rename = "localPaths")]
