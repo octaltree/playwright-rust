@@ -1,9 +1,8 @@
-use std::collections::{HashMap, VecDeque};
-
 use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 use scripts::{api::*, utils};
+use std::collections::{HashMap, VecDeque};
 
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
@@ -106,8 +105,6 @@ fn event_tokens(member: Vec<&Member>) -> TokenStream {
         }
     }
 }
-
-// TODO
 fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStream {
     let mut tokens: TokenStream = Default::default();
     let Member {
@@ -136,7 +133,7 @@ fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStrea
     let arg_fields = args
         .iter()
         .filter(|a| a.required)
-        .filter(|a| !is_action_csharp(&a))
+        .filter(|a| !types::is_action_csharp(&a))
         .map(|a| arg_field(alias, a, true));
     let fn_name = if is_builder {
         format_ident!(
@@ -211,20 +208,11 @@ fn arg_field(scope: &str, a: &Arg, borrow: bool) -> TokenStream {
     }
 }
 
-fn is_action_csharp(a: &Arg) -> bool {
-    let for_csharp = if let Some(only) = &a.langs.only {
-        only.len() == 1 && only[0] == "csharp"
-    } else {
-        false
-    };
-    a.name == "action" && for_csharp
-}
-
 fn collect_types(x: &Interface) -> TokenStream {
     let mut ret = TokenStream::default();
     for member in &x.members {
         for arg in &member.args {
-            if is_action_csharp(arg) {
+            if types::is_action_csharp(arg) {
                 continue;
             }
             ret.extend(declare_ty(&member.name, &arg.name, &arg.ty, true));
@@ -524,48 +512,4 @@ fn enum_tokens(name: &str, ty: &Type) -> TokenStream {
             #(#variants),*
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Model {
-    Struct {},
-    Enum {}
-}
-
-struct QueueFrame<'a> {
-    scope: Vec<&'a str>,
-    ty: &'a Type,
-    borrow: bool
-}
-
-fn _collect_types(x: &Interface) -> TokenStream {
-    let mut que: VecDeque<QueueFrame> = VecDeque::new();
-    let mut xs: Vec<(String, &str, Model)> = Vec::new();
-    for member in &x.members {
-        for arg in &member.args {
-            if is_action_csharp(&arg) {
-                continue;
-            }
-            que.push_back(QueueFrame {
-                scope: vec![&member.name, &arg.name],
-                ty: &arg.ty,
-                borrow: true
-            });
-        }
-        que.push_back(QueueFrame {
-            scope: vec![&member.name],
-            ty: &member.ty,
-            borrow: false
-        });
-    }
-    while let Some(frame) = que.pop_front() {
-        let o: &str = &frame.ty.name;
-        let (name, model) = _declare_ty(&mut que, frame);
-        xs.push((name, o, model));
-    }
-    todo!()
-}
-
-fn _declare_ty<'a>(que: &mut VecDeque<QueueFrame<'a>>, frame: QueueFrame<'a>) -> (String, Model) {
-    todo!()
 }
