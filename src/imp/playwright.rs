@@ -68,11 +68,12 @@ impl Playwright {
     pub(crate) fn selectors(&self) -> Weak<Selectors> { self.selectors.clone() }
 
     pub(crate) async fn wait_initial_object(conn: &Connection) -> Result<Weak<Self>, Error> {
-        let ctx = upgrade(&conn.context())?;
-        let ctx = ctx.lock().unwrap();
-        let root = get_object!(ctx, &S::validate("").unwrap(), Root)?;
+        let root = {
+            let ctx = upgrade(&conn.context())?;
+            let ctx = ctx.lock().unwrap();
+            get_object!(ctx, &S::validate("").unwrap(), Root)?
+        };
         let root = upgrade(&root)?;
-        std::mem::drop(ctx);
         let v = send_message!(
             root,
             "initialize",
