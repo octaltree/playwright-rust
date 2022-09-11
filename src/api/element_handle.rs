@@ -397,8 +397,8 @@ impl ElementHandle {
         SetInputFilesBuilder::new(self.inner.clone(), file)
     }
 
-    pub fn set_input_large_files_builder(&self, file: &str) -> SetLargeInputFilesBuilder {
-        SetLargeInputFilesBuilder::new(self.inner.clone(), file)
+    pub fn set_input_file_paths_builder(&self, file: &str) -> SetInputFilePathsBuilder {
+        SetInputFilePathsBuilder::new(self.inner.clone(), file)
     }
     // eval_on_selector
     // eval_on_selector_all
@@ -820,12 +820,12 @@ impl SetInputFilesBuilder {
 }
 
 
-pub struct SetLargeInputFilesBuilder {
+pub struct SetInputFilePathsBuilder {
     inner: Weak<Impl>,
     args: SetInputFilePathsArgs,
 }
 
-impl SetLargeInputFilesBuilder {
+impl SetInputFilePathsBuilder {
     pub(crate) fn new(inner: Weak<Impl>, filepath: &str) -> Self {
         let f = fs::canonicalize(filepath).unwrap();
         let args = SetInputFilePathsArgs {
