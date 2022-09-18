@@ -1,7 +1,10 @@
 use case::CaseExt;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
-use scripts::{api::*, utils};
+use scripts::{
+    api::{types::Model, *},
+    utils
+};
 use std::collections::{HashMap, VecDeque};
 
 fn main() {
@@ -56,7 +59,8 @@ fn body(x: &Interface) -> TokenStream {
             event_tokens(xs)
         }
     };
-    let sub = collect_types(x);
+    let sub = types::collect_types(x);
+    let sub = sub.into_iter().map(|m| format_ty(&*m));
     quote! {
         mod #mod_name {
             #extends
@@ -64,7 +68,81 @@ fn body(x: &Interface) -> TokenStream {
                 #(#methods)*
             }
             #events
-            #sub
+            #(#sub)*
+        }
+    }
+}
+
+fn format_ty(x: &types::Model) -> TokenStream {
+    match x {
+        Model::Struct { name, orig, fields } => {
+            let n = format_ident!("{}", name);
+            let fields = fields.iter().map(|(k, v)| {
+                let n = format_ident!("{}", k);
+                let v = format_use_ty(v);
+                quote! {
+                    #n: #v
+                }
+            });
+            quote! {
+                struct #n {
+                    #(#fields),*
+                }
+            }
+        }
+        Model::Enum {
+            name,
+            orig,
+            variants
+        } => {
+            let n = format_ident!("{}", name);
+            let variants = variants.iter().map(|variant| {
+                let n = format_ident!("{}", variant.label);
+                if let Some(x) = &variant.data {
+                    let v = format_use_ty(x);
+                    quote! {
+                        #n (v)
+                    }
+                } else {
+                    quote! {
+                        #n
+                    }
+                }
+            });
+            quote! {
+                enum #n {
+                    #(#variants),*
+                }
+            }
+        }
+        _ => {
+            quote! {}
+        }
+    }
+}
+
+fn format_use_ty(x: &types::Model) -> TokenStream {
+    match x {
+        Model::Struct { name, .. } => {
+            let n = format_ident!("{}", name);
+            quote!(#n)
+        }
+        Model::Enum { name, .. } => {
+            let n = format_ident!("{}", name);
+            quote!(#n)
+        }
+        Model::Option(y) => {
+            let y = format_use_ty(y);
+            quote!(Option<#y>)
+        }
+        Model::Vec(y) => {
+            let y = format_use_ty(y);
+            quote!(Vec<#y>)
+        }
+        Model::Map(y, z) => {
+            let y = format_use_ty(y);
+            let z = format_use_ty(z);
+            quote!(HashMap<#y, #z>)
         }
     }
 }
