@@ -60,6 +60,7 @@ fn body(x: &Interface) -> TokenStream {
         }
     };
     let sub = types::collect_types(x);
+    dbg!(&sub);
     let sub = sub.into_iter().map(|m| format_ty(&*m));
     quote! {
         mod #mod_name {
@@ -75,7 +76,9 @@ fn body(x: &Interface) -> TokenStream {
 
 fn format_ty(x: &types::Model) -> TokenStream {
     match x {
-        Model::Struct { name, orig, fields } => {
+        Model::Struct {
+            name, orig, fields, ..
+        } => {
             let n = format_ident!("{}", name);
             let fields = fields.iter().map(|(k, v)| {
                 let n = format_ident!("{}", k);
@@ -93,7 +96,8 @@ fn format_ty(x: &types::Model) -> TokenStream {
         Model::Enum {
             name,
             orig,
-            variants
+            variants,
+            ..
         } => {
             let n = format_ident!("{}", name);
             let variants = variants.iter().map(|variant| {
@@ -122,14 +126,16 @@ fn format_ty(x: &types::Model) -> TokenStream {
 }
 
 fn format_use_ty(x: &types::Model) -> TokenStream {
+    let reference = x.has_reference();
+    let lifetime = reference.then(|| quote!(<'a>));
     match x {
         Model::Struct { name, .. } => {
             let n = format_ident!("{}", name);
-            quote!(#n)
+            quote! {#n #lifetime}
         }
         Model::Enum { name, .. } => {
             let n = format_ident!("{}", name);
-            quote!(#n)
+            quote! {#n #lifetime}
         }
         Model::Option(y) => {
             let y = format_use_ty(y);
@@ -143,6 +149,23 @@ fn format_use_ty(x: &types::Model) -> TokenStream {
             let y = format_use_ty(y);
             let z = format_use_ty(z);
             quote!(HashMap<#y, #z>)
+        }
+        Model::Known { name, .. } => match name.as_ref() {
+            "binary" if reference => quote!(&'a [u8]),
+            "binary" => quote!(Vec<u8>),
+            "json" if reference => quote!(&'a str),
+            "json" => quote!(String),
+            "string" if reference => quote!(&'a str),
+            "string" => quote!(String),
+            "number" => quote!(serde_json::Number),
+            "float" => quote!(f64),
+            "boolean" => quote!(bool),
+            "void" => quote!(()),
+            _ => {
+                let n = format_ident!("{}", name);
+                assert!(!reference);
+                quote!(#n)
+            }
         }
     }
 }

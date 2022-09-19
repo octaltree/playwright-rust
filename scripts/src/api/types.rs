@@ -3,6 +3,7 @@ use crate::utils;
 use case::CaseExt;
 use itertools::Itertools;
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet, VecDeque},
     rc::Rc
 };
@@ -26,7 +27,7 @@ pub enum Model {
     Vec(Rc<Model>),
     Map(Rc<Model>, Rc<Model>),
     Known {
-        name: &'static str,
+        name: Cow<'static, str>,
         reference: bool
     }
 }
@@ -47,14 +48,14 @@ impl Model {
         }
     }
 
-    fn has_reference(&self) -> bool {
+    pub fn has_reference(&self) -> bool {
         match self {
             Model::Struct { has_reference, .. } => *has_reference,
             Model::Enum { has_reference, .. } => *has_reference,
             Model::Option(x) => x.has_reference(),
             Model::Vec(x) => x.has_reference(),
             Model::Map(k, v) => k.has_reference() || v.has_reference(),
-            Model::Known { name, reference } => *reference
+            Model::Known { reference, .. } => *reference
         }
     }
 }
@@ -101,79 +102,91 @@ pub fn collect_types(x: &Interface) -> Vec<Rc<Model>> {
                 que.push_back(k.clone());
                 que.push_back(x.clone());
             }
-            Model::Known { name, reference } => {}
+            Model::Known { .. } => {}
         }
     }
-    all.into_iter()
-        .filter(|t| t.orig().is_some())
-        .group_by(|t| t.orig().unwrap().clone())
-        .into_iter()
-        .map(|(_, group)| {
-            let xs = group.collect::<Vec<_>>();
-            if xs.len() == 1 {
-                xs[0].clone()
-            } else {
-                match &*xs[0] {
-                    Model::Struct {
-                        name: _,
-                        orig,
-                        fields,
-                        has_reference
-                    } => Rc::new(Model::Struct {
-                        name: orig.name.to_string(),
-                        orig: orig.clone(),
-                        fields: fields.clone(),
-                        has_reference: *has_reference
-                    }),
-                    Model::Enum {
-                        name: _,
-                        orig,
-                        variants,
-                        has_reference
-                    } => Rc::new(Model::Enum {
-                        name: orig.name.to_string(),
-                        orig: orig.clone(),
-                        variants: variants.clone(),
-                        has_reference: *has_reference
-                    }),
-                    _ => unreachable!()
-                }
-            }
-        })
-        .collect()
+    all.into_iter().filter(|t| t.orig().is_some()).collect()
+    // all.into_iter()
+    //    .filter(|t| t.orig().is_some())
+    //    .group_by(|t| t.orig().unwrap().clone())
+    //    .into_iter()
+    //    .map(|(_, group)| {
+    //        let xs = group.collect::<Vec<_>>();
+    //        if xs.len() == 1 {
+    //            xs[0].clone()
+    //        } else {
+    //            match &*xs[0] {
+    //                Model::Struct {
+    //                    name,
+    //                    orig,
+    //                    fields,
+    //                    has_reference
+    //                } => Rc::new(Model::Struct {
+    //                    name: name.clone(),
+    //                    orig: orig.clone(),
+    //                    fields: fields.clone(),
+    //                    has_reference: *has_reference
+    //                }),
+    //                Model::Enum {
+    //                    name,
+    //                    orig,
+    //                    variants,
+    //                    has_reference
+    //                } => Rc::new(Model::Enum {
+    //                    name: name.clone(),
+    //                    orig: orig.clone(),
+    //                    variants: variants.clone(),
+    //                    has_reference: *has_reference
+    //                }),
+    //                _ => unreachable!()
+    //            }
+    //        }
+    //    })
+    //    .collect()
 }
 
 fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<Model> {
     if ty.union.is_empty() {
         match (ty.properties.is_empty(), ty.templates.is_empty()) {
             (true, true) => Rc::new(match &*ty.name {
-                "binary" => Model::Array {
-                    data: Rc::new(Model::Struct {
-                        name: "u8".to_string(),
-                        has_reference: false,
-                        orig: todo!(),
-                        fields: vec![]
-                    }),
+                "binary" => Model::Known {
+                    name: Cow::Borrowed("binary"),
                     reference: allow_borrow
                 },
-                "number" => quote!(serde_json::Number),
-                "float" => quote!(f64),
-                "json" if allow_borrow => quote!(&'a str),
-                "json" => quote!(String),
-                "string" if allow_borrow => quote!(&'a str),
-                "string" => quote!(String),
-                "boolean" => quote!(bool),
-                "void" => quote!(()),
-                x => {
-                    let ident = format_ident!("{}", utils::loud_to_camel(x));
-                    quote!(#ident)
+                "json" => Model::Known {
+                    name: Cow::Borrowed("json"),
+                    reference: allow_borrow
+                },
+                "number" => Model::Known {
+                    name: Cow::Borrowed("number"),
+                    reference: false
+                },
+                "float" => Model::Known {
+                    name: Cow::Borrowed("float"),
+                    reference: false
+                },
+                "string" => Model::Known {
+                    name: Cow::Borrowed("string"),
+                    reference: allow_borrow
+                },
+                "boolean" => Model::Known {
+                    name: Cow::Borrowed("boolean"),
+                    reference: false
+                },
+                "void" => Model::Known {
+                    name: Cow::Borrowed("void"),
+                    reference: false
+                },
+                x => Model::Known {
+                    name: Cow::Owned(utils::loud_to_camel(x)),
+                    reference: false
                 }
             }),
             (false, true) => {
                 let name = scope
                     .iter()
                     .map(|s| utils::loud_to_camel(&s.to_camel().replace("#", "")))
-                    .join("\n");
+                    .join("");
 
                 let fields = ty
                     .properties
@@ -192,11 +205,16 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
                             }
                         )
                     })
-                    .collect();
+                    .collect::<Vec<_>>();
+                let has_reference = fields
+                    .iter()
+                    .map(|(_, m)| m.has_reference())
+                    .fold(false, |a, b| a || b);
                 Rc::new(Model::Struct {
                     name,
                     orig: ty.clone(),
-                    fields
+                    fields,
+                    has_reference
                 })
             }
             (true, false) if ty.name == "Func" => unreachable!(),
@@ -210,7 +228,11 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
                     ty.expression.as_deref()
                         == Some("[IReadOnlyDictionary<string, BrowserNewContextOptions>]")
                         || ty.expression.as_deref() == Some("[Map]<[string], [JSHandle]>")
-                        || ty.expression.as_deref() == Some("[Object]<[string], [string]>"),
+                        || ty.expression.as_deref() == Some("[Object]<[string], [string]>")
+                        || ty.expression.as_deref()
+                            == Some("[Object]<[string], [string]|[float]|[boolean]>")
+                        || ty.expression.as_deref() == Some("[Object]<[string], [Serializable]>")
+                        || ty.expression.as_deref() == Some("[Object]<[string], [any]>"),
                     "{:?}",
                     &ty
                 );
@@ -240,6 +262,9 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
             1 => {
                 let mut vs = variants;
                 let t = vs.next().unwrap();
+                if t.name.contains("\"") {
+                    return declare_enum(scope, ty, allow_borrow);
+                }
                 declare_ty(scope, t, allow_borrow)
             }
             _ => declare_enum(scope, ty, allow_borrow)
@@ -251,37 +276,48 @@ fn declare_enum<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc
     assert_eq!(ty.properties, &[]);
     assert_eq!(ty.templates, &[]);
     let name = scope.iter().fold(String::new(), |mut a, b| {
-        a.push_str(&utils::loud_to_camel(&b.to_camel()));
+        a.push_str(&utils::loud_to_camel(&b.replace("#", "").to_camel()));
         a
     });
+    let variants = ty
+        .union
+        .iter()
+        .filter(|t| t.name != "null")
+        .map(|t| {
+            if t.name.contains("\"") {
+                let name = t.name.replace("\"", "");
+                let label = utils::kebab_to_camel(&name);
+                Variant {
+                    orig: name,
+                    label,
+                    data: None
+                }
+            } else {
+                let name = &t.name;
+                let label = utils::kebab_to_camel(&name);
+                let mut tmp = scope.clone();
+                tmp.push(name);
+                Variant {
+                    orig: name.to_string(),
+                    label,
+                    data: Some(declare_ty(tmp, t, allow_borrow))
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+    let has_reference = variants
+        .iter()
+        .map(|v| {
+            v.data
+                .as_ref()
+                .map(|data| data.has_reference())
+                .unwrap_or_default()
+        })
+        .fold(false, |a, b| a || b);
     Rc::new(Model::Enum {
         name,
         orig: ty.clone(),
-        variants: ty
-            .union
-            .iter()
-            .filter(|t| t.name != "null")
-            .map(|t| {
-                if t.name.contains("\"") {
-                    let name = t.name.replace("\"", "");
-                    let label = utils::kebab_to_camel(&name);
-                    Variant {
-                        orig: name,
-                        label,
-                        data: None
-                    }
-                } else {
-                    let name = &t.name;
-                    let label = utils::kebab_to_camel(&name);
-                    let mut tmp = scope.clone();
-                    tmp.push(name);
-                    Variant {
-                        orig: name.to_string(),
-                        label,
-                        data: Some(declare_ty(tmp, t, allow_borrow))
-                    }
-                }
-            })
-            .collect()
+        variants,
+        has_reference
     })
 }
