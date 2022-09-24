@@ -1,4 +1,4 @@
-use super::{Arg, Interface, Member, Type};
+use super::{Arg, Interface, Kind, Member, Type};
 use crate::utils;
 use case::CaseExt;
 use itertools::Itertools;
@@ -29,6 +29,37 @@ pub enum Model {
     Known {
         name: Cow<'static, str>,
         reference: bool
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Method<'a> {
+    pub orig: &'a Member,
+    pub args: Vec<(String, Rc<Model>)>,
+    pub builder: Option<Rc<Model>>,
+    pub ty: Rc<Model>
+}
+
+#[derive(Debug, Clone)]
+pub struct Event<'a> {
+    pub orig: Vec<&'a Member>,
+    pub model: Rc<Model>,
+    pub which: Rc<Model>
+}
+
+impl<'a> Event<'a> {
+    fn new_dummy() -> Self {
+        Self {
+            orig: vec![],
+            model: Rc::new(Model::Known {
+                name: Cow::Borrowed(""),
+                reference: false
+            }),
+            which: Rc::new(Model::Known {
+                name: Cow::Borrowed(""),
+                reference: false
+            })
+        }
     }
 }
 
@@ -69,26 +100,86 @@ pub fn is_action_csharp(a: &Arg) -> bool {
     a.name == "action" && for_csharp
 }
 
-pub fn collect_types(x: &Interface) -> Vec<Rc<Model>> {
+pub fn collect_types<'a>(x: &'a Interface) -> (Vec<Rc<Model>>, Vec<Method<'a>>, Option<Event<'a>>) {
     let mut top = Vec::new();
+    let mut methods = Vec::new();
+    let mut event = Event::new_dummy();
+    let mut event_types = Vec::new();
     for member in &x.members {
+        let mut args = Vec::new();
+        let mut builder_properties = Vec::new();
+        let needs_builder = needs_builder(member);
+        let mut handle_arg = |arg: &Arg| {
+            let ty = declare_ty(vec![&member.name, &arg.name], &arg.ty, true);
+            match (needs_builder, arg.required) {
+                (true, true) => {
+                    builder_properties.push((utils::loud_to_snake(&arg.name), ty.clone()));
+                }
+                (true, false) => {
+                    builder_properties.push((
+                        utils::loud_to_snake(&arg.name),
+                        Rc::new(Model::Option(ty.clone()))
+                    ));
+                }
+                (false, true) => {
+                    args.push((arg.name.clone(), ty.clone()));
+                }
+                (false, false) => ()
+            }
+            top.push(ty);
+        };
         for arg in &member.args {
             if is_action_csharp(arg) {
                 continue;
             }
             if arg.name == "options" {
                 for p in &arg.ty.properties {
-                    top.push(declare_ty(vec![&member.name, &p.name], &p.ty, true));
+                    handle_arg(p);
                 }
-                continue;
+            } else {
+                handle_arg(arg);
             }
-            top.push(declare_ty(vec![&member.name, &arg.name], &arg.ty, true));
         }
-        top.push(declare_ty(vec![&member.name], &member.ty, false));
-        if let Some(b) = maybe_builder(member) {
-            top.push(b);
+        let builder = if needs_builder {
+            let has_reference = builder_properties.iter().any(|(_, p)| p.has_reference());
+            let b = Rc::new(Model::Struct {
+                name: format!(
+                    "{}Builder",
+                    utils::loud_to_camel(&member.name.to_camel().replace("#", ""))
+                ),
+                orig: Type {
+                    name: "".into(),
+                    expression: None,
+                    properties: vec![],
+                    templates: vec![],
+                    union: vec![]
+                },
+                fields: builder_properties,
+                has_reference
+            });
+            top.push(b.clone());
+            Some(b)
+        } else {
+            None
+        };
+        let ty = declare_ty(vec![&member.name], &member.ty, false);
+        top.push(ty.clone());
+        match member.kind {
+            Kind::Method | Kind::Property => {
+                methods.push(Method {
+                    orig: member,
+                    args,
+                    builder,
+                    ty
+                });
+            }
+            Kind::Event => {
+                event.orig.push(member);
+                event_types.push(ty);
+            }
         }
     }
+    event_model(&mut event, event_types);
     let mut que: VecDeque<_> = top.into();
     let mut all = Vec::new();
     while let Some(x) = que.pop_front() {
@@ -114,44 +205,13 @@ pub fn collect_types(x: &Interface) -> Vec<Rc<Model>> {
             Model::Known { .. } => {}
         }
     }
-    all.into_iter().filter(|t| t.orig().is_some()).collect()
-    // all.into_iter()
-    //    .filter(|t| t.orig().is_some())
-    //    .group_by(|t| t.orig().unwrap().clone())
-    //    .into_iter()
-    //    .map(|(_, group)| {
-    //        let xs = group.collect::<Vec<_>>();
-    //        if xs.len() == 1 {
-    //            xs[0].clone()
-    //        } else {
-    //            match &*xs[0] {
-    //                Model::Struct {
-    //                    name,
-    //                    orig,
-    //                    fields,
-    //                    has_reference
-    //                } => Rc::new(Model::Struct {
-    //                    name: name.clone(),
-    //                    orig: orig.clone(),
-    //                    fields: fields.clone(),
-    //                    has_reference: *has_reference
-    //                }),
-    //                Model::Enum {
-    //                    name,
-    //                    orig,
-    //                    variants,
-    //                    has_reference
-    //                } => Rc::new(Model::Enum {
-    //                    name: name.clone(),
-    //                    orig: orig.clone(),
-    //                    variants: variants.clone(),
-    //                    has_reference: *has_reference
-    //                }),
-    //                _ => unreachable!()
-    //            }
-    //        }
-    //    })
-    //    .collect()
+    let types = all.into_iter().filter(|t| t.orig().is_some()).collect();
+    let event = if event.orig.is_empty() {
+        None
+    } else {
+        Some(event)
+    };
+    (types, methods, event)
 }
 
 fn maybe_builder(member: &Member) -> Option<Rc<Model>> {
@@ -368,4 +428,58 @@ fn declare_enum<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc
         variants,
         has_reference
     })
+}
+
+fn event_model(event: &mut Event, models: Vec<Rc<Model>>) {
+    event.model = Rc::new(Model::Enum {
+        name: "Event".into(),
+        orig: Type {
+            name: "Event".into(),
+            expression: None,
+            properties: vec![],
+            templates: vec![],
+            union: event.orig.iter().map(|member| member.ty.clone()).collect()
+        },
+        variants: event
+            .orig
+            .iter()
+            .zip(models.iter())
+            .map(|(member, model)| {
+                let data = match &**model {
+                    Model::Known {
+                        name: Cow::Borrowed("void"),
+                        ..
+                    } => None,
+                    _ => Some(model.clone())
+                };
+                Variant {
+                    label: utils::loud_to_camel(&member.name.to_camel().replace("#", "")),
+                    orig: member.name.clone(),
+                    data
+                }
+            })
+            .collect(),
+        has_reference: false
+    });
+    event.which = Rc::new(Model::Enum {
+        name: "EventType".into(),
+        orig: Type {
+            name: "EventType".into(),
+            expression: None,
+            properties: vec![],
+            templates: vec![],
+            union: event.orig.iter().map(|member| member.ty.clone()).collect()
+        },
+        variants: event
+            .orig
+            .iter()
+            .zip(models.iter())
+            .map(|(member, model)| Variant {
+                label: utils::loud_to_camel(&member.name.to_camel().replace("#", "")),
+                orig: member.name.clone(),
+                data: None
+            })
+            .collect(),
+        has_reference: false
+    });
 }
