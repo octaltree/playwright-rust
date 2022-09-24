@@ -60,7 +60,6 @@ fn body(x: &Interface) -> TokenStream {
         }
     };
     let sub = types::collect_types(x);
-    dbg!(&sub);
     let sub = sub.into_iter().map(|m| format_ty(&*m));
     quote! {
         mod #mod_name {
@@ -233,9 +232,16 @@ fn method_tokens(member: &Member, overloads: Option<Vec<&Member>>) -> TokenStrea
     };
     let arg_fields = args
         .iter()
+        .flat_map(|arg| {
+            if arg.name == "options" {
+                arg.ty.properties.clone()
+            } else {
+                vec![arg.clone()]
+            }
+        })
         .filter(|a| a.required)
-        .filter(|a| !types::is_action_csharp(&a))
-        .map(|a| arg_field(alias, a, true));
+        .filter(|a| !types::is_action_csharp(a))
+        .map(|a| arg_field(alias, &a, true));
     let fn_name = if is_builder {
         format_ident!(
             "{}_builder",

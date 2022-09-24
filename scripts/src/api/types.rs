@@ -1,4 +1,4 @@
-use super::{Arg, Interface, Type};
+use super::{Arg, Interface, Member, Type};
 use crate::utils;
 use case::CaseExt;
 use itertools::Itertools;
@@ -76,9 +76,18 @@ pub fn collect_types(x: &Interface) -> Vec<Rc<Model>> {
             if is_action_csharp(arg) {
                 continue;
             }
+            if arg.name == "options" {
+                for p in &arg.ty.properties {
+                    top.push(declare_ty(vec![&member.name, &p.name], &p.ty, true));
+                }
+                continue;
+            }
             top.push(declare_ty(vec![&member.name, &arg.name], &arg.ty, true));
         }
         top.push(declare_ty(vec![&member.name], &member.ty, false));
+        if let Some(b) = maybe_builder(member) {
+            top.push(b);
+        }
     }
     let mut que: VecDeque<_> = top.into();
     let mut all = Vec::new();
@@ -145,6 +154,46 @@ pub fn collect_types(x: &Interface) -> Vec<Rc<Model>> {
     //    .collect()
 }
 
+fn maybe_builder(member: &Member) -> Option<Rc<Model>> {
+    if !needs_builder(member) {
+        return None;
+    }
+    let properties = member
+        .args
+        .iter()
+        .flat_map(|arg| {
+            if arg.name == "options" {
+                arg.ty.properties.clone()
+            } else {
+                vec![arg.clone()]
+            }
+        })
+        .filter(|arg| !is_action_csharp(arg))
+        .collect();
+    Some(declare_ty(
+        vec![&member.name, "builder"],
+        &Type {
+            name: "builder".into(),
+            expression: None,
+            properties,
+            templates: vec![],
+            union: vec![]
+        },
+        true
+    ))
+}
+
+/// has two or more optional values
+pub fn needs_builder(member: &Member) -> bool {
+    let args = &member.args;
+    let mut xs = args.iter().filter(|a| !a.required).chain(
+        args.iter()
+            .filter(|a| a.name == "options" && !a.ty.properties.is_empty())
+            .flat_map(|a| a.ty.properties.iter())
+    );
+    xs.next().and(xs.next()).is_some()
+}
+
 fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<Model> {
     if ty.union.is_empty() {
         match (ty.properties.is_empty(), ty.templates.is_empty()) {
@@ -187,7 +236,6 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
                     .iter()
                     .map(|s| utils::loud_to_camel(&s.to_camel().replace("#", "")))
                     .join("");
-
                 let fields = ty
                     .properties
                     .iter()
@@ -199,9 +247,9 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
                         (
                             field_name,
                             if p.required {
-                                Rc::new(Model::Option(t))
-                            } else {
                                 t
+                            } else {
+                                Rc::new(Model::Option(t))
                             }
                         )
                     })
@@ -217,7 +265,7 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
                     has_reference
                 })
             }
-            (true, false) if ty.name == "Func" => unreachable!(),
+            (true, false) if ty.name == "Func" => unreachable!("{:?}", &ty),
             (true, false) if ty.name == "Array" => {
                 assert_eq!(ty.templates.len(), 1);
                 let t = &ty.templates[0];
