@@ -27,7 +27,11 @@ fn body(x: &Interface) -> TokenStream {
         quote! { #[doc=#e] }
     });
     let (sub, methods, event) = types::collect_types(x);
-    let sub = sub.into_iter().map(|m| format_ty(&*m));
+    let builders = methods
+        .iter()
+        .filter(|method| method.builder.is_some())
+        .map(|method| builder_tokens(method));
+    let sub = sub.iter().map(|m| format_ty(&*m));
     let mut overload_targets: HashMap<&str, Vec<&types::Method>> = methods
         .iter()
         .filter(|m| m.orig.overload_index > 0)
@@ -53,6 +57,7 @@ fn body(x: &Interface) -> TokenStream {
             }
             #events
             #(#sub)*
+            #(#builders)*
         }
     }
 }
@@ -189,7 +194,7 @@ fn method_tokens(method: &types::Method, overloads: Option<Vec<&types::Method>>)
         builder,
         ty
     } = method;
-    let is_builder = types::needs_builder(&method.orig);
+    let is_builder = builder.is_some();
     assert!(name == alias || name.starts_with(alias), "{}", name);
     let rety = format_use_ty(builder.as_deref().unwrap_or(&*ty));
     let arg_fields = args.iter().map(|(name, model)| {
@@ -225,6 +230,70 @@ fn method_tokens(method: &types::Method, overloads: Option<Vec<&types::Method>>)
         #mark_deprecated
         #mark_async fn #fn_name() -> #rety {
             todo!()
+        }
+    }
+}
+
+fn builder_tokens(method: &types::Method) -> TokenStream {
+    let (name, orig, fields, has_reference) = match method.builder.as_deref() {
+        Some(Model::Struct {
+            name,
+            orig,
+            fields,
+            has_reference
+        }) => (name, orig, fields, has_reference),
+        _ => return quote! {}
+    };
+    let ident = format_ident!("{}", name);
+    let lifetime = has_reference.then(|| quote!(<'a>));
+    let new_fields = fields
+        .iter()
+        .filter(|(_, model)| model.maybe_option().is_none())
+        .map(|(name, model)| {
+            let ident = format_ident!("{}", name);
+            let ty = format_use_ty(model);
+            quote! {
+                #ident: #ty
+            }
+        });
+    let execute = format_ident!(
+        "{}",
+        utils::loud_to_snake(&method.orig.name.replace("#", ""))
+    );
+    let ty = format_use_ty(&method.ty);
+    let setter_fields = fields
+        .iter()
+        .filter(|(_, model)| model.maybe_option().is_some())
+        .map(|(name, model)| {
+            let ident = format_ident!("{}", name);
+            let ty = format_use_ty(model);
+            let inner_ty = format_use_ty(model.maybe_option().unwrap());
+            let clear = format_ident!("clear_{}", name.replace("r#", ""));
+            // TODO: doc
+            quote! {
+                #[allow(clippy::wrong_self_convention)]
+                pub fn #ident(mut self, x: #inner_ty) -> Self {
+                    self.args.#ident = Some(x);
+                    self
+                }
+
+                pub fn #clear(mut self) -> Self {
+                    self.args.#ident = None;
+                    self
+                }
+            }
+        });
+    quote! {
+        impl #lifetime #ident #lifetime {
+            pub(crate) fn new(inner: Weak<Impl>, #(#new_fields),*) -> Self {
+                todo!()
+            }
+
+            pub fn #execute(self) -> #ty {
+                todo!()
+            }
+
+            #(#setter_fields)*
         }
     }
 }

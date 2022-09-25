@@ -47,6 +47,15 @@ pub struct Event<'a> {
     pub which: Rc<Model>
 }
 
+impl Model {
+    pub fn maybe_option(&self) -> Option<&Model> {
+        match self {
+            Model::Option(x) => Some(x),
+            _ => None
+        }
+    }
+}
+
 impl<'a> Event<'a> {
     fn new_dummy() -> Self {
         Self {
