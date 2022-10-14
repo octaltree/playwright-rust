@@ -1,23 +1,25 @@
-use crate::imp::{
-    browser_context::BrowserContext,
-    console_message::ConsoleMessage,
-    core::*,
-    download::Download,
-    element_handle::may_save,
-    file_hooser::FileChooser,
-    frame::Frame,
-    prelude::*,
-    request::Request,
-    response::Response,
-    utils::{
-        ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
-        ScreenshotType, Viewport
+use crate::{
+    imp::{
+        browser_context::BrowserContext,
+        console_message::ConsoleMessage,
+        core::*,
+        download::Download,
+        element_handle::may_save,
+        file_hooser::FileChooser,
+        frame::Frame,
+        prelude::*,
+        request::Request,
+        response::Response,
+        utils::{
+            ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
+            ScreenshotType, Viewport
+        },
+        video::Video,
+        websocket::WebSocket,
+        worker::Worker
     },
-    video::Video,
-    websocket::WebSocket,
-    worker::Worker
+    protocol::generated::{page::commands::EmulateMediaArgsMedia, LifecycleEvent}
 };
-use crate::protocol::generated::LifecycleEvent;
 
 #[derive(Debug)]
 pub(crate) struct Page {
@@ -368,24 +370,19 @@ impl Page {
         self.emit_event(Evt::FrameNavigated(f));
     }
 
-
-    pub(crate) fn on_request(&self, request: Weak<Request>) -> Result<(), Error>{
+    pub(crate) fn on_request(&self, request: Weak<Request>) -> Result<(), Error> {
         self.emit_event(Evt::Request(request));
         Ok(())
     }
 
-    pub(crate) fn on_response(&self, response: Weak<Response>) -> Result<(), Error>{
+    pub(crate) fn on_response(&self, response: Weak<Response>) -> Result<(), Error> {
         self.emit_event(Evt::Response(response));
         Ok(())
     }
 
-    pub(crate) fn on_page_load(&self) {
-        self.emit_event(Evt::Load);
-    }
+    pub(crate) fn on_page_load(&self) { self.emit_event(Evt::Load); }
 
-    pub(crate) fn on_dom_content_loaded(&self) {
-        self.emit_event(Evt::DomContentLoaded);
-    }
+    pub(crate) fn on_dom_content_loaded(&self) { self.emit_event(Evt::DomContentLoaded); }
 
     pub(crate) fn set_video(&self, video: Video) -> Result<(), Error> {
         self.var.lock().unwrap().video = Some(video);
@@ -542,7 +539,6 @@ impl RemoteObject for Page {
         method: Str<Method>,
         params: Map<String, Value>
     ) -> Result<(), Error> {
-        dbg!(&method);
         match method.as_str() {
             "close" => self.on_close(ctx)?,
             "frameattached" => {
@@ -814,19 +810,23 @@ pub(crate) struct ScreenshotArgs {
     pub(crate) path: Option<PathBuf>
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct EmulateMediaArgs {
-    pub(crate) media: Option<Media>,
-    pub(crate) color_scheme: Option<ColorScheme>
-}
+// #[skip_serializing_none]
+// #[derive(Serialize, Default)]
+// #[serde(rename_all = "camelCase")]
+// pub(crate) struct EmulateMediaArgs {
+//     pub(crate) media: Option<Media>,
+//     pub(crate) color_scheme: Option<ColorScheme>
+// }
 
-#[derive(Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Media {
-    /// Reset emulating
-    Null,
-    Print,
-    Screen
-}
+pub type EmulateMediaArgs = crate::protocol::generated::page::commands::EmulateMediaArgs;
+
+// #[derive(Serialize)]
+// #[serde(rename_all = "lowercase")]
+// pub enum Media {
+//     /// Reset emulating
+//     Null,
+//     Print,
+//     Screen
+// }
+
+pub type Media = EmulateMediaArgsMedia;

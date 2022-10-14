@@ -1,4 +1,4 @@
-use crate::imp::prelude::*;
+use crate::{imp::prelude::*, protocol::generated::page::commands::EmulateMediaArgsColorScheme};
 
 #[derive(Debug, Deserialize, Clone, Serialize, PartialEq, Eq)]
 pub struct Viewport {
@@ -34,13 +34,15 @@ pub struct HttpCredentials {
     pub password: String
 }
 
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
-#[serde(rename_all = "snake_case")]
-pub enum ColorScheme {
-    Dark,
-    Light,
-    NoPreference
-}
+// #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
+// #[serde(rename_all = "snake_case")]
+// pub enum ColorScheme {
+//     Dark,
+//     Light,
+//     NoPreference
+// }
+
+pub type ColorScheme = EmulateMediaArgsColorScheme;
 
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize)]
@@ -121,7 +123,7 @@ pub struct LocalStorageEntry {
 pub enum DocumentLoadState {
     DomContentLoaded,
     Load,
-    NetworkIdle,
+    NetworkIdle
 }
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy)]
@@ -231,14 +233,19 @@ pub struct File {
     pub name: String,
     pub mime: String,
     pub buffer: String,
-    pub mime_type: String,
+    pub mime_type: String
 }
 
 impl File {
     pub fn new(name: String, mime: String, body: &[u8]) -> Self {
         let buffer = base64::encode(body);
         let mime_type = mime.clone();
-        Self { name, mime, buffer, mime_type }
+        Self {
+            name,
+            mime,
+            buffer,
+            mime_type
+        }
     }
 }
 /// Browser distribution channel.

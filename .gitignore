@@ -2,3 +2,6 @@ target
 Cargo.lock
 driver
 tarpaulin-report.html
+/.idea/
+/playwright-rust-randall.iml
+/scripts/scripts.iml

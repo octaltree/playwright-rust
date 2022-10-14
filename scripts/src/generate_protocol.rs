@@ -59,7 +59,7 @@ fn enum_tokens(name: &str, x: &Enum) -> TokenStream {
         .collect::<Vec<_>>();
     let name = format_ident!("{}", name);
     quote! {
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum #name {
             #(#variants),*
         }

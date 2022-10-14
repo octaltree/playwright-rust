@@ -1,4 +1,3 @@
-use std::fmt::{Debug, Formatter};
 pub use crate::{
     api::{
         frame::{
@@ -11,7 +10,6 @@ pub use crate::{
     },
     imp::page::{EventType, Media}
 };
-use crate::protocol::generated::LifecycleEvent;
 use crate::{
     api::{
         input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, FileChooser,
@@ -27,8 +25,10 @@ use crate::{
             Viewport
         }
     },
+    protocol::generated::LifecycleEvent,
     Error
 };
+use std::fmt::{Debug, Formatter};
 
 /// Page provides methods to interact with a single tab in a `Browser`, or an
 /// [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One `Browser`
@@ -453,7 +453,7 @@ impl Debug for Event {
             Event::Response(_) => "Response(_)",
             Event::WebSocket(_) => "WebSocket(_)",
             Event::Worker(_) => "Worker(_)",
-            Event::Video(_) => "Video(_)",
+            Event::Video(_) => "Video(_)"
         };
         write!(f, "{}", current_event)
     }

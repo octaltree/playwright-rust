@@ -1,10 +1,10 @@
 pub(crate) mod de;
 pub(crate) mod ser;
 
-use std::fmt::Debug;
 use crate::imp::core::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::{map::Map, value::Value};
+use std::fmt::Debug;
 use strong::*;
 
 #[derive(Debug, Serialize)]
@@ -165,7 +165,6 @@ pub(crate) fn as_only_guid(v: &Value) -> Option<&S<Guid>> {
     S::validate(s).ok()
 }
 
-
 pub(crate) fn only_guid(v: &Value) -> Result<&S<Guid>, Error> {
     as_only_guid(v).ok_or_else(|| Error::GuidNotFound(v.clone()))
 }
@@ -197,7 +196,6 @@ pub(crate) fn _guid(v: &Value) -> Option<&S<Guid>> {
 pub(crate) fn guid_from_params(v: &Value) -> Result<&S<Guid>, Error> {
     _guid(v).ok_or_else(|| Error::GuidNotFound(v.clone()))
 }
-
 
 #[derive(Debug, Serialize)]
 pub(crate) struct Argument {

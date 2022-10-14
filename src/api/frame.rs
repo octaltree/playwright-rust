@@ -10,9 +10,9 @@ use crate::{
         },
         prelude::*,
         utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
-    }
+    },
+    protocol::generated::LifecycleEvent
 };
-use crate::protocol::generated::LifecycleEvent;
 
 /// At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`] and
 /// [`method: Frame.childFrames`] methods.

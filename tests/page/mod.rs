@@ -412,10 +412,10 @@ async fn emulate_media(p: &Page) {
     assert!(!screen().await);
     assert!(print().await);
     p.emulate_media_builder().emulate_media().await.unwrap();
-    assert!(!screen().await);
-    assert!(print().await);
+    assert!(screen().await);
+    assert!(!print().await);
     p.emulate_media_builder()
-        .media(Media::Null)
+        .media(Media::None)
         .emulate_media()
         .await
         .unwrap();

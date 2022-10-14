@@ -4,7 +4,7 @@ use crate::{
         browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors,
         utils::Viewport
     },
-    protocol::generated::playwright as protocol
+    protocol::generated::{playwright as protocol, root::commands::InitializeArgsSdkLanguage}
 };
 use serde::Deserialize;
 use std::{sync::TryLockError, time::Instant};
@@ -28,6 +28,7 @@ impl Playwright {
             device_descriptors,
             electron,
             firefox,
+            pre_connected_android_device,
             pre_launched_browser,
             selectors,
             socks_support,
@@ -68,16 +69,17 @@ impl Playwright {
     pub(crate) fn selectors(&self) -> Weak<Selectors> { self.selectors.clone() }
 
     pub(crate) async fn wait_initial_object(conn: &Connection) -> Result<Weak<Self>, Error> {
-        let ctx = upgrade(&conn.context())?;
-        let ctx = ctx.lock().unwrap();
-        let root = get_object!(ctx, &S::validate("").unwrap(), Root)?;
-        let root = upgrade(&root)?;
-        std::mem::drop(ctx);
+        let root = {
+            let ctx = upgrade(&conn.context())?;
+            let ctx = ctx.lock().unwrap();
+            let root = get_object!(ctx, &S::validate("").unwrap(), Root)?;
+            upgrade(&root)?
+        };
         let v = send_message!(
             root,
             "initialize",
             crate::protocol::generated::root::commands::InitializeArgs {
-                sdk_language: "python"
+                sdk_language: InitializeArgsSdkLanguage::Python
             }
         );
         let v = Arc::unwrap_or_clone(v);
