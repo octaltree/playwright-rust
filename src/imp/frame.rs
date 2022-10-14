@@ -1,7 +1,18 @@
 pub(crate) use crate::imp::element_handle::Opt;
-use crate::imp::{core::*, element_handle::ElementHandle, js_handle::JsHandle, page, page::Page, prelude::*, response::Response, utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}};
+use crate::{
+    imp::{
+        core::*,
+        element_handle::ElementHandle,
+        js_handle::JsHandle,
+        page,
+        page::Page,
+        prelude::*,
+        response::Response,
+        utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
+    },
+    protocol::generated::LifecycleEvent
+};
 use std::{collections::HashSet, iter::FromIterator};
-use crate::protocol::generated::LifecycleEvent;
 
 #[derive(Debug)]
 pub(crate) struct Frame {
@@ -688,6 +699,7 @@ pub enum FrameState {
 
 macro_rules! type_args {
     ($t:ident, $f:ident) => {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         pub(crate) struct $t<'a, 'b> {

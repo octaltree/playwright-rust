@@ -1,6 +1,6 @@
 pub mod types;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Deserialize)]
 #[serde(transparent)]
@@ -35,11 +35,25 @@ pub struct Member {
     pub ty: Type,
     // langs
     // paramOrOption null
+    #[serde(default)]
+    #[serde(deserialize_with = "string_as_bool")]
     pub deprecated: bool,
     //#[serde(default)]
     // pub comment: String,
     pub spec: Vec<SpecNode>
 }
+
+fn string_as_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
+    where
+        D: Deserializer<'de>,
+{
+    let s = <String as Deserialize>::deserialize(deserializer);
+    Ok(match s {
+        Err(_) => false,
+        _ => true
+    })
+}
+
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
@@ -79,6 +93,8 @@ pub struct Arg {
     #[serde(default)]
     pub spec: Vec<SpecNode>,
     pub required: bool,
+    #[serde(default)]
+    #[serde(deserialize_with = "string_as_bool")]
     pub deprecated: bool,
     #[serde(rename = "async")]
     pub is_async: bool

@@ -341,15 +341,17 @@ fn declare_ty<'a>(scope: Vec<&'a str>, ty: &'a Type, allow_borrow: bool) -> Rc<M
                 Rc::new(Model::Vec(declare_ty(scope, t, allow_borrow)))
             }
             (true, false) => {
+                let option = ty.expression.as_deref();
                 assert!(
-                    ty.expression.as_deref()
+                    option
                         == Some("[IReadOnlyDictionary<string, BrowserNewContextOptions>]")
-                        || ty.expression.as_deref() == Some("[Map]<[string], [JSHandle]>")
-                        || ty.expression.as_deref() == Some("[Object]<[string], [string]>")
-                        || ty.expression.as_deref()
+                        || option == Some("[Map]<[string], [JSHandle]>")
+                        || option == Some("[Map<string, Object>]")
+                        || option == Some("[Object]<[string], [string]>")
+                        || option
                             == Some("[Object]<[string], [string]|[float]|[boolean]>")
-                        || ty.expression.as_deref() == Some("[Object]<[string], [Serializable]>")
-                        || ty.expression.as_deref() == Some("[Object]<[string], [any]>"),
+                        || option == Some("[Object]<[string], [Serializable]>")
+                        || option == Some("[Object]<[string], [any]>"),
                     "{:?}",
                     &ty
                 );
