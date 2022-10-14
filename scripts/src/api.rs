@@ -1,3 +1,5 @@
+pub mod types;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -47,7 +49,7 @@ pub enum Kind {
     Property
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Eq, Clone)]
 pub struct Type {
     pub name: String,
     #[serde(default)]
@@ -60,7 +62,7 @@ pub struct Type {
     pub union: Vec<Type>
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Arg {
     pub name: String,
@@ -68,7 +70,7 @@ pub struct Arg {
     pub alias: String,
     #[serde(rename = "type")]
     pub ty: Type,
-    // langs
+    pub langs: Langs,
     // experimental
     // paramOrOption
     pub since: String,
@@ -127,6 +129,12 @@ pub enum NoteType {
     Caution,
     Note,
     Warning
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Langs {
+    pub only: Option<Vec<String>>
 }
 
 #[cfg(test)]

@@ -636,10 +636,9 @@ impl<'a> ScreenshotBuilder<'a> {
         Self { inner, args }
     }
 
-    pub async fn screenshot(self) -> Result<(), Arc<Error>> {
+    pub async fn screenshot(self) -> ArcResult<Vec<u8>> {
         let Self { inner, args } = self;
-        let _ = upgrade(&inner)?.screenshot(args).await?;
-        Ok(())
+        upgrade(&inner)?.screenshot(args).await
     }
 
     /// Specify screenshot type, defaults to `png`.

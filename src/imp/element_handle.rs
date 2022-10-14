@@ -205,9 +205,11 @@ impl ElementHandle {
     }
 
     pub(crate) async fn screenshot(&self, args: ScreenshotArgs<'_>) -> ArcResult<Vec<u8>> {
+        let path = args.path.clone();
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&v)?;
         let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
 
@@ -306,6 +308,17 @@ impl ElementHandle {
         let _ = send_message!(self, "setInputFilePaths", args);
         Ok(())
     }
+}
+
+pub(super) fn may_save(path: Option<&Path>, bytes: &[u8]) -> Result<(), Error> {
+    let path = match path {
+        Some(path) => path,
+        None => return Ok(())
+    };
+    use std::io::Write;
+    let mut file = std::fs::File::create(path).map_err(Error::from)?;
+    file.write(bytes).map_err(Error::from)?;
+    Ok(())
 }
 
 #[skip_serializing_none]

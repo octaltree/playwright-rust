@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.41"
 case = "1.0.0"
+itertools = "0.10.3"
 proc-macro2 = "1.0.27"
 quote = "1.0.9"
 serde = { version = "1.0.126", features = ["derive"] }
