@@ -433,6 +433,7 @@ pub(crate) struct SelectOptionArgs {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) enum Opt {
     Value(String),
     Index(usize),
