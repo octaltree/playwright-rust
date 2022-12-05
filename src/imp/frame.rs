@@ -688,7 +688,8 @@ pub enum FrameState {
 
 macro_rules! type_args {
     ($t:ident, $f:ident) => {
-        #[derive(Serialize)]
+        #[skip_serializing_none]
+        #[derive(Serialize, Default)]
         #[serde(rename_all = "camelCase")]
         pub(crate) struct $t<'a, 'b> {
             selector: &'a str,
