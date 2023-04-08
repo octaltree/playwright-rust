@@ -41,7 +41,7 @@ impl BrowserType {
     ) -> Result<Weak<Browser>, Arc<Error>> {
         let res = send_message!(self, "launch", args);
         let guid = only_guid(&res)?;
-        let b = get_object!(self.context()?.lock().unwrap(), guid, Browser)?;
+        let b = get_object!(self.context()?.lock(), guid, Browser)?;
         Ok(b)
     }
 
@@ -51,7 +51,7 @@ impl BrowserType {
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "launchPersistentContext", args);
         let guid = only_guid(&res)?;
-        let b = get_object!(self.context()?.lock().unwrap(), guid, BrowserContext)?;
+        let b = get_object!(self.context()?.lock(), guid, BrowserContext)?;
         Ok(b)
     }
 
@@ -70,12 +70,12 @@ impl BrowserType {
             browser,
             default_context
         } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
-        let browser = get_object!(self.context()?.lock().unwrap(), &browser.guid, Browser)?;
+        let browser = get_object!(self.context()?.lock(), &browser.guid, Browser)?;
         let arc_browser = upgrade(&browser)?;
         arc_browser.set_is_remote_true();
         if let Some(OnlyGuid { guid }) = default_context {
             let default_context =
-                get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+                get_object!(self.context()?.lock(), &guid, BrowserContext)?;
             let arc_context = upgrade(&default_context)?;
             arc_browser.push_context(default_context);
             arc_context.set_browser(browser.clone());

@@ -1,6 +1,8 @@
 use crate::imp::{core::*, impl_future::*, prelude::*};
 use serde_json::value::Value;
 use std::{fmt::Debug, future::Future, pin::Pin, sync::TryLockError, task::Waker};
+use std::ops::DerefMut;
+use parking_lot::RawMutex;
 
 pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, Error> {
     w.upgrade().ok_or(Error::ObjectNotFound)
@@ -67,14 +69,14 @@ impl ChannelOwner {
         let wait = WaitData::new();
         let r = r.set_wait(&wait);
         let ctx = upgrade(&self.ctx)?;
-        ctx.lock().unwrap().send_message(r)?;
+        ctx.lock().send_message(r)?;
         Ok(wait)
     }
 
-    pub(crate) fn children(&self) -> Vec<RemoteWeak> { self.children.lock().unwrap().to_vec() }
+    pub(crate) fn children(&self) -> Vec<RemoteWeak> { self.children.lock().to_vec() }
 
     pub(crate) fn push_child(&self, c: RemoteWeak) {
-        let children = &mut self.children.lock().unwrap();
+        let children = &mut self.children.lock();
         children.push(c);
     }
 }
@@ -389,23 +391,25 @@ where
             }};
         }
         {
-            let x = match this.place.try_lock() {
-                Ok(x) => x,
-                Err(TryLockError::WouldBlock) => pending!(),
-                Err(e) => Err(e).unwrap()
-            };
-            if let Some(x) = &*x {
-                return Poll::Ready(x.clone());
+            match this.place.try_lock() {
+                None => { pending!() }
+                Some(mut x) => {
+                    let t = x.deref_mut();
+                    if let Some(x) = &*t {
+                        return Poll::Ready(x.clone());
+                    }
+                }
             }
         }
         {
-            let mut x = match this.waker.try_lock() {
-                Ok(x) => x,
-                Err(TryLockError::WouldBlock) => pending!(),
-                Err(e) => Err(e).unwrap()
-            };
-            if x.is_none() {
-                *x = Some(cx.waker().clone());
+            match this.waker.try_lock() {
+                None => {pending!()}
+                Some(mut t) => {
+                    let x = t.deref_mut();
+                    if x.is_none() {
+                        *x = Some(cx.waker().clone());
+                    }
+                }
             }
         }
         Poll::Pending

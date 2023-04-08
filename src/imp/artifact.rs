@@ -43,7 +43,7 @@ impl Artifact {
             .ok_or_else(|| Error::ResolvePath(path.into()))?;
         let res = send_message!(self, "saveAsStream", Map::new());
         let guid = only_guid(&res)?;
-        let stream = get_object!(self.context()?.lock().unwrap(), guid, Stream)?;
+        let stream = get_object!(self.context()?.lock(), guid, Stream)?;
         std::fs::create_dir_all(dir).map_err(Error::from)?;
         upgrade(&stream)?.save_as(path).await?;
         Ok(())
@@ -58,9 +58,9 @@ impl Artifact {
 
 // mutable
 impl Artifact {
-    fn set_is_remote(&self, x: bool) { self.var.lock().unwrap().is_remote = x; }
+    fn set_is_remote(&self, x: bool) { self.var.lock().is_remote = x; }
 
-    fn is_remote(&self) -> bool { self.var.lock().unwrap().is_remote }
+    fn is_remote(&self) -> bool { self.var.lock().is_remote }
 }
 
 impl RemoteObject for Artifact {
