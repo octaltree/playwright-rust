@@ -34,6 +34,7 @@ chrono = { version = "0.4.19", optional = true, features = ["serde"] }
 tokio-stream = { version = "0.1.7", features = ["sync"] }
 futures = "0.3.16"
 serde_with = { version = "1.9.4", default-features = false, features = ["macros"] }
+parking_lot = "0.12.1"
 
 [dev-dependencies]
 env_logger = "0.9.0"

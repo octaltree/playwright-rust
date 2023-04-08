@@ -28,7 +28,7 @@ impl WebSocket {
 }
 
 impl WebSocket {
-    pub(crate) fn is_closed(&self) -> bool { self.var.lock().unwrap().is_closed }
+    pub(crate) fn is_closed(&self) -> bool { self.var.lock().is_closed }
 
     fn on_frame_sent(&self, params: Map<String, Value>) -> Result<(), Error> {
         let buffer = parse_frame(params)?;
@@ -77,7 +77,7 @@ impl RemoteObject for WebSocket {
                 self.emit_event(Evt::Error(error));
             }
             "close" => {
-                self.var.lock().unwrap().is_closed = true;
+                self.var.lock().is_closed = true;
                 self.emit_event(Evt::Close);
             }
             _ => {}
@@ -103,9 +103,9 @@ pub enum Buffer {
 impl EventEmitter for WebSocket {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().clone() }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

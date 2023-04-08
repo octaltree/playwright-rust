@@ -71,7 +71,7 @@ impl Playwright {
     pub(crate) async fn wait_initial_object(conn: &Connection) -> Result<Weak<Self>, Error> {
         let root = {
             let ctx = upgrade(&conn.context())?;
-            let ctx = ctx.lock().unwrap();
+            let ctx = ctx.lock();
             let root = get_object!(ctx, &S::validate("").unwrap(), Root)?;
             upgrade(&root)?
         };
@@ -87,7 +87,7 @@ impl Playwright {
             playwright: crate::protocol::generated::Playwright { guid }
         } = serde_json::from_value(v)?;
         let ctx = upgrade(&conn.context())?;
-        let ctx = ctx.lock().unwrap();
+        let ctx = ctx.lock();
         let p = get_object!(ctx, &guid, Playwright)?;
         Ok(p)
     }
