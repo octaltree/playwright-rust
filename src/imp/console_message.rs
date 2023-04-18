@@ -39,6 +39,7 @@ impl ConsoleMessage {
 
     pub(crate) fn location(&self) -> &SourceLocation { &self.location }
 
+
     pub fn message_type(&self) -> &str {
         &self.message_type
     }

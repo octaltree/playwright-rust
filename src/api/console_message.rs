@@ -24,4 +24,5 @@ impl ConsoleMessage {
     pub fn location(&self) -> Result<SourceLocation, Error> {
         Ok(upgrade(&self.inner)?.location().to_owned())
     }
+
 }
