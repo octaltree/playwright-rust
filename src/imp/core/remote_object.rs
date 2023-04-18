@@ -251,7 +251,8 @@ mod remote_enum {
             ctx: &Context,
             c: ChannelOwner
         ) -> Result<RemoteArc, Error> {
-            let r = match typ.as_str() {
+            let typ_as_str = typ.as_str();
+            let r = match typ_as_str {
                 "Artifact" => RemoteArc::Artifact(Arc::new(Artifact::try_new(c)?)),
                 "BindingCall" => RemoteArc::BindingCall(Arc::new(BindingCall::new(c))),
                 "Browser" => RemoteArc::Browser(Arc::new(Browser::try_new(c)?)),
@@ -283,6 +284,7 @@ mod remote_enum {
 }
 
 pub(crate) use remote_enum::{RemoteArc, RemoteWeak};
+use crate::protocol::generated::MetadataLocation;
 
 pub(crate) struct RequestBody {
     pub(crate) guid: Str<Guid>,
@@ -295,8 +297,13 @@ pub(crate) struct RequestBody {
 impl RequestBody {
     pub(crate) fn new(guid: Str<Guid>, method: Str<Method>) -> RequestBody {
         let mut metadata: crate::protocol::generated::Metadata = Default::default();
-        metadata.stack = Some(vec![]);
         metadata.api_name = Some("".into());
+
+        metadata.location = Some(MetadataLocation {
+            column: Some(0.into()),
+            file: "".to_string(),
+            line: Some(0.into()),
+        });
         RequestBody {
             guid,
             method,

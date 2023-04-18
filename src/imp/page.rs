@@ -18,7 +18,7 @@ use crate::{
         websocket::WebSocket,
         worker::Worker
     },
-    protocol::generated::{page::commands::EmulateMediaArgsMedia, LifecycleEvent}
+    protocol::generated::{LifecycleEvent}
 };
 
 #[derive(Debug)]
@@ -818,7 +818,79 @@ pub(crate) struct ScreenshotArgs {
 //     pub(crate) color_scheme: Option<ColorScheme>
 // }
 
-pub type EmulateMediaArgs = crate::protocol::generated::page::commands::EmulateMediaArgs;
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsMedia {
+    #[default]
+    #[serde(rename = "screen")]
+    Screen,
+    #[serde(rename = "print")]
+    Print,
+    #[serde(rename = "no-override")]
+    NoOverride,
+    #[serde(rename = "screen")]
+    None
+}
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsReducedMotion {
+    #[serde(rename = "reduce")]
+    Reduce,
+    #[default]
+    #[serde(rename = "no-preference")]
+    NoPreference,
+    #[serde(rename = "no-override")]
+    NoOverride,
+    #[serde(rename = "no-preference")]
+    None
+}
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsForcedColors {
+    #[serde(rename = "active")]
+    Active,
+    #[default]
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "no-override")]
+    NoOverride
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsColorScheme {
+    #[serde(rename = "dark")]
+    Dark,
+    #[serde(rename = "light")]
+    Light,
+    #[serde(rename = "no-preference")]
+    NoPreference,
+    #[default]
+    #[serde(rename = "no-override")]
+    NoOverride,
+    #[serde(rename = "no-override")]
+    None
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EmulateMediaArgs {
+    #[serde(rename = "colorScheme")]
+    pub(crate) color_scheme: Option<EmulateMediaArgsColorScheme>,
+    #[serde(rename = "forcedColors")]
+    pub(crate) forced_colors: Option<EmulateMediaArgsForcedColors>,
+    #[serde(rename = "media")]
+    pub(crate) media: Option<EmulateMediaArgsMedia>,
+    #[serde(rename = "reducedMotion")]
+    pub(crate) reduced_motion: Option<EmulateMediaArgsReducedMotion>
+}
+
+impl Default for EmulateMediaArgs {
+    fn default() -> Self {
+        EmulateMediaArgs {
+            color_scheme: Some(EmulateMediaArgsColorScheme::default()),
+            forced_colors: Some(EmulateMediaArgsForcedColors::default()),
+            media: Some(EmulateMediaArgsMedia::default()),
+            reduced_motion: Some(EmulateMediaArgsReducedMotion::default())
+        }
+    }
+}
 
 // #[derive(Serialize)]
 // #[serde(rename_all = "lowercase")]

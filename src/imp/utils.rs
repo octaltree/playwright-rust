@@ -1,4 +1,4 @@
-use crate::{imp::prelude::*, protocol::generated::page::commands::EmulateMediaArgsColorScheme};
+use crate::{imp::prelude::*};
 
 #[derive(Debug, Deserialize, Clone, Serialize, PartialEq, Eq)]
 pub struct Viewport {
@@ -42,7 +42,7 @@ pub struct HttpCredentials {
 //     NoPreference
 // }
 
-pub type ColorScheme = EmulateMediaArgsColorScheme;
+pub type ColorScheme = crate::imp::page::EmulateMediaArgsColorScheme;
 
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize)]
