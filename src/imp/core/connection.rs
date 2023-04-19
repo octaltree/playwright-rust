@@ -7,6 +7,8 @@ use std::{
         TryLockError
     }
 };
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 
 #[derive(Debug)]
 pub(crate) struct Context {

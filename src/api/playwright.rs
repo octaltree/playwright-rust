@@ -6,6 +6,9 @@ use crate::{
 };
 use std::{io, process::Command};
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 /// Entry point
 pub struct Playwright {
     driver: Driver,
@@ -14,7 +17,12 @@ pub struct Playwright {
 }
 
 fn run(driver: &Driver, args: &'static [&'static str]) -> io::Result<()> {
-    let status = Command::new(driver.executable()).args(args).status()?;
+    let mut command = Command::new(driver.executable());
+    let child = command.args(args);
+    #[cfg(target_os = "windows")]
+    child.creation_flags(0x08000000);
+    let status = child.status()?;
+
     if !status.success() {
         return Err(io::Error::new(
             io::ErrorKind::Other,
