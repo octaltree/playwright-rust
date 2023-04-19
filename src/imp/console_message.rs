@@ -4,7 +4,8 @@ use crate::imp::{core::*, js_handle::JsHandle, prelude::*, utils::SourceLocation
 pub(crate) struct ConsoleMessage {
     channel: ChannelOwner,
     location: SourceLocation,
-    args: Vec<Weak<JsHandle>>
+    text: String,
+    message_type: String,
 }
 
 impl ConsoleMessage {
@@ -12,17 +13,15 @@ impl ConsoleMessage {
         #[derive(Deserialize)]
         struct De {
             location: SourceLocation,
-            args: Vec<OnlyGuid>
+            text: String,
+            r#type: String,
         }
-        let De { location, args } = serde_json::from_value(channel.initializer.clone())?;
-        let args = args
-            .iter()
-            .map(|OnlyGuid { guid }| get_object!(ctx, guid, JsHandle))
-            .collect::<Result<Vec<_>, _>>()?;
+        let De { location, text, r#type } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,
             location,
-            args
+            text,
+            message_type: r#type
         })
     }
 
@@ -35,16 +34,14 @@ impl ConsoleMessage {
     }
 
     pub(crate) fn text(&self) -> &str {
-        self.channel()
-            .initializer
-            .get("text")
-            .and_then(|v| v.as_str())
-            .unwrap_or_default()
+        &self.text
     }
 
     pub(crate) fn location(&self) -> &SourceLocation { &self.location }
 
-    pub(crate) fn args(&self) -> &[Weak<JsHandle>] { &self.args }
+    pub fn message_type(&self) -> &str {
+        &self.message_type
+    }
 }
 
 impl RemoteObject for ConsoleMessage {

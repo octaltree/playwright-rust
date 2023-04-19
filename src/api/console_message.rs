@@ -24,13 +24,4 @@ impl ConsoleMessage {
     pub fn location(&self) -> Result<SourceLocation, Error> {
         Ok(upgrade(&self.inner)?.location().to_owned())
     }
-
-    /// List of arguments passed to a `console` function call.
-    pub fn args(&self) -> Result<Vec<JsHandle>, Error> {
-        Ok(upgrade(&self.inner)?
-            .args()
-            .iter()
-            .map(|x| JsHandle::new(x.clone()))
-            .collect())
-    }
 }
