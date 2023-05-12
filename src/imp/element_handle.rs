@@ -321,8 +321,7 @@ impl ElementHandle {
             //     guid.
             // }
         }
-        let m = send_message!(self, "setInputFilePaths", args);
-        println!("{:?}", m);
+        send_message!(self, "setInputFilePaths", args);
         Ok(())
     }
 }
