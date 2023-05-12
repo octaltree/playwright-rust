@@ -16,8 +16,8 @@ StackFrame:
   type: object
   properties:
     file: string
-    line: number?
-    column: number?
+    line: number
+    column: number
     function: string?
 
 # This object can be send with any rpc call in the "metadata" field.
@@ -25,12 +25,24 @@ StackFrame:
 Metadata:
   type: object
   properties:
+    location:
+      type: object?
+      properties:
+        file: string
+        line: number?
+        column: number?
+    apiName: string?
+    internal: boolean?
+    # The number of milliseconds elapsed since midnight, January 1, 1970 UTC.
+    wallTime: number?
+
+ClientSideCallMetadata:
+  type: object
+  properties:
+    id: number
     stack:
       type: array?
       items: StackFrame
-    apiName: string?
-    internal: boolean?
-
 
 Point:
   type: object
@@ -284,6 +296,7 @@ APIRequestContext:
         timeout: number?
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
+        maxRedirects: number?
       returns:
         response: APIResponse
 
@@ -444,16 +457,19 @@ ContextOptions:
       - dark
       - light
       - no-preference
+      - no-override
     reducedMotion:
       type: enum?
       literals:
       - reduce
       - no-preference
+      - no-override
     forcedColors:
       type: enum?
       literals:
       - active
       - none
+      - no-override
     acceptDownloads: boolean?
     baseURL: string?
     recordVideo:
@@ -484,6 +500,13 @@ LocalUtils:
         entries:
           type: array
           items: NameValue
+        stacksId: string?
+        mode:
+          type: enum
+          literals:
+            - write
+            - append
+        includeSources: boolean
 
     harOpen:
       parameters:
@@ -527,6 +550,32 @@ LocalUtils:
         zipFile: string
         harFile: string
 
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        exposeNetwork: string?
+        slowMo: number?
+        timeout: number?
+        socksProxyRedirectPortForTest: number?
+      returns:
+        pipe: JsonPipe
+
+    tracingStarted:
+      parameters:
+        tracesDir: string?
+        traceName: string
+      returns:
+        stacksId: string
+
+    addStackToTracingNoReply:
+      parameters:
+        callData: ClientSideCallMetadata
+
+    traceDiscarded:
+      parameters:
+        stacksId: string
+
 Root:
   type: interface
 
@@ -534,7 +583,13 @@ Root:
 
     initialize:
       parameters:
-        sdkLanguage: string
+        sdkLanguage:
+          type: enum
+          literals:
+          - javascript
+          - python
+          - java
+          - csharp
       returns:
         playwright: Playwright
 
@@ -580,6 +635,8 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+    # Only present when connecting remotely via Android.connect() method.
+    preConnectedAndroidDevice: AndroidDevice?
     # Only present when socks proxy is supported.
     socksSupport: SocksSupport?
 
@@ -619,7 +676,110 @@ Playwright:
       returns:
         request: APIRequestContext
 
+RecorderSource:
+  type: object
+  properties:
+    isRecorded: boolean
+    id: string
+    label: string
+    text: string
+    language: string
+    highlight:
+      type: array
+      items:
+        type: object
+        properties:
+          line: number
+          type: string
+    revealLine: number?
+    group: string?
+
+DebugController:
+  type: interface
+
+  commands:
+    initialize:
+      parameters:
+        codegenId: string
+        sdkLanguage:
+          type: enum
+          literals:
+          - javascript
+          - python
+          - java
+          - csharp
+
+    setReportStateChanged:
+      parameters:
+        enabled: boolean
+
+    resetForReuse:
+
+    navigate:
+      parameters:
+        url: string
+
+    setRecorderMode:
+      parameters:
+        mode:
+          type: enum
+          literals:
+            - inspecting
+            - recording
+            - none
+        testIdAttributeName: string?
+
+    highlight:
+      parameters:
+        selector: string
+
     hideHighlight:
+
+    resume:
+
+    kill:
+
+    closeAllBrowsers:
+
+  events:
+    inspectRequested:
+      parameters:
+        selector: string
+        locator: string
+
+    stateChanged:
+      parameters:
+        pageCount: number
+
+    sourceChanged:
+      parameters:
+        text: string
+        header: string?
+        footer: string?
+        actions:
+          type: array?
+          items: string
+
+    paused:
+      parameters:
+        paused: boolean
+
+    # Deprecated
+    browsersChanged:
+      parameters:
+        browsers:
+          type: array
+          items:
+            type: object
+            properties:
+              contexts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pages:
+                      type: array
+                      items: string
 
 SocksSupport:
   type: interface
@@ -677,6 +837,9 @@ Selectors:
         source: string
         contentScript: boolean?
 
+    setTestIdAttributeName:
+      parameters:
+        testIdAttributeName: string
 
 BrowserType:
   type: interface
@@ -686,16 +849,6 @@ BrowserType:
     name: string
 
   commands:
-
-    connect:
-      parameters:
-        wsEndpoint: string
-        headers: json?
-        slowMo: number?
-        timeout: number?
-        socksProxyRedirectPortForTest: number?
-      returns:
-        pipe: JsonPipe
 
     launch:
       parameters:
@@ -913,9 +1066,16 @@ BrowserContext:
             username: string
             password: string
 
-    setNetworkInterceptionEnabled:
+    setNetworkInterceptionPatterns:
       parameters:
-        enabled: boolean
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
 
     setOffline:
       parameters:
@@ -937,13 +1097,19 @@ BrowserContext:
       experimental: True
       parameters:
         language: string?
-        startRecording: boolean?
+        mode:
+          type: enum?
+          literals:
+          - inspecting
+          - recording
         pauseOnNextStatement: boolean?
         launchOptions: json?
         contextOptions: json?
         device: string?
         saveStorage: string?
         outputFile: string?
+        handleSIGINT: boolean?
+        omitCallTracking: boolean?
 
     newCDPSession:
       parameters:
@@ -971,6 +1137,17 @@ BrowserContext:
       returns:
         writableStream: WritableStream
 
+    updateSubscription:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - request
+          - response
+          - requestFinished
+          - requestFailed
+        enabled: boolean
+
   events:
 
     bindingCall:
@@ -986,7 +1163,6 @@ BrowserContext:
     route:
       parameters:
         route: Route
-        request: Request
 
     video:
       parameters:
@@ -1049,10 +1225,6 @@ Page:
       parameters:
         timeout: number?
 
-    setFileChooserInterceptedNoReply:
-      parameters:
-        intercepted: boolean
-
     addInitScript:
       parameters:
         source: string
@@ -1068,30 +1240,28 @@ Page:
           literals:
           - screen
           - print
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         colorScheme:
           type: enum?
           literals:
           - dark
           - light
           - no-preference
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         reducedMotion:
           type: enum?
           literals:
           - reduce
           - no-preference
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         forcedColors:
           type: enum?
           literals:
           - active
           - none
-          # Reset emulated value to the system default.
-          - null
+          - no-override
+      tracing:
+        snapshot: true
 
     exposeBinding:
       parameters:
@@ -1138,6 +1308,7 @@ Page:
         comparatorOptions:
           type: object?
           properties:
+            comparator: string?
             maxDiffPixels: number?
             maxDiffPixelRatio: number?
             threshold: number?
@@ -1181,9 +1352,16 @@ Page:
           type: array
           items: NameValue
 
-    setNetworkInterceptionEnabled:
+    setNetworkInterceptionPatterns:
       parameters:
-        enabled: boolean
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
 
     setViewportSize:
       parameters:
@@ -1372,6 +1550,18 @@ Page:
 
     bringToFront:
 
+    updateSubscription:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - fileChooser
+          - request
+          - response
+          - requestFinished
+          - requestFailed
+        enabled: boolean
+
   events:
 
     bindingCall:
@@ -1416,7 +1606,6 @@ Page:
     route:
       parameters:
         route: Route
-        request: Request
 
     video:
       parameters:
@@ -1484,6 +1673,14 @@ Frame:
         content: string?
       returns:
         element: ElementHandle
+      tracing:
+        snapshot: true
+
+    blur:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
       tracing:
         snapshot: true
 
@@ -1592,6 +1789,7 @@ Frame:
       parameters:
         expression: string
         isFunction: boolean?
+        exposeUtilityScript: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
@@ -1675,6 +1873,7 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
+        noWaitAfter: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
@@ -1812,6 +2011,7 @@ Frame:
           items:
             type: object
             properties:
+              valueOrLabel: string?
               value: string?
               label: string?
               index: number?
@@ -1984,6 +2184,7 @@ Frame:
       returns:
         matches: boolean
         received: SerializedValue?
+        timedOut: boolean?
         log:
           type: array?
           items: string
@@ -2218,6 +2419,8 @@ ElementHandle:
         pausesBeforeInput: true
 
     focus:
+      tracing:
+        snapshot: true
 
     getAttribute:
       parameters:
@@ -2240,6 +2443,7 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+        noWaitAfter: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
@@ -2358,6 +2562,7 @@ ElementHandle:
           items:
             type: object
             properties:
+              valueOrLabel: string?
               value: string?
               label: string?
               index: number?
@@ -2733,20 +2938,25 @@ Tracing:
 
     tracingStartChunk:
       parameters:
+        name: string?
         title: string?
+      returns:
+        traceName: string
 
     tracingStopChunk:
       parameters:
         mode:
           type: enum
           literals:
-          - doNotSave
-          - compressTrace
-          - compressTraceAndSources
+          - archive
+          - discard
+          - entries
       returns:
-        # The artifact may be missing if the browser closes while tracing is beeing stopped.
+        # The artifact may be missing if the browser closes while tracing is being stopped.
+        # Or it can be missing if client-side compression is taking place.
         artifact: Artifact?
-        sourceEntries:
+        # For local mode, these are all entries.
+        entries:
           type: array?
           items: NameValue
 
@@ -2860,6 +3070,7 @@ Electron:
           - dark
           - light
           - no-preference
+          - no-override
         extraHTTPHeaders:
           type: array?
           items: NameValue
@@ -3104,6 +3315,9 @@ AndroidDevice:
       parameters:
         $mixin: ContextOptions
         pkg: string?
+        args:
+          type: array?
+          items: string
         proxy:
           type: object?
           properties:
@@ -3153,6 +3367,8 @@ AndroidDevice:
     close:
 
   events:
+    close:
+
     webViewAdded:
       parameters:
         webView: AndroidWebView

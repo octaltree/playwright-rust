@@ -7,6 +7,8 @@ use std::{
         TryLockError
     }
 };
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 
 #[derive(Debug)]
 pub(crate) struct Context {
@@ -137,9 +139,8 @@ impl Connection {
                             None => break
                         };
                         let mut reader = match r.try_lock() {
-                            Ok(x) => x,
-                            Err(TryLockError::WouldBlock) => continue,
-                            Err(e) => Err(e).unwrap()
+                            Some(x) => x,
+                            None => continue,
                         };
                         match reader.try_read()? {
                             Some(x) => x,
@@ -152,7 +153,7 @@ impl Connection {
                             Some(x) => x,
                             None => break
                         };
-                        let mut ctx = c.lock().unwrap();
+                        let mut ctx = c.lock();
                         ctx.dispatch(response)?;
                         // log::debug!("{:?}", ctx.objects.keys());
                     }
@@ -162,7 +163,7 @@ impl Connection {
             if let Err(e) = status {
                 log::trace!("Failed with {:?}", e);
                 if let Some(c) = c.upgrade() {
-                    let mut ctx = c.lock().unwrap();
+                    let mut ctx = c.lock();
                     ctx.notify_closed(e);
                 }
             } else {
@@ -174,7 +175,7 @@ impl Connection {
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
 
     fn notify_closed(&mut self, e: Error) {
-        let ctx = &mut self.ctx.lock().unwrap();
+        let ctx = &mut self.ctx.lock();
         ctx.notify_closed(e);
     }
 }
@@ -259,8 +260,8 @@ impl Context {
             Some(x) => x,
             None => return
         };
-        *place.lock().unwrap() = Some(result);
-        let waker: &Option<Waker> = &waker.lock().unwrap();
+        *place.lock() = Some(result);
+        let waker: &Option<Waker> = &waker.lock();
         let waker = match waker {
             Some(x) => x.clone(),
             None => return

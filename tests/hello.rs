@@ -29,6 +29,7 @@ async fn main() -> Result<(), playwright::Error> {
 
     // Waiting load explicitly is unnecessary.
     // [many functions wait contents automaticaly](https://playwright.dev/docs/actionability/).
-    page.expect_event(playwright::api::page::EventType::Load).await?;
+    page.expect_event(playwright::api::page::EventType::Load)
+        .await?;
     Ok(())
 }

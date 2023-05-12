@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR}
 };
 
-const DRIVER_VERSION: &str = "1.25.0-alpha-jul-26-2022";
+const DRIVER_VERSION: &str = "1.32.2-beta-1680712603000";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();
@@ -76,6 +76,11 @@ fn url(platform: Platform) -> String {
         || DRIVER_VERSION.contains("-beta"))
     .then(|| "next/")
     .unwrap_or_default();
+    let k = format!(
+        "https://playwright.azureedge.net/builds/driver/{}playwright-{}-{}.zip",
+        next, DRIVER_VERSION, platform
+    );
+    println!("[[[{}]]]", k);
     format!(
         "https://playwright.azureedge.net/builds/driver/{}playwright-{}-{}.zip",
         next, DRIVER_VERSION, platform

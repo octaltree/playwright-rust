@@ -1,5 +1,9 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use playwright::*;
 use std::{env, io, process};
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 
 fn main() {
     let envs = env::vars_os();
@@ -16,8 +20,12 @@ fn main() {
 
 fn run(args: env::ArgsOs, envs: env::VarsOs) -> io::Result<process::ExitStatus> {
     let driver = Driver::install().unwrap();
-    process::Command::new(driver.executable())
+    let mut command = process::Command::new(driver.executable());
+    let mut child = command
         .args(args)
-        .envs(envs)
-        .status()
+        .envs(envs);
+
+    #[cfg(target_os = "windows")]
+    child.creation_flags(0x08000000);
+    child.status()
 }

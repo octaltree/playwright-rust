@@ -1,7 +1,18 @@
 pub(crate) use crate::imp::element_handle::Opt;
-use crate::imp::{core::*, element_handle::ElementHandle, js_handle::JsHandle, page, page::Page, prelude::*, response::Response, utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}};
+use crate::{
+    imp::{
+        core::*,
+        element_handle::ElementHandle,
+        js_handle::JsHandle,
+        page,
+        page::Page,
+        prelude::*,
+        response::Response,
+        utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
+    },
+    protocol::generated::LifecycleEvent
+};
 use std::{collections::HashSet, iter::FromIterator};
-use crate::protocol::generated::LifecycleEvent;
 
 #[derive(Debug)]
 pub(crate) struct Frame {
@@ -98,7 +109,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = get_object!(self.context()?.lock().unwrap(), guid, Response)?;
+        let r = get_object!(self.context()?.lock(), guid, Response)?;
         Ok(Some(r))
     }
 
@@ -196,7 +207,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -213,7 +224,7 @@ impl Frame {
         let es = elements
             .into_iter()
             .map(|OnlyGuid { guid }| {
-                get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
+                get_object!(self.context()?.lock(), &guid, ElementHandle)
             })
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
@@ -222,7 +233,7 @@ impl Frame {
     pub(crate) async fn frame_element(&self) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "frameElement", Map::new());
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -235,7 +246,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -294,7 +305,7 @@ impl Frame {
     ) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "addScriptTag", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -310,7 +321,7 @@ impl Frame {
         }
         let v = send_message!(self, "addStyleTag", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -353,10 +364,10 @@ impl Frame {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpressionHandle", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)
             .ok()
             .map(Handle::Element);
-        let j = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)
+        let j = get_object!(self.context()?.lock(), guid, JsHandle)
             .ok()
             .map(Handle::Js);
         let h = e.or(j).ok_or(Error::ObjectNotFound)?;
@@ -472,33 +483,33 @@ impl Frame {
     ) -> ArcResult<Weak<JsHandle>> {
         let v = send_message!(self, "waitForFunction", args);
         let guid = only_guid(&v)?;
-        let h = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)?;
+        let h = get_object!(self.context()?.lock(), guid, JsHandle)?;
         Ok(h)
     }
 }
 
 // mutable
 impl Frame {
-    pub(crate) fn url(&self) -> String { self.var.lock().unwrap().url.clone() }
+    pub(crate) fn url(&self) -> String { self.var.lock().url.clone() }
 
-    pub(crate) fn name(&self) -> String { self.var.lock().unwrap().name.clone() }
+    pub(crate) fn name(&self) -> String { self.var.lock().name.clone() }
 
-    pub(crate) fn page(&self) -> Option<Weak<Page>> { self.var.lock().unwrap().page.clone() }
+    pub(crate) fn page(&self) -> Option<Weak<Page>> { self.var.lock().page.clone() }
 
-    pub(crate) fn set_page(&self, page: Weak<Page>) { self.var.lock().unwrap().page = Some(page); }
+    pub(crate) fn set_page(&self, page: Weak<Page>) { self.var.lock().page = Some(page); }
 
     pub(crate) fn parent_frame(&self) -> Option<Weak<Frame>> { self.parent_frame.clone() }
 
     pub(crate) fn child_frames(&self) -> Vec<Weak<Frame>> {
-        self.var.lock().unwrap().child_frames.clone()
+        self.var.lock().child_frames.clone()
     }
 
     pub(crate) fn add_child_frames(&self, child: Weak<Frame>) {
-        self.var.lock().unwrap().child_frames.push(child);
+        self.var.lock().child_frames.push(child);
     }
 
     fn on_navigated(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         let payload: FrameNavigatedEvent = serde_json::from_value(params.into())?;
         {
             var.name = payload.name.clone();
@@ -520,7 +531,7 @@ impl Frame {
             Remove(LifecycleEvent)
         }
         let op: Op = serde_json::from_value(params.into())?;
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         let load_states = &mut var.load_states;
         match op {
             Op::Add(x) => {
@@ -575,9 +586,9 @@ pub(crate) enum Evt {
 impl EventEmitter for Frame {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().clone() }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -688,6 +699,7 @@ pub enum FrameState {
 
 macro_rules! type_args {
     ($t:ident, $f:ident) => {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         pub(crate) struct $t<'a, 'b> {

@@ -105,41 +105,41 @@ impl Request {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = get_object!(self.context()?.lock().unwrap(), guid, Response)?;
+        let r = get_object!(self.context()?.lock(), guid, Response)?;
         Ok(Some(r))
     }
 }
 
 impl Request {
     pub(crate) fn timing(&self) -> Option<ResponseTiming> {
-        self.var.lock().unwrap().timing.clone()
+        self.var.lock().timing.clone()
     }
 
-    pub(crate) fn response_end(&self) -> Option<f64> { self.var.lock().unwrap().response_end }
+    pub(crate) fn response_end(&self) -> Option<f64> { self.var.lock().response_end }
 
-    pub(crate) fn failure(&self) -> Option<String> { self.var.lock().unwrap().failure.clone() }
+    pub(crate) fn failure(&self) -> Option<String> { self.var.lock().failure.clone() }
 
     pub(crate) fn redirected_to(&self) -> Option<Weak<Request>> {
-        self.var.lock().unwrap().redirected_to.clone()
+        self.var.lock().redirected_to.clone()
     }
 
     fn set_redirected_to(&self, to: Weak<Request>) {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         var.redirected_to = Some(to);
     }
 
     pub(crate) fn set_response_timing(&self, timing: ResponseTiming) {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         var.timing = Some(timing);
     }
 
     pub(crate) fn set_response_end(&self, response_end: f64) {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         var.response_end = Some(response_end);
     }
 
     pub(crate) fn set_failure(&self, failure: Option<String>) {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         var.failure = failure;
     }
 }

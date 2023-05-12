@@ -10,7 +10,6 @@ pub use crate::{
     },
     imp::page::{EventType, Media}
 };
-use crate::protocol::generated::LifecycleEvent;
 use crate::{
     api::{
         input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, FileChooser,
@@ -26,8 +25,10 @@ use crate::{
             Viewport
         }
     },
+    protocol::generated::LifecycleEvent,
     Error
 };
+use std::fmt::{Debug, Formatter};
 
 /// Page provides methods to interact with a single tab in a `Browser`, or an
 /// [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One `Browser`
@@ -428,6 +429,34 @@ pub enum Event {
     WebSocket(WebSocket),
     Worker(Worker),
     Video(Video)
+}
+
+impl Debug for Event {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let current_event = match self {
+            Event::Close => "Close",
+            Event::Crash => "Crash",
+            Event::Console(_) => "Console",
+            Event::Dialog => "Dialog",
+            Event::DomContentLoaded => "DomContentLoaded",
+            Event::Download(_) => "Download(_)",
+            // Event::FileChooser(_) => "FileChooser(_)",
+            Event::FrameAttached(_) => "FrameAttached(_)",
+            Event::FrameDetached(_) => "FrameDetached(_)",
+            Event::FrameNavigated(_) => "FrameNavigated(_)",
+            Event::Load => "Load",
+            Event::PageError => "PageError",
+            Event::Popup(_) => "Popup(_)",
+            Event::Request(_) => "Request(_)",
+            Event::RequestFailed(_) => "RequestFailed(_)",
+            Event::RequestFinished(_) => "RequestFinished(_)",
+            Event::Response(_) => "Response(_)",
+            Event::WebSocket(_) => "WebSocket(_)",
+            Event::Worker(_) => "Worker(_)",
+            Event::Video(_) => "Video(_)"
+        };
+        write!(f, "{}", current_event)
+    }
 }
 
 impl From<Evt> for Event {

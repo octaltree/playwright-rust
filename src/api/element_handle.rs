@@ -4,8 +4,8 @@ use crate::{
         core::*,
         element_handle::{
             CheckArgs, ClickArgs, ElementHandle as Impl, FillArgs, HoverArgs, Opt, PressArgs,
-            ScreenshotArgs, SelectOptionArgs, SetInputFilesArgs, TapArgs, TypeArgs,
-            WaitForSelectorArgs
+            ScreenshotArgs, SelectOptionArgs, SetInputFilePathsArgs, SetInputFilesArgs, TapArgs,
+            TypeArgs, WaitForSelectorArgs
         },
         prelude::*,
         utils::{
@@ -14,6 +14,7 @@ use crate::{
         }
     }
 };
+use std::{borrow::Borrow, fs};
 
 /// ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`]
 /// method.
@@ -397,6 +398,9 @@ impl ElementHandle {
         SetInputFilesBuilder::new(self.inner.clone(), file)
     }
 
+    pub fn set_input_file_paths_builder(&self, file: &str) -> SetInputFilePathsBuilder {
+        SetInputFilePathsBuilder::new(self.inner.clone(), file)
+    }
     // eval_on_selector
     // eval_on_selector_all
 }
@@ -811,6 +815,43 @@ impl SetInputFilesBuilder {
 
     pub fn clear_files(mut self) -> Self {
         self.args.files = vec![];
+        self
+    }
+}
+
+pub struct SetInputFilePathsBuilder {
+    inner: Weak<Impl>,
+    args: SetInputFilePathsArgs
+}
+
+impl SetInputFilePathsBuilder {
+    pub(crate) fn new(inner: Weak<Impl>, filepath: &str) -> Self {
+        let f = fs::canonicalize(filepath).unwrap();
+        let args = SetInputFilePathsArgs {
+            local_paths: Some(vec![f]),
+            ..SetInputFilePathsArgs::default()
+        };
+        Self { inner, args }
+    }
+
+    pub async fn set_input_file_paths(self) -> Result<(), Arc<Error>> {
+        let Self { inner, args } = self;
+        upgrade(&inner)?.set_input_file_paths(args).await
+    }
+
+    pub fn add_file(mut self, x: &str) -> Self {
+        let mut local_paths = self.args.local_paths.as_mut().unwrap();
+        local_paths.push(fs::canonicalize(x).unwrap());
+        self
+    }
+
+    setter! {
+        no_wait_after: Option<bool>,
+        timeout: Option<f64>
+    }
+
+    pub fn clear_files(mut self) -> Self {
+        self.args.local_paths = Some(vec![]);
         self
     }
 }

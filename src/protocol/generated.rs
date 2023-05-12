@@ -41,6 +41,8 @@ pub mod api_request_context {
             #[serde(borrow)]
             #[serde(rename = "jsonData")]
             pub(crate) json_data: Option<&'a str>,
+            #[serde(rename = "maxRedirects")]
+            pub(crate) max_redirects: Option<serde_json::Number>,
             #[serde(borrow)]
             #[serde(rename = "method")]
             pub(crate) method: Option<&'a str>,
@@ -127,6 +129,8 @@ pub mod android_device {
     pub mod events {
         #[derive(Debug, Deserialize, Serialize)]
         pub enum Events {
+            #[serde(rename = "close")]
+            Close,
             #[serde(rename = "webViewAdded")]
             WebViewAdded(WebViewAdded),
             #[serde(rename = "webViewRemoved")]
@@ -192,7 +196,7 @@ pub mod android_device {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum FlingArgsDirection {
             #[serde(rename = "up")]
             Up,
@@ -271,6 +275,9 @@ pub mod android_device {
             #[serde(flatten)]
             #[serde(rename = "$mixin")]
             pub(crate) mixin: crate::protocol::generated::ContextOptions,
+            #[serde(borrow)]
+            #[serde(rename = "args")]
+            pub(crate) args: Option<Vec<&'a str>>,
             #[serde(borrow)]
             #[serde(rename = "pkg")]
             pub(crate) pkg: Option<&'a str>,
@@ -368,7 +375,7 @@ pub mod android_device {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ScrollArgsDirection {
             #[serde(rename = "up")]
             Up,
@@ -410,7 +417,7 @@ pub mod android_device {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum SwipeArgsDirection {
             #[serde(rename = "up")]
             Up,
@@ -441,7 +448,7 @@ pub mod android_device {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum WaitArgsState {
             #[serde(rename = "gone")]
             Gone
@@ -764,8 +771,6 @@ pub mod browser_context {
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct Route {
-            #[serde(rename = "request")]
-            pub(crate) request: crate::protocol::generated::Request,
             #[serde(rename = "route")]
             pub(crate) route: crate::protocol::generated::Route
         }
@@ -893,12 +898,18 @@ pub mod browser_context {
             #[serde(borrow)]
             #[serde(rename = "device")]
             pub(crate) device: Option<&'a str>,
+            #[serde(rename = "handleSIGINT")]
+            pub(crate) handle_sigint: Option<bool>,
             #[serde(borrow)]
             #[serde(rename = "language")]
             pub(crate) language: Option<&'a str>,
             #[serde(borrow)]
             #[serde(rename = "launchOptions")]
             pub(crate) launch_options: Option<&'a str>,
+            #[serde(rename = "mode")]
+            pub(crate) mode: Option<RecorderSupplementEnableArgsMode>,
+            #[serde(rename = "omitCallTracking")]
+            pub(crate) omit_call_tracking: Option<bool>,
             #[serde(borrow)]
             #[serde(rename = "outputFile")]
             pub(crate) output_file: Option<&'a str>,
@@ -906,9 +917,14 @@ pub mod browser_context {
             pub(crate) pause_on_next_statement: Option<bool>,
             #[serde(borrow)]
             #[serde(rename = "saveStorage")]
-            pub(crate) save_storage: Option<&'a str>,
-            #[serde(rename = "startRecording")]
-            pub(crate) start_recording: Option<bool>
+            pub(crate) save_storage: Option<&'a str>
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum RecorderSupplementEnableArgsMode {
+            #[serde(rename = "inspecting")]
+            Inspecting,
+            #[serde(rename = "recording")]
+            Recording
         }
         pub type SetDefaultNavigationTimeoutNoReply = ();
         #[derive(Debug, Serialize, Deserialize)]
@@ -959,11 +975,24 @@ pub mod browser_context {
             #[serde(rename = "username")]
             pub(crate) username: &'a str
         }
-        pub type SetNetworkInterceptionEnabled = ();
+        pub type SetNetworkInterceptionPatterns = ();
         #[derive(Debug, Serialize, Deserialize)]
-        pub struct SetNetworkInterceptionEnabledArgs {
-            #[serde(rename = "enabled")]
-            pub(crate) enabled: bool
+        pub struct SetNetworkInterceptionPatternsArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "patterns")]
+            pub(crate) patterns: Vec<SetNetworkInterceptionPatternsArgsPatterns<'a>>
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct SetNetworkInterceptionPatternsArgsPatterns<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "glob")]
+            pub(crate) glob: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "regexFlags")]
+            pub(crate) regex_flags: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "regexSource")]
+            pub(crate) regex_source: Option<&'a str>
         }
         pub type SetOffline = ();
         #[derive(Debug, Serialize, Deserialize)]
@@ -979,6 +1008,25 @@ pub mod browser_context {
             pub(crate) origins: Vec<crate::protocol::generated::OriginStorage>
         }
         pub type StorageStateArgs = ();
+        pub type UpdateSubscription = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct UpdateSubscriptionArgs {
+            #[serde(rename = "enabled")]
+            pub(crate) enabled: bool,
+            #[serde(rename = "event")]
+            pub(crate) event: UpdateSubscriptionArgsEvent
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum UpdateSubscriptionArgsEvent {
+            #[serde(rename = "request")]
+            Request,
+            #[serde(rename = "response")]
+            Response,
+            #[serde(rename = "requestFinished")]
+            RequestFinished,
+            #[serde(rename = "requestFailed")]
+            RequestFailed
+        }
     }
 }
 pub(crate) type BrowserType = OnlyGuid;
@@ -991,26 +1039,6 @@ pub mod browser_type {
         pub(crate) name: String
     }
     pub mod commands {
-        #[derive(Debug, Serialize, Deserialize)]
-        pub struct Connect {
-            #[serde(rename = "pipe")]
-            pub(crate) pipe: crate::protocol::generated::JsonPipe
-        }
-        #[derive(Debug, Serialize, Deserialize)]
-        pub struct ConnectArgs<'a> {
-            #[serde(borrow)]
-            #[serde(rename = "headers")]
-            pub(crate) headers: Option<&'a str>,
-            #[serde(rename = "slowMo")]
-            pub(crate) slow_mo: Option<serde_json::Number>,
-            #[serde(rename = "socksProxyRedirectPortForTest")]
-            pub(crate) socks_proxy_redirect_port_for_test: Option<serde_json::Number>,
-            #[serde(rename = "timeout")]
-            pub(crate) timeout: Option<serde_json::Number>,
-            #[serde(borrow)]
-            #[serde(rename = "wsEndpoint")]
-            pub(crate) ws_endpoint: &'a str
-        }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct ConnectOverCdp {
             #[serde(rename = "browser")]
@@ -1125,6 +1153,137 @@ pub mod console_message {
         pub(crate) url: String
     }
 }
+pub(crate) type DebugController = OnlyGuid;
+pub mod debug_controller {
+    pub mod events {
+        #[derive(Debug, Deserialize, Serialize)]
+        pub enum Events {
+            #[serde(rename = "browsersChanged")]
+            BrowsersChanged(BrowsersChanged),
+            #[serde(rename = "inspectRequested")]
+            InspectRequested(InspectRequested),
+            #[serde(rename = "paused")]
+            Paused(Paused),
+            #[serde(rename = "sourceChanged")]
+            SourceChanged(SourceChanged),
+            #[serde(rename = "stateChanged")]
+            StateChanged(StateChanged)
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct BrowsersChanged {
+            #[serde(rename = "browsers")]
+            pub(crate) browsers: Vec<BrowsersChangedBrowsers>
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct BrowsersChangedBrowsers {
+            #[serde(rename = "contexts")]
+            pub(crate) contexts: Vec<BrowsersChangedBrowsersContexts>
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct BrowsersChangedBrowsersContexts {
+            #[serde(rename = "pages")]
+            pub(crate) pages: Vec<String>
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct InspectRequested {
+            #[serde(rename = "locator")]
+            pub(crate) locator: String,
+            #[serde(rename = "selector")]
+            pub(crate) selector: String
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct Paused {
+            #[serde(rename = "paused")]
+            pub(crate) paused: bool
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct SourceChanged {
+            #[serde(rename = "actions")]
+            pub(crate) actions: Option<Vec<String>>,
+            #[serde(rename = "footer")]
+            pub(crate) footer: Option<String>,
+            #[serde(rename = "header")]
+            pub(crate) header: Option<String>,
+            #[serde(rename = "text")]
+            pub(crate) text: String
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct StateChanged {
+            #[serde(rename = "pageCount")]
+            pub(crate) page_count: serde_json::Number
+        }
+    }
+    pub mod commands {
+        pub type CloseAllBrowsers = ();
+        pub type CloseAllBrowsersArgs = ();
+        pub type HideHighlight = ();
+        pub type HideHighlightArgs = ();
+        pub type Highlight = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct HighlightArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "selector")]
+            pub(crate) selector: &'a str
+        }
+        pub type Initialize = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct InitializeArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "codegenId")]
+            pub(crate) codegen_id: &'a str,
+            #[serde(rename = "sdkLanguage")]
+            pub(crate) sdk_language: InitializeArgsSdkLanguage
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum InitializeArgsSdkLanguage {
+            #[serde(rename = "javascript")]
+            Javascript,
+            #[serde(rename = "python")]
+            Python,
+            #[serde(rename = "java")]
+            Java,
+            #[serde(rename = "csharp")]
+            Csharp
+        }
+        pub type Kill = ();
+        pub type KillArgs = ();
+        pub type Navigate = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct NavigateArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "url")]
+            pub(crate) url: &'a str
+        }
+        pub type ResetForReuse = ();
+        pub type ResetForReuseArgs = ();
+        pub type Resume = ();
+        pub type ResumeArgs = ();
+        pub type SetRecorderMode = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct SetRecorderModeArgs<'a> {
+            #[serde(rename = "mode")]
+            pub(crate) mode: SetRecorderModeArgsMode,
+            #[serde(borrow)]
+            #[serde(rename = "testIdAttributeName")]
+            pub(crate) test_id_attribute_name: Option<&'a str>
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum SetRecorderModeArgsMode {
+            #[serde(rename = "inspecting")]
+            Inspecting,
+            #[serde(rename = "recording")]
+            Recording,
+            #[serde(rename = "none")]
+            None
+        }
+        pub type SetReportStateChanged = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct SetReportStateChangedArgs {
+            #[serde(rename = "enabled")]
+            pub(crate) enabled: bool
+        }
+    }
+}
 pub(crate) type Dialog = OnlyGuid;
 pub mod dialog {
     #[derive(Debug, Serialize, Deserialize)]
@@ -1202,14 +1361,16 @@ pub mod electron {
             #[serde(rename = "timezoneId")]
             pub(crate) timezone_id: Option<&'a str>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum LaunchArgsColorScheme {
             #[serde(rename = "dark")]
             Dark,
             #[serde(rename = "light")]
             Light,
             #[serde(rename = "no-preference")]
-            NoPreference
+            NoPreference,
+            #[serde(rename = "no-override")]
+            NoOverride
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct LaunchArgsGeolocation {
@@ -1351,7 +1512,7 @@ pub mod element_handle {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ClickArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -1360,7 +1521,7 @@ pub mod element_handle {
             #[serde(rename = "middle")]
             Middle
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ClickArgsModifiers {
             Alt,
             Control,
@@ -1393,7 +1554,7 @@ pub mod element_handle {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum DblclickArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -1402,7 +1563,7 @@ pub mod element_handle {
             #[serde(rename = "middle")]
             Middle
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum DblclickArgsModifiers {
             Alt,
             Control,
@@ -1489,6 +1650,8 @@ pub mod element_handle {
             pub(crate) force: Option<bool>,
             #[serde(rename = "modifiers")]
             pub(crate) modifiers: Option<Vec<HoverArgsModifiers>>,
+            #[serde(rename = "noWaitAfter")]
+            pub(crate) no_wait_after: Option<bool>,
             #[serde(rename = "position")]
             pub(crate) position: Option<crate::protocol::generated::Point>,
             #[serde(rename = "timeout")]
@@ -1496,7 +1659,7 @@ pub mod element_handle {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum HoverArgsModifiers {
             Alt,
             Control,
@@ -1617,7 +1780,7 @@ pub mod element_handle {
             #[serde(rename = "type")]
             pub(crate) r#type: Option<ScreenshotArgsType>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ScreenshotArgsType {
             #[serde(rename = "png")]
             Png,
@@ -1658,7 +1821,10 @@ pub mod element_handle {
             pub(crate) label: Option<&'a str>,
             #[serde(borrow)]
             #[serde(rename = "value")]
-            pub(crate) value: Option<&'a str>
+            pub(crate) value: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "valueOrLabel")]
+            pub(crate) value_or_label: Option<&'a str>
         }
         pub type SelectText = ();
         #[derive(Debug, Serialize, Deserialize)]
@@ -1720,7 +1886,7 @@ pub mod element_handle {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum TapArgsModifiers {
             Alt,
             Control,
@@ -1768,7 +1934,7 @@ pub mod element_handle {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum WaitForElementStateArgsState {
             #[serde(rename = "visible")]
             Visible,
@@ -1800,7 +1966,7 @@ pub mod element_handle {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum WaitForSelectorArgsState {
             #[serde(rename = "attached")]
             Attached,
@@ -1840,7 +2006,7 @@ pub mod event_target {
             #[serde(rename = "waitId")]
             pub(crate) wait_id: &'a str
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum WaitForEventInfoArgsInfoPhase {
             #[serde(rename = "before")]
             Before,
@@ -1928,6 +2094,17 @@ pub mod frame {
             #[serde(rename = "url")]
             pub(crate) url: Option<&'a str>
         }
+        pub type Blur = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct BlurArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "selector")]
+            pub(crate) selector: &'a str,
+            #[serde(rename = "strict")]
+            pub(crate) strict: Option<bool>,
+            #[serde(rename = "timeout")]
+            pub(crate) timeout: Option<serde_json::Number>
+        }
         pub type Check = ();
         #[derive(Debug, Serialize, Deserialize)]
         pub struct CheckArgs<'a> {
@@ -1974,7 +2151,7 @@ pub mod frame {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ClickArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -1983,7 +2160,7 @@ pub mod frame {
             #[serde(rename = "middle")]
             Middle
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ClickArgsModifiers {
             Alt,
             Control,
@@ -2021,7 +2198,7 @@ pub mod frame {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum DblclickArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -2030,7 +2207,7 @@ pub mod frame {
             #[serde(rename = "middle")]
             Middle
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum DblclickArgsModifiers {
             Alt,
             Control,
@@ -2124,6 +2301,8 @@ pub mod frame {
         pub struct EvaluateExpressionArgs<'a> {
             #[serde(rename = "arg")]
             pub(crate) arg: crate::protocol::generated::SerializedArgument,
+            #[serde(rename = "exposeUtilityScript")]
+            pub(crate) expose_utility_script: Option<bool>,
             #[serde(borrow)]
             #[serde(rename = "expression")]
             pub(crate) expression: &'a str,
@@ -2152,7 +2331,9 @@ pub mod frame {
             #[serde(rename = "matches")]
             pub(crate) matches: bool,
             #[serde(rename = "received")]
-            pub(crate) received: Option<crate::protocol::generated::SerializedValue>
+            pub(crate) received: Option<crate::protocol::generated::SerializedValue>,
+            #[serde(rename = "timedOut")]
+            pub(crate) timed_out: Option<bool>
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct ExpectArgs<'a> {
@@ -2263,6 +2444,8 @@ pub mod frame {
             pub(crate) force: Option<bool>,
             #[serde(rename = "modifiers")]
             pub(crate) modifiers: Option<Vec<HoverArgsModifiers>>,
+            #[serde(rename = "noWaitAfter")]
+            pub(crate) no_wait_after: Option<bool>,
             #[serde(rename = "position")]
             pub(crate) position: Option<crate::protocol::generated::Point>,
             #[serde(borrow)]
@@ -2275,7 +2458,7 @@ pub mod frame {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum HoverArgsModifiers {
             Alt,
             Control,
@@ -2499,7 +2682,10 @@ pub mod frame {
             pub(crate) label: Option<&'a str>,
             #[serde(borrow)]
             #[serde(rename = "value")]
-            pub(crate) value: Option<&'a str>
+            pub(crate) value: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "valueOrLabel")]
+            pub(crate) value_or_label: Option<&'a str>
         }
         pub type SetContent = ();
         #[derive(Debug, Serialize, Deserialize)]
@@ -2579,7 +2765,7 @@ pub mod frame {
             #[serde(rename = "trial")]
             pub(crate) trial: Option<bool>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum TapArgsModifiers {
             Alt,
             Control,
@@ -2682,7 +2868,7 @@ pub mod frame {
             #[serde(rename = "timeout")]
             pub(crate) timeout: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum WaitForSelectorArgsState {
             #[serde(rename = "attached")]
             Attached,
@@ -2821,6 +3007,35 @@ pub mod json_pipe {
 pub(crate) type LocalUtils = OnlyGuid;
 pub mod local_utils {
     pub mod commands {
+        pub type AddStackToTracingNoReply = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct AddStackToTracingNoReplyArgs {
+            #[serde(rename = "callData")]
+            pub(crate) call_data: crate::protocol::generated::ClientSideCallMetadata
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct Connect {
+            #[serde(rename = "pipe")]
+            pub(crate) pipe: crate::protocol::generated::JsonPipe
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct ConnectArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "exposeNetwork")]
+            pub(crate) expose_network: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "headers")]
+            pub(crate) headers: Option<&'a str>,
+            #[serde(rename = "slowMo")]
+            pub(crate) slow_mo: Option<serde_json::Number>,
+            #[serde(rename = "socksProxyRedirectPortForTest")]
+            pub(crate) socks_proxy_redirect_port_for_test: Option<serde_json::Number>,
+            #[serde(rename = "timeout")]
+            pub(crate) timeout: Option<serde_json::Number>,
+            #[serde(borrow)]
+            #[serde(rename = "wsEndpoint")]
+            pub(crate) ws_endpoint: &'a str
+        }
         pub type HarClose = ();
         #[derive(Debug, Serialize, Deserialize)]
         pub struct HarCloseArgs<'a> {
@@ -2843,7 +3058,7 @@ pub mod local_utils {
             #[serde(rename = "status")]
             pub(crate) status: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum HarLookupAction {
             #[serde(rename = "error")]
             Error,
@@ -2896,14 +3111,49 @@ pub mod local_utils {
             #[serde(rename = "zipFile")]
             pub(crate) zip_file: &'a str
         }
+        pub type TraceDiscarded = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct TraceDiscardedArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "stacksId")]
+            pub(crate) stacks_id: &'a str
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct TracingStarted {
+            #[serde(rename = "stacksId")]
+            pub(crate) stacks_id: String
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct TracingStartedArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "traceName")]
+            pub(crate) trace_name: &'a str,
+            #[serde(borrow)]
+            #[serde(rename = "tracesDir")]
+            pub(crate) traces_dir: Option<&'a str>
+        }
         pub type Zip = ();
         #[derive(Debug, Serialize, Deserialize)]
         pub struct ZipArgs<'a> {
             #[serde(rename = "entries")]
             pub(crate) entries: Vec<crate::protocol::generated::NameValue>,
+            #[serde(rename = "includeSources")]
+            pub(crate) include_sources: bool,
+            #[serde(rename = "mode")]
+            pub(crate) mode: ZipArgsMode,
+            #[serde(borrow)]
+            #[serde(rename = "stacksId")]
+            pub(crate) stacks_id: Option<&'a str>,
             #[serde(borrow)]
             #[serde(rename = "zipFile")]
             pub(crate) zip_file: &'a str
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum ZipArgsMode {
+            #[serde(rename = "write")]
+            Write,
+            #[serde(rename = "append")]
+            Append
         }
     }
 }
@@ -3007,8 +3257,6 @@ pub mod page {
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct Route {
-            #[serde(rename = "request")]
-            pub(crate) request: crate::protocol::generated::Request,
             #[serde(rename = "route")]
             pub(crate) route: crate::protocol::generated::Route
         }
@@ -3056,56 +3304,9 @@ pub mod page {
             #[serde(rename = "runBeforeUnload")]
             pub(crate) run_before_unload: Option<bool>
         }
+
         pub type EmulateMedia = ();
-        #[derive(Debug, Serialize, Deserialize)]
-        pub struct EmulateMediaArgs {
-            #[serde(rename = "colorScheme")]
-            pub(crate) color_scheme: Option<EmulateMediaArgsColorScheme>,
-            #[serde(rename = "forcedColors")]
-            pub(crate) forced_colors: Option<EmulateMediaArgsForcedColors>,
-            #[serde(rename = "media")]
-            pub(crate) media: Option<EmulateMediaArgsMedia>,
-            #[serde(rename = "reducedMotion")]
-            pub(crate) reduced_motion: Option<EmulateMediaArgsReducedMotion>
-        }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-        pub enum EmulateMediaArgsColorScheme {
-            #[serde(rename = "dark")]
-            Dark,
-            #[serde(rename = "light")]
-            Light,
-            #[serde(rename = "no-preference")]
-            NoPreference,
-            #[serde(rename = "null")]
-            Null
-        }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-        pub enum EmulateMediaArgsForcedColors {
-            #[serde(rename = "active")]
-            Active,
-            #[serde(rename = "none")]
-            None,
-            #[serde(rename = "null")]
-            Null
-        }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-        pub enum EmulateMediaArgsMedia {
-            #[serde(rename = "screen")]
-            Screen,
-            #[serde(rename = "print")]
-            Print,
-            #[serde(rename = "null")]
-            Null
-        }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-        pub enum EmulateMediaArgsReducedMotion {
-            #[serde(rename = "reduce")]
-            Reduce,
-            #[serde(rename = "no-preference")]
-            NoPreference,
-            #[serde(rename = "null")]
-            Null
-        }
+
         #[derive(Debug, Serialize, Deserialize)]
         pub struct ExpectScreenshot {
             #[serde(rename = "actual")]
@@ -3121,8 +3322,9 @@ pub mod page {
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct ExpectScreenshotArgs<'a> {
+            #[serde(borrow)]
             #[serde(rename = "comparatorOptions")]
-            pub(crate) comparator_options: Option<ExpectScreenshotArgsComparatorOptions>,
+            pub(crate) comparator_options: Option<ExpectScreenshotArgsComparatorOptions<'a>>,
             #[serde(borrow)]
             #[serde(rename = "expected")]
             pub(crate) expected: Option<&'a [u8]>,
@@ -3137,7 +3339,10 @@ pub mod page {
             pub(crate) timeout: Option<serde_json::Number>
         }
         #[derive(Debug, Serialize, Deserialize)]
-        pub struct ExpectScreenshotArgsComparatorOptions {
+        pub struct ExpectScreenshotArgsComparatorOptions<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "comparator")]
+            pub(crate) comparator: Option<&'a str>,
             #[serde(rename = "maxDiffPixelRatio")]
             pub(crate) max_diff_pixel_ratio: Option<serde_json::Number>,
             #[serde(rename = "maxDiffPixels")]
@@ -3249,7 +3454,7 @@ pub mod page {
             #[serde(rename = "y")]
             pub(crate) y: serde_json::Number
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum MouseClickArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -3266,7 +3471,7 @@ pub mod page {
             #[serde(rename = "clickCount")]
             pub(crate) click_count: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum MouseDownArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -3293,7 +3498,7 @@ pub mod page {
             #[serde(rename = "clickCount")]
             pub(crate) click_count: Option<serde_json::Number>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum MouseUpArgsButton {
             #[serde(rename = "left")]
             Left,
@@ -3397,7 +3602,7 @@ pub mod page {
             #[serde(rename = "type")]
             pub(crate) r#type: Option<ScreenshotArgsType>
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum ScreenshotArgsType {
             #[serde(rename = "png")]
             Png,
@@ -3422,17 +3627,24 @@ pub mod page {
             #[serde(rename = "headers")]
             pub(crate) headers: Vec<crate::protocol::generated::NameValue>
         }
-        pub type SetFileChooserInterceptedNoReply = ();
+        pub type SetNetworkInterceptionPatterns = ();
         #[derive(Debug, Serialize, Deserialize)]
-        pub struct SetFileChooserInterceptedNoReplyArgs {
-            #[serde(rename = "intercepted")]
-            pub(crate) intercepted: bool
+        pub struct SetNetworkInterceptionPatternsArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "patterns")]
+            pub(crate) patterns: Vec<SetNetworkInterceptionPatternsArgsPatterns<'a>>
         }
-        pub type SetNetworkInterceptionEnabled = ();
         #[derive(Debug, Serialize, Deserialize)]
-        pub struct SetNetworkInterceptionEnabledArgs {
-            #[serde(rename = "enabled")]
-            pub(crate) enabled: bool
+        pub struct SetNetworkInterceptionPatternsArgsPatterns<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "glob")]
+            pub(crate) glob: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "regexFlags")]
+            pub(crate) regex_flags: Option<&'a str>,
+            #[serde(borrow)]
+            #[serde(rename = "regexSource")]
+            pub(crate) regex_source: Option<&'a str>
         }
         pub type SetViewportSize = ();
         #[derive(Debug, Serialize, Deserialize)]
@@ -3526,6 +3738,27 @@ pub mod page {
             #[serde(rename = "y")]
             pub(crate) y: serde_json::Number
         }
+        pub type UpdateSubscription = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct UpdateSubscriptionArgs {
+            #[serde(rename = "enabled")]
+            pub(crate) enabled: bool,
+            #[serde(rename = "event")]
+            pub(crate) event: UpdateSubscriptionArgsEvent
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum UpdateSubscriptionArgsEvent {
+            #[serde(rename = "fileChooser")]
+            FileChooser,
+            #[serde(rename = "request")]
+            Request,
+            #[serde(rename = "response")]
+            Response,
+            #[serde(rename = "requestFinished")]
+            RequestFinished,
+            #[serde(rename = "requestFailed")]
+            RequestFailed
+        }
     }
 }
 pub(crate) type Playwright = OnlyGuid;
@@ -3542,6 +3775,8 @@ pub mod playwright {
         pub(crate) electron: crate::protocol::generated::Electron,
         #[serde(rename = "firefox")]
         pub(crate) firefox: crate::protocol::generated::BrowserType,
+        #[serde(rename = "preConnectedAndroidDevice")]
+        pub(crate) pre_connected_android_device: Option<crate::protocol::generated::AndroidDevice>,
         #[serde(rename = "preLaunchedBrowser")]
         pub(crate) pre_launched_browser: Option<crate::protocol::generated::Browser>,
         #[serde(rename = "selectors")]
@@ -3577,7 +3812,7 @@ pub mod playwright {
         #[serde(rename = "viewport")]
         pub(crate) viewport: InitializerDeviceDescriptorsDescriptorViewport
     }
-    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
     pub enum InitializerDeviceDescriptorsDescriptorDefaultBrowserType {
         #[serde(rename = "chromium")]
         Chromium,
@@ -3601,8 +3836,6 @@ pub mod playwright {
         pub(crate) width: serde_json::Number
     }
     pub mod commands {
-        pub type HideHighlight = ();
-        pub type HideHighlightArgs = ();
         #[derive(Debug, Serialize, Deserialize)]
         pub struct NewRequest {
             #[serde(rename = "request")]
@@ -3766,10 +3999,20 @@ pub mod root {
             pub(crate) playwright: crate::protocol::generated::Playwright
         }
         #[derive(Debug, Serialize, Deserialize)]
-        pub struct InitializeArgs<'a> {
-            #[serde(borrow)]
+        pub struct InitializeArgs {
             #[serde(rename = "sdkLanguage")]
-            pub(crate) sdk_language: &'a str
+            pub(crate) sdk_language: InitializeArgsSdkLanguage
+        }
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
+        pub enum InitializeArgsSdkLanguage {
+            #[serde(rename = "javascript")]
+            Javascript,
+            #[serde(rename = "python")]
+            Python,
+            #[serde(rename = "java")]
+            Java,
+            #[serde(rename = "csharp")]
+            Csharp
         }
     }
 }
@@ -3842,6 +4085,13 @@ pub mod selectors {
             #[serde(borrow)]
             #[serde(rename = "source")]
             pub(crate) source: &'a str
+        }
+        pub type SetTestIdAttributeName = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct SetTestIdAttributeNameArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "testIdAttributeName")]
+            pub(crate) test_id_attribute_name: &'a str
         }
     }
 }
@@ -3964,9 +4214,16 @@ pub mod tracing {
             #[serde(rename = "sources")]
             pub(crate) sources: Option<bool>
         }
-        pub type TracingStartChunk = ();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct TracingStartChunk {
+            #[serde(rename = "traceName")]
+            pub(crate) trace_name: String
+        }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct TracingStartChunkArgs<'a> {
+            #[serde(borrow)]
+            #[serde(rename = "name")]
+            pub(crate) name: Option<&'a str>,
             #[serde(borrow)]
             #[serde(rename = "title")]
             pub(crate) title: Option<&'a str>
@@ -3977,22 +4234,22 @@ pub mod tracing {
         pub struct TracingStopChunk {
             #[serde(rename = "artifact")]
             pub(crate) artifact: Option<crate::protocol::generated::Artifact>,
-            #[serde(rename = "sourceEntries")]
-            pub(crate) source_entries: Option<Vec<crate::protocol::generated::NameValue>>
+            #[serde(rename = "entries")]
+            pub(crate) entries: Option<Vec<crate::protocol::generated::NameValue>>
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct TracingStopChunkArgs {
             #[serde(rename = "mode")]
             pub(crate) mode: TracingStopChunkArgsMode
         }
-        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
         pub enum TracingStopChunkArgsMode {
-            #[serde(rename = "doNotSave")]
-            DoNotSave,
-            #[serde(rename = "compressTrace")]
-            CompressTrace,
-            #[serde(rename = "compressTraceAndSources")]
-            CompressTraceAndSources
+            #[serde(rename = "archive")]
+            Archive,
+            #[serde(rename = "discard")]
+            Discard,
+            #[serde(rename = "entries")]
+            Entries
         }
     }
 }
@@ -4104,7 +4361,7 @@ pub struct ApiResponse {
     #[serde(rename = "fetchUid")]
     pub(crate) fetch_uid: String,
     #[serde(rename = "headers")]
-    pub(crate) headers: Vec<crate::protocol::generated::NameValue>,
+    pub(crate) headers: Vec<NameValue>,
     #[serde(rename = "status")]
     pub(crate) status: serde_json::Number,
     #[serde(rename = "statusText")]
@@ -4119,7 +4376,7 @@ pub struct AxNode {
     #[serde(rename = "checked")]
     pub(crate) checked: Option<AxNodeChecked>,
     #[serde(rename = "children")]
-    pub(crate) children: Option<Vec<crate::protocol::generated::AxNode>>,
+    pub(crate) children: Option<Vec<AxNode>>,
     #[serde(rename = "description")]
     pub(crate) description: Option<String>,
     #[serde(rename = "disabled")]
@@ -4169,7 +4426,7 @@ pub struct AxNode {
     #[serde(rename = "valuetext")]
     pub(crate) valuetext: Option<String>
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum AxNodeChecked {
     #[serde(rename = "checked")]
     Checked,
@@ -4178,7 +4435,7 @@ pub enum AxNodeChecked {
     #[serde(rename = "mixed")]
     Mixed
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum AxNodePressed {
     #[serde(rename = "pressed")]
     Pressed,
@@ -4190,13 +4447,13 @@ pub enum AxNodePressed {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AndroidElementInfo {
     #[serde(rename = "bounds")]
-    pub(crate) bounds: crate::protocol::generated::Rect,
+    pub(crate) bounds: Rect,
     #[serde(rename = "checkable")]
     pub(crate) checkable: bool,
     #[serde(rename = "checked")]
     pub(crate) checked: bool,
     #[serde(rename = "children")]
-    pub(crate) children: Option<Vec<crate::protocol::generated::AndroidElementInfo>>,
+    pub(crate) children: Option<Vec<AndroidElementInfo>>,
     #[serde(rename = "clazz")]
     pub(crate) clazz: String,
     #[serde(rename = "clickable")]
@@ -4262,14 +4519,14 @@ pub struct AndroidSelector {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AndroidSelectorHasChild {
     #[serde(rename = "selector")]
-    pub(crate) selector: crate::protocol::generated::AndroidSelector
+    pub(crate) selector: AndroidSelector
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AndroidSelectorHasDescendant {
     #[serde(rename = "maxDepth")]
     pub(crate) max_depth: Option<serde_json::Number>,
     #[serde(rename = "selector")]
-    pub(crate) selector: crate::protocol::generated::AndroidSelector
+    pub(crate) selector: AndroidSelector
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AndroidWebView {
@@ -4279,6 +4536,13 @@ pub struct AndroidWebView {
     pub(crate) pkg: String,
     #[serde(rename = "socketName")]
     pub(crate) socket_name: String
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClientSideCallMetadata {
+    #[serde(rename = "id")]
+    pub(crate) id: serde_json::Number,
+    #[serde(rename = "stack")]
+    pub(crate) stack: Option<Vec<StackFrame>>
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExpectedTextValue {
@@ -4320,8 +4584,19 @@ pub struct Metadata {
     #[serde(skip_serializing_if = "is_default")]
     #[serde(rename = "internal")]
     pub(crate) internal: Option<bool>,
-    #[serde(rename = "stack")]
-    pub(crate) stack: Option<Vec<crate::protocol::generated::StackFrame>>
+    #[serde(rename = "location")]
+    pub(crate) location: Option<MetadataLocation>,
+    #[serde(rename = "wallTime")]
+    pub(crate) wall_time: Option<serde_json::Number>
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MetadataLocation {
+    #[serde(rename = "column")]
+    pub(crate) column: Option<serde_json::Number>,
+    #[serde(rename = "file")]
+    pub(crate) file: String,
+    #[serde(rename = "line")]
+    pub(crate) line: Option<serde_json::Number>
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NameValue {
@@ -4349,7 +4624,7 @@ pub struct NetworkCookie {
     #[serde(rename = "value")]
     pub(crate) value: String
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum NetworkCookieSameSite {
     Strict,
     Lax,
@@ -4358,7 +4633,7 @@ pub enum NetworkCookieSameSite {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OriginStorage {
     #[serde(rename = "localStorage")]
-    pub(crate) local_storage: Vec<crate::protocol::generated::NameValue>,
+    pub(crate) local_storage: Vec<NameValue>,
     #[serde(rename = "origin")]
     pub(crate) origin: String
 }
@@ -4384,7 +4659,7 @@ pub struct RecordHarOptions {
     #[serde(rename = "urlRegexSource")]
     pub(crate) url_regex_source: Option<String>
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum RecordHarOptionsContent {
     #[serde(rename = "embed")]
     Embed,
@@ -4393,12 +4668,38 @@ pub enum RecordHarOptionsContent {
     #[serde(rename = "omit")]
     Omit
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum RecordHarOptionsMode {
     #[serde(rename = "full")]
     Full,
     #[serde(rename = "minimal")]
     Minimal
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecorderSource {
+    #[serde(rename = "group")]
+    pub(crate) group: Option<String>,
+    #[serde(rename = "highlight")]
+    pub(crate) highlight: Vec<RecorderSourceHighlight>,
+    #[serde(rename = "id")]
+    pub(crate) id: String,
+    #[serde(rename = "isRecorded")]
+    pub(crate) is_recorded: bool,
+    #[serde(rename = "label")]
+    pub(crate) label: String,
+    #[serde(rename = "language")]
+    pub(crate) language: String,
+    #[serde(rename = "revealLine")]
+    pub(crate) reveal_line: Option<serde_json::Number>,
+    #[serde(rename = "text")]
+    pub(crate) text: String
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecorderSourceHighlight {
+    #[serde(rename = "line")]
+    pub(crate) line: serde_json::Number,
+    #[serde(rename = "type")]
+    pub(crate) r#type: String
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rect {
@@ -4464,16 +4765,16 @@ pub struct SecurityDetails {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SerializedArgument {
     #[serde(rename = "handles")]
-    pub(crate) handles: Vec<crate::protocol::generated::Channel>,
+    pub(crate) handles: Vec<Channel>,
     #[serde(rename = "value")]
-    pub(crate) value: crate::protocol::generated::SerializedValue
+    pub(crate) value: SerializedValue
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SerializedError {
     #[serde(rename = "error")]
     pub(crate) error: Option<SerializedErrorError>,
     #[serde(rename = "value")]
-    pub(crate) value: Option<crate::protocol::generated::SerializedValue>
+    pub(crate) value: Option<SerializedValue>
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SerializedErrorError {
@@ -4525,7 +4826,7 @@ pub struct SerializedValueR {
     #[serde(rename = "p")]
     pub(crate) p: String
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum SerializedValueV {
     #[serde(rename = "null")]
     Null,
@@ -4559,7 +4860,7 @@ pub struct SetNetworkCookie {
     #[serde(rename = "value")]
     pub(crate) value: String
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum SetNetworkCookieSameSite {
     Strict,
     Lax,
@@ -4568,13 +4869,13 @@ pub enum SetNetworkCookieSameSite {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StackFrame {
     #[serde(rename = "column")]
-    pub(crate) column: Option<serde_json::Number>,
+    pub(crate) column: serde_json::Number,
     #[serde(rename = "file")]
     pub(crate) file: String,
     #[serde(rename = "function")]
     pub(crate) function: Option<String>,
     #[serde(rename = "line")]
-    pub(crate) line: Option<serde_json::Number>
+    pub(crate) line: serde_json::Number
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CommonScreenshotOptions {
@@ -4589,14 +4890,14 @@ pub struct CommonScreenshotOptions {
     #[serde(rename = "scale")]
     pub(crate) scale: Option<CommonScreenshotOptionsScale>
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum CommonScreenshotOptionsAnimations {
     #[serde(rename = "disabled")]
     Disabled,
     #[serde(rename = "allow")]
     Allow
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum CommonScreenshotOptionsCaret {
     #[serde(rename = "hide")]
     Hide,
@@ -4610,7 +4911,7 @@ pub struct CommonScreenshotOptionsMask {
     #[serde(rename = "selector")]
     pub(crate) selector: String
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum CommonScreenshotOptionsScale {
     #[serde(rename = "css")]
     Css,
@@ -4672,21 +4973,25 @@ pub struct ContextOptions {
     #[serde(rename = "viewport")]
     pub(crate) viewport: Option<ContextOptionsViewport>
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum ContextOptionsColorScheme {
     #[serde(rename = "dark")]
     Dark,
     #[serde(rename = "light")]
     Light,
     #[serde(rename = "no-preference")]
-    NoPreference
+    NoPreference,
+    #[serde(rename = "no-override")]
+    NoOverride
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum ContextOptionsForcedColors {
     #[serde(rename = "active")]
     Active,
     #[serde(rename = "none")]
-    None
+    None,
+    #[serde(rename = "no-override")]
+    NoOverride
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ContextOptionsGeolocation {
@@ -4718,12 +5023,14 @@ pub struct ContextOptionsRecordVideoSize {
     #[serde(rename = "width")]
     pub(crate) width: serde_json::Number
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum ContextOptionsReducedMotion {
     #[serde(rename = "reduce")]
     Reduce,
     #[serde(rename = "no-preference")]
-    NoPreference
+    NoPreference,
+    #[serde(rename = "no-override")]
+    NoOverride
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ContextOptionsScreen {
@@ -4732,7 +5039,7 @@ pub struct ContextOptionsScreen {
     #[serde(rename = "width")]
     pub(crate) width: serde_json::Number
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum ContextOptionsServiceWorkers {
     #[serde(rename = "allow")]
     Allow,

@@ -7,19 +7,26 @@ pub(crate) mod prelude {
         map::Map,
         value::{to_value, Value}
     };
+    pub use parking_lot::{
+        Mutex, MutexGuard
+    };
     pub use std::{
         collections::HashMap,
         convert::{TryFrom, TryInto},
         future::Future,
         path::{Path, PathBuf},
         pin::Pin,
-        sync::{Arc, Mutex, MutexGuard, Weak},
+        sync::{
+            Arc, Weak,
+            // Mutex, MutexGuard
+        },
         task::{Poll, Waker},
         time::Duration
     };
     pub use strong::*;
     pub type Wm<T> = Weak<Mutex<T>>;
     pub type Am<T> = Arc<Mutex<T>>;
+
 
     #[cfg(feature = "rt-async-std")]
     #[derive(Debug, thiserror::Error)]

@@ -143,21 +143,24 @@ fn format_use_ty(x: &types::Model) -> TokenStream {
             let z = format_use_ty(z);
             quote!(HashMap<#y, #z>)
         }
-        Model::Known { name, .. } => match name.as_ref() {
-            "binary" if reference => quote!(&'a [u8]),
-            "binary" => quote!(Vec<u8>),
-            "json" if reference => quote!(&'a str),
-            "json" => quote!(String),
-            "string" if reference => quote!(&'a str),
-            "string" => quote!(String),
-            "number" => quote!(serde_json::Number),
-            "float" => quote!(f64),
-            "boolean" => quote!(bool),
-            "void" => quote!(()),
-            _ => {
-                let n = format_ident!("{}", name);
-                assert!(!reference);
-                quote!(#n)
+        Model::Known { name, .. } => {
+            match name.as_ref() {
+                "binary" if reference => quote!(&'a [u8]),
+                "binary" => quote!(Vec<u8>),
+                "json" if reference => quote!(&'a str),
+                "json" => quote!(String),
+                "string" if reference => quote!(&'a str),
+                "string" => quote!(String),
+                "number" => quote!(serde_json::Number),
+                "float" => quote!(f64),
+                "boolean" => quote!(bool),
+                "void" => quote!(()),
+                "JsonElement?" => quote!(()),
+                _ => {
+                    let n = format_ident!("{}", name);
+                    assert!(!reference);
+                    quote!(#n)
+                }
             }
         }
     }
