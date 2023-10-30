@@ -1,22 +1,26 @@
-use crate::imp::{core::*, js_handle::JsHandle, prelude::*, utils::SourceLocation};
+use crate::imp::{core::*, prelude::*, utils::SourceLocation};
 
 #[derive(Debug)]
 pub(crate) struct ConsoleMessage {
     channel: ChannelOwner,
     location: SourceLocation,
     text: String,
-    message_type: String,
+    message_type: String
 }
 
 impl ConsoleMessage {
-    pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
+    pub(crate) fn try_new(_ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         #[derive(Deserialize)]
         struct De {
             location: SourceLocation,
             text: String,
-            r#type: String,
+            r#type: String
         }
-        let De { location, text, r#type } = serde_json::from_value(channel.initializer.clone())?;
+        let De {
+            location,
+            text,
+            r#type
+        } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,
             location,
@@ -33,16 +37,11 @@ impl ConsoleMessage {
             .unwrap_or_default()
     }
 
-    pub(crate) fn text(&self) -> &str {
-        &self.text
-    }
+    pub(crate) fn text(&self) -> &str { &self.text }
 
     pub(crate) fn location(&self) -> &SourceLocation { &self.location }
 
-
-    pub fn message_type(&self) -> &str {
-        &self.message_type
-    }
+    pub fn message_type(&self) -> &str { &self.message_type }
 }
 
 impl RemoteObject for ConsoleMessage {

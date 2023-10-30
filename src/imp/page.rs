@@ -1,3 +1,4 @@
+use base64::Engine;
 use crate::{
     imp::{
         browser_context::BrowserContext,
@@ -10,15 +11,12 @@ use crate::{
         prelude::*,
         request::Request,
         response::Response,
-        utils::{
-            ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
-            ScreenshotType, Viewport
-        },
+        utils::{FloatRect, Header, Length, MouseButton, PdfMargins, ScreenshotType, Viewport},
         video::Video,
         websocket::WebSocket,
         worker::Worker
     },
-    protocol::generated::{LifecycleEvent}
+    protocol::generated::LifecycleEvent
 };
 
 #[derive(Debug)]
@@ -248,7 +246,7 @@ impl Page {
         let path = args.path.clone();
         let v = send_message!(self, "pdf", args);
         let b64 = only_str(&v)?;
-        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(Error::InvalidBase64)?;
         may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
@@ -269,7 +267,7 @@ impl Page {
         let path = args.path.clone();
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&v)?;
-        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(Error::InvalidBase64)?;
         may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
@@ -308,9 +306,7 @@ impl Page {
 
 // mutable
 impl Page {
-    pub(crate) fn viewport_size(&self) -> Option<Viewport> {
-        self.var.lock().viewport.clone()
-    }
+    pub(crate) fn viewport_size(&self) -> Option<Viewport> { self.var.lock().viewport.clone() }
 
     pub(crate) async fn set_viewport_size(&self, viewport_size: Viewport) -> ArcResult<()> {
         #[derive(Debug, Serialize)]
@@ -523,7 +519,7 @@ impl Page {
         } = serde_json::from_value(params.into())?;
         let element = get_object!(ctx, &guid, ElementHandle)?;
         let this = get_object!(ctx, self.guid(), Page)?;
-        let file_chooser = FileChooser::new(this, element, is_multiple);
+        let _file_chooser = FileChooser::new(this, element, is_multiple);
         // self.emit_event(Evt::FileChooser(file_chooser));
         Ok(())
     }
@@ -817,7 +813,6 @@ pub(crate) struct ScreenshotArgs {
 //     pub(crate) media: Option<Media>,
 //     pub(crate) color_scheme: Option<ColorScheme>
 // }
-
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
 pub enum EmulateMediaArgsMedia {

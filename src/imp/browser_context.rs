@@ -168,9 +168,7 @@ impl BrowserContext {
 
 // mutable
 impl BrowserContext {
-    pub(crate) fn browser(&self) -> Option<Weak<Browser>> {
-        self.var.lock().browser.clone()
-    }
+    pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.var.lock().browser.clone() }
 
     pub(crate) fn set_browser(&self, browser: Weak<Browser>) {
         self.var.lock().browser = Some(browser);
@@ -186,10 +184,7 @@ impl BrowserContext {
     }
 
     pub(crate) fn default_timeout(&self) -> u32 {
-        self.var
-            .lock()
-            .timeout
-            .unwrap_or(Self::DEFAULT_TIMEOUT)
+        self.var.lock().timeout.unwrap_or(Self::DEFAULT_TIMEOUT)
     }
 
     pub(crate) fn default_navigation_timeout(&self) -> u32 {

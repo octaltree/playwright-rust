@@ -74,8 +74,7 @@ impl BrowserType {
         let arc_browser = upgrade(&browser)?;
         arc_browser.set_is_remote_true();
         if let Some(OnlyGuid { guid }) = default_context {
-            let default_context =
-                get_object!(self.context()?.lock(), &guid, BrowserContext)?;
+            let default_context = get_object!(self.context()?.lock(), &guid, BrowserContext)?;
             let arc_context = upgrade(&default_context)?;
             arc_browser.push_context(default_context);
             arc_context.set_browser(browser.clone());
@@ -83,7 +82,7 @@ impl BrowserType {
         Ok(browser)
     }
 
-    pub(crate) async fn connect(&self, args: ConnectArgs<'_>) -> ArcResult<Weak<Browser>> {
+    pub(crate) async fn connect(&self, _args: ConnectArgs<'_>) -> ArcResult<Weak<Browser>> {
         todo!()
     }
 }

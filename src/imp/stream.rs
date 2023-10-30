@@ -3,6 +3,7 @@ use std::{
     fs::File,
     io::{BufWriter, Write}
 };
+use base64::Engine;
 
 #[derive(Debug)]
 pub(crate) struct Stream {
@@ -21,7 +22,7 @@ impl Stream {
             if b64.is_empty() {
                 break;
             } else {
-                let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+                let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(Error::InvalidBase64)?;
                 writer.write(&bytes).map_err(Error::from)?;
             }
         }

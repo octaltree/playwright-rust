@@ -840,7 +840,7 @@ impl SetInputFilePathsBuilder {
     }
 
     pub fn add_file(mut self, x: &str) -> Self {
-        let mut local_paths = self.args.local_paths.as_mut().unwrap();
+        let local_paths = self.args.local_paths.as_mut().unwrap();
         local_paths.push(fs::canonicalize(x).unwrap());
         self
     }

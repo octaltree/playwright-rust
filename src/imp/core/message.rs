@@ -3,9 +3,8 @@ pub(crate) mod ser;
 
 use crate::imp::core::Error;
 use serde::{Deserialize, Deserializer};
-use serde_json::{map::Map, Number, value::Value};
-use std::fmt::Debug;
-use std::time::UNIX_EPOCH;
+use serde_json::{map::Map, value::Value, Number};
+use std::{fmt::Debug, time::UNIX_EPOCH};
 use strong::*;
 
 #[derive(Debug, Serialize)]
@@ -17,17 +16,22 @@ pub(crate) struct Req<'a, 'b> {
     pub(crate) method: &'b S<Method>,
     #[serde(default)]
     pub(crate) params: Map<String, Value>,
-    pub(crate) metadata: crate::protocol::generated::Metadata,
+    pub(crate) metadata: crate::protocol::generated::Metadata
 }
 
 impl Default for crate::protocol::generated::Metadata {
     fn default() -> Self {
-        let wall_time = Number::from(std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        let wall_time = Number::from(
+            std::time::SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
         Self {
             api_name: None,
             internal: None,
             location: None,
-            wall_time: Some(wall_time),
+            wall_time: Some(wall_time)
         }
     }
 }
@@ -36,39 +40,39 @@ impl Default for crate::protocol::generated::Metadata {
 #[serde(untagged)]
 pub(crate) enum Res {
     Result(ResResult),
-    Initial(ResInitial),
+    Initial(ResInitial)
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct ResResult {
     pub(crate) id: i32,
-    pub(crate) body: Result<Value, ErrorMessage>,
+    pub(crate) body: Result<Value, ErrorMessage>
 }
 
 impl<'de> Deserialize<'de> for ResResult {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>
+    where
+        D: Deserializer<'de>
     {
         #[derive(Deserialize)]
         struct ResponseResultImpl {
             id: i32,
             result: Option<Value>,
-            error: Option<ErrorWrap>,
+            error: Option<ErrorWrap>
         }
         let ResponseResultImpl { id, result, error } =
             ResponseResultImpl::deserialize(deserializer)?;
         if let Some(ErrorWrap { error }) = error {
             Ok(Self {
                 id,
-                body: Err(error),
+                body: Err(error)
             })
         } else if let Some(x) = result {
             Ok(Self { id, body: Ok(x) })
         } else {
             Ok(Self {
                 id,
-                body: Ok(Value::default()),
+                body: Ok(Value::default())
             })
         }
     }
@@ -79,7 +83,7 @@ pub(crate) struct ResInitial {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
     #[serde(default)]
-    pub(crate) params: Map<String, Value>,
+    pub(crate) params: Map<String, Value>
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -88,12 +92,12 @@ pub(crate) struct CreateParams {
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
     #[serde(default)]
-    pub(crate) initializer: Value,
+    pub(crate) initializer: Value
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct ErrorWrap {
-    error: ErrorMessage,
+    error: ErrorMessage
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, thiserror::Error)]
@@ -101,12 +105,12 @@ pub(crate) struct ErrorWrap {
 pub struct ErrorMessage {
     pub(crate) name: String,
     pub(crate) message: String,
-    pub(crate) stack: String,
+    pub(crate) stack: String
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct OnlyGuid {
-    pub(crate) guid: Str<Guid>,
+    pub(crate) guid: Str<Guid>
 }
 
 pub(crate) enum Guid {}
@@ -203,12 +207,12 @@ pub(crate) fn guid_from_params(v: &Value) -> Result<&S<Guid>, Error> {
 #[derive(Debug, Serialize)]
 pub(crate) struct Argument {
     pub(crate) value: Map<String, Value>,
-    pub(crate) handles: Vec<OnlyGuid>,
+    pub(crate) handles: Vec<OnlyGuid>
 }
 
 #[derive(Debug, Deserialize)]
 pub struct DateTime {
-    d: String,
+    d: String
 }
 
 mod datetime {
@@ -235,8 +239,8 @@ mod datetime {
 
     impl ser::Serialize for DateTime {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: ser::Serializer
+        where
+            S: ser::Serializer
         {
             let mut s = serializer.serialize_struct("e7ee19d3-64cb-4286-8762-6dd8ab78eb89", 1)?;
             s.serialize_field("d", &self.d)?;

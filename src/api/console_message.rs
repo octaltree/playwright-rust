@@ -1,6 +1,5 @@
-use crate::{
-    api::JsHandle,
-    imp::{console_message::ConsoleMessage as Impl, core::*, prelude::*, utils::SourceLocation}
+use crate::imp::{
+    console_message::ConsoleMessage as Impl, core::*, prelude::*, utils::SourceLocation
 };
 
 /// `ConsoleMessage` objects are dispatched by page via the [page::Event::Console](crate::api::page::Event::Console) event.
@@ -24,5 +23,4 @@ impl ConsoleMessage {
     pub fn location(&self) -> Result<SourceLocation, Error> {
         Ok(upgrade(&self.inner)?.location().to_owned())
     }
-
 }

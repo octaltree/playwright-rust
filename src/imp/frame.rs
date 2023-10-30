@@ -4,7 +4,6 @@ use crate::{
         core::*,
         element_handle::ElementHandle,
         js_handle::JsHandle,
-        page,
         page::Page,
         prelude::*,
         response::Response,
@@ -223,9 +222,7 @@ impl Frame {
             serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         let es = elements
             .into_iter()
-            .map(|OnlyGuid { guid }| {
-                get_object!(self.context()?.lock(), &guid, ElementHandle)
-            })
+            .map(|OnlyGuid { guid }| get_object!(self.context()?.lock(), &guid, ElementHandle))
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
     }
@@ -500,9 +497,7 @@ impl Frame {
 
     pub(crate) fn parent_frame(&self) -> Option<Weak<Frame>> { self.parent_frame.clone() }
 
-    pub(crate) fn child_frames(&self) -> Vec<Weak<Frame>> {
-        self.var.lock().child_frames.clone()
-    }
+    pub(crate) fn child_frames(&self) -> Vec<Weak<Frame>> { self.var.lock().child_frames.clone() }
 
     pub(crate) fn add_child_frames(&self, child: Weak<Frame>) {
         self.var.lock().child_frames.push(child);

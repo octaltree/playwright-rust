@@ -1,23 +1,18 @@
 pub(crate) mod impl_future {
-    pub use std::{future::Future, pin::Pin, task};
+    pub use std::task;
 }
 pub(crate) mod prelude {
+    pub use parking_lot::Mutex;
     pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
-    pub use serde_json::{
-        map::Map,
-        value::{to_value, Value}
-    };
-    pub use parking_lot::{
-        Mutex, MutexGuard
-    };
+    pub use serde_json::{map::Map, value::Value};
     pub use std::{
         collections::HashMap,
         convert::{TryFrom, TryInto},
         future::Future,
         path::{Path, PathBuf},
-        pin::Pin,
         sync::{
-            Arc, Weak,
+            Arc,
+            Weak
             // Mutex, MutexGuard
         },
         task::{Poll, Waker},
@@ -26,7 +21,6 @@ pub(crate) mod prelude {
     pub use strong::*;
     pub type Wm<T> = Weak<Mutex<T>>;
     pub type Am<T> = Arc<Mutex<T>>;
-
 
     #[cfg(feature = "rt-async-std")]
     #[derive(Debug, thiserror::Error)]

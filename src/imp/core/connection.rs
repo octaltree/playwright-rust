@@ -2,13 +2,8 @@ use crate::imp::{core::*, prelude::*};
 use std::{
     io,
     process::{Child, Command, Stdio},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        TryLockError
-    }
+    sync::atomic::{AtomicBool, Ordering}
 };
-#[cfg(target_os = "windows")]
-use std::os::windows::process::CommandExt;
 
 #[derive(Debug)]
 pub(crate) struct Context {
@@ -140,7 +135,7 @@ impl Connection {
                         };
                         let mut reader = match r.try_lock() {
                             Some(x) => x,
-                            None => continue,
+                            None => continue
                         };
                         match reader.try_read()? {
                             Some(x) => x,

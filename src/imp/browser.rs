@@ -49,9 +49,7 @@ impl Browser {
         self.var.lock().contexts.to_owned()
     }
 
-    pub(crate) fn push_context(&self, c: Weak<BrowserContext>) {
-        self.var.lock().contexts.push(c);
-    }
+    pub(crate) fn push_context(&self, c: Weak<BrowserContext>) { self.var.lock().contexts.push(c); }
 
     pub(super) fn remove_context(&self, c: &Weak<BrowserContext>) {
         let contexts = &mut self.var.lock().contexts;

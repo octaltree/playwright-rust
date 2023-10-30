@@ -12,18 +12,15 @@ pub use crate::{
 };
 use crate::{
     api::{
-        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, FileChooser,
-        Frame, Keyboard, Response, TouchScreen, Video, WebSocket, Worker
+        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, Frame,
+        Keyboard, Response, TouchScreen, Video, WebSocket, Worker
     },
     imp::{
         core::*,
         frame::Frame as FrameImpl,
         page::{EmulateMediaArgs, Evt, Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
         prelude::*,
-        utils::{
-            ColorScheme, DocumentLoadState, File, FloatRect, Length, PdfMargins, ScreenshotType,
-            Viewport
-        }
+        utils::{ColorScheme, File, FloatRect, Length, PdfMargins, ScreenshotType, Viewport}
     },
     protocol::generated::LifecycleEvent,
     Error

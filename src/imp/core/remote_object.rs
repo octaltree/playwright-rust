@@ -1,8 +1,6 @@
 use crate::imp::{core::*, impl_future::*, prelude::*};
 use serde_json::value::Value;
-use std::{fmt::Debug, future::Future, pin::Pin, sync::TryLockError, task::Waker};
-use std::ops::DerefMut;
-use parking_lot::RawMutex;
+use std::{fmt::Debug, future::Future, ops::DerefMut, pin::Pin, task::Waker};
 
 pub(crate) fn upgrade<T>(w: &Weak<T>) -> Result<Arc<T>, Error> {
     w.upgrade().ok_or(Error::ObjectNotFound)
@@ -283,8 +281,8 @@ mod remote_enum {
     }
 }
 
-pub(crate) use remote_enum::{RemoteArc, RemoteWeak};
 use crate::protocol::generated::MetadataLocation;
+pub(crate) use remote_enum::{RemoteArc, RemoteWeak};
 
 pub(crate) struct RequestBody {
     pub(crate) guid: Str<Guid>,
@@ -302,7 +300,7 @@ impl RequestBody {
         metadata.location = Some(MetadataLocation {
             column: Some(0.into()),
             file: "".to_string(),
-            line: Some(0.into()),
+            line: Some(0.into())
         });
         RequestBody {
             guid,
@@ -399,7 +397,9 @@ where
         }
         {
             match this.place.try_lock() {
-                None => { pending!() }
+                None => {
+                    pending!()
+                }
                 Some(mut x) => {
                     let t = x.deref_mut();
                     if let Some(x) = &*t {
@@ -410,7 +410,9 @@ where
         }
         {
             match this.waker.try_lock() {
-                None => {pending!()}
+                None => {
+                    pending!()
+                }
                 Some(mut t) => {
                     let x = t.deref_mut();
                     if x.is_none() {

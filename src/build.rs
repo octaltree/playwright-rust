@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR}
 };
 
-const DRIVER_VERSION: &str = "1.32.2-beta-1680712603000";
+const DRIVER_VERSION: &'static str = "1.39.0";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();

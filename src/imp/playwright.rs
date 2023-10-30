@@ -1,13 +1,8 @@
 use crate::{
     api::{browser::ContextBuilder, browser_type::PersistentContextLauncher},
-    imp::{
-        browser_type::BrowserType, core::*, impl_future::*, prelude::*, selectors::Selectors,
-        utils::Viewport
-    },
+    imp::{browser_type::BrowserType, core::*, prelude::*, selectors::Selectors, utils::Viewport},
     protocol::generated::{playwright as protocol, root::commands::InitializeArgsSdkLanguage}
 };
-use serde::Deserialize;
-use std::{sync::TryLockError, time::Instant};
 
 #[derive(Debug)]
 pub(crate) struct Playwright {
@@ -23,16 +18,16 @@ impl Playwright {
     pub(crate) fn try_new(ctx: &Context, channel: ChannelOwner) -> Result<Self, Error> {
         // TODO
         let protocol::Initializer {
-            android,
+            android: _,
             chromium,
             device_descriptors,
-            electron,
+            electron: _,
             firefox,
-            pre_connected_android_device,
-            pre_launched_browser,
+            pre_connected_android_device: _,
+            pre_launched_browser: _,
             selectors,
-            socks_support,
-            utils,
+            socks_support: _,
+            utils: _,
             webkit
         } = serde_json::from_value(channel.initializer.clone())?;
         let chromium = get_object!(ctx, &chromium.guid, BrowserType)?;
