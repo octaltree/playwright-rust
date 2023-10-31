@@ -1,11 +1,11 @@
 use case::CaseExt;
-use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote, TokenStreamExt};
 use scripts::{
     api::{types::Model, *},
     utils
 };
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 fn main() {
     let api: Api = serde_json::from_reader(std::io::stdin()).unwrap();
@@ -32,7 +32,7 @@ fn body(x: &Interface) -> TokenStream {
         .filter(|method| method.builder.is_some())
         .map(|method| builder_tokens(method));
     let sub = sub.iter().map(|m| format_ty(&*m));
-    let mut overload_targets: HashMap<&str, Vec<&types::Method>> = methods
+    let _overload_targets: HashMap<&str, Vec<&types::Method>> = methods
         .iter()
         .filter(|m| m.orig.overload_index > 0)
         .fold(HashMap::new(), |mut a, b| {
@@ -45,8 +45,8 @@ fn body(x: &Interface) -> TokenStream {
         .iter()
         .filter(|m| m.orig.overload_index == 0)
         .map(|m| {
-            let overloads = overload_targets.remove(&*m.orig.alias);
-            method_tokens(m, overloads)
+            // let overloads = overload_targets.remove(&*m.orig.alias);
+            method_tokens(m/*, overloads*/)
         });
     let events = event.map(|event| event_tokens(event));
     quote! {
@@ -66,7 +66,7 @@ fn format_ty(x: &types::Model) -> TokenStream {
     match x {
         Model::Struct {
             name,
-            orig,
+            orig: _,
             fields,
             has_reference
         } => {
@@ -87,7 +87,7 @@ fn format_ty(x: &types::Model) -> TokenStream {
         }
         Model::Enum {
             name,
-            orig,
+            orig: _,
             variants,
             has_reference
         } => {
@@ -167,7 +167,7 @@ fn format_use_ty(x: &types::Model) -> TokenStream {
 }
 
 fn event_tokens(event: types::Event) -> TokenStream {
-    let types::Event { orig, model, which } = event;
+    let types::Event { orig: _, model, which } = event;
     let model = format_ty(&*model);
     let which = format_ty(&*which);
     quote! {
@@ -176,7 +176,7 @@ fn event_tokens(event: types::Event) -> TokenStream {
     }
 }
 
-fn method_tokens(method: &types::Method, overloads: Option<Vec<&types::Method>>) -> TokenStream {
+fn method_tokens(method: &types::Method) -> TokenStream {
     let types::Method {
         orig:
             Member {
@@ -188,10 +188,10 @@ fn method_tokens(method: &types::Method, overloads: Option<Vec<&types::Method>>)
                 overload_index: _,
                 required,
                 is_async,
-                args: member_args,
-                ty: member_ty,
+                args: _member_args,
+                ty: _member_ty,
                 deprecated,
-                spec // TODO
+                spec: _spec // TODO
             },
         args,
         builder,
@@ -200,7 +200,7 @@ fn method_tokens(method: &types::Method, overloads: Option<Vec<&types::Method>>)
     let is_builder = builder.is_some();
     assert!(name == alias || name.starts_with(alias), "{}", name);
     let rety = format_use_ty(builder.as_deref().unwrap_or(&*ty));
-    let arg_fields = args.iter().map(|(name, model)| {
+    let _arg_fields = args.iter().map(|(name, model)| {
         let name = format_ident!("{}", name);
         let ty = format_use_ty(model);
         quote! {
@@ -238,7 +238,7 @@ fn method_tokens(method: &types::Method, overloads: Option<Vec<&types::Method>>)
 }
 
 fn builder_tokens(method: &types::Method) -> TokenStream {
-    let (name, orig, fields, has_reference) = match method.builder.as_deref() {
+    let (name, _orig, fields, has_reference) = match method.builder.as_deref() {
         Some(Model::Struct {
             name,
             orig,
@@ -269,7 +269,7 @@ fn builder_tokens(method: &types::Method) -> TokenStream {
         .filter(|(_, model)| model.maybe_option().is_some())
         .map(|(name, model)| {
             let ident = format_ident!("{}", name);
-            let ty = format_use_ty(model);
+            // let ty = format_use_ty(model);
             let inner_ty = format_use_ty(model.maybe_option().unwrap());
             let clear = format_ident!("clear_{}", name.replace("r#", ""));
             // TODO: doc
