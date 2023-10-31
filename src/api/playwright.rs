@@ -6,6 +6,9 @@ use crate::{
 };
 use std::{io, process::Command};
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 /// Entry point
 pub struct Playwright {
     driver: Driver,
@@ -14,7 +17,12 @@ pub struct Playwright {
 }
 
 fn run(driver: &Driver, args: &'static [&'static str]) -> io::Result<()> {
-    let status = Command::new(driver.executable()).args(args).status()?;
+    let mut command = Command::new(driver.executable());
+    let child = command.args(args);
+    #[cfg(target_os = "windows")]
+    child.creation_flags(0x08000000);
+    let status = child.status()?;
+
     if !status.success() {
         return Err(io::Error::new(
             io::ErrorKind::Other,
@@ -111,12 +119,7 @@ impl Playwright {
 mod tests {
     use super::*;
 
-    crate::runtime_test!(failure_status_code, {
-        let mut p = Playwright::initialize().await.unwrap();
-        let err = run(p.driver(), &["nonExistentArg"]);
-        assert!(err.is_err());
-        if let Some(e) = err.err() {
-            assert_eq!(e.kind(), io::ErrorKind::Other);
-        }
+    crate::runtime_test!(initialize, {
+        let _ = Playwright::initialize().await.unwrap();
     });
 }

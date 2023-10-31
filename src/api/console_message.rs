@@ -1,6 +1,5 @@
-use crate::{
-    api::JsHandle,
-    imp::{console_message::ConsoleMessage as Impl, core::*, prelude::*, utils::SourceLocation}
+use crate::imp::{
+    console_message::ConsoleMessage as Impl, core::*, prelude::*, utils::SourceLocation
 };
 
 /// `ConsoleMessage` objects are dispatched by page via the [page::Event::Console](crate::api::page::Event::Console) event.
@@ -23,14 +22,5 @@ impl ConsoleMessage {
     /// URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`.
     pub fn location(&self) -> Result<SourceLocation, Error> {
         Ok(upgrade(&self.inner)?.location().to_owned())
-    }
-
-    /// List of arguments passed to a `console` function call.
-    pub fn args(&self) -> Result<Vec<JsHandle>, Error> {
-        Ok(upgrade(&self.inner)?
-            .args()
-            .iter()
-            .map(|x| JsHandle::new(x.clone()))
-            .collect())
     }
 }

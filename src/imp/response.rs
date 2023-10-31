@@ -1,3 +1,4 @@
+use base64::Engine;
 use crate::imp::{
     core::*,
     prelude::*,
@@ -49,7 +50,7 @@ impl Response {
     pub(crate) async fn body(&self) -> ArcResult<Vec<u8>> {
         let v = send_message!(self, "body", Map::new());
         let s = only_str(&v)?;
-        let bytes = base64::decode(s).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(s).map_err(Error::InvalidBase64)?;
         Ok(bytes)
     }
 

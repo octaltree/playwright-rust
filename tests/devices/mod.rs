@@ -72,7 +72,7 @@ async fn has_touch(page: &Page) -> bool {
 }
 
 async fn check_user_agent(page: &Page, port: u16) {
-    let user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1";
+    let user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1";
     assert_eq!(
         page.eval::<String>("() => navigator.userAgent")
             .await

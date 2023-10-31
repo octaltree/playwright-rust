@@ -1,3 +1,4 @@
+use base64::Engine;
 use crate::imp::{core::*, prelude::*};
 
 #[derive(Debug)]
@@ -28,7 +29,7 @@ impl WebSocket {
 }
 
 impl WebSocket {
-    pub(crate) fn is_closed(&self) -> bool { self.var.lock().unwrap().is_closed }
+    pub(crate) fn is_closed(&self) -> bool { self.var.lock().is_closed }
 
     fn on_frame_sent(&self, params: Map<String, Value>) -> Result<(), Error> {
         let buffer = parse_frame(params)?;
@@ -51,7 +52,7 @@ fn parse_frame(params: Map<String, Value>) -> Result<Buffer, Error> {
     }
     let De { opcode, data } = serde_json::from_value(params.into())?;
     let buffer = if opcode == 2 {
-        let bytes = base64::decode(data).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(data).map_err(Error::InvalidBase64)?;
         Buffer::Bytes(bytes)
     } else {
         Buffer::String(data)
@@ -77,7 +78,7 @@ impl RemoteObject for WebSocket {
                 self.emit_event(Evt::Error(error));
             }
             "close" => {
-                self.var.lock().unwrap().is_closed = true;
+                self.var.lock().is_closed = true;
                 self.emit_event(Evt::Close);
             }
             _ => {}
@@ -103,9 +104,9 @@ pub enum Buffer {
 impl EventEmitter for WebSocket {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().clone() }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

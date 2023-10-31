@@ -1,21 +1,22 @@
-use crate::imp::{
-    browser_context::BrowserContext,
-    console_message::ConsoleMessage,
-    core::*,
-    download::Download,
-    element_handle::may_save,
-    file_hooser::FileChooser,
-    frame::Frame,
-    prelude::*,
-    request::Request,
-    response::Response,
-    utils::{
-        ColorScheme, DocumentLoadState, FloatRect, Header, Length, MouseButton, PdfMargins,
-        ScreenshotType, Viewport
+use base64::Engine;
+use crate::{
+    imp::{
+        browser_context::BrowserContext,
+        console_message::ConsoleMessage,
+        core::*,
+        download::Download,
+        element_handle::may_save,
+        file_hooser::FileChooser,
+        frame::Frame,
+        prelude::*,
+        request::Request,
+        response::Response,
+        utils::{FloatRect, Header, Length, MouseButton, PdfMargins, ScreenshotType, Viewport},
+        video::Video,
+        websocket::WebSocket,
+        worker::Worker
     },
-    video::Video,
-    websocket::WebSocket,
-    worker::Worker
+    protocol::generated::LifecycleEvent
 };
 
 #[derive(Debug)]
@@ -48,7 +49,7 @@ macro_rules! navigation {
                 Some(g) => g,
                 None => return Ok(None)
             };
-            let r = get_object!(self.context()?.lock().unwrap(), &guid, Response)?;
+            let r = get_object!(self.context()?.lock(), &guid, Response)?;
             Ok(Some(r))
         }
     };
@@ -245,7 +246,7 @@ impl Page {
         let path = args.path.clone();
         let v = send_message!(self, "pdf", args);
         let b64 = only_str(&v)?;
-        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(Error::InvalidBase64)?;
         may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
@@ -266,7 +267,7 @@ impl Page {
         let path = args.path.clone();
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&v)?;
-        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(Error::InvalidBase64)?;
         may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
@@ -282,7 +283,7 @@ impl Page {
             Some(g) => g,
             None => return Ok(None)
         };
-        let p = get_object!(self.context()?.lock().unwrap(), guid, Page)?;
+        let p = get_object!(self.context()?.lock(), guid, Page)?;
         Ok(Some(p))
     }
 
@@ -305,9 +306,7 @@ impl Page {
 
 // mutable
 impl Page {
-    pub(crate) fn viewport_size(&self) -> Option<Viewport> {
-        self.var.lock().unwrap().viewport.clone()
-    }
+    pub(crate) fn viewport_size(&self) -> Option<Viewport> { self.var.lock().viewport.clone() }
 
     pub(crate) async fn set_viewport_size(&self, viewport_size: Viewport) -> ArcResult<()> {
         #[derive(Debug, Serialize)]
@@ -319,14 +318,14 @@ impl Page {
             viewport_size: viewport_size.clone()
         };
         let _ = send_message!(self, "setViewportSize", args);
-        self.var.lock().unwrap().viewport = Some(viewport_size);
+        self.var.lock().viewport = Some(viewport_size);
         Ok(())
     }
 
-    pub(crate) fn frames(&self) -> Vec<Weak<Frame>> { self.var.lock().unwrap().frames.clone() }
+    pub(crate) fn frames(&self) -> Vec<Weak<Frame>> { self.var.lock().frames.clone() }
 
     pub(crate) fn default_timeout(&self) -> u32 {
-        let this = self.var.lock().unwrap().timeout;
+        let this = self.var.lock().timeout;
         let parent = || {
             self.browser_context
                 .upgrade()
@@ -337,7 +336,7 @@ impl Page {
     }
 
     pub(crate) fn default_navigation_timeout(&self) -> u32 {
-        let this = self.var.lock().unwrap().navigation_timeout;
+        let this = self.var.lock().navigation_timeout;
         let parent = || {
             self.browser_context
                 .upgrade()
@@ -351,7 +350,7 @@ impl Page {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultTimeoutNoReply", args);
-        self.var.lock().unwrap().timeout = Some(timeout);
+        self.var.lock().timeout = Some(timeout);
         Ok(())
     }
 
@@ -359,7 +358,7 @@ impl Page {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultNavigationTimeoutNoReply", args);
-        self.var.lock().unwrap().navigation_timeout = Some(timeout);
+        self.var.lock().navigation_timeout = Some(timeout);
         Ok(())
     }
 
@@ -367,12 +366,26 @@ impl Page {
         self.emit_event(Evt::FrameNavigated(f));
     }
 
-    pub(crate) fn set_video(&self, video: Video) -> Result<(), Error> {
-        self.var.lock().unwrap().video = Some(video);
+    pub(crate) fn on_request(&self, request: Weak<Request>) -> Result<(), Error> {
+        self.emit_event(Evt::Request(request));
         Ok(())
     }
 
-    pub(crate) fn video(&self) -> Option<Video> { self.var.lock().unwrap().video.clone() }
+    pub(crate) fn on_response(&self, response: Weak<Response>) -> Result<(), Error> {
+        self.emit_event(Evt::Response(response));
+        Ok(())
+    }
+
+    pub(crate) fn on_page_load(&self) { self.emit_event(Evt::Load); }
+
+    pub(crate) fn on_dom_content_loaded(&self) { self.emit_event(Evt::DomContentLoaded); }
+
+    pub(crate) fn set_video(&self, video: Video) -> Result<(), Error> {
+        self.var.lock().video = Some(video);
+        Ok(())
+    }
+
+    pub(crate) fn video(&self) -> Option<Video> { self.var.lock().video.clone() }
 
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let bc = match self.browser_context().upgrade() {
@@ -389,13 +402,13 @@ impl Page {
         let this = get_object!(ctx, self.guid(), Page)?;
         let f = get_object!(ctx, &guid, Frame)?;
         upgrade(&f)?.set_page(this);
-        self.var.lock().unwrap().frames.push(f.clone());
+        self.var.lock().frames.push(f.clone());
         self.emit_event(Evt::FrameAttached(f));
         Ok(())
     }
 
     fn on_frame_detached(&self, ctx: &Context, guid: Str<Guid>) -> Result<(), Error> {
-        let frames = &mut self.var.lock().unwrap().frames;
+        let frames = &mut self.var.lock().frames;
         *frames = frames
             .iter()
             .filter(|w| w.upgrade().map(|a| a.guid() != guid).unwrap_or(false))
@@ -445,12 +458,12 @@ impl Page {
         Ok(())
     }
 
-    pub(crate) fn workers(&self) -> Vec<Weak<Worker>> { self.var.lock().unwrap().workers.clone() }
+    pub(crate) fn workers(&self) -> Vec<Weak<Worker>> { self.var.lock().workers.clone() }
 
-    fn push_worker(&self, worker: Weak<Worker>) { self.var.lock().unwrap().workers.push(worker); }
+    fn push_worker(&self, worker: Weak<Worker>) { self.var.lock().workers.push(worker); }
 
     pub(crate) fn remove_worker(&self, worker: &Weak<Worker>) {
-        let workers = &mut self.var.lock().unwrap().workers;
+        let workers = &mut self.var.lock().workers;
         workers.remove_one(|w| w.ptr_eq(worker));
     }
 
@@ -506,7 +519,7 @@ impl Page {
         } = serde_json::from_value(params.into())?;
         let element = get_object!(ctx, &guid, ElementHandle)?;
         let this = get_object!(ctx, self.guid(), Page)?;
-        let file_chooser = FileChooser::new(this, element, is_multiple);
+        let _file_chooser = FileChooser::new(this, element, is_multiple);
         // self.emit_event(Evt::FileChooser(file_chooser));
         Ok(())
     }
@@ -613,8 +626,8 @@ pub(crate) enum Evt {
 
 impl EventEmitter for Page {
     type Event = Evt;
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().clone() }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -757,7 +770,7 @@ pub enum Mixed {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ReloadArgs {
     pub(crate) timeout: Option<f64>,
-    pub(crate) wait_until: Option<DocumentLoadState>
+    pub(crate) wait_until: Option<LifecycleEvent>
 }
 
 #[skip_serializing_none]
@@ -793,19 +806,94 @@ pub(crate) struct ScreenshotArgs {
     pub(crate) path: Option<PathBuf>
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct EmulateMediaArgs {
-    pub(crate) media: Option<Media>,
-    pub(crate) color_scheme: Option<ColorScheme>
+// #[skip_serializing_none]
+// #[derive(Serialize, Default)]
+// #[serde(rename_all = "camelCase")]
+// pub(crate) struct EmulateMediaArgs {
+//     pub(crate) media: Option<Media>,
+//     pub(crate) color_scheme: Option<ColorScheme>
+// }
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsMedia {
+    #[default]
+    #[serde(rename = "screen")]
+    Screen,
+    #[serde(rename = "print")]
+    Print,
+    #[serde(rename = "no-override")]
+    NoOverride,
+    #[serde(rename = "screen")]
+    None
+}
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsReducedMotion {
+    #[serde(rename = "reduce")]
+    Reduce,
+    #[default]
+    #[serde(rename = "no-preference")]
+    NoPreference,
+    #[serde(rename = "no-override")]
+    NoOverride,
+    #[serde(rename = "no-preference")]
+    None
+}
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsForcedColors {
+    #[serde(rename = "active")]
+    Active,
+    #[default]
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "no-override")]
+    NoOverride
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Media {
-    /// Reset emulating
-    Null,
-    Print,
-    Screen
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Hash, Default)]
+pub enum EmulateMediaArgsColorScheme {
+    #[serde(rename = "dark")]
+    Dark,
+    #[serde(rename = "light")]
+    Light,
+    #[serde(rename = "no-preference")]
+    NoPreference,
+    #[default]
+    #[serde(rename = "no-override")]
+    NoOverride,
+    #[serde(rename = "no-override")]
+    None
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EmulateMediaArgs {
+    #[serde(rename = "colorScheme")]
+    pub(crate) color_scheme: Option<EmulateMediaArgsColorScheme>,
+    #[serde(rename = "forcedColors")]
+    pub(crate) forced_colors: Option<EmulateMediaArgsForcedColors>,
+    #[serde(rename = "media")]
+    pub(crate) media: Option<EmulateMediaArgsMedia>,
+    #[serde(rename = "reducedMotion")]
+    pub(crate) reduced_motion: Option<EmulateMediaArgsReducedMotion>
+}
+
+impl Default for EmulateMediaArgs {
+    fn default() -> Self {
+        EmulateMediaArgs {
+            color_scheme: Some(EmulateMediaArgsColorScheme::default()),
+            forced_colors: Some(EmulateMediaArgsForcedColors::default()),
+            media: Some(EmulateMediaArgsMedia::default()),
+            reduced_motion: Some(EmulateMediaArgsReducedMotion::default())
+        }
+    }
+}
+
+// #[derive(Serialize)]
+// #[serde(rename_all = "lowercase")]
+// pub enum Media {
+//     /// Reset emulating
+//     Null,
+//     Print,
+//     Screen
+// }
+
+pub type Media = EmulateMediaArgsMedia;

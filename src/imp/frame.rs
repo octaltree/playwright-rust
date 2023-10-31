@@ -1,12 +1,15 @@
 pub(crate) use crate::imp::element_handle::Opt;
-use crate::imp::{
-    core::*,
-    element_handle::ElementHandle,
-    js_handle::JsHandle,
-    page::Page,
-    prelude::*,
-    response::Response,
-    utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
+use crate::{
+    imp::{
+        core::*,
+        element_handle::ElementHandle,
+        js_handle::JsHandle,
+        page::Page,
+        prelude::*,
+        response::Response,
+        utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
+    },
+    protocol::generated::LifecycleEvent
 };
 use std::{collections::HashSet, iter::FromIterator};
 
@@ -24,7 +27,7 @@ struct Variable {
     name: String,
     page: Option<Weak<Page>>,
     child_frames: Vec<Weak<Frame>>,
-    load_states: HashSet<DocumentLoadState>
+    load_states: HashSet<LifecycleEvent>
 }
 
 macro_rules! is_checked {
@@ -105,7 +108,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let r = get_object!(self.context()?.lock().unwrap(), guid, Response)?;
+        let r = get_object!(self.context()?.lock(), guid, Response)?;
         Ok(Some(r))
     }
 
@@ -203,7 +206,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -219,9 +222,7 @@ impl Frame {
             serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         let es = elements
             .into_iter()
-            .map(|OnlyGuid { guid }| {
-                get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
-            })
+            .map(|OnlyGuid { guid }| get_object!(self.context()?.lock(), &guid, ElementHandle))
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
     }
@@ -229,7 +230,7 @@ impl Frame {
     pub(crate) async fn frame_element(&self) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "frameElement", Map::new());
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -242,7 +243,7 @@ impl Frame {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -301,7 +302,7 @@ impl Frame {
     ) -> ArcResult<Weak<ElementHandle>> {
         let v = send_message!(self, "addScriptTag", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -317,7 +318,7 @@ impl Frame {
         }
         let v = send_message!(self, "addStyleTag", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(e)
     }
 
@@ -360,10 +361,10 @@ impl Frame {
         let args = Args { expression, arg };
         let v = send_message!(self, "evaluateExpressionHandle", args);
         let guid = only_guid(&v)?;
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)
             .ok()
             .map(Handle::Element);
-        let j = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)
+        let j = get_object!(self.context()?.lock(), guid, JsHandle)
             .ok()
             .map(Handle::Js);
         let h = e.or(j).ok_or(Error::ObjectNotFound)?;
@@ -479,33 +480,31 @@ impl Frame {
     ) -> ArcResult<Weak<JsHandle>> {
         let v = send_message!(self, "waitForFunction", args);
         let guid = only_guid(&v)?;
-        let h = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)?;
+        let h = get_object!(self.context()?.lock(), guid, JsHandle)?;
         Ok(h)
     }
 }
 
 // mutable
 impl Frame {
-    pub(crate) fn url(&self) -> String { self.var.lock().unwrap().url.clone() }
+    pub(crate) fn url(&self) -> String { self.var.lock().url.clone() }
 
-    pub(crate) fn name(&self) -> String { self.var.lock().unwrap().name.clone() }
+    pub(crate) fn name(&self) -> String { self.var.lock().name.clone() }
 
-    pub(crate) fn page(&self) -> Option<Weak<Page>> { self.var.lock().unwrap().page.clone() }
+    pub(crate) fn page(&self) -> Option<Weak<Page>> { self.var.lock().page.clone() }
 
-    pub(crate) fn set_page(&self, page: Weak<Page>) { self.var.lock().unwrap().page = Some(page); }
+    pub(crate) fn set_page(&self, page: Weak<Page>) { self.var.lock().page = Some(page); }
 
     pub(crate) fn parent_frame(&self) -> Option<Weak<Frame>> { self.parent_frame.clone() }
 
-    pub(crate) fn child_frames(&self) -> Vec<Weak<Frame>> {
-        self.var.lock().unwrap().child_frames.clone()
-    }
+    pub(crate) fn child_frames(&self) -> Vec<Weak<Frame>> { self.var.lock().child_frames.clone() }
 
     pub(crate) fn add_child_frames(&self, child: Weak<Frame>) {
-        self.var.lock().unwrap().child_frames.push(child);
+        self.var.lock().child_frames.push(child);
     }
 
     fn on_navigated(&self, ctx: &Context, params: Map<String, Value>) -> Result<(), Error> {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         let payload: FrameNavigatedEvent = serde_json::from_value(params.into())?;
         {
             var.name = payload.name.clone();
@@ -523,15 +522,28 @@ impl Frame {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         enum Op {
-            Add(DocumentLoadState),
-            Remove(DocumentLoadState)
+            Add(LifecycleEvent),
+            Remove(LifecycleEvent)
         }
         let op: Op = serde_json::from_value(params.into())?;
-        let load_states = &mut self.var.lock().unwrap().load_states;
+        let var = &mut self.var.lock();
+        let load_states = &mut var.load_states;
         match op {
             Op::Add(x) => {
                 load_states.insert(x);
                 self.emit_event(Evt::LoadState(x));
+                if let Some(page) = var.page.as_ref().and_then(|p| p.upgrade()) {
+                    match x {
+                        LifecycleEvent::Load => {
+                            page.on_page_load();
+                        }
+                        LifecycleEvent::Domcontentloaded => {
+                            page.on_dom_content_loaded();
+                        }
+                        LifecycleEvent::Networkidle => {}
+                        LifecycleEvent::Commit => {}
+                    }
+                }
             }
             Op::Remove(x) => {
                 load_states.remove(&x);
@@ -562,16 +574,16 @@ impl RemoteObject for Frame {
 
 #[derive(Debug, Clone)]
 pub(crate) enum Evt {
-    LoadState(DocumentLoadState),
+    LoadState(LifecycleEvent),
     Navigated(FrameNavigatedEvent)
 }
 
 impl EventEmitter for Frame {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().clone() }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -682,6 +694,7 @@ pub enum FrameState {
 
 macro_rules! type_args {
     ($t:ident, $f:ident) => {
+        #[skip_serializing_none]
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         pub(crate) struct $t<'a, 'b> {
@@ -945,7 +958,7 @@ struct Initializer {
     name: String,
     url: String,
     parent_frame: Option<OnlyGuid>,
-    load_states: Vec<DocumentLoadState>
+    load_states: Vec<LifecycleEvent>
 }
 
 #[derive(Debug, Deserialize, Clone)]

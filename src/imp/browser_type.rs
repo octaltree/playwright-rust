@@ -1,9 +1,14 @@
-use crate::imp::{
-    browser::Browser,
-    browser_context::BrowserContext,
-    core::*,
-    prelude::*,
-    utils::{BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
+use crate::{
+    imp::{
+        browser::Browser,
+        browser_context::BrowserContext,
+        core::*,
+        prelude::*,
+        utils::{
+            BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport
+        }
+    },
+    protocol::generated::browser_type as protocol
 };
 
 #[derive(Debug)]
@@ -15,11 +20,14 @@ pub(crate) struct BrowserType {
 
 impl BrowserType {
     pub(crate) fn try_new(channel: ChannelOwner) -> Result<Self, Error> {
-        let Initializer { name, executable } = serde_json::from_value(channel.initializer.clone())?;
+        let protocol::Initializer {
+            name,
+            executable_path
+        } = serde_json::from_value(channel.initializer.clone())?;
         Ok(Self {
             channel,
             name,
-            executable
+            executable: PathBuf::from(executable_path)
         })
     }
 
@@ -33,7 +41,7 @@ impl BrowserType {
     ) -> Result<Weak<Browser>, Arc<Error>> {
         let res = send_message!(self, "launch", args);
         let guid = only_guid(&res)?;
-        let b = get_object!(self.context()?.lock().unwrap(), guid, Browser)?;
+        let b = get_object!(self.context()?.lock(), guid, Browser)?;
         Ok(b)
     }
 
@@ -43,7 +51,7 @@ impl BrowserType {
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "launchPersistentContext", args);
         let guid = only_guid(&res)?;
-        let b = get_object!(self.context()?.lock().unwrap(), guid, BrowserContext)?;
+        let b = get_object!(self.context()?.lock(), guid, BrowserContext)?;
         Ok(b)
     }
 
@@ -62,12 +70,11 @@ impl BrowserType {
             browser,
             default_context
         } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
-        let browser = get_object!(self.context()?.lock().unwrap(), &browser.guid, Browser)?;
+        let browser = get_object!(self.context()?.lock(), &browser.guid, Browser)?;
         let arc_browser = upgrade(&browser)?;
         arc_browser.set_is_remote_true();
         if let Some(OnlyGuid { guid }) = default_context {
-            let default_context =
-                get_object!(self.context()?.lock().unwrap(), &guid, BrowserContext)?;
+            let default_context = get_object!(self.context()?.lock(), &guid, BrowserContext)?;
             let arc_context = upgrade(&default_context)?;
             arc_browser.push_context(default_context);
             arc_context.set_browser(browser.clone());
@@ -75,7 +82,7 @@ impl BrowserType {
         Ok(browser)
     }
 
-    pub(crate) async fn connect(&self, args: ConnectArgs<'_>) -> ArcResult<Weak<Browser>> {
+    pub(crate) async fn connect(&self, _args: ConnectArgs<'_>) -> ArcResult<Weak<Browser>> {
         todo!()
     }
 }

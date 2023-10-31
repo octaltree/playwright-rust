@@ -46,21 +46,19 @@ impl Browser {
 // mutable
 impl Browser {
     pub(crate) fn contexts(&self) -> Vec<Weak<BrowserContext>> {
-        self.var.lock().unwrap().contexts.to_owned()
+        self.var.lock().contexts.to_owned()
     }
 
-    pub(crate) fn push_context(&self, c: Weak<BrowserContext>) {
-        self.var.lock().unwrap().contexts.push(c);
-    }
+    pub(crate) fn push_context(&self, c: Weak<BrowserContext>) { self.var.lock().contexts.push(c); }
 
     pub(super) fn remove_context(&self, c: &Weak<BrowserContext>) {
-        let contexts = &mut self.var.lock().unwrap().contexts;
+        let contexts = &mut self.var.lock().contexts;
         contexts.remove_one(|v| v.ptr_eq(c));
     }
 
-    pub(crate) fn is_remote(&self) -> bool { self.var.lock().unwrap().is_remote }
+    pub(crate) fn is_remote(&self) -> bool { self.var.lock().is_remote }
 
-    pub(crate) fn set_is_remote_true(&self) { self.var.lock().unwrap().is_remote = true; }
+    pub(crate) fn set_is_remote_true(&self) { self.var.lock().is_remote = true; }
 
     pub(crate) async fn new_context(
         &self,
@@ -68,7 +66,7 @@ impl Browser {
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "newContext", args);
         let guid = only_guid(&res)?;
-        let c = get_object!(self.context()?.lock().unwrap(), guid, BrowserContext)?;
+        let c = get_object!(self.context()?.lock(), guid, BrowserContext)?;
         self.register_new_context(c.clone())?;
         Ok(c)
     }
@@ -76,7 +74,7 @@ impl Browser {
     fn register_new_context(&self, c: Weak<BrowserContext>) -> Result<(), Arc<Error>> {
         self.push_context(c);
         // TODO: options
-        // let this = get_object!(self.context()?.lock().unwrap(), &self.guid(), Browser)?;
+        // let this = get_object!(self.context()?.lock(), &self.guid(), Browser)?;
         // let bc = upgrade(&c)?;
         // bc._options = params
         Ok(())

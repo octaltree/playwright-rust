@@ -2,10 +2,7 @@ use crate::imp::{core::*, prelude::*};
 use std::{
     io,
     process::{Child, Command, Stdio},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        TryLockError
-    }
+    sync::atomic::{AtomicBool, Ordering}
 };
 
 #[derive(Debug)]
@@ -88,7 +85,7 @@ impl Connection {
             .args(&["run-driver"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
+            .stderr(Stdio::inherit())
             .spawn()?;
         // TODO: env "NODE_OPTIONS"
         let stdin = child.stdin.take().unwrap();
@@ -118,24 +115,9 @@ impl Connection {
             let c = c2;
             let r = r2;
             let s = s2;
-            log::trace!("succcess starting connection");
+            log::trace!("success starting connection");
             let status = (|| -> Result<(), Error> {
                 loop {
-                    let response = {
-                        let r = match r.upgrade() {
-                            Some(x) => x,
-                            None => break
-                        };
-                        let mut reader = match r.try_lock() {
-                            Ok(x) => x,
-                            Err(TryLockError::WouldBlock) => continue,
-                            Err(e) => Err(e).unwrap()
-                        };
-                        match reader.try_read()? {
-                            Some(x) => x,
-                            None => continue
-                        }
-                    };
                     {
                         let s = match s.upgrade() {
                             Some(x) => x,
@@ -146,13 +128,27 @@ impl Connection {
                             break;
                         }
                     }
+                    let response = {
+                        let r = match r.upgrade() {
+                            Some(x) => x,
+                            None => break
+                        };
+                        let mut reader = match r.try_lock() {
+                            Some(x) => x,
+                            None => continue
+                        };
+                        match reader.try_read()? {
+                            Some(x) => x,
+                            None => continue
+                        }
+                    };
                     // dispatch
                     {
                         let c = match c.upgrade() {
                             Some(x) => x,
                             None => break
                         };
-                        let mut ctx = c.lock().unwrap();
+                        let mut ctx = c.lock();
                         ctx.dispatch(response)?;
                         // log::debug!("{:?}", ctx.objects.keys());
                     }
@@ -162,7 +158,7 @@ impl Connection {
             if let Err(e) = status {
                 log::trace!("Failed with {:?}", e);
                 if let Some(c) = c.upgrade() {
-                    let mut ctx = c.lock().unwrap();
+                    let mut ctx = c.lock();
                     ctx.notify_closed(e);
                 }
             } else {
@@ -174,29 +170,28 @@ impl Connection {
     pub(crate) fn context(&self) -> Wm<Context> { Arc::downgrade(&self.ctx) }
 
     fn notify_closed(&mut self, e: Error) {
-        let ctx = &mut self.ctx.lock().unwrap();
+        let ctx = &mut self.ctx.lock();
         ctx.notify_closed(e);
     }
 }
 
 impl Context {
     fn new(writer: Writer) -> Am<Context> {
-        let objects = {
-            let mut d = HashMap::new();
-            let root = RootObject::new();
-            d.insert(root.guid().to_owned(), RemoteArc::Root(Arc::new(root)));
-            d
-        };
-        let ctx = Context {
-            objects,
-            ctx: Weak::new(),
-            id: 0,
-            callbacks: HashMap::new(),
-            writer
-        };
-        let am = Arc::new(Mutex::new(ctx));
-        am.lock().unwrap().ctx = Arc::downgrade(&am);
-        am
+        Arc::new_cyclic(|w| {
+            let objects = {
+                let mut d = HashMap::new();
+                let root = RootObject::new(w.clone());
+                d.insert(root.guid().to_owned(), RemoteArc::Root(Arc::new(root)));
+                d
+            };
+            Mutex::new(Context {
+                objects,
+                ctx: w.clone(),
+                id: 0,
+                callbacks: HashMap::new(),
+                writer
+            })
+        })
     }
 
     fn notify_closed(&mut self, e: Error) {
@@ -260,8 +255,8 @@ impl Context {
             Some(x) => x,
             None => return
         };
-        *place.lock().unwrap() = Some(result);
-        let waker: &Option<Waker> = &waker.lock().unwrap();
+        *place.lock() = Some(result);
+        let waker: &Option<Waker> = &waker.lock();
         let waker = match waker {
             Some(x) => x.clone(),
             None => return
@@ -314,6 +309,7 @@ impl Context {
             guid,
             method,
             params,
+            metadata,
             place
         } = r;
         self.callbacks.insert(self.id, place);
@@ -321,6 +317,7 @@ impl Context {
             guid: &guid,
             method: &method,
             params,
+            metadata,
             id: self.id
         };
         self.writer.send(&req)?;

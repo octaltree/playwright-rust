@@ -24,7 +24,7 @@ impl JsHandle {
         args.insert("name", name);
         let v = send_message!(self, "getProperty", args);
         let guid = only_guid(&v)?;
-        let j = get_object!(self.context()?.lock().unwrap(), guid, JsHandle)?;
+        let j = get_object!(self.context()?.lock(), guid, JsHandle)?;
         Ok(j)
     }
 
@@ -40,7 +40,7 @@ impl JsHandle {
                      name,
                      value: OnlyGuid { guid }
                  }| {
-                    get_object!(self.context()?.lock().unwrap(), &guid, JsHandle).map(|o| (name, o))
+                    get_object!(self.context()?.lock(), &guid, JsHandle).map(|o| (name, o))
                 }
             )
             .collect::<Result<HashMap<_, _>, Error>>()?;
@@ -64,7 +64,7 @@ impl JsHandle {
 
 impl JsHandle {
     fn set_preview(&self, preview: String) {
-        let var = &mut self.var.lock().unwrap();
+        let var = &mut self.var.lock();
         var.preview = preview;
     }
 
@@ -98,7 +98,7 @@ impl RemoteObject for JsHandle {
 
 impl fmt::Display for JsHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.var.lock().unwrap().preview)
+        write!(f, "{}", &self.var.lock().preview)
     }
 }
 

@@ -8,14 +8,20 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.41"
 case = "1.0.0"
+itertools = "0.10.3"
 proc-macro2 = "1.0.27"
 quote = "1.0.9"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0.64"
+serde_yaml = "0.9.2"
 
 [[bin]]
-name = "gen"
-path = "src/gen.rs"
+name = "generate_api"
+path = "src/generate_api.rs"
+
+[[bin]]
+name = "generate_protocol"
+path = "src/generate_protocol.rs"
 
 [[bin]]
 name = "diff"

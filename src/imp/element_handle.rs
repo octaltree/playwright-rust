@@ -1,11 +1,16 @@
-use crate::imp::{
-    core::*,
-    frame::Frame,
-    prelude::*,
-    utils::{
-        ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
-        WaitForSelectorState
-    }
+use base64::Engine;
+use crate::{
+    imp::{
+        browser_context::BrowserContext,
+        core::*,
+        frame::Frame,
+        prelude::*,
+        utils::{
+            ElementState, File, FloatRect, KeyboardModifier, MouseButton, Position, ScreenshotType,
+            WaitForSelectorState
+        }
+    },
+    protocol::generated::WritableStream
 };
 
 #[derive(Debug)]
@@ -40,7 +45,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -56,9 +61,7 @@ impl ElementHandle {
             serde_json::from_value((*first).clone()).map_err(Error::Serde)?;
         let es = elements
             .into_iter()
-            .map(|OnlyGuid { guid }| {
-                get_object!(self.context()?.lock().unwrap(), &guid, ElementHandle)
-            })
+            .map(|OnlyGuid { guid }| get_object!(self.context()?.lock(), &guid, ElementHandle))
             .collect::<Result<Vec<_>, Error>>()?;
         Ok(es)
     }
@@ -88,7 +91,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let f = get_object!(self.context()?.lock().unwrap(), guid, Frame)?;
+        let f = get_object!(self.context()?.lock(), guid, Frame)?;
         Ok(Some(f))
     }
 
@@ -98,7 +101,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let f = get_object!(self.context()?.lock().unwrap(), guid, Frame)?;
+        let f = get_object!(self.context()?.lock(), guid, Frame)?;
         Ok(Some(f))
     }
 
@@ -204,7 +207,7 @@ impl ElementHandle {
         let path = args.path.clone();
         let v = send_message!(self, "screenshot", args);
         let b64 = only_str(&v)?;
-        let bytes = base64::decode(b64).map_err(Error::InvalidBase64)?;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(Error::InvalidBase64)?;
         may_save(path.as_deref(), &bytes)?;
         Ok(bytes)
     }
@@ -235,7 +238,7 @@ impl ElementHandle {
             Some(g) => g,
             None => return Ok(None)
         };
-        let e = get_object!(self.context()?.lock().unwrap(), guid, ElementHandle)?;
+        let e = get_object!(self.context()?.lock(), guid, ElementHandle)?;
         Ok(Some(e))
     }
 
@@ -274,6 +277,50 @@ impl ElementHandle {
 
     pub(crate) async fn set_input_files(&self, args: SetInputFilesArgs) -> ArcResult<()> {
         let _ = send_message!(self, "setInputFiles", args);
+        Ok(())
+    }
+
+    async fn browser_context(&self) -> ArcResult<Arc<BrowserContext>> {
+        Ok(self
+            .owner_frame()
+            .await
+            .unwrap()
+            .unwrap()
+            .upgrade()
+            .unwrap()
+            .page()
+            .unwrap()
+            .upgrade()
+            .unwrap()
+            .browser_context()
+            .upgrade()
+            .unwrap())
+    }
+
+    /// # stages:
+    /// * create temp files using browser
+    /// * create streams
+    /// * assign each files to a stream
+    /// * send setInputFilesPaths message
+    pub(crate) async fn set_input_file_paths(&self, args: SetInputFilePathsArgs) -> ArcResult<()> {
+        let browser_context = self.browser_context().await?;
+        if browser_context.browser().is_some()
+            && browser_context
+                .browser()
+                .unwrap()
+                .upgrade()
+                .unwrap()
+                .is_remote()
+        {
+            panic!("Not implemented yet");
+            // for local_path in &args.local_paths {
+            //     let guid = browser_context.create_temp_file(local_path).await?;
+            //     args.streams.as_mut().unwrap().push(guid);
+            //     let f = fs::File::open(local_path).unwrap();
+            //     guid.
+            // }
+        }
+        send_message!(self, "setInputFilePaths", args);
         Ok(())
     }
 }
@@ -444,6 +491,16 @@ pub(crate) enum Opt {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SetInputFilesArgs {
     pub(crate) files: Vec<File>,
+    pub(crate) timeout: Option<f64>,
+    pub(crate) no_wait_after: Option<bool>
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SetInputFilePathsArgs {
+    pub(crate) local_paths: Option<Vec<PathBuf>>,
+    pub(crate) stream: Option<Vec<WritableStream>>,
     pub(crate) timeout: Option<f64>,
     pub(crate) no_wait_after: Option<bool>
 }

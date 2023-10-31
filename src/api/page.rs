@@ -12,21 +12,20 @@ pub use crate::{
 };
 use crate::{
     api::{
-        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, FileChooser,
-        Frame, Keyboard, Response, TouchScreen, Video, WebSocket, Worker
+        input_device::*, Accessibility, BrowserContext, ConsoleMessage, ElementHandle, Frame,
+        Keyboard, Response, TouchScreen, Video, WebSocket, Worker
     },
     imp::{
         core::*,
         frame::Frame as FrameImpl,
         page::{EmulateMediaArgs, Evt, Page as Impl, PdfArgs, ReloadArgs, ScreenshotArgs},
         prelude::*,
-        utils::{
-            ColorScheme, DocumentLoadState, File, FloatRect, Length, PdfMargins, ScreenshotType,
-            Viewport
-        }
+        utils::{ColorScheme, File, FloatRect, Length, PdfMargins, ScreenshotType, Viewport}
     },
+    protocol::generated::LifecycleEvent,
     Error
 };
+use std::fmt::{Debug, Formatter};
 
 /// Page provides methods to interact with a single tab in a `Browser`, or an
 /// [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One `Browser`
@@ -429,6 +428,34 @@ pub enum Event {
     Video(Video)
 }
 
+impl Debug for Event {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let current_event = match self {
+            Event::Close => "Close",
+            Event::Crash => "Crash",
+            Event::Console(_) => "Console",
+            Event::Dialog => "Dialog",
+            Event::DomContentLoaded => "DomContentLoaded",
+            Event::Download(_) => "Download(_)",
+            // Event::FileChooser(_) => "FileChooser(_)",
+            Event::FrameAttached(_) => "FrameAttached(_)",
+            Event::FrameDetached(_) => "FrameDetached(_)",
+            Event::FrameNavigated(_) => "FrameNavigated(_)",
+            Event::Load => "Load",
+            Event::PageError => "PageError",
+            Event::Popup(_) => "Popup(_)",
+            Event::Request(_) => "Request(_)",
+            Event::RequestFailed(_) => "RequestFailed(_)",
+            Event::RequestFinished(_) => "RequestFinished(_)",
+            Event::Response(_) => "Response(_)",
+            Event::WebSocket(_) => "WebSocket(_)",
+            Event::Worker(_) => "Worker(_)",
+            Event::Video(_) => "Video(_)"
+        };
+        write!(f, "{}", current_event)
+    }
+}
+
 impl From<Evt> for Event {
     fn from(e: Evt) -> Event {
         match e {
@@ -758,7 +785,7 @@ macro_rules! navigation {
                 /// - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
                 /// - `'load'` - consider operation to be finished when the `load` event is fired.
                 /// - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-                wait_until: Option<DocumentLoadState>
+                wait_until: Option<LifecycleEvent>
             }
         }
     };

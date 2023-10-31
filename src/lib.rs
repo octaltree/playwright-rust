@@ -1,3 +1,4 @@
+#![feature(arc_unwrap_or_clone)]
 #[macro_use]
 extern crate serde;
 #[macro_use]
@@ -38,4 +39,8 @@ macro_rules! runtime_test {
             async_std::task::block_on(async { $main });
         }
     };
+}
+
+pub(crate) mod protocol {
+    pub(crate) mod generated;
 }

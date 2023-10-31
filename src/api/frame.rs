@@ -10,7 +10,8 @@ use crate::{
         },
         prelude::*,
         utils::{DocumentLoadState, File, KeyboardModifier, MouseButton, Position}
-    }
+    },
+    protocol::generated::LifecycleEvent
 };
 
 /// At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`] and
@@ -650,7 +651,7 @@ impl Frame {
 
 #[derive(Debug)]
 pub enum Event {
-    LoadState(DocumentLoadState),
+    LoadState(LifecycleEvent),
     Navigated(FrameNavigatedEvent)
 }
 

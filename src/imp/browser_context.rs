@@ -44,7 +44,7 @@ impl BrowserContext {
     pub(crate) async fn new_page(&self) -> Result<Weak<Page>, Arc<Error>> {
         let res = send_message!(self, "newPage", Map::new());
         let guid = only_guid(&res)?;
-        let p = get_object!(self.context()?.lock().unwrap(), guid, Page)?;
+        let p = get_object!(self.context()?.lock(), guid, Page)?;
         Ok(p)
     }
 
@@ -168,35 +168,28 @@ impl BrowserContext {
 
 // mutable
 impl BrowserContext {
-    pub(crate) fn browser(&self) -> Option<Weak<Browser>> {
-        self.var.lock().unwrap().browser.clone()
-    }
+    pub(crate) fn browser(&self) -> Option<Weak<Browser>> { self.var.lock().browser.clone() }
 
     pub(crate) fn set_browser(&self, browser: Weak<Browser>) {
-        self.var.lock().unwrap().browser = Some(browser);
+        self.var.lock().browser = Some(browser);
     }
 
-    pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
+    pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().pages.clone() }
 
-    pub(super) fn push_page(&self, p: Weak<Page>) { self.var.lock().unwrap().pages.push(p); }
+    pub(super) fn push_page(&self, p: Weak<Page>) { self.var.lock().pages.push(p); }
 
     pub(super) fn remove_page(&self, page: &Weak<Page>) {
-        let pages = &mut self.var.lock().unwrap().pages;
+        let pages = &mut self.var.lock().pages;
         pages.remove_one(|p| p.ptr_eq(page));
     }
 
     pub(crate) fn default_timeout(&self) -> u32 {
-        self.var
-            .lock()
-            .unwrap()
-            .timeout
-            .unwrap_or(Self::DEFAULT_TIMEOUT)
+        self.var.lock().timeout.unwrap_or(Self::DEFAULT_TIMEOUT)
     }
 
     pub(crate) fn default_navigation_timeout(&self) -> u32 {
         self.var
             .lock()
-            .unwrap()
             .navigation_timeout
             .unwrap_or(Self::DEFAULT_TIMEOUT)
     }
@@ -205,7 +198,7 @@ impl BrowserContext {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultTimeoutNoReply", args);
-        self.var.lock().unwrap().timeout = Some(timeout);
+        self.var.lock().timeout = Some(timeout);
         Ok(())
     }
 
@@ -213,7 +206,7 @@ impl BrowserContext {
         let mut args = Map::new();
         args.insert("timeout".into(), timeout.into());
         let _ = send_message!(self, "setDefaultNavigationTimeoutNoReply", args);
-        self.var.lock().unwrap().navigation_timeout = Some(timeout);
+        self.var.lock().navigation_timeout = Some(timeout);
         Ok(())
     }
 
@@ -245,6 +238,22 @@ impl RemoteObject for BrowserContext {
         params: Map<String, Value>
     ) -> Result<(), Error> {
         match method.as_str() {
+            "request" => {
+                if let Some(page) = self.pages().last() {
+                    let first = guid_from_params(params.get("request").unwrap())?;
+                    let page = page.upgrade().unwrap();
+                    let request = get_object!(ctx, first, Request)?;
+                    page.on_request(request)?;
+                }
+            }
+            "response" => {
+                if let Some(page) = self.pages().last() {
+                    let first = guid_from_params(params.get("response").unwrap())?;
+                    let page = page.upgrade().unwrap();
+                    let response = get_object!(ctx, first, Response)?;
+                    page.on_response(response)?;
+                }
+            }
             "page" => {
                 let first = first_object(&params).ok_or(Error::InvalidParams)?;
                 let OnlyGuid { guid } = serde_json::from_value((*first).clone())?;
@@ -270,9 +279,9 @@ pub(crate) enum Evt {
 impl EventEmitter for BrowserContext {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().clone() }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock() = Some(tx); }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

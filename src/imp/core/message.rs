@@ -3,7 +3,8 @@ pub(crate) mod ser;
 
 use crate::imp::core::Error;
 use serde::{Deserialize, Deserializer};
-use serde_json::{map::Map, value::Value};
+use serde_json::{map::Map, value::Value, Number};
+use std::{fmt::Debug, time::UNIX_EPOCH};
 use strong::*;
 
 #[derive(Debug, Serialize)]
@@ -14,7 +15,25 @@ pub(crate) struct Req<'a, 'b> {
     #[serde(default)]
     pub(crate) method: &'b S<Method>,
     #[serde(default)]
-    pub(crate) params: Map<String, Value>
+    pub(crate) params: Map<String, Value>,
+    pub(crate) metadata: crate::protocol::generated::Metadata
+}
+
+impl Default for crate::protocol::generated::Metadata {
+    fn default() -> Self {
+        let wall_time = Number::from(
+            std::time::SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
+        Self {
+            api_name: None,
+            internal: None,
+            location: None,
+            wall_time: Some(wall_time)
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -63,6 +82,7 @@ impl<'de> Deserialize<'de> for ResResult {
 pub(crate) struct ResInitial {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
+    #[serde(default)]
     pub(crate) params: Map<String, Value>
 }
 
@@ -170,6 +190,18 @@ pub(crate) fn maybe_only_str(v: &Value) -> Result<Option<&str>, Error> {
         None => return Ok(None)
     };
     Ok(Some(s))
+}
+
+pub(crate) fn _guid(v: &Value) -> Option<&S<Guid>> {
+    let m: &Map<String, Value> = v.as_object()?;
+    let v: &Value = m.get("guid")?;
+    let s: &str = v.as_str()?;
+    S::validate(s).ok()
+}
+
+/// If {"guid": str} then str
+pub(crate) fn guid_from_params(v: &Value) -> Result<&S<Guid>, Error> {
+    _guid(v).ok_or_else(|| Error::GuidNotFound(v.clone()))
 }
 
 #[derive(Debug, Serialize)]

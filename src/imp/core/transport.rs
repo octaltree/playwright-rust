@@ -28,7 +28,7 @@ pub enum TransportError {
 }
 
 impl Reader {
-    const BUFSIZE: usize = 30000;
+    const BUFSIZE: usize = 32767;
 
     pub(super) fn new(stdout: ChildStdout) -> Self {
         Self {
