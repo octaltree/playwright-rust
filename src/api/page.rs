@@ -711,7 +711,7 @@ impl Page {
         self.main_frame().set_input_files_builder(selector, file)
     }
 
-    pub fn type_builer<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
+    pub fn type_builder<'a, 'b>(&self, selector: &'a str, text: &'b str) -> TypeBuilder<'a, 'b> {
         self.main_frame().type_builder(selector, text)
     }
 
