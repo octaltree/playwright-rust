@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR}
 };
 
-const DRIVER_VERSION: &str = "1.11.0-1620331022000";
+const DRIVER_VERSION: &str = "1.13.0";
 
 fn main() {
     let out_dir: PathBuf = env::var_os("OUT_DIR").unwrap().into();
@@ -12,8 +12,8 @@ fn main() {
     let platform = PlaywrightPlatform::default();
     fs::write(out_dir.join("platform"), platform.to_string()).unwrap();
     download(&url(platform), &dest);
-    println!("cargo:rerun-if-changed=src/build.rs");
-    println!("cargo:rustc-env=SEP={}", MAIN_SEPARATOR);
+    println!("cargo::rerun-if-changed=src/build.rs");
+    println!("cargo::rustc-env=SEP={}", MAIN_SEPARATOR);
 }
 
 #[cfg(all(not(feature = "only-for-docs-rs"), not(unix)))]
@@ -75,14 +75,9 @@ fn check_size(p: &Path) {
 fn download(_url: &str, dest: &Path) { File::create(dest).unwrap(); }
 
 fn url(platform: PlaywrightPlatform) -> String {
-    // let next = DRIVER_VERSION
-    //    .contains("next")
-    //    .then(|| "/next")
-    //    .unwrap_or_default();
-    let next = "/next";
     format!(
-        "https://playwright.azureedge.net/builds/driver{}/playwright-{}-{}.zip",
-        next, DRIVER_VERSION, platform
+        "https://playwright.azureedge.net/builds/driver/playwright-{}-{}.zip",
+        DRIVER_VERSION, platform
     )
 }
 
